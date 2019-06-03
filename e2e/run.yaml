@@ -1,0 +1,29 @@
+init:
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+  appHost: $Hostname($target.URL)
+  appPath: $WorkingDirectory(..)
+
+  gcpSecrets: gcp-e2e
+  gcp: ${secrets.$gcpSecrets}
+  projectID: $gcp.ProjectID
+  serviceAccount: $gcp.ClientEmail
+
+
+pipeline:
+  system:
+    action: run
+    request: '@system'
+    tasks: '*'
+
+
+  app:
+    action: run
+    request: '@app'
+    tasks: 'deploy'
+
+  test:
+    action: run
+    request: '@regression/regression'
+    tasks: '*'

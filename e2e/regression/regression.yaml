@@ -1,0 +1,33 @@
+pipeline:
+  set_sdk:
+    action: sdk.set
+    target: $target
+    sdk: go:1.12
+  set_env:
+    action: exec:run
+    comments: vendor build for deployment speedup
+    target: $target
+    commands:
+      - unset GOPATH
+      - export GO111MODULE=on
+  test:
+    tag: $pathMatch
+    description: '@info'
+    subPath: 'cases/${index}_*'
+    range: 1..003
+    template:
+
+      setVars:
+        action: nop
+        comments: use case init
+        skip: $HasResource(${path}/skip.txt)
+
+      test:
+        when: $HasResource(${path}/test.yaml)
+        action: run
+        request: '@test'
+
+    post-test-sleep:
+      action: nop
+      sleepTimeMs: 1000
+      comments: sleep for extra debuging

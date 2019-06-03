@@ -1,0 +1,50 @@
+defaults:
+  credentials: $gcpSecrets
+
+pipeline:
+#  undeploy:
+#    indexer:
+#      action: gcp/cloudfunctions:delete
+#      '@name': IndexSiteRules
+#    matcher:
+#      action: gcp/cloudfunctions:delete
+#      '@name': MatchSiteWithRules
+
+
+  deploy:
+    package:
+      action: exec:run
+      comments: vendor build for deployment speedup
+      target: $target
+      checkError: true
+      commands:
+        - export GIT_TERMINAL_PROMPT=1
+        - export GO111MODULE=on
+        - unset GOPATH
+        - cd ${appPath}/
+        - go mod vendor
+        - go build
+
+    loadConifg:
+      action: nop
+      init:
+        configText: $Cat('config/config.json')
+        config: $AsMap(${configText})
+
+
+    upload:
+      action: gcp/cloudfunctions:deploy
+      '@name': BQTail
+      timeout: 180s
+      public: true
+      availableMemoryMb: 512
+      entryPoint: BQTailFn
+      runtime: go111
+      environmentVariables:
+        CONFIG: ${config.ConfigURL}
+      eventTrigger:
+        eventType: google.storage.object.finalize
+        resource: projects/_/buckets/${config.Bucket}
+      source:
+        URL: ${appPath}/
+

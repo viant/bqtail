@@ -1,0 +1,11 @@
+pipeline:
+  db1-load:
+    register:
+      action: dsunit:register
+      datastore: db1
+      config:
+        driverName: bigquery
+        credentials: $gcpSecrets
+        parameters:
+          datasetId: db1
+

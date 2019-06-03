@@ -1,0 +1,44 @@
+{
+  "RunOnce": true,
+  "Rules": {
+    "Items": [
+      {
+        "Source": {
+          "Prefix": "/data/case1/",
+          "Ext": ".json"
+        },
+        "Dest": {
+          "TableID": "dummy",
+          "DatasetID": "db1"
+        }
+      },
+      {
+        "Source": {
+          "Prefix": "/data/case2/",
+          "Ext": ".json"
+        },
+        "Dest": {
+          "TableID": "dummy",
+          "DatasetID": "db1"
+        },
+        "OnSuccess": {
+          "Name":"move",
+          "DestURL": "gs://e2e-data/processed/"
+        }
+      },
+      {
+        "Source": {
+          "Prefix": "/data/case3/",
+          "Ext": ".json"
+        },
+        "Dest": {
+          "TableID": "dummy",
+          "DatasetID": "db1"
+        },
+        "OnSuccess": {
+          "Name":"delete"
+        }
+      }
+    ]
+  }
+}

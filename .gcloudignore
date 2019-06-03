@@ -1,0 +1,9 @@
+e2e
+.idea
+.gcloudignore
+.git
+.gitignore
+node_modules
+main
+go.mod
+go.sum

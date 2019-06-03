@@ -1,0 +1,44 @@
+init:
+  configText: $Cat('config/config.json')
+  config: $AsMap(${configText})
+
+pipeline:
+  prepare:
+    init-db:
+      action: dsunit:init
+      datastore: db1
+      config:
+        driverName: bigquery
+        credentials: $gcpSecrets
+        parameters:
+          datasetId: db1
+      scripts:
+        - URL: ${parent.path}/db1/schema.sql
+    populate:
+      db1:
+        action: dsunit:prepare
+        datastore: db1
+        URL:  ${parent.path}/db1/prepare
+
+  trigger:
+    action: storage:copy
+    source:
+      URL: ${parent.path}/data/dummy.json
+    dest:
+      URL: gs://${config.Bucket}/data/case3/dummy.json
+      credentials: $gcpSecrets
+    sleepTimeMs: 20000
+
+  validate:
+# TODO storage:exists function
+#    check-content:
+#      action: storage:download
+#      source:
+#        URL: ${config.ProcessedURL}/case2/dummy.json
+#        credentials: $gcpSecrets
+#      expect: $Cat(${parent.path}/data/dummy.json)
+    check-db:
+      db1:
+        action: dsunit:expect
+        datastore: db1
+        URL:  ${parent.path}/db1/expect

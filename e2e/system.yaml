@@ -1,0 +1,21 @@
+init:
+  configText: $Cat('config/config.json')
+  config: $AsMap(${configText})
+  bqTail: $Cat('config/bqtail.json')
+  bqTailConfig:  $AsString($bqTail)
+
+pipeline:
+  create-bucket:
+    action: storage:upload
+    sourceKey: bqTailConfig
+    dest:
+      URL: ${config.ConfigURL}
+      credentials: $gcpSecrets
+
+  cleanup:
+    action: storage:remove
+    assets:
+      - URL: gs://${config.Bucket}/data
+        credentials: $gcpSecrets
+      - URL: gs://${config.Bucket}/processed
+        credentials: $gcpSecrets
