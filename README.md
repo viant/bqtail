@@ -33,8 +33,7 @@ On completing data load with error on success you can specify a post action. Cur
 
 ## Individual mode
 
-
-
+![BqTail Indivudal](BQTailIndividual.png)
 
 
 ## Batched mode
@@ -47,7 +46,7 @@ On completing data load with error on success you can specify a post action. Cur
 
 ```bash
 
-gcloud functions deploy YYYBqTail --entry-point BQTailFn --trigger-resource XXX --trigger-event google.storage.object.finalize  \n
+gcloud functions deploy YYYBQTailUploaderFn --entry-point BQTailUploaderFn --trigger-resource XXX --trigger-event google.storage.object.finalize  \n
  --set-env-vars=CONFIG=gs://XXX/config/bqtail.json
 --runtime go111
 ```
