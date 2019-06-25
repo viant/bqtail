@@ -1,4 +1,4 @@
-# BigQuery Tail (bqtail
+# BigQuery Tail (bqtail)
 
 This library is compatible with Go 1.11+
 
