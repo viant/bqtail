@@ -38,7 +38,7 @@ pipeline:
       timeout: 180s
       public: true
       availableMemoryMb: 512
-      entryPoint: BQTailFn
+      entryPoint: BQTailUploaderFn
       runtime: go111
       environmentVariables:
         CONFIG: ${config.ConfigURL}

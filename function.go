@@ -13,8 +13,8 @@ import (
 	"net/http"
 )
 
-//BQTailFn background cloud function entry point
-func BQTailFn(ctx context.Context, event model.GSEvent) (err error) {
+//BQTailUploaderFn background cloud function entry point
+func BQTailUploaderFn(ctx context.Context, event model.GSEvent) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered in f", r)
