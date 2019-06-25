@@ -33,7 +33,7 @@ On completing data load with error on success you can specify a post action. Cur
 
 ## Individual mode
 
-![BqTail Indivudal](BQTailIndividual.png)
+![BqTail Indivudal](bq_tail_individual.png)
 
 
 ## Batched mode
