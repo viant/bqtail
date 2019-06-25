@@ -6,10 +6,12 @@ import (
 	"github.com/viant/toolbox/url"
 	"log"
 	"os"
+	"path"
 )
 
 func main() {
 
+	parent := toolbox.CallerDirectory(3)
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/Users/awitas/.secret/viant-e2e.json")
 	//
 	//config := &bqtail.Config{}
@@ -21,8 +23,9 @@ func main() {
 	//	},
 	//})
 
-	os.Setenv("k1", "gs://e2e-data/config/bqtail.json")
-	config, err := bqtail.NewConfig("k1")
+	configURL := url.NewResource(path.Join(parent, "config.json")).URL
+	os.Setenv("CONFIG", configURL)
+	config, err := bqtail.NewConfig("CONFIG")
 
 	config.Init()
 	err = config.Validate()
@@ -32,7 +35,7 @@ func main() {
 	service := bqtail.New(config)
 	//{"EventID":"","SourceURL":"gs://e2e-data/data/case1/dummy.json"}
 	response := service.Tail(&bqtail.Request{
-		SourceURL: url.NewResource("gs://e2e-data/data/case2/dummy.json").URL,
+		SourceURL: url.NewResource("gs://sitelist/matcher/app00001.avro").URL,
 	})
 
 	toolbox.Dump(response)

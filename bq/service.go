@@ -1,7 +1,6 @@
 package bq
 
 import (
-	"bqtail/gcp"
 	"context"
 	"google.golang.org/api/bigquery/v2"
 	"time"
@@ -9,13 +8,14 @@ import (
 
 const doneStatus = "DONE"
 
+//Service represents service
 type Service interface {
 	Load(*LoadRequest) *LoadResponse
 }
 
 type service struct {
 	credentials string
-	bqService   *gcp.BigQueryService
+	bqService   *BigQueryClient
 }
 
 func (s *service) getJob(ctx context.Context, jobService *bigquery.JobsService, ref *bigquery.JobReference) (*bigquery.Job, error) {
@@ -32,11 +32,11 @@ func (s *service) Load(request *LoadRequest) *LoadResponse {
 	return response
 }
 
-func (s *service) getBQService() (*gcp.BigQueryService, error) {
+func (s *service) getBQService() (*BigQueryClient, error) {
 	if s.bqService != nil {
 		return s.bqService, nil
 	}
-	client, err := gcp.NewBigQueryClient()
+	client, err := NewBigQueryClient()
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (s *service) load(request *LoadRequest, response *LoadResponse) error {
 	bigquery.NewJobsService(bqService.Service)
 	request.Init()
 
-	client, err := gcp.NewBigQueryClient()
+	client, err := NewBigQueryClient()
 	if err != nil {
 		return err
 	}

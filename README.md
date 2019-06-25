@@ -31,8 +31,50 @@ On completing data load with error on success you can specify a post action. Cur
 - move data file
 
 
+## Individual mode
 
 
 
 
 
+## Batched mode
+
+-- work in progress
+
+
+
+## Deployment
+
+```bash
+
+gcloud functions deploy YYYBqTail --entry-point BQTailFn --trigger-resource XXX --trigger-event google.storage.object.finalize  \n
+ --set-env-vars=CONFIG=gs://XXX/config/bqtail.json
+--runtime go111
+```
+
+Where:
+- XXX is bucket name
+- YYY is customized name per XXX bucket
+- bqtail.json is configuration file
+```json
+{
+  "Rules": {
+    "Items": [
+      {
+        "Source": {
+          "Prefix": "/folter/output/",
+          "Ext": ".avro"
+        },
+        "Dest": {
+          "TableID": "MY_TABLE",
+          "DatasetID": "mydataset"
+        },
+        "OnSuccess": {
+          "Name": "delete"
+        }
+      }
+    ]
+  }
+}
+
+```

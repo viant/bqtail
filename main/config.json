@@ -1,0 +1,17 @@
+{
+  "RunOnce": true,
+  "Rules": {
+    "Items": [
+      {
+        "Source": {
+          "Prefix": "/matcher/",
+          "Ext": ".avro"
+        },
+        "Dest": {
+          "TableID": "SITELIST_MATCH",
+          "DatasetID": "sitemgnt"
+        }
+      }
+    ]
+  }
+}
