@@ -1,5 +1,6 @@
 {
   "Bucket": "e2e-data",
-  "ConfigURL": "gs://e2e-data/config/bqtail.json",
-  "ProcessedURL": "gs://e2e-data/processed/"
+  "BqTailConfigURL": "gs://e2e-data/config/bqtail.json",
+  "BqDispatchConfigURL": "gs://e2e-data/config/bqdispatch.json"
+
 }

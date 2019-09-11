@@ -1,0 +1,5 @@
+- Add documentation to tail service
+- Add documentation to dispatch service
+- Updated e2e test with journal log validation (after endly update with viant/afs)
+- Added e2e error cases
+- Add logic to split batching to not exceed max URIs limit 

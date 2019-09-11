@@ -3,12 +3,12 @@ defaults:
 
 pipeline:
 #  undeploy:
-#    indexer:
+#    tail:
 #      action: gcp/cloudfunctions:delete
-#      '@name': IndexSiteRules
-#    matcher:
+#      '@name': E2eDataBqTail
+#    dispatch:
 #      action: gcp/cloudfunctions:delete
-#      '@name': MatchSiteWithRules
+#      '@name': BqDispatch
 
 
   deploy:
@@ -31,20 +31,36 @@ pipeline:
         configText: $Cat('config/config.json')
         config: $AsMap(${configText})
 
+    deploay:
+#      bqtail:
+#        action: gcp/cloudfunctions:deploy
+#        '@name': E2eDataBqTail
+#        timeout: 180s
+#        public: true
+#        availableMemoryMb: 512
+#        entryPoint: BqTailFn
+#        runtime: go111
+#        environmentVariables:
+#          CONFIG: ${config.BqTailConfigURL}
+#        eventTrigger:
+#          eventType: google.storage.object.finalize
+#          resource: projects/_/buckets/${config.Bucket}
+#        source:
+#          URL: ${appPath}/
 
-    upload:
-      action: gcp/cloudfunctions:deploy
-      '@name': BQTail
-      timeout: 180s
-      public: true
-      availableMemoryMb: 512
-      entryPoint: BQTailUploaderFn
-      runtime: go111
-      environmentVariables:
-        CONFIG: ${config.ConfigURL}
-      eventTrigger:
-        eventType: google.storage.object.finalize
-        resource: projects/_/buckets/${config.Bucket}
-      source:
-        URL: ${appPath}/
+      bqdisaptch:
+        action: gcp/cloudfunctions:deploy
+        '@name': BqDispatch
+        timeout: 180s
+        public: true
+        availableMemoryMb: 512
+        entryPoint: BqDispatchFn
+        runtime: go111
+        environmentVariables:
+          CONFIG: ${config.BqDispatchConfigURL}
+        eventTrigger:
+          eventType: google.cloud.bigquery.job.complete
+          resource: projects/${projectID}/jobs/{jobId}
+        source:
+          URL: ${appPath}/
 

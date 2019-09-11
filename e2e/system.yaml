@@ -1,21 +1,42 @@
 init:
   configText: $Cat('config/config.json')
   config: $AsMap(${configText})
+
   bqTail: $Cat('config/bqtail.json')
   bqTailConfig:  $AsString($bqTail)
 
+  bqDispatch: $Cat('config/bqdispatch.json')
+  bqDispatchConfig:  $AsString($bqDispatch)
+
+
 pipeline:
-  create-bucket:
-    action: storage:upload
-    sourceKey: bqTailConfig
-    dest:
-      URL: ${config.ConfigURL}
-      credentials: $gcpSecrets
+  uploadConfigs:
+    bqTail:
+      action: storage:upload
+      sourceKey: bqTailConfig
+      dest:
+        URL: ${config.BqTailConfigURL}
+        credentials: $gcpSecrets
+
+    bqDispatch:
+      action: storage:upload
+      sourceKey: bqDispatchConfig
+      dest:
+        URL: ${config.BqDispatchConfigURL}
+        credentials: $gcpSecrets
 
   cleanup:
     action: storage:remove
     assets:
       - URL: gs://${config.Bucket}/data
         credentials: $gcpSecrets
-      - URL: gs://${config.Bucket}/processed
+      - URL: gs://${config.Bucket}/errors
+        credentials: $gcpSecrets
+      - URL: gs://${config.Bucket}/events
+        credentials: $gcpSecrets
+      - URL: gs://${config.Bucket}/journal
+        credentials: $gcpSecrets
+      - URL: gs://${config.Bucket}/batch
+        credentials: $gcpSecrets
+      - URL: gs://${config.Bucket}/export
         credentials: $gcpSecrets

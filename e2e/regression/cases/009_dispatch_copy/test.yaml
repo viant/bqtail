@@ -1,0 +1,33 @@
+init:
+  configText: $Cat('config/config.json')
+  config: $AsMap(${configText})
+  expectedData: $Cat(${parent.path}/data/expect/dummy.json)
+
+pipeline:
+
+  prepare:
+    init-bqdispatch:
+      action: dsunit:init
+      datastore: bqdispatch
+      config:
+        driverName: bigquery
+        credentials: $gcpSecrets
+        parameters:
+          datasetId: bqdispatch
+      scripts:
+        - URL: ${parent.path}/bqdispatch/schema.sql
+
+
+  trigger:
+    action: dsunit:prepare
+    datastore: bqtail
+    URL:  ${parent.path}/bqdispatch/prepare
+
+  waitForServerless:
+    action: nop
+    sleepTimeMs: 20000
+
+  validate:
+    action: dsunit:expect
+    datastore: bqtail
+    URL:  ${parent.path}/bqdispatch/expect

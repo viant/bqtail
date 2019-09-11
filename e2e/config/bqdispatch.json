@@ -1,0 +1,36 @@
+{
+  "RunOnce": true,
+  "JournalURL": "gs://e2e-data/journal/",
+  "ErrorURL": "gs://e2e-data/errors/",
+  "DispatchURL": "gs://e2e-data/events/",
+  "Routes": [
+    {
+      "When": {
+        "Dest": ".+:bqdispatch\\.dummy_v2",
+        "Type": "QUERY"
+      },
+      "OnSuccess": [
+        {
+          "Action": "export",
+          "Request": {
+            "DestURL": "gs://${config.Bucket}/export/dummy.json.gz"
+          }
+        }
+      ]
+    },
+    {
+      "When": {
+        "Dest": ".+:bqdispatch\\.dummy_v3",
+        "Type": "LOAD"
+      },
+      "OnSuccess": [
+        {
+          "Action": "copy",
+          "Request": {
+            "Dest": "bqdispatch.dummy_v4"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -10,13 +10,11 @@ init:
   projectID: $gcp.ProjectID
   serviceAccount: $gcp.ClientEmail
 
-
 pipeline:
   system:
     action: run
     request: '@system'
     tasks: '*'
-
 
   app:
     action: run

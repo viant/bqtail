@@ -4,76 +4,34 @@ This library is compatible with Go 1.11+
 
 Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes.
 
-- [Motivation](#Motivation)
-
-
+- [Motivation](#motivation)
+- [Introduction](#introduction)
+- [Usage](#usage)
+- [End to end testing](#end-to-end-testing)
 
 ## Motivation
 
-
-To goal of this project is to manage google storage based data ingestion of in close to real time without extra cost (i.e. streaming API) and [limitations](https://cloud.google.com/bigquery/quotas).
-
+The goal of this project is to provide cost effective event driven data ingestion and extraction with generic Big Query events handler.
+The first is implemented by [tail](tail/README.md) service, the latter by [dispatch](dispatch/README.md) service.
 
 ## Introduction
 
-This project uses GCE cloud functions and Big Query Load API to handle data ingestion.
+This project uses cloud functions to handle data ingestion and to handle Big Query events.
 
-Two modes are supported:
+## Usage
 
-- Individual: each matched file on google storage is directly loaded to BigQuery table 
+## End to end testing
 
+## License
 
-- Batched: uploaded file during specified time window are batched per destination table before loading to BigQuery 
+The source code is made available under the terms of the Apache License, Version 2, as stated in the file `LICENSE`.
 
+Individual files may be made available under their own specific license,
+all compatible with Apache License, Version 2. Please see individual files for details.
 
-On completing data load with error on success you can specify a post action. Currently the following post action are supported: 
-- delete
-- move data file
+<a name="Credits-and-Acknowledgements"></a>
 
+## Credits and Acknowledgements
 
-## Individual mode
+**Library Author:** Adrian Witas
 
-![BqTail Indivudal](bq_tail_individual.png)
-
-
-## Batched mode
-
--- work in progress
-
-
-
-## Deployment
-
-```bash
-
-gcloud functions deploy YYYBQTailUploaderFn --entry-point BQTailUploaderFn --trigger-resource XXX --trigger-event google.storage.object.finalize  \n
- --set-env-vars=CONFIG=gs://XXX/config/bqtail.json
---runtime go111
-```
-
-Where:
-- XXX is bucket name
-- YYY is customized name per XXX bucket
-- bqtail.json is configuration file
-```json
-{
-  "Rules": {
-    "Items": [
-      {
-        "Source": {
-          "Prefix": "/folter/output/",
-          "Ext": ".avro"
-        },
-        "Dest": {
-          "TableID": "MY_TABLE",
-          "DatasetID": "mydataset"
-        },
-        "OnSuccess": {
-          "Name": "delete"
-        }
-      }
-    ]
-  }
-}
-
-```

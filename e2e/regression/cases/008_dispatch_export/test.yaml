@@ -1,0 +1,46 @@
+init:
+  configText: $Cat('config/config.json')
+  config: $AsMap(${configText})
+  expectedData: $Cat(${parent.path}/data/expect/dummy.json)
+
+pipeline:
+
+  prepare:
+    init-bqdispatch:
+      action: dsunit:init
+      datastore: bqdispatch
+      config:
+        driverName: bigquery
+        credentials: $gcpSecrets
+        parameters:
+          datasetId: bqdispatch
+      scripts:
+        - URL: ${parent.path}/bqdispatch/schema.sql
+
+    populate:
+      action: dsunit:prepare
+      datastore: bqdispatch
+      URL:  ${parent.path}/bqdispatch/prepare
+
+  trigger:
+    action: gcp/bigquery:query
+    credentials: $gcpSecrets
+    query: SELECT * FROM bqdispatch.dummy_v1
+    destinationTable:
+      projectId: ${gcp.ProjectID}
+      datasetId: bqdispatch
+      tableId: dummy_v2
+
+  waitForServerless:
+    action: nop
+    sleepTimeMs: 20000
+
+  validate:
+    action: storage:download
+    udf: UnzipText
+    source:
+      URL:   gs://${config.Bucket}/export/dummy.json.gz
+      credentials: $gcpSecrets
+    destKey: dummy
+    expect: $expectedData
+
