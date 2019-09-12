@@ -43,4 +43,4 @@ SELECT * FROM bqtail.dummy
  
 * **Logs:** 
 
-- [gs://${config.Bucket}/journal/dummy/${date}/${storageEventId}/tail-output.json](data/expect/journal/tail-job.json)
+- [gs://${config.Bucket}/journal/dummy/${date}/${storageEventId}/tail-job.json](data/expect/journal/tail-job.json)

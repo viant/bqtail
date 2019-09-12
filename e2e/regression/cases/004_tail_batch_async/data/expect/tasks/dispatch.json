@@ -1,0 +1,45 @@
+{
+  "DeferTaskURL": "gs://${config.Bucket}/tasks/",
+  "Async": true,
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "SourceURL": "gs://${config.Bucket}/data/case004/dummy1.json"
+      }
+    },
+    {
+      "Action": "delete",
+      "Request": {
+        "SourceURL": "gs://${config.Bucket}/data/case004/dummy2.json"
+      }
+    },
+    {
+      "Action": "delete",
+      "Request": {
+        "SourceURL": "",
+        "URLs": [
+          "~/gs://${config.Bucket}/batch/bqtail.dummy/\\d+.win/",
+          "~/gs://${config.Bucket}/batch/bqtail.dummy/\\d+.tnf/",
+          "~/gs://${config.Bucket}/batch/bqtail.dummy/\\d+.tnf/"
+        ]
+      }
+    }
+  ],
+  "OnFailure": [
+    {
+      "Action": "move",
+      "Request": {
+        "DestURL": "gs://${config.Bucket}/errors",
+        "SourceURL": "gs://${config.Bucket}/data/case004/dummy1.json"
+      }
+    },
+    {
+      "Action": "move",
+      "Request": {
+        "DestURL": "gs://${config.Bucket}/errors",
+        "SourceURL": "gs://${config.Bucket}/data/case004/dummy2.json"
+      }
+    }
+  ]
+}

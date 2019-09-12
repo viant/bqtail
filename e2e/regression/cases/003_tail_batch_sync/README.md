@@ -49,18 +49,27 @@ When BigQuery load time takes more than max cloud function execution time, the f
 
 #### Output
 
+ 
+* **Batch window transient files**
+
+- gs://${config.Bucket}/batch/dummy/
+
+    - [${eventID1}.tnf](data/expect/batch/eventID1.tnf) 
+    - [${eventID2}.tnf](data/expect/batch/eventID2.tnf)
+    - [$WindowEndTimestamp.win](data/expect/batch/ts.win)
+
+
 * **Data:**
 Big Query destination table:
 
 ```sql
 SELECT * FROM bqtail.dummy
 ```
- 
+
+
 * **Logs:** 
 
-- gs://${config.Bucket}/journal/dummy/${date}/
-
-
+    - gs://${config.Bucket}/journal/dummy/${date}/
 
 ### BqDispatch
 

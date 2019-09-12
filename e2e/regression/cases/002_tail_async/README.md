@@ -62,17 +62,16 @@ Where jobID is created using the following:
 $jobID: ${table}/${storageEventID}/dispatch
 
 
+
 * **Logs:** 
-- [gs://${config.Bucket}/journal/${date}_${hour}/dummy/${jobID}/tail-job.json](data/expect/journal/tail-job.json)
+ - [gs://${config.Bucket}/journal/dummy/${date}/${jobID}/tail-job.json](data/expect/journal/tail-job.json)
 
 
 
 ### BqDispatch
 
-BqDispatch function loads matched with BigQuery JobID defer actions file from: [gs://${config.Bucket}/tasks/${jobID}.json](data/expect/tasks/eventID.json)
-to execute defer task.
-
- 
+BqDispatch function loads matched BigQuery JobID defer actions file from: [gs://${config.Bucket}/tasks/${jobID}.json](data/expect/tasks/dispatch.json)
+to execute defer actions.
 
 #### Input:
 
@@ -89,7 +88,8 @@ to execute defer task.
 
 #### Output:
 
-* **Logs:** 
-  - gs://${config.Bucket}/journal/dummy/${date}/${jobID}/bqDispatch.json
-  - gs://${config.Bucket}/journal/dummy/${date}/${jobID}/bqDispatch-done.json
+* **Logs:**
+ 
+  - gs://${config.Bucket}/journal/dummy/${date}/${jobID}/dispatch.json
+  - gs://${config.Bucket}/journal/dummy/${date}/${jobID}/dispatch-job.json
   
