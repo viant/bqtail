@@ -32,7 +32,7 @@ pipeline:
         credentials: $gcpSecrets
       - URL: gs://${config.Bucket}/errors
         credentials: $gcpSecrets
-      - URL: gs://${config.Bucket}/events
+      - URL: gs://${config.Bucket}/tasks
         credentials: $gcpSecrets
       - URL: gs://${config.Bucket}/journal
         credentials: $gcpSecrets

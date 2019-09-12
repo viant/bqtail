@@ -1,11 +1,10 @@
-### Ingestion with transient dataset 
+### Export data on destination table modification 
 
 ### Scenario:
 
-BqTail function is notified once data is upload to gs://${config.Bucket}/data/case007/dummy[1-2].json
-It matches the the following route, to ingest data with transient table in temp dataset, followed by deduplicated final destination ingestion.
-In this scenario deduplication process has to handle nested [data structure](data/dummy1.json)
- 
+BqDispatch function is notified with all Big Query jobs completion, it matches actions to run
+with the following route to export destination table to google storage gs://${config.Bucket}/export/dummy.json.gz
+
 
 ```json
   {
@@ -24,32 +23,26 @@ In this scenario deduplication process has to handle nested [data structure](dat
   }
 ```
 
-### BqTail
+### BqDispatch
 
 
 #### Input:
 
 * **Trigger**:
-    - eventType: google.storage.object.finalize
-    - resource: projects/_/buckets/${config.Bucket}
-* **Configuration:** [gs://e2e-data/config/bqtail.json](../../../config/bqtail.json)
+  - eventType: google.cloud.bigquery.job.complete
+  - resource: projects/${projectID}/jobs/{jobId}
+* **Configuration:** [gs://e2e-data/config/bqdispatch.json](../../../config/bqdispatch.json)
 * **Data**:
-    - [gs://${config.Bucket}/data/case005/dummy.json](data/dummy.json)
+
+```sql
+    INSERT INTO bqdispatch.dummy_v2 AS SELECT * FROM bqdispatch.dummy_v1
+```
 
 #### Output
 
-* **Data:**
-Big Query destination table:
-
-```sql
-SELECT * FROM bqtail.dummy
-```
- 
 * **Logs:** 
 
+- gs://${config.Bucket}/journal/
 
-[gs://${config.Bucket}/journal/dummy/${date}/$EventID.bqt](data/expect/journal.json)
-
-### BqDispatch
-
-N/A
+* **Data:**
+- gs://${config.Bucket}/export/dummy.json.gz

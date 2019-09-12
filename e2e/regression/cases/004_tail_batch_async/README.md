@@ -32,7 +32,7 @@ Other function within batch do not wait or submit load job.
 
 
 BqTail function does not wait for job completion, but instead if generate post action JSON file with job ID
-to ${config.DispatchURL}  i.e gs://${config.Bucket}/events/${JobID} and post action instruction.
+to ${config.DeferTaskURL}  i.e gs://${config.Bucket}/tasks/${JobID} and post action instruction.
 
 
 Once BigQuery job completes, Dispatch Service is notified with completed BigQuery job ID, to pick post action execution. 

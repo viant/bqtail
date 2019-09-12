@@ -1,9 +1,9 @@
 {
   "RunOnce": true,
   "BatchURL": "gs://e2e-data/batch/",
+  "DeferTaskURL": "gs://e2e-data/tasks/",
   "ErrorURL": "gs://e2e-data/errors/",
   "JournalURL": "gs://e2e-data/journal/",
-  "DispatchURL": "gs://e2e-data/events/",
   "Routes": [
     {
       "When": {

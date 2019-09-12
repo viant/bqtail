@@ -29,7 +29,7 @@ When BigQuery load time takes more than max cloud function execution time, the f
     - eventType: google.storage.object.finalize
     - resource: projects/_/buckets/${config.Bucket}
 * **Configuration:** [gs://e2e-data/config/bqtail.json](../../../config/bqtail.json)
-* **Data**: [gs://${config.Bucket}/data/case001/dummy.json](data/dummy.json)
+* **Data**: [gs://${config.Bucket}/data/case001/dummy.json](data/trigger/dummy.json)
 
 
 #### Output
@@ -42,3 +42,5 @@ SELECT * FROM bqtail.dummy
 ```
  
 * **Logs:** 
+
+- [gs://${config.Bucket}/journal/dummy/${date}/${storageEventId}/tail-output.json](data/expect/journal/tail-job.json)

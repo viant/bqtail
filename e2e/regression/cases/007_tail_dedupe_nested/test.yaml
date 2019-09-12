@@ -60,5 +60,3 @@ pipeline:
       action: dsunit:expect
       datastore: bqtail
       URL:  ${parent.path}/bqtail/expect
-
-s

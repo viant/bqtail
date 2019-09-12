@@ -44,8 +44,8 @@ When BigQuery load time takes more than max cloud function execution time, the f
     - resource: projects/_/buckets/${config.Bucket}
 * **Configuration:** [gs://e2e-data/config/bqtail.json](../../../config/bqtail.json)
 * **Data**:
-    - [gs://${config.Bucket}/data/case003/dummy1.json](data/dummy1.json)
-    - [gs://${config.Bucket}/data/case003/dummy2.json](data/dummy2.json)
+    - [gs://${config.Bucket}/data/case003/dummy1.json](data/trigger/dummy1.json)
+    - [gs://${config.Bucket}/data/case003/dummy2.json](data/trigger/dummy2.json)
 
 #### Output
 
@@ -58,11 +58,10 @@ SELECT * FROM bqtail.dummy
  
 * **Logs:** 
 
-
-[gs://${config.Bucket}/journal/dummy/${date}/$EventID.bqt](data/expect/journal.json)
-
+- gs://${config.Bucket}/journal/dummy/${date}/
 
 
 
 ### BqDispatch
 
+N/A

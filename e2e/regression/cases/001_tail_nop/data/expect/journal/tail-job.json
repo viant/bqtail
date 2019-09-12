@@ -1,15 +1,15 @@
 {
-  "EventID": "~/\\d+/",
-  "SourceCreated": "2019-09-05T22:29:11.759Z",
+  "EventID": "\\d+",
   "Load": {
     "createDisposition": "CREATE_IF_NEEDED",
     "destinationTable": {
       "datasetId": "bqtail",
+      "projectId": "my_project",
       "tableId": "dummy"
     },
     "sourceFormat": "NEWLINE_DELIMITED_JSON",
     "sourceUris": [
-        "/data/case001/dummy.json/"
+      "gs://${config.Bucket}/data/case001/dummy.json"
     ],
     "writeDisposition": "WRITE_APPEND"
   },

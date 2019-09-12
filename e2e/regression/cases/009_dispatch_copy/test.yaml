@@ -17,11 +17,11 @@ pipeline:
       scripts:
         - URL: ${parent.path}/bqdispatch/schema.sql
 
-
   trigger:
     action: dsunit:prepare
-    datastore: bqtail
+    datastore: bqdispatch
     URL:  ${parent.path}/bqdispatch/prepare
+
 
   waitForServerless:
     action: nop
@@ -29,5 +29,5 @@ pipeline:
 
   validate:
     action: dsunit:expect
-    datastore: bqtail
+    datastore: bqdispatch
     URL:  ${parent.path}/bqdispatch/expect

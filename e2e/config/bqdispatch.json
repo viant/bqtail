@@ -2,7 +2,7 @@
   "RunOnce": true,
   "JournalURL": "gs://e2e-data/journal/",
   "ErrorURL": "gs://e2e-data/errors/",
-  "DispatchURL": "gs://e2e-data/events/",
+  "DeferTaskURL": "gs://e2e-data/tasks/",
   "Routes": [
     {
       "When": {

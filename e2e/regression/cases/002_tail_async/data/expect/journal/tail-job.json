@@ -1,0 +1,18 @@
+{
+  "EventID": "~/\\d+/",
+  "Load": {
+    "createDisposition": "CREATE_IF_NEEDED",
+    "destinationTable": {
+      "datasetId": "bqtail",
+      "projectId": "my_project",
+      "tableId": "dummy"
+    },
+    "sourceFormat": "NEWLINE_DELIMITED_JSON",
+    "sourceUris": [
+      "gs://${config.Bucket}/data/case002/dummy.json"
+    ],
+    "writeDisposition": "WRITE_APPEND"
+  },
+  "Error": "",
+  "Status": "ok"
+}

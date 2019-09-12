@@ -11,15 +11,16 @@ init:
   serviceAccount: $gcp.ClientEmail
 
 pipeline:
-  system:
-    action: run
-    request: '@system'
-    tasks: '*'
 
-  app:
-    action: run
-    request: '@app'
-    tasks: 'deploy'
+  init:
+    system:
+      action: run
+      request: '@system'
+      tasks: '*'
+    app:
+      action: run
+      request: '@app'
+      tasks: 'deploy'
 
   test:
     action: run
