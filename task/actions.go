@@ -5,11 +5,11 @@ import (
 )
 
 type Actions struct {
-	DispatchURL string
-	Async       bool
-	JobID       string
-	OnSuccess   []*Action
-	OnFailure   []*Action
+	DeferTaskURL string
+	Async        bool
+	JobID        string
+	OnSuccess    []*Action
+	OnFailure    []*Action
 }
 
 //IsEmpty returns is actions are empty
@@ -29,7 +29,7 @@ func (r Actions) ID(prefix string) (string, error) {
 
 //IsSyncMode returns true if route uses synchronous mode
 func (r Actions) IsSyncMode() bool {
-	return ! r.Async
+	return !r.Async
 }
 
 //Expand creates clone actions with expanded sources URLs
@@ -38,8 +38,11 @@ func (a *Actions) Expand(expandable *base.Expandable) *Actions {
 		return a
 	}
 	result := &Actions{
-		OnSuccess: make([]*Action, 0),
-		OnFailure: make([]*Action, 0),
+		Async:        a.Async,
+		DeferTaskURL: a.DeferTaskURL,
+		JobID:        a.JobID,
+		OnSuccess:    make([]*Action, 0),
+		OnFailure:    make([]*Action, 0),
 	}
 	appendSourceURLExpandableActions(a.OnSuccess, &result.OnSuccess, expandable)
 	appendSourceURLExpandableActions(a.OnFailure, &result.OnFailure, expandable)
@@ -50,13 +53,12 @@ func (a *Actions) Expand(expandable *base.Expandable) *Actions {
 	return result
 }
 
-
 func expandSource(actions []*Action, expandable *base.Expandable) {
 	if expandable.Source == "" {
 		return
 	}
 	for i := range actions {
-		if _, has := actions[i].Request[base.SourceKey]; !  has {
+		if _, has := actions[i].Request[base.SourceKey]; !has {
 			actions[i].Request[base.SourceKey] = expandable.Source
 		}
 	}
@@ -79,7 +81,7 @@ func (a *Actions) AddOnFailure(action *Action) {
 }
 
 //NewActions creates an actions
-func NewActions(async bool, baseURL, jobID string, onSuccess, onFailure [] *Action) *Actions {
+func NewActions(async bool, baseURL, jobID string, onSuccess, onFailure []*Action) *Actions {
 	if len(onSuccess) == 0 {
 		onSuccess = make([]*Action, 0)
 	}
@@ -87,11 +89,11 @@ func NewActions(async bool, baseURL, jobID string, onSuccess, onFailure [] *Acti
 		onFailure = make([]*Action, 0)
 	}
 	return &Actions{
-		Async:       async,
-		DispatchURL: baseURL,
-		JobID:       jobID,
-		OnSuccess:   onSuccess,
-		OnFailure:   onFailure,
+		Async:        async,
+		DeferTaskURL: baseURL,
+		JobID:        jobID,
+		OnSuccess:    onSuccess,
+		OnFailure:    onFailure,
 	}
 }
 
@@ -107,7 +109,7 @@ func appendSourceURLExpandableActions(source []*Action, dest *[]*Action, expanda
 	if len(expandable.SourceURLs) > 0 {
 		for i := range expandable.SourceURLs {
 			for _, action := range source {
-				if ! sourceURLExpandable[action.Action] {
+				if !sourceURLExpandable[action.Action] {
 					continue
 				}
 				*dest = append(*dest, action.New(map[string]interface{}{

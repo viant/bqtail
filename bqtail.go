@@ -1,16 +1,14 @@
 package bqtail
 
 import (
-	"cloud.google.com/go/functions/metadata"
-	"context"
-	"errors"
 	"bqtail/base"
 	"bqtail/tail"
 	"bqtail/tail/contract"
+	"cloud.google.com/go/functions/metadata"
+	"context"
+	"errors"
 	"log"
 )
-
-
 
 //BqTailFn storage trigger background cloud function entry point
 func BqTailFn(ctx context.Context, event contract.GSEvent) (err error) {
@@ -26,7 +24,6 @@ func BqTailFn(ctx context.Context, event contract.GSEvent) (err error) {
 	return err
 }
 
-
 func handleTailEvent(ctx context.Context, request *contract.Request) (*contract.Response, error) {
 	service, err := tail.Singleton(ctx)
 	if err != nil {
@@ -39,8 +36,11 @@ func handleTailEvent(ctx context.Context, request *contract.Request) (*contract.
 	if response.Status != base.StatusOK {
 		log.Printf("Status: %v, Error: %v", response.Status, response.Error)
 	} else {
-		log.Printf("Status: %v, Time: %v, Matched: %v, Batched: %v, job: %v", response.Status, response.TimeTaken, response.Matched, response.Batched, response.JobRef)
+		jobID := ""
+		if response.JobRef != nil {
+			jobID = response.JobRef.JobId
+		}
+		log.Printf("Status: %v, Time: %v, Matched: %v, Batched: %v, job: %v", response.Status, response.TimeTaken, response.Matched, response.Batched, jobID)
 	}
 	return response, nil
 }
-

@@ -1,0 +1,35 @@
+{
+  "JournalURL": "gs://${config.Bucket}/journal/",
+  "ErrorURL": "gs://${config.Bucket}/errors/",
+  "DeferTaskURL": "gs://${config.Bucket}/tasks/",
+  "Routes": [
+    {
+      "When": {
+        "Dest": ".+:mydataset\\.my_table_v2",
+        "Type": "QUERY"
+      },
+      "OnSuccess": [
+        {
+          "Action": "export",
+          "Request": {
+            "DestURL": "gs://${config.Bucket}/export/my_table.json.gz"
+          }
+        }
+      ]
+    },
+    {
+      "When": {
+        "Dest": ".+:mydataset\\.my_table_v3",
+        "Type": "LOAD"
+      },
+      "OnSuccess": [
+        {
+          "Action": "copy",
+          "Request": {
+            "Dest": "mydataset.my_table_v4"
+          }
+        }
+      ]
+    }
+  ]
+}

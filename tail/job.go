@@ -18,9 +18,19 @@ type Job struct {
 	Window        *batch.Window `json:",ommittempty"`
 }
 
+//Dest returns dataset and table destination
 func (j Job) Dest() string {
 	if j.Load == nil {
 		return ""
 	}
 	return j.Load.DestinationTable.DatasetId + base.PathElementSeparator + j.Load.DestinationTable.TableId
+}
+
+//SetIfError sets non nil error
+func (r *Job) SetIfError(err error) {
+	if err == nil {
+		return
+	}
+	r.Status = base.StatusError
+	r.Error = err.Error()
 }

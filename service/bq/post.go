@@ -1,16 +1,14 @@
 package bq
 
 import (
+	"bqtail/base"
+	"bqtail/task"
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
-	"bqtail/base"
-	"bqtail/task"
-	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"path"
 )
@@ -36,30 +34,29 @@ func (s *service) schedulePostTask(ctx context.Context, jobReference *bigquery.J
 	if err != nil {
 		return err
 	}
-	filename := jobReference.JobId
+	filename := base.DecodePathSeparator(jobReference.JobId)
 	if path.Ext(filename) == "" {
 		filename += base.JobExt
 	}
-	URL := url.Join(actions.DispatchURL, filename)
+	URL := url.Join(actions.DeferTaskURL, filename)
 	return s.storage.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
 
-func (s *service) Post(ctx context.Context, projectID string, job *bigquery.Job, onDone *task.Actions) (*bigquery.Job, error) {
-	job, err := s.post(ctx, projectID, job, onDone)
-	toolbox.Dump(job)
+func (s *service) Post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 
+	job, err := s.post(ctx, projectID, job, onDoneActions)
 	if err == nil {
 		err = JobError(job)
 	}
-	if onDone != nil && onDone.IsSyncMode() {
+	if onDoneActions != nil && onDoneActions.IsSyncMode() {
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
 			if err == nil {
 				err = JobError(job)
 			}
 		}
-		if e := s.runActions(ctx, err, job, onDone); e != nil {
+		if e := s.runActions(ctx, err, job, onDoneActions); e != nil {
 			if err == nil {
 				err = e
 			}
@@ -68,16 +65,18 @@ func (s *service) Post(ctx context.Context, projectID string, job *bigquery.Job,
 	return job, err
 }
 
-func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job, actions *task.Actions) (*bigquery.Job, error) {
+func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 	var err error
-	if job.JobReference, err = s.setJobID(ctx, actions); err != nil {
+	if job.JobReference, err = s.setJobID(ctx, onDoneActions); err != nil {
 		return nil, err
 	}
 	if job.JobReference != nil {
-		job.JobReference.JobId = base.EncodeID(job.JobReference.JobId)
-		fmt.Printf("USING JOB ID:%v\n", job.JobReference.JobId)
+		job.JobReference.JobId = base.EncodePathSeparator(job.JobReference.JobId)
 	}
 
+	if err = s.schedulePostTask(ctx, job.JobReference, onDoneActions);err != nil {
+		return nil, err
+	}
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)

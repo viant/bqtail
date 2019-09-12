@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-
 //Response represents response
 type Response struct {
 	Status     string
@@ -35,7 +34,7 @@ func (r *Response) SetIfError(err error) {
 //NewResponse create a response
 func NewResponse(eventID string) *Response {
 	return &Response{
-		EventID:eventID,
+		EventID: eventID,
 		Status:  StatusOK,
 		Started: time.Now(),
 	}

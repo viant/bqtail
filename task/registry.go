@@ -5,7 +5,6 @@ import (
 	"sync"
 )
 
-
 //Registry represents services actions
 type Registry interface {
 	Service(name string) (Service, error)
@@ -17,17 +16,14 @@ type Registry interface {
 	Action(name string) (*ServiceAction, error)
 }
 
-
 type registry struct {
 	services map[string]Service
 	actions  map[string]*ServiceAction
 	mutex    *sync.RWMutex
 }
 
-
-
 //Register register service
-func (r *registry) RegisterService(name string, service Service){
+func (r *registry) RegisterService(name string, service Service) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.services[name] = service
@@ -44,12 +40,11 @@ func (r *registry) Service(name string) (Service, error) {
 	return nil, fmt.Errorf("failed to lookup service: %v", name)
 }
 
-func (r *registry) RegisterAction(name string,action *ServiceAction) {
+func (r *registry) RegisterAction(name string, action *ServiceAction) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	r.actions[name]= action
+	r.actions[name] = action
 }
-
 
 func (r *registry) Action(name string) (*ServiceAction, error) {
 	r.mutex.RLock()
@@ -61,18 +56,15 @@ func (r *registry) Action(name string) (*ServiceAction, error) {
 	return nil, fmt.Errorf("failed to lookup action: %v", name)
 }
 
-
 func newRegistry() Registry {
 	return &registry{
 		services: make(map[string]Service),
-		actions: make( map[string]*ServiceAction),
-		mutex :   &sync.RWMutex{},
+		actions:  make(map[string]*ServiceAction),
+		mutex:    &sync.RWMutex{},
 	}
 }
 
-
 //NewRegistry returns a service action registry
-func NewRegistry() Registry{
+func NewRegistry() Registry {
 	return newRegistry()
 }
-

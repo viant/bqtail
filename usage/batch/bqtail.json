@@ -1,0 +1,38 @@
+{
+  "RunOnce": true,
+  "BatchURL": "gs://e2e-data/batch/",
+  "ErrorURL": "gs://e2e-data/errors/",
+  "JournalURL": "gs://e2e-data/journal/",
+  "DeferTaskURL": "gs://e2e-data/tasks/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/case001",
+        "Suffix": ".json"
+      },
+      "Dest": {
+        "Table": "bqtail.dummy"
+      }
+    }
+  ]
+}
+
+{
+  "When": {
+    "Prefix": "/data/case003",
+    "Suffix": ".json"
+  },
+  "Dest": {
+    "Table": "bqtail.dummy"
+  },
+  "Batch": {
+    "Window": {
+      "DurationInSec": 10
+    }
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete"
+    }
+  ]
+},

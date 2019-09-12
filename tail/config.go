@@ -1,13 +1,13 @@
 package tail
 
 import (
+	"bqtail/base"
+	"bqtail/tail/config"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/viant/afs"
-	"bqtail/base"
-	"bqtail/tail/config"
 	"os"
 	"strings"
 )
@@ -28,8 +28,8 @@ func (c *Config) Init(ctx context.Context) error {
 		return nil
 	}
 	for _, route := range c.Routes {
-		if route.Actions.DispatchURL == "" {
-			route.Actions.DispatchURL = c.DispatchURL
+		if route.Actions.DeferTaskURL == "" {
+			route.Actions.DeferTaskURL = c.DeferTaskURL
 		}
 		if route.Batch != nil {
 			route.Batch.Init()

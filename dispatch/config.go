@@ -1,13 +1,13 @@
 package dispatch
 
 import (
+	"bqtail/base"
+	"bqtail/dispatch/config"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
-	"bqtail/base"
-	"bqtail/dispatch/config"
 	"os"
 	"strings"
 )
@@ -15,7 +15,7 @@ import (
 //Config represents dispatch config
 type Config struct {
 	base.Config
-	Routes      config.Routes
+	Routes config.Routes
 }
 
 //Init initialises config
@@ -30,7 +30,6 @@ func (c *Config) Init(ctx context.Context) error {
 	}
 	return c.Config.Init(ctx)
 }
-
 
 //NewConfigFromEnv creates config from env
 func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
@@ -56,7 +55,7 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	storageService := afs.New()
 	reader, err := storageService.DownloadWithURL(ctx, URL)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	cfg := &Config{}

@@ -13,11 +13,11 @@ const (
 
 //Config represents base config
 type Config struct {
-	RunOnce     bool
-	ProjectID   string
-	DispatchURL string
-	JournalURL  string
-	ErrorURL    string
+	RunOnce      bool
+	ProjectID    string
+	DeferTaskURL string
+	JournalURL   string
+	ErrorURL     string
 }
 
 //OutputURL returns an output URL
@@ -50,7 +50,7 @@ func (c *Config) Validate() error {
 	if c.ErrorURL == "" {
 		return fmt.Errorf("errorURL was empty")
 	}
-	if c.DispatchURL == "" {
+	if c.DeferTaskURL == "" {
 		return fmt.Errorf("eventURL were empty")
 	}
 	return nil

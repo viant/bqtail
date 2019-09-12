@@ -1,0 +1,22 @@
+{
+  "DeferTaskURL": "gs://${config.Bucket}/tasks/",
+  "Async": true,
+  "JobID": "~/\\d+/",
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "SourceURL": "gs://${config.Bucket}/data/dataset/table.json"
+      }
+    }
+  ],
+  "OnFailure": [
+    {
+      "Action": "move",
+      "Request": {
+        "SourceURL": "gs://${config.Bucket}/data/dataset/table.json",
+        "DestURL": "gs://${config.Bucket}/errors"
+      }
+    }
+  ]
+}

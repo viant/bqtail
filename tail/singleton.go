@@ -1,7 +1,5 @@
 package tail
 
-
-
 import (
 	"context"
 	_ "github.com/viant/afsc/gs"
@@ -27,4 +25,3 @@ func Singleton(ctx context.Context) (Service, error) {
 	srv, err = New(ctx, config)
 	return srv, err
 }
-

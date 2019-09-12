@@ -2,8 +2,6 @@ package task
 
 import (
 	"context"
-	"fmt"
-	"github.com/viant/toolbox"
 )
 
 //RunWithService handlers service request or error
@@ -25,7 +23,7 @@ func RunWithService(ctx context.Context, registry Registry, serviceName string, 
 	if err != nil {
 		return err
 	}
-	fmt.Printf("running %T\n", service)
-	toolbox.Dump(request)
+	//fmt.Printf("running %T\n", service)
+	//toolbox.Dump(request)
 	return service.Run(ctx, request)
 }

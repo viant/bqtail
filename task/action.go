@@ -36,15 +36,11 @@ func (a Action) New(request map[string]interface{}) *Action {
 	return result
 }
 
-
-
 //NewAction creates a new action for supplied name, action
 func NewAction(action string, req interface{}) (*Action, error) {
-	result := &Action{Action:action}
+	result := &Action{Action: action}
 	return result, result.SetRequest(req)
 }
-
-
 
 //ServiceAction represets service action
 type ServiceAction struct {

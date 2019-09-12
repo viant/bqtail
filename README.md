@@ -6,6 +6,8 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 - [Motivation](#motivation)
 - [Introduction](#introduction)
+- [Tail Service](tail/README.md)
+- [Dispatch Service](dispatch/README.md)
 - [Usage](#usage)
 - [End to end testing](#end-to-end-testing)
 
@@ -16,9 +18,46 @@ The first is implemented by [tail](tail/README.md) service, the latter by [dispa
 
 ## Introduction
 
-This project uses cloud functions to handle data ingestion and to handle Big Query events.
+
+![BqTail](images/bqtail.png)
+
+This project uses cloud functions to handle data ingestion and Big Query events.
+
+- [Tail Service](tail/README.md)
+- [Dispatch Service](dispatch/README.md)
+- [Task Service](task/README.md)
+
 
 ## Usage
+
+
+- Data ingestion in batches with 30 sec time window.
+
+#bqtail.config
+```json
+{
+  "BatchURL": "gs://my-ops-bucket/batch/",
+  "ErrorURL": "gs://my-ops-bucket/errors/",
+  "JournalURL": "gs://my-ops-bucket/journal/",
+  "DeferTaskURL": "gs://my-ops-bucket/tasks/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/case001",
+        "Suffix": ".json"
+      },
+      "Dest": {
+        "Table": "bqtail.dummy"
+      }
+    }
+  ]
+ }
+```
+ 
+
+
+## Deployment
+
 
 ## End to end testing
 

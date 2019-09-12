@@ -9,28 +9,27 @@ import (
 //Job represents a dispatch job
 type Job struct {
 	*contract.Job
-	Actions *task.Actions
+	Actions  *task.Actions
 	Response *contract.Response
-	Run []*task.Action
+	run      []*task.Action
 }
-
 
 //Completed return completion time
 func (j Job) Completed() time.Time {
-	baseTime :=  j.Job.Statistics.EndTime
+	baseTime := j.Job.Statistics.EndTime
 	if baseTime == 0 {
-		baseTime =  j.Job.Statistics.StartTime
+		baseTime = j.Job.Statistics.StartTime
 	}
 	if baseTime == 0 {
 		return time.Now()
 	}
-	return time.Unix(0, baseTime * int64(time.Millisecond))
+	return time.Unix(0, baseTime*int64(time.Millisecond))
 }
 
 //ToRun returns actions to run
 func (j Job) ToRun() []*task.Action {
-	if len(j.Run) > 0 {
-		return j.Run
+	if len(j.run) > 0 {
+		return j.run
 	}
 	var toRun []*task.Action
 	if j.Error() == nil {
@@ -38,14 +37,15 @@ func (j Job) ToRun() []*task.Action {
 	} else {
 		toRun = j.Actions.OnFailure
 	}
-	j.Run = toRun
+	j.run = toRun
 	return toRun
 }
 
 //NewJob creates a job
 func NewJob(job *contract.Job, response *contract.Response) *Job {
 	return &Job{
-		Job:job,
-		Response:response,
+
+		Job:      job,
+		Response: response,
 	}
 }

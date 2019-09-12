@@ -8,10 +8,12 @@ Tail service ingests data to Big Query with Load API.
 
 ### Introduction 
 
-![BqTail](../images/bqtail.png)  
+![BqTail](../images/tail.png)  
 
 
 ### Usage
+
+### Configuration
 
 #### Batch ingestion
 
@@ -69,7 +71,7 @@ Where:
 "BatchURL": "gs://YYY/batch/",
 "ErrorURL": "gs://YYY/errors/",
 "JournalURL": "gs://YYY/journal/",
-"DispatchURL": "gs://YYY/events/",
+"DeferTaskURL": "gs://YYY/tasks/",
 "Routes": [
   {
     "When": {

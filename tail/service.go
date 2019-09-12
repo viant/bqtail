@@ -1,6 +1,14 @@
 package tail
 
 import (
+	"bqtail/base"
+	"bqtail/service/bq"
+	"bqtail/service/storage"
+	"bqtail/tail/batch"
+	"bqtail/tail/config"
+	"bqtail/tail/contract"
+	"bqtail/tail/sql"
+	"bqtail/task"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,14 +18,6 @@ import (
 	"github.com/viant/afs/file"
 	store "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
-	"bqtail/base"
-	"bqtail/service/bq"
-	"bqtail/service/storage"
-	"bqtail/tail/batch"
-	"bqtail/tail/config"
-	"bqtail/tail/contract"
-	"bqtail/tail/sql"
-	"bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"path"
 	"time"
@@ -85,8 +85,9 @@ func (s *service) onDone(ctx context.Context, job *Job) error {
 	if err != nil {
 		return err
 	}
-	name := path.Join(job.SourceCreated.Format(dateLayout), path.Join(job.Load.DestinationTable.TableId, job.EventID, bqTailSuffix))
-	URL := url.Join(s.config.JournalURL, name)
+	baseURL := s.config.OutputURL(job.Status == base.StatusError)
+	name := path.Join(job.SourceCreated.Format(dateLayout), path.Join(base.DecodePathSeparator(job.Dest()), job.EventID, base.TailJob+base.JobElement+base.JobExt))
+	URL := url.Join(baseURL, name)
 	return s.storage.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
@@ -100,7 +101,8 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, dest *config.D
 	}
 	result := &bq.LoadRequest{Append: true}
 	job.Load.DestinationTable = tableReference
-	result.JobID = path.Join(job.Dest(), job.EventID, base.BqDispatchJob)
+	result.JobID = path.Join(job.Dest(), job.EventID, base.DispatchJob)
+
 	if dest.TransientDataset != "" {
 		tableReference.DatasetId = dest.TransientDataset
 		tableReference.TableId += "_" + job.EventID
@@ -123,7 +125,8 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, 
 		return err
 	}
 
-	actions := route.Actions.Expand(&base.Expandable{SourceURLs:job.Load.SourceUris})
+	actions := route.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
+	actions.JobID = path.Join(job.Dest(), job.EventID, base.DispatchJob)
 	if route.Dest.TransientDataset != "" {
 		if actions, err = s.addTransientDatasetActions(ctx, load.JobID, job, route, actions); err != nil {
 			return err
@@ -132,6 +135,7 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, 
 	load.Actions = *actions
 	defer func() {
 		response.SetIfError(err)
+		job.SetIfError(err)
 		if e := s.onDone(ctx, job); e != nil && err == nil {
 			err = e
 		}
@@ -142,15 +146,11 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, 
 		err = bq.JobError(job.Job)
 		response.JobRef = job.Job.JobReference
 	}
-	if route.Async {
-		return err
-	}
 	return err
 }
 
-
 func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID string, job *Job, route *config.Route, actions *task.Actions) (*task.Actions, error) {
-	var result = task.NewActions(actions.Async, actions.DispatchURL, parentJobID, nil, nil)
+	var result = task.NewActions(actions.Async, actions.DeferTaskURL, parentJobID, nil, nil)
 	dropDDL := fmt.Sprintf("DROP TABLE %v.%v", job.Load.DestinationTable.DatasetId, job.Load.DestinationTable.TableId)
 	dropAction, err := task.NewAction("query", bq.NewQueryRequest(dropDDL, nil, nil))
 	if err != nil {
@@ -158,7 +158,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 	}
 	actions.AddOnSuccess(dropAction)
 	destTable, _ := route.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
-	selectAll :=  sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns)
+	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns)
 	query := bq.NewQueryRequest(selectAll, destTable, actions)
 	query.Append = true
 	queryAction, err := task.NewAction("query", query)
@@ -175,6 +175,7 @@ func (s *service) tailIndividually(ctx context.Context, source store.Object, rou
 		return errors.Wrapf(err, "event source not found:%v", request.SourceURL)
 	}
 	job := &Job{
+		Status:        base.StatusOK,
 		EventID:       request.EventID,
 		SourceCreated: object.ModTime(),
 		Load:          &bigquery.JobConfigurationLoad{},
@@ -221,6 +222,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 		return err
 	}
 	job := &Job{
+		Status:        base.StatusOK,
 		EventID:       request.EventID,
 		SourceCreated: source.ModTime(),
 		Window:        window,

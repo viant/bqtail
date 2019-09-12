@@ -12,7 +12,6 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
-	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"path"
 	"strings"
@@ -65,7 +64,7 @@ func (s *service) initRequest(ctx context.Context, request *contract.Request) er
 	return nil
 }
 
-//move moves shedule file to output folder
+//move moves schedule file to output folder
 func (s *service) move(ctx context.Context, baseURL string, job *Job) error {
 	matchedURL := job.Response.MatchedURL
 	if matchedURL == "" {
@@ -73,8 +72,8 @@ func (s *service) move(ctx context.Context, baseURL string, job *Job) error {
 	}
 	parent, sourceName := url.Split(matchedURL, file.Scheme)
 	parentElements := strings.Split(parent, "/")
-	if len(parentElements) > 2 {
-		sourceName = path.Join(strings.Join(parentElements[len(parentElements)-2:], "/"), sourceName)
+	if len(parentElements) > 3 {
+		sourceName = path.Join(strings.Join(parentElements[len(parentElements)-3:], "/"), sourceName)
 	}
 	name := path.Join(job.Completed().Format(dateLayout), sourceName)
 	URL := url.Join(baseURL, name)
@@ -90,21 +89,21 @@ func (s *service) onDone(ctx context.Context, job *Job) error {
 	if err != nil {
 		return err
 	}
-	jobFilename := path.Join(base.DecodeID(job.JobReference.JobId))
-	name := path.Join(job.Completed().Format(dateLayout), jobFilename+base.JobExt+"-done")
+	jobFilename := path.Join(base.DecodePathSeparator(job.JobReference.JobId))
+	name := path.Join(job.Completed().Format(dateLayout), jobFilename+base.JobElement+base.JobExt)
 	URL := url.Join(baseURL, name)
 	return s.storage.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
 func (s *service) getActions(ctx context.Context, request *contract.Request, response *contract.Response) (*task.Actions, error) {
-	jobID := base.DecodeID(request.JobID)
-	if strings.HasSuffix(jobID, base.BqDispatchJob) {
-		URL := url.Join(s.config.DispatchURL, jobID+base.JobExt)
+	jobID := base.DecodePathSeparator(request.JobID)
+	if strings.HasSuffix(jobID, base.DispatchJob) {
+		URL := url.Join(s.config.DeferTaskURL, jobID+base.JobExt)
 		response.MatchedURL = URL
 		response.Matched = true
 		reader, err := s.storage.DownloadWithURL(ctx, URL)
 		if err != nil {
-			return nil, nil
+			return nil, err
 		}
 		defer func() { _ = reader.Close() }()
 		actions := &task.Actions{}
@@ -119,6 +118,7 @@ func (s *service) dispatch(ctx context.Context, request *contract.Request, respo
 	if err != nil {
 		return err
 	}
+
 	job := NewJob(request.Job, response)
 	defer func() {
 		if response.Matched || err != nil {
@@ -142,16 +142,13 @@ func (s *service) dispatch(ctx context.Context, request *contract.Request, respo
 		}
 		response.Matched = true
 		job.Actions = route.Actions.Expand(expandable)
-		toolbox.Dump(job.Actions)
 		return s.run(ctx, job)
 	}
-	var actions *task.Actions
+
 	job.Actions, err = s.getActions(ctx, request, response)
 	if err != nil || job.Actions == nil || job.Actions.IsEmpty() {
 		return err
 	}
-	job.Actions = actions
-	response.Matched = true
 	err = s.run(ctx, job)
 	return err
 }

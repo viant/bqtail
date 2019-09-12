@@ -1,9 +1,9 @@
 package tail
 
 import (
+	"bqtail/tail/contract"
 	"context"
 	"fmt"
-	"bqtail/tail/contract"
 	"github.com/viant/toolbox"
 	"log"
 	"os"

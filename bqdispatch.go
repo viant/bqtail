@@ -1,17 +1,15 @@
 package bqtail
 
 import (
-	"cloud.google.com/go/functions/metadata"
-	"context"
-	"errors"
 	"bqtail/base"
 	"bqtail/dispatch"
 	"bqtail/dispatch/contract"
+	"cloud.google.com/go/functions/metadata"
+	"context"
+	"errors"
 	"log"
 	"strings"
 )
-
-
 
 //BqDispatchFn BigQuery trigger background cloud function entry point
 func BqDispatchFn(ctx context.Context, event interface{}) (err error) {
@@ -24,13 +22,12 @@ func BqDispatchFn(ctx context.Context, event interface{}) (err error) {
 	return err
 }
 
-
 func newRequest(meta *metadata.Metadata) *contract.Request {
 	resourceParts := strings.Split(meta.Resource.Name, "/")
 	return &contract.Request{
-		EventID:meta.EventID,
-		ProjectID:resourceParts[1],
-		JobID:resourceParts[len(resourceParts)-1],
+		EventID:   meta.EventID,
+		ProjectID: resourceParts[1],
+		JobID:     resourceParts[len(resourceParts)-1],
 	}
 }
 
@@ -46,7 +43,7 @@ func handleDispatchEvent(ctx context.Context, request *contract.Request) (*contr
 	if response.Status != base.StatusOK {
 		log.Printf("Status: %v, Error: %v", response.Status, response.Error)
 	} else {
-		jobID :=""
+		jobID := ""
 		if response.JobRef != nil {
 			jobID = response.JobRef.JobId
 		}
@@ -54,4 +51,3 @@ func handleDispatchEvent(ctx context.Context, request *contract.Request) (*contr
 	}
 	return response, nil
 }
-
