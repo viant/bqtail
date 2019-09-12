@@ -13,15 +13,13 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 ## Motivation
 
-The goal of this project is to provide cost effective event driven data ingestion and extraction with generic Big Query events handler.
-The first is implemented by [tail](tail/README.md) service, the latter by [dispatch](dispatch/README.md) service.
+The goal of this project is to provide cost effective events driven, data ingestion and extraction.
 
 ## Introduction
 
 
 ![BqTail](images/bqtail.png)
 
-This project uses cloud functions to handle data ingestion and extraction.
 
 - [Tail Service](tail/README.md)
 - [Dispatch Service](dispatch/README.md)
