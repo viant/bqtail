@@ -1,0 +1,20 @@
+{
+  "JournalURL": "gs://myBucket/journal/",
+  "ErrorURL": "gs://myBucket/errors/",
+  "Routes": [
+    {
+      "When": {
+        "Dest": ".+:mydataset\\.mytable",
+        "Type": "QUERY"
+      },
+      "OnSuccess": [
+        {
+          "Action": "export",
+          "Request": {
+            "DestURL": "gs://${config.Bucket}/export/mytable.json.gz"
+          }
+        }
+      ]
+    }
+  ]
+}

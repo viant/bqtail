@@ -9,7 +9,7 @@ import (
 )
 
 func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.Job, error) {
-	if err := request.Init(s.projectID);err != nil {
+	if err := request.Init(s.projectID); err != nil {
 		return nil, err
 	}
 	if err := request.Validate(); err != nil {
@@ -58,12 +58,10 @@ func (r *QueryRequest) Init(projectID string) (err error) {
 		r.ProjectID = projectID
 	}
 	if r.Dest != "" {
-		if r.destTable, err = base.NewTableReference(r.Dest);err != nil {
+		if r.destTable, err = base.NewTableReference(r.Dest); err != nil {
 			return err
 		}
-
 	}
-
 	if r.destTable != nil {
 		if r.destTable.ProjectId == "" {
 			r.destTable.ProjectId = projectID
@@ -84,6 +82,9 @@ func NewQueryRequest(SQL string, dest *bigquery.TableReference, finally *task.Ac
 	result := &QueryRequest{
 		SQL:       SQL,
 		destTable: dest,
+	}
+	if dest != nil {
+		result.Dest = dest.DatasetId + "." + dest.TableId
 	}
 	if finally != nil {
 		result.Actions = *finally

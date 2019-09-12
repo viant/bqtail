@@ -5,11 +5,11 @@ import (
 )
 
 type Actions struct {
-	DeferTaskURL string
-	Async        bool
-	JobID        string
-	OnSuccess    []*Action
-	OnFailure    []*Action
+	DeferTaskURL string    `json:",ommittempty"`
+	Async        bool      `json:",ommittempty"`
+	JobID        string    `json:",ommittempty"`
+	OnSuccess    []*Action `json:",ommittempty"`
+	OnFailure    []*Action `json:",ommittempty"`
 }
 
 //IsEmpty returns is actions are empty

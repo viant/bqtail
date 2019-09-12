@@ -1,0 +1,36 @@
+{
+  "BatchURL": "gs://myBucket/batch/",
+  "ErrorURL": "gs://myBucket/errors/",
+  "JournalURL": "gs://myBucket/journal/",
+  "DeferTaskURL": "gs://myBucket/tasks/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/",
+        "Suffix": ".avro"
+      },
+      "Dest": {
+        "Table": "mydataset.mytable"
+      },
+      "Async": true,
+      "Batch": {
+        "Window": {
+          "DurationInSec": 15
+        }
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ],
+      "OnFailure": [
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "gs://myBucket/errors"
+          }
+        }
+      ]
+    }
+  ]
+}

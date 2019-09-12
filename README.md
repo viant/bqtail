@@ -31,35 +31,111 @@ This project uses cloud functions to handle data ingestion and Big Query events.
 ## Usage
 
 
-- Data ingestion in batches with 30 sec time window.
+- **Data ingestion**
 
-#bqtail.config
+The following define configuration to ingest data in batches within 30 sec time window in async mode.
+
+[@config/bqtail.json](usage/batch/tail.json)
 ```json
 {
-  "BatchURL": "gs://my-ops-bucket/batch/",
-  "ErrorURL": "gs://my-ops-bucket/errors/",
-  "JournalURL": "gs://my-ops-bucket/journal/",
-  "DeferTaskURL": "gs://my-ops-bucket/tasks/",
+  "BatchURL": "gs://myBucket/batch/",
+  "ErrorURL": "gs://myBucket/errors/",
+  "JournalURL": "gs://myBucket/journal/",
+  "DeferTaskURL": "gs://myBucket/tasks/",
   "Routes": [
     {
       "When": {
-        "Prefix": "/data/case001",
-        "Suffix": ".json"
+        "Prefix": "/data/",
+        "Suffix": ".avro"
       },
       "Dest": {
-        "Table": "bqtail.dummy"
-      }
+        "Table": "mydataset.mytable"
+      },
+      "Async": true,
+      "Batch": {
+        "Window": {
+          "DurationInSec": 15
+        }
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ],
+      "OnFailure": [
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "gs://myBucket/errors"
+          }
+        }
+      ]
     }
   ]
+}
+```
+[@config/dispatch.json](usage/batch/dispatch.json)
+```json
+{
+  "JournalURL": "gs://myBucket/journal/",
+  "ErrorURL": "gs://myBucket/errors/",
+  "DeferTaskURL": "gs://myBucket/tasks/"
+}
+``` 
+
+- **Data extraction**
+
+The following define configuration to extract data to google storate after target table is modified.
+
+```json
+{
+   "JournalURL": "gs://myBucket/journal/",
+   "ErrorURL": "gs://myBucket/errors/",
+   "Routes": [
+     {
+       "When": {
+         "Dest": ".+:mydataset\\.mytable",
+         "Type": "QUERY"
+       },
+       "OnSuccess": [
+         {
+           "Action": "export",
+           "Request": {
+             "DestURL": "gs://${config.Bucket}/export/mytable.json.gz"
+           }
+         }
+       ]
+     }
+   ]
  }
 ```
- 
-
 
 ## Deployment
 
+The following URL are used by tail/dispatch services:
+
+- JournalURL - job history journal 
+- ErrorURL - job that resulted in an error
+- DeferTaskURL - transient storage for managing deferred tasks (tail in async mode). 
+- BatchURL - transient storage for managing event batching.
+
+- [Tail](tail/README.md#deployment)
+- [Dispatch](dispatch/README.md#deployment)
+
+
+### Monitoring
+
+- Check for any files under ErrorURL
+- DeferTaskURL should not have very old files, unless there is processsing error
+- BatchURL should not have very old files, unless there is processing error
+
 
 ## End to end testing
+
+You can try on all data ingestion and extraction scenarios by simply running e2e test cases:
+
+- [Prerequisites](e2e/README.md#prerequisites)
+- [Use cases](e2e/README.md#use-cases)
 
 ## License
 
