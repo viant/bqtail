@@ -16,12 +16,15 @@ cd bqtail/e2e
 6. Update Bucket name in config file (it has to be globally unique)
 [config/config.json](config/config.json)
 
-7. Run all test:
+
+
+## Use cases
+
+To run all test use the following command:
+
 ```bash
 endly run.yaml
 ```
-
-## Use cases
 
 To run individual use cases run first init task to upload configs, and deploy cloud functions, followed by individual case run.
 
@@ -85,6 +88,4 @@ endly -t=init
 ```bash
     endly -t=test -i=dispatch_copy
 ```
-
-
 
