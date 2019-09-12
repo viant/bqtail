@@ -3,6 +3,7 @@ package tail
 import (
 	"bqtail/base"
 	"bqtail/tail/batch"
+	"bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
@@ -15,6 +16,7 @@ type Job struct {
 	Load          *bigquery.JobConfigurationLoad
 	Error         string `json:",ommittempty"`
 	Status        string
+	*task.Actions
 	Window        *batch.Window `json:",ommittempty"`
 }
 

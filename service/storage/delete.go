@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+//Delete deletes supplied URLs
 func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 	request.Init()
 	err := request.Validate()
@@ -25,8 +26,9 @@ type DeleteRequest struct {
 	SourceURL string
 }
 
+//Init initialize request
 func (r *DeleteRequest) Init() {
-	if len(r.SourceURL) == 0 {
+	if len(r.URLs) == 0 {
 		r.URLs = make([]string, 0)
 	}
 	if r.SourceURL != "" {
@@ -38,7 +40,7 @@ func (r *DeleteRequest) Init() {
 //Validate check if request is valid
 func (r *DeleteRequest) Validate() error {
 	if len(r.URLs) == 0 {
-		return fmt.Errorf("URLS was empty")
+		return fmt.Errorf("urls was empty")
 	}
 	return nil
 }

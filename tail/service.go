@@ -18,6 +18,7 @@ import (
 	"github.com/viant/afs/file"
 	store "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"path"
 	"time"
@@ -124,9 +125,13 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, 
 	if load, err = s.buildLoadRequest(ctx, job, route.Dest); err != nil {
 		return err
 	}
-
 	actions := route.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
 	actions.JobID = path.Join(job.Dest(), job.EventID, base.DispatchJob)
+
+		if err = appendBatchAction(job.Window, actions); err != nil {
+			return err
+		}
+
 	if route.Dest.TransientDataset != "" {
 		if actions, err = s.addTransientDatasetActions(ctx, load.JobID, job, route, actions); err != nil {
 			return err
@@ -134,6 +139,7 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, 
 	}
 	load.Actions = *actions
 	defer func() {
+		job.Actions = actions
 		response.SetIfError(err)
 		job.SetIfError(err)
 		if e := s.onDone(ctx, job); e != nil && err == nil {
@@ -147,6 +153,26 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, 
 		response.JobRef = job.Job.JobReference
 	}
 	return err
+}
+
+func appendBatchAction(window *batch.Window, actions *task.Actions) error {
+	if window == nil{
+		return nil
+	}
+	URLsToDelete := make([]string, 0)
+	URLsToDelete = append(URLsToDelete, window.URL)
+	for _, datafile := range window.Datafiles {
+		URLsToDelete = append(URLsToDelete, datafile.URL)
+	}
+	delete := storage.DeleteRequest{URLs: URLsToDelete}
+	deleteAction, err := task.NewAction("delete", delete)
+	if err != nil {
+		return err
+	}
+	actions.AddOnSuccess(deleteAction)
+	fmt.Printf("delte action %v\n", delete)
+	toolbox.Dump(deleteAction)
+	return nil
 }
 
 func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID string, job *Job, route *config.Route, actions *task.Actions) (*task.Actions, error) {

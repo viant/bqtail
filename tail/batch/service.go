@@ -151,7 +151,7 @@ func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Dat
 	}
 	_, name := url.Split(object.URL(), file.Scheme)
 	name  = string(name[:len(name)-4])
-	return &Datafile{SourceURL:string(data), EventID:name, Created:object.ModTime()}, nil
+	return &Datafile{SourceURL:string(data), EventID:name, Created:object.ModTime(), URL:object.URL()}, nil
 }
 
 
