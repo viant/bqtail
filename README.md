@@ -21,7 +21,7 @@ The first is implemented by [tail](tail/README.md) service, the latter by [dispa
 
 ![BqTail](images/bqtail.png)
 
-This project uses cloud functions to handle data ingestion and Big Query events.
+This project uses cloud functions to handle data ingestion and extraction.
 
 - [Tail Service](tail/README.md)
 - [Dispatch Service](dispatch/README.md)
