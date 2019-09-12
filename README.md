@@ -110,12 +110,16 @@ The following define configuration to extract data to google storate after targe
 
 ## Deployment
 
+**Prerequiries**
+
 The following URL are used by tail/dispatch services:
 
 - JournalURL - job history journal 
 - ErrorURL - job that resulted in an error
 - DeferTaskURL - transient storage for managing deferred tasks (tail in async mode). 
 - BatchURL - transient storage for managing event batching.
+
+**Cloud function deployments**
 
 - [Tail](tail/README.md#deployment)
 - [Dispatch](dispatch/README.md#deployment)
