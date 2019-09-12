@@ -1,4 +1,4 @@
-### Ingestion with transient dataset 
+### Ingestion with transient dataset deduplication in async mode  
 
 ### Scenario:
 

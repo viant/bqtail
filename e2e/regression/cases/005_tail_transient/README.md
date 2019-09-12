@@ -1,4 +1,4 @@
-### Ingestion with transient dataset 
+### Ingestion with transient dataset in sync mode
 
 ### Scenario:
 
@@ -42,17 +42,17 @@ Name of transient table uses event ID as suffix.
 
 #### Output
 
-* **Data:**
-Big Query destination table:
 
-```sql
-SELECT * FROM bqtail.dummy
-```
+* **Data:**
+
+    - temporary loaded data in temp.dummy_${EventID}
+    - data copied from  temp.dummy_${EventID} to bqtail.dummy
+
+All SQL sub task moving data from temp to destination can be found in tail.job.json journal. 
  
 * **Logs:** 
 
-
-[gs://${config.Bucket}/journal/dummy/${date}/$EventID.bqt](data/expect/journal.json)
+    - [gs://${config.Bucket}/journal/dummy_${eventID}/${date}/${EventID}/tail-job.json](data/expect/journal/tail-job.json)
 
 ### BqDispatch
 
