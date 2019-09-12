@@ -102,7 +102,8 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, dest *config.D
 	}
 	result := &bq.LoadRequest{Append: true}
 	job.Load.DestinationTable = tableReference
-	result.JobID = path.Join(job.Dest(), job.EventID, base.DispatchJob)
+
+	result.JobID = getJobID(job)
 
 	if dest.TransientDataset != "" {
 		tableReference.DatasetId = dest.TransientDataset
@@ -117,6 +118,14 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, dest *config.D
 
 }
 
+func getJobID(job *Job) string {
+	suffix := base.DispatchJob
+	if job.Actions != nil && job.IsSyncMode() {
+		suffix = base.TailJob
+	}
+	return path.Join(job.Dest(), job.EventID, suffix)
+}
+
 func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, response *contract.Response) (err error) {
 	if len(job.Load.SourceUris) == 0 {
 		return fmt.Errorf("SourceUris was empty")
@@ -128,14 +137,11 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, 
 	actions := route.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
 	actions.JobID = path.Join(job.Dest(), job.EventID, base.DispatchJob)
 
-		if err = appendBatchAction(job.Window, actions); err != nil {
-			return err
-		}
-
-	if route.Dest.TransientDataset != "" {
-		if actions, err = s.addTransientDatasetActions(ctx, load.JobID, job, route, actions); err != nil {
-			return err
-		}
+	if err = appendBatchAction(job.Window, actions); err == nil {
+		actions, err = s.addTransientDatasetActions(ctx, load.JobID, job, route, actions)
+	}
+	if err != nil {
+		return err
 	}
 	load.Actions = *actions
 	defer func() {
@@ -147,16 +153,19 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, 
 		}
 	}()
 
-	job.Job, err = s.bq.Load(ctx, load)
+	var bqJob *bigquery.Job
+	bqJob, err = s.bq.Load(ctx, load)
 	if err == nil {
-		err = bq.JobError(job.Job)
-		response.JobRef = job.Job.JobReference
+		job.JobStatus = bqJob.Status
+		job.Statistics = bqJob.Statistics
+		err = bq.JobError(bqJob)
+		response.JobRef = bqJob.JobReference
 	}
 	return err
 }
 
 func appendBatchAction(window *batch.Window, actions *task.Actions) error {
-	if window == nil{
+	if window == nil {
 		return nil
 	}
 	URLsToDelete := make([]string, 0)
@@ -176,6 +185,9 @@ func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 }
 
 func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID string, job *Job, route *config.Route, actions *task.Actions) (*task.Actions, error) {
+	if route.Dest.TransientDataset == "" {
+		return actions, nil
+	}
 	var result = task.NewActions(actions.Async, actions.DeferTaskURL, parentJobID, nil, nil)
 	dropDDL := fmt.Sprintf("DROP TABLE %v.%v", job.Load.DestinationTable.DatasetId, job.Load.DestinationTable.TableId)
 	dropAction, err := task.NewAction("query", bq.NewQueryRequest(dropDDL, nil, nil))

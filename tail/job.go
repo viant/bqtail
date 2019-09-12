@@ -10,14 +10,15 @@ import (
 
 //Job represents a tail job
 type Job struct {
-	EventID       string
-	SourceCreated time.Time
-	Job           *bigquery.Job
-	Load          *bigquery.JobConfigurationLoad
-	Error         string `json:",ommittempty"`
-	Status        string
+	EventID             string                  `json:"eventID,ommittempty"`
+	SourceCreated       time.Time               `json:"created,ommittempty"`
+	Statistics          *bigquery.JobStatistics `json:"statistics,omitempty"`
+	*bigquery.JobStatus `json:"status,omitempty"`
+	Load                *bigquery.JobConfigurationLoad `json:"load,ommittempty"`
+	Error               string                         `json:",ommittempty"`
+	Status              string                         `json:",ommittempty"`
 	*task.Actions
-	Window        *batch.Window `json:",ommittempty"`
+	Window *batch.Window `json:",ommittempty"`
 }
 
 //Dest returns dataset and table destination
