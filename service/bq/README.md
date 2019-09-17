@@ -54,9 +54,6 @@ Query run supplied SQL
 
 where request should be compatible with the following type:
 
-- $dest  event.dest 
-- $jobID: event.jobID 
-
 
 ```go
 type QueryRequest struct {
