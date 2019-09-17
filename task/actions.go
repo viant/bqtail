@@ -6,6 +6,7 @@ import (
 	"fmt"
 )
 
+//Actions represents actions
 type Actions struct {
 	DeferTaskURL string    `json:",ommittempty"`
 	Async        bool      `json:",ommittempty"`
@@ -14,20 +15,14 @@ type Actions struct {
 	OnFailure    []*Action `json:",ommittempty"`
 }
 
-type Source struct {
-	Value interface{}
-	JobID string
-	Dest  string
-}
-
 //ToRun returns actions to run
-func (j Actions) ToRun(err error, job *base.Job) []*Action {
+func (a Actions) ToRun(err error, job *base.Job) []*Action {
 	var toRun []*Action
 	if err == nil {
-		toRun = j.OnSuccess
+		toRun = a.OnSuccess
 	} else {
 		error := err.Error()
-		toRun = j.OnFailure
+		toRun = a.OnFailure
 		for i := range toRun {
 			toRun[i].Request[base.ErrorKey] = error
 		}
@@ -46,7 +41,7 @@ func (j Actions) ToRun(err error, job *base.Job) []*Action {
 		}
 
 		if bodyAppendable[toRun[i].Action] {
-			if body, err := json.Marshal(j); err == nil {
+			if body, err := json.Marshal(a); err == nil {
 				toRun[i].Request[base.BodyKey] = string(body)
 			}
 		}
@@ -73,18 +68,18 @@ func (a Actions) IsEmpty() bool {
 }
 
 //ID returns actions ID
-func (r Actions) ID(prefix string) (string, error) {
-	if r.JobID != "" {
-		return r.JobID, nil
+func (a Actions) ID(prefix string) (string, error) {
+	if a.JobID != "" {
+		return a.JobID, nil
 	}
 	var err error
-	r.JobID, err = NextID(prefix)
-	return r.JobID, err
+	a.JobID, err = NextID(prefix)
+	return a.JobID, err
 }
 
 //IsSyncMode returns true if route uses synchronous mode
-func (r Actions) IsSyncMode() bool {
-	return !r.Async
+func (a Actions) IsSyncMode() bool {
+	return !a.Async
 }
 
 //Expand creates clone actions with expanded sources URLs

@@ -32,6 +32,7 @@ func (c *Config) OutputURL(hasError bool) string {
 	return c.JournalURL
 }
 
+//Init initialises config
 func (c *Config) Init(ctx context.Context) error {
 	if c.ProjectID == "" {
 		for _, key := range cloudFunctionProjectEnvKeys {
@@ -63,6 +64,7 @@ func (c *Config) Init(ctx context.Context) error {
 	return nil
 }
 
+//Validate checks if config is valid
 func (c *Config) Validate() error {
 	if c.JournalURL == "" {
 		return fmt.Errorf("journalURL was empty")

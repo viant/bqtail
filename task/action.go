@@ -12,13 +12,14 @@ type Action struct {
 	Request map[string]interface{}
 }
 
-//SetRequest set reqeust for supplied req instance
+//SetRequest set request for supplied req instance
 func (a *Action) SetRequest(req interface{}) error {
 	a.Request = map[string]interface{}{}
 
 	return toolbox.DefaultConverter.AssignConverted(&a.Request, req)
 }
 
+//New creates a new action
 func (a Action) New(request map[string]interface{}) *Action {
 	var result = &Action{
 		Action:  a.Action,

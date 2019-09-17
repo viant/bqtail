@@ -43,6 +43,7 @@ func (s *service) schedulePostTask(ctx context.Context, jobReference *bigquery.J
 	return s.storage.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
+//Post post big query job
 func (s *service) Post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 
 	job, err := s.post(ctx, projectID, job, onDoneActions)

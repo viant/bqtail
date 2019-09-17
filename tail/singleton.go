@@ -2,9 +2,11 @@ package tail
 
 import (
 	"context"
+	//use google storage connector
 	_ "github.com/viant/afsc/gs"
 )
 
+//ConfigKey represents a config env key
 const ConfigKey = "CONFIG"
 
 var srv Service

@@ -8,6 +8,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
+//Query run supplied SQL
 func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.Job, error) {
 	if err := request.Init(s.projectID); err != nil {
 		return nil, err
@@ -41,6 +42,7 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 	return s.Post(ctx, request.ProjectID, job, &request.Actions)
 }
 
+//QueryRequest represents Query request
 type QueryRequest struct {
 	DatasetID string
 	SQL       string
@@ -51,6 +53,7 @@ type QueryRequest struct {
 	Request
 }
 
+//Init initialises request
 func (r *QueryRequest) Init(projectID string) (err error) {
 	if r.ProjectID != "" {
 		projectID = r.ProjectID
@@ -70,6 +73,7 @@ func (r *QueryRequest) Init(projectID string) (err error) {
 	return nil
 }
 
+//Validate checks if request is valid
 func (r *QueryRequest) Validate() error {
 	if r.SQL == "" {
 		return fmt.Errorf("SQL was empty")

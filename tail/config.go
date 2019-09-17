@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+//Config represents a tail config
 type Config struct {
 	base.Config
 	Routes   config.Routes

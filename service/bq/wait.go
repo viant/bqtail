@@ -10,6 +10,7 @@ const (
 	doneStatus = "DONE"
 )
 
+//Wait waits for job completion
 func (s *service) Wait(ctx context.Context, ref *bigquery.JobReference) (*bigquery.Job, error) {
 	var err error
 	var statusJob *bigquery.Job

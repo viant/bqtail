@@ -8,6 +8,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
+//Run run request
 func (s *service) Run(ctx context.Context, request task.Request) error {
 	var job *bigquery.Job
 	var err error

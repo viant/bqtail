@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-//RunWithService handlers service request or error
+//Run execute supplied actions
 func Run(ctx context.Context, registry Registry, action *Action) error {
 	serviceAction, err := registry.Action(action.Action)
 	if err != nil {

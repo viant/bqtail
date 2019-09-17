@@ -256,6 +256,9 @@ When using transient table you can specify unique columns to deduplicate data wh
 }
 ```
 
+#### Template table
+
+
 
 #### Destination
 

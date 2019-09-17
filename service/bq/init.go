@@ -2,6 +2,7 @@ package bq
 
 import "bqtail/task"
 
+//InitRegistry initialises registry with bq actions
 func InitRegistry(registry task.Registry, service Service) {
 	registry.RegisterService("bq", service)
 	registry.RegisterAction("copy", task.NewServiceAction("bq", CopyRequest{}))

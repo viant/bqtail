@@ -10,8 +10,8 @@ import (
 	"log"
 )
 
-//BqTailFn storage trigger background cloud function entry point
-func BqTailFn(ctx context.Context, event contract.GSEvent) (err error) {
+//BqTail storage trigger background cloud function entry point
+func BqTail(ctx context.Context, event contract.GSEvent) (err error) {
 	meta, err := metadata.FromContext(ctx)
 	if err != nil {
 		return err

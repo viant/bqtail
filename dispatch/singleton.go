@@ -2,9 +2,11 @@ package dispatch
 
 import (
 	"context"
+	//load google storage connector
 	_ "github.com/viant/afsc/gs"
 )
 
+//ConfigKey represents config env key.
 const ConfigKey = "CONFIG"
 
 var srv Service

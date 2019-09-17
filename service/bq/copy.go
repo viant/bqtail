@@ -7,6 +7,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
+//Copy copy source to dest table
 func (s *service) Copy(ctx context.Context, request *CopyRequest) (*bigquery.Job, error) {
 	if err := request.Init(s.projectID); err != nil {
 		return nil, err
@@ -26,6 +27,7 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest) (*bigquery.Job
 	return s.Post(ctx, request.ProjectID, job, &request.Actions)
 }
 
+//CopyRequest represents a copy request
 type CopyRequest struct {
 	Request
 	Source      string
@@ -34,6 +36,7 @@ type CopyRequest struct {
 	destTable   *bigquery.TableReference
 }
 
+//Init initialises a copy request
 func (r *CopyRequest) Init(projectID string) (err error) {
 	if r.ProjectID != "" {
 		projectID = r.ProjectID
@@ -64,6 +67,7 @@ func (r *CopyRequest) Init(projectID string) (err error) {
 	return nil
 }
 
+//Validate checks if request is valid
 func (r *CopyRequest) Validate() error {
 	if r.sourceTable == nil {
 		return fmt.Errorf("sourceTable was empty")

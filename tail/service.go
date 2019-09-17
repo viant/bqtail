@@ -25,6 +25,7 @@ import (
 	"time"
 )
 
+//Service represents a tail service
 type Service interface {
 	//Tails appends data from source URL to matched BigQuery table
 	Tail(ctx context.Context, request *contract.Request) *contract.Response

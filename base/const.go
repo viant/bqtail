@@ -1,29 +1,52 @@
 package base
 
 const (
-	StatusOK             = "ok"
-	StatusError          = "error"
-	DispatchJob          = "dispatch"
-	TailJob              = "tail"
-	JobPrefix            = "bq"
-	JobExt               = ".json"
-	JobElement           = "-job"
+	//StatusOK response status
+	StatusOK = "ok"
+	//StatusError response status
+	StatusError = "error"
+	//DispatchJob dispatch job name
+	DispatchJob = "dispatch"
+	//TailJob tail job name
+	TailJob = "tail"
+	//JobPrefix default job refix
+	JobPrefix = "bq"
+	//JobExt job extension
+	JobExt = ".json"
+	//JobElement job path element
+	JobElement = "-job"
+	//PathElementSeparator path separator
 	PathElementSeparator = "--"
-	SourceURLKey         = "SourceURL"
-	SourceKey            = "Source"
-	BodyKey              = "body"
+	//SourceURLKey source key
+	SourceURLKey = "SourceURL"
+	//SourceKey source key
+	SourceKey = "Source"
+	//BodyKey body key
+	BodyKey = "body"
 
+	//OnSuccessKey OnSuccess key
 	OnSuccessKey = "OnSuccess"
+	//OnFailureKey OnFailure key
 	OnFailureKey = "OnFailure"
 
-	ErrorKey        = "error"
-	ErrorExpr       = "$Error"
-	JobIDKey        = "JobID"
-	JobIDExpr       = "$JobID"
-	EventIDKey      = "eventID"
-	EventIDExpr     = "$EventID"
-	SourceTableKey  = "sourceTable"
+	//ErrorKey error key
+	ErrorKey = "error"
+	//ErrorExpr error expression
+	ErrorExpr = "$Error"
+	//JobIDKey job id key
+	JobIDKey = "JobID"
+	//JobIDExpr job id expression
+	JobIDExpr = "$JobID"
+	//EventIDKey event key
+	EventIDKey = "eventID"
+	//EventIDExpr event id expression
+	EventIDExpr = "$EventID"
+	//SourceTableKey source table key
+	SourceTableKey = "sourceTable"
+	//SourceTableExpr source table epxression
 	SourceTableExpr = "$SourceTable"
-	DestTableKey    = "destTable"
-	DestTableExpr   = "$DestTable"
+	//DestTableKey dest table key
+	DestTableKey = "destTable"
+	//DestTableExpr dest table expression
+	DestTableExpr = "$DestTable"
 )

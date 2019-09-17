@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-//BqDispatchFn BigQuery trigger background cloud function entry point
-func BqDispatchFn(ctx context.Context, event interface{}) (err error) {
+//BqDispatch BigQuery trigger background cloud function entry point
+func BqDispatch(ctx context.Context, event interface{}) (err error) {
 	meta, err := metadata.FromContext(ctx)
 	if err != nil {
 		return err

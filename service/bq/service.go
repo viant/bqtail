@@ -7,6 +7,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
+//Service represents big query service
 type Service interface {
 	task.Service
 

@@ -30,10 +30,10 @@ func (j Job) Dest() string {
 }
 
 //SetIfError sets non nil error
-func (r *Job) SetIfError(err error) {
+func (j *Job) SetIfError(err error) {
 	if err == nil {
 		return
 	}
-	r.Status = base.StatusError
-	r.Error = err.Error()
+	j.Status = base.StatusError
+	j.Error = err.Error()
 }

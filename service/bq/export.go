@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+//Export export table data to google storage
 func (s *service) Export(ctx context.Context, request *ExportRequest) (*bigquery.Job, error) {
 	if err := request.Init(s.projectID); err != nil {
 		return nil, err
@@ -32,6 +33,7 @@ func (s *service) Export(ctx context.Context, request *ExportRequest) (*bigquery
 	return s.Post(ctx, request.ProjectID, job, &request.Actions)
 }
 
+//ExportRequest represents an export request
 type ExportRequest struct {
 	Source         string
 	sourceTable    *bigquery.TableReference
@@ -44,6 +46,7 @@ type ExportRequest struct {
 	Format string
 }
 
+//Init initialises request
 func (r *ExportRequest) Init(projectID string) (err error) {
 	if r.ProjectID != "" {
 		projectID = r.ProjectID
@@ -80,6 +83,7 @@ func (r *ExportRequest) Init(projectID string) (err error) {
 	return nil
 }
 
+//Validate checks if request is valid
 func (r *ExportRequest) Validate() error {
 	if r.sourceTable == nil {
 		return fmt.Errorf("sourceTable was empty")

@@ -7,12 +7,14 @@ import (
 	"strings"
 )
 
+//LoadRequest represents a load job
 type LoadRequest struct {
 	*bigquery.JobConfigurationLoad
 	Request
 	Append bool
 }
 
+//Load loads data into BigQuery
 func (s *service) Load(ctx context.Context, request *LoadRequest) (*bigquery.Job, error) {
 	request.Init(s.projectID)
 	if err := request.Validate(); err != nil {
@@ -27,6 +29,7 @@ func (s *service) Load(ctx context.Context, request *LoadRequest) (*bigquery.Job
 	return s.Post(ctx, request.DestinationTable.ProjectId, job, &request.Actions)
 }
 
+//Init initialises request
 func (r *LoadRequest) Init(projectID string) {
 	table := r.JobConfigurationLoad.DestinationTable
 	if table == nil {
@@ -63,6 +66,7 @@ func (r *LoadRequest) Init(projectID string) {
 	r.CreateDisposition = "CREATE_IF_NEEDED"
 }
 
+//Validate checks if request is valid
 func (r *LoadRequest) Validate() error {
 	table := r.JobConfigurationLoad.DestinationTable
 	if table == nil {

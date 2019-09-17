@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+//Job represents a big query job
 type Job bigquery.Job
 
 //Type returns job type
