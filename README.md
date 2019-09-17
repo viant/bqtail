@@ -147,9 +147,6 @@ The following define configuration to ingest data in batches within 30 sec time 
 }
 ```
 
-
-
-
 - **Data extraction**
 
 The following define configuration to extract data to google storate after target table is modified.
