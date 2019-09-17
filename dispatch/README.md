@@ -3,7 +3,7 @@
 Dispatch service allows you run cloud service task for defer BqTail task or specified source or Big Query destination or job type.
   
 - [Introduction](#introduction)
-- [Usage](#usage)
+- [Configuration](#configuration)
 - [Deployment](#deployment)
 
 ## Introduction 
