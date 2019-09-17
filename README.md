@@ -84,7 +84,7 @@ The following define configuration to ingest data in batches within 30 sec time 
 
 - **Data ingestion with deduplication**
 
-The following define configuration to ingest data in batches within 30 sec time window in async mode.
+The following define configuration to ingest data in batches within 60 sec time window in async mode.
 
 [@config/bqtail.json](usage/dedupe/tail.json)
 ```json
