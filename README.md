@@ -59,27 +59,13 @@ The following define configuration to ingest data in batches within 30 sec time 
         {
           "Action": "delete"
         }
+      
       ],
       "OnFailure": [
         {
           "Action": "move",
           "Request": {
             "DestURL": "gs://myBucket/errors"
-          }
-        },
-        {
-          "Action": "notify",
-          "Request": {
-            "Channels": [
-              "#e2e"
-            ],
-            "From": "BqTail",
-            "Title": "bqtail.wrong_dummy ingestion",
-            "Message": "$Error",
-            "Secret": {
-              "URL": "gs://${config.Bucket}/config/slack.json.enc",
-              "Key": "bqtail_ring/bqtail_key"
-            }
           }
         }
       ]
@@ -152,10 +138,7 @@ The following define configuration to ingest data in batches within 30 sec time 
             "From": "BqTail",
             "Title": "bqtail.wrong_dummy ingestion",
             "Message": "$Error",
-            "Secret": {
-              "URL": "gs://${config.Bucket}/config/slack.json.enc",
-              "Key": "bqtail_ring/bqtail_key"
-            }
+            "Token": "SlackToken"
           }
         }
       ]

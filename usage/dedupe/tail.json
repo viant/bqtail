@@ -48,10 +48,7 @@
             "From": "BqTail",
             "Title": "bqtail.wrong_dummy ingestion",
             "Message": "$Error",
-            "Secret": {
-              "URL": "gs://${config.Bucket}/config/slack.json.enc",
-              "Key": "bqtail_ring/bqtail_key"
-            }
+            "Token": "SlackToken"
           }
         }
       ]

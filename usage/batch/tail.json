@@ -21,15 +21,8 @@
       "OnSuccess": [
         {
           "Action": "delete"
-        },
-        {
-          "Action": "query",
-          "Request": {
-            "SQL" :"SELECT $jobID AS job_id, COUNT(1) AS cnt, CURRENT_TIMESTAMP() AS completed FROM $dest",
-            "Append": true,
-            "Dest": "mydataset.ingestion_journal"
-          }
         }
+
       ],
       "OnFailure": [
         {
