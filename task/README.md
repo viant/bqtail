@@ -1,5 +1,9 @@
 ## Task service
 
+Task service enables you to specify post job execution task for both success and failed job status.
+
+
+
 The generic task format use the following structure
 
 ```json
@@ -44,5 +48,5 @@ The generic task format use the following structure
 
 }
 ```
-The [Cloud Services](../service/README.md) link details all currently supported actions.
+The task services uses [Cloud Services](../service/README.md) with supported actions. 
 
