@@ -1,1 +1,1 @@
-bqtail_batch_sync
+tail_batch_async

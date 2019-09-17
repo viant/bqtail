@@ -2,6 +2,9 @@
 
 ### Scenario:
 
+This scenario tests data extract triggered by loading data to a target table.
+
+
 BqDispatch function is notified with all Big Query jobs completion, it matches actions to run
 with the following route to export destination table to google storage gs://${config.Bucket}/export/dummy.json.gz
 

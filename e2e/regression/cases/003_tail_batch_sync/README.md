@@ -2,6 +2,9 @@
 
 ### Scenario:
 
+This scenario tests data sync data ingestion in batch.
+
+
 BqTail function is notified once data is upload to gs://${config.Bucket}/data/case003/dummy[1..2].json
 It matches the the following route, to ingest data in batch. All function write event sourceURL to batchURL base location.
 Only the one function will  wait for the whole batch duration to run BigQuery Load Job with batch sourceURLs and post action after job is completed.

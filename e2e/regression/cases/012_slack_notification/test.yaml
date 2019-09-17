@@ -1,0 +1,33 @@
+init:
+  configText: $Cat('config/config.json')
+  config: $AsMap(${configText})
+
+pipeline:
+  prepare:
+    init-db:
+      action: dsunit:init
+      datastore: bqtail
+      config:
+        driverName: bigquery
+        credentials: $gcpSecrets
+        parameters:
+          datasetId: bqtail
+      scripts:
+        - URL: ${parent.path}/bqtail/schema.sql
+    populate:
+      bqtail:
+        action: dsunit:prepare
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/prepare
+
+
+
+  trigger:
+    action: storage:copy
+    sleepTimeMs: 10000
+    source:
+      URL: ${parent.path}/data/trigger/dummy.json
+    dest:
+      URL: gs://${config.Bucket}/data/case012/dummy.json
+      credentials: $gcpSecrets
+

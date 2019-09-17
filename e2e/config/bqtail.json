@@ -99,7 +99,9 @@
       "Dest": {
         "Table": "bqtail.dummy",
         "TransientDataset": "temp",
-         "UniqueColumns": ["id"]
+        "UniqueColumns": [
+          "id"
+        ]
       },
       "OnSuccess": [
         {
@@ -121,7 +123,9 @@
       "Dest": {
         "Table": "bqtail.dummy",
         "TransientDataset": "temp",
-        "UniqueColumns": ["id"]
+        "UniqueColumns": [
+          "id"
+        ]
       },
       "OnSuccess": [
         {
@@ -130,9 +134,92 @@
       ],
       "Batch": {
         "Window": {
-          "DurationInSec": 10
+          "DurationInSec": 15
         }
       }
+    },
+    {
+      "When": {
+        "Prefix": "/data/case010",
+        "Suffix": ".json"
+      },
+      "Dest": {
+        "Table": "bqtail.dummy",
+        "TransientDataset": "temp",
+        "UniqueColumns": ["id"]
+      },
+      "Batch": {
+        "Window": {
+          "DurationInSec": 15
+        }
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        },
+        {
+          "Action": "query",
+          "Request": {
+            "SQL": "SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $DestTable",
+            "Dest": "bqtail.summary"
+          }
+        }
+      ]
+    },
+    {
+      "When": {
+        "Prefix": "/data/case011",
+        "Suffix": ".json"
+      },
+      "Async": true,
+      "Dest": {
+        "Table": "bqtail.dummy",
+        "TransientDataset": "temp",
+        "UniqueColumns": ["id"]
+      },
+      "Batch": {
+        "Window": {
+          "DurationInSec": 15
+        }
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        },
+        {
+          "Action": "query",
+          "Request": {
+            "SQL": "SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $DestTable",
+            "Dest": "bqtail.summary"
+          }
+        }
+      ]
+    },
+    {
+      "When": {
+        "Prefix": "/data/case012",
+        "Suffix": ".json"
+      },
+      "Dest": {
+        "Table": "bqtail.wrong_dummy"
+      },
+      "OnFailure": [
+        {
+          "Action": "notify",
+          "Request": {
+            "Channels": [
+              "#e2e"
+            ],
+            "From": "BqTail",
+            "Title": "bqtail.wrong_dummy ingestion",
+            "Message": "$Error",
+            "Secret": {
+              "URL": "gs://${config.Bucket}/config/slack.json.enc",
+              "Key": "BqTailRing/BqTailKey"
+            }
+          }
+        }
+      ]
     }
   ]
 }

@@ -8,8 +8,13 @@ init:
   bqDispatch: $Cat('config/bqdispatch.json')
   bqDispatchConfig:  $AsString($bqDispatch)
 
+  slackOAuth: $Cat('$env.HOME/.secret/slack-e2e.json')
 
 pipeline:
+
+
+
+
   uploadConfigs:
     bqTail:
       action: storage:upload
@@ -24,6 +29,30 @@ pipeline:
       dest:
         URL: ${config.BqDispatchConfigURL}
         credentials: $gcpSecrets
+
+
+    deployBqTailKMSKey:
+      action: gcp/kms:deployKey
+      credentials: $gcpSecrets
+      ring: BqTailRing
+      key: BqTailKey
+      purpose: ENCRYPT_DECRYPT
+      bindings:
+        - role: roles/cloudkms.cryptoKeyEncrypterDecrypter
+          members:
+            - serviceAccount:${gcp.serviceAccount}
+
+
+    encryptSlackOAuthToken:
+      action: gcp/kms:encrypt
+      ring: BqTailRing
+      key: BqTailKey
+      plainData: $AsString($slackOAuth)
+      dest:
+        URL: gs://${config.Bucket}/config/slack.json.enc
+        credentials: ${gcpSecrets}
+      logging: false
+
 
   cleanup:
     action: storage:remove

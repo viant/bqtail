@@ -1,1 +1,1 @@
-bqtail_batch_dedupe
+tail_batch_dedupe

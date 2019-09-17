@@ -1,0 +1,48 @@
+{
+  "DeferTaskURL": "gs://${config.Bucket}/tasks/",
+  "Async": true,
+  "JobID": "bqtail--dummy/${eventId}/dispatch",
+  "OnSuccess": [
+    {
+      "Action": "query",
+      "Request": {
+        "Append": true,
+        "Async": true,
+        "DeferTaskURL": "gs://${config.Bucket}/tasks/",
+        "Dest": "bqtail.dummy",
+        "JobID": "temp--dummy_${eventId}/${eventId}/dispatch",
+        "OnSuccess": [
+          {
+            "Action": "delete",
+            "Request": {
+              "SourceURL": "gs://${config.Bucket}/data/case006/dummy1.json"
+            }
+          },
+          {
+            "Action": "delete",
+            "Request": {
+              "SourceURL": "gs://${config.Bucket}/data/case006/dummy2.json"
+            }
+          },
+          {
+            "Action": "delete",
+            "Request": {
+              "URLs": [
+                "~/gs://${config.Bucket}/batch/bqtail.dummy/\\d+.win/",
+                "gs://${config.Bucket}/batch/bqtail.dummy/${eventId}.tnf",
+                "~/gs://${config.Bucket}/batch/bqtail.dummy/\\d+.tnf/"
+              ]
+            }
+          },
+          {
+            "Action": "query",
+            "Request": {
+              "SQL": "DROP TABLE temp.dummy_${eventId}"
+            }
+          }
+        ],
+        "SQL": "SELECT id, MAX(type_id) AS type_id, MAX(name) AS name \nFROM temp.dummy_${eventId} \nGROUP BY 1"
+      }
+    }
+  ]
+}

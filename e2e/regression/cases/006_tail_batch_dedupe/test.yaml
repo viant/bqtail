@@ -40,7 +40,7 @@ pipeline:
         _: $self.i++
       action: storage:copy
       source:
-        URL: ${parent.path}/data/dummy${self.i}.json
+        URL: ${parent.path}/data/trigger/dummy${self.i}.json
       dest:
         URL: gs://${config.Bucket}/data/case006/dummy${self.i}.json
         credentials: $gcpSecrets

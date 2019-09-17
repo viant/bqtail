@@ -7,8 +7,19 @@ This project uses [endly](https://github.com/viant/endly/) end to end test runne
 1. Install latest [runner](https://github.com/viant/endly/releases) or use [endly docker image](https://github.com/viant/endly/tree/master/docker)
 2. Create dedicated GCP project for  end to end testing.
 3. Create e2e service account with admin permission on e2e test project
-4. Generate and download [google secrets](https://github.com/viant/endly/tree/master/doc/secrets#gc) to ~/.secret/gcp-e2e.json 
-5. Checkout the this project:
+4. Generate and download [google secrets](https://github.com/viant/endly/tree/master/doc/secrets#gc) to ~/.secret/gcp-e2e.json
+5. Create slack OAuth token and store in the ~/secret/slack-e2e.json in the following format:
+
+```json
+{
+  "Token": "MY_OAUTH_SLACK_TOKEN"
+}
+```
+
+If you do not have slack testing token just create a file with dummy data.
+
+ 
+6. Checkout the this project:
 ```bash
 git clone https://bqtail.git
 cd bqtail/e2e
@@ -88,4 +99,32 @@ endly -t=init
 ```bash
     endly -t=test -i=dispatch_copy
 ```
+
+
+
+- [Copy data on target table modification](regression/cases/009_dispatch_copy)
+
+```bash
+    endly -t=test -i=dispatch_copy
+```
+
+- [Deduplication with summary task in sync mode](regression/cases/010_query_task)
+
+```bash
+    endly -t=test -i=query_task
+```
+
+- [Deduplication with summary task in async mode](regression/cases/011_async_query_task)
+
+```bash
+    endly -t=test -i=async_query_task
+```
+
+
+- [Error notification with slack](regression/cases/012_slack_notification)
+
+```bash
+    endly -t=test -i=slack_notification
+```
+
 

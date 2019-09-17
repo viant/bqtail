@@ -1,0 +1,43 @@
+{
+  "DeferTaskURL": "gs://${config.Bucket}/tasks/",
+  "Async": true,
+  "JobID": "bqtail--dummy/${eventID}/dispatch",
+  "OnSuccess": [
+    {
+      "Action": "query",
+      "Request": {
+        "Append": true,
+        "Async": true,
+        "DatasetID": "",
+        "DeferTaskURL": "gs://${config.Bucket}/tasks/",
+        "Dest": "bqtail.dummy",
+        "JobID": "temp--dummy_${eventID}/${eventID}/dispatch",
+        "OnSuccess": [
+          {
+            "Action": "delete",
+            "Request": {
+              "SourceURL": "gs://${config.Bucket}/data/case006/dummy1.json"
+            }
+          },
+          {
+            "Action": "delete",
+            "Request": {
+              "SourceURL": "",
+              "URLs": [
+                "gs://${config.Bucket}/batch/bqtail.dummy/${batchWindowEndUnixTimestamp}.win",
+                "gs://${config.Bucket}/batch/bqtail.dummy/${eventID}.tnf"
+              ]
+            }
+          },
+          {
+            "Action": "query",
+            "Request": {
+              "SQL": "DROP TABLE temp.dummy_${eventID}"
+            }
+          }
+        ],
+        "SQL": "SELECT id, type_id, name, refs\nFROM (\n  SELECT\n      *,\n      ROW_NUMBER() OVER (PARTITION BY id) row_number\n  FROM temp.dummy_${eventID}\n)\nWHERE row_number = 1"
+      }
+    }
+  ]
+}

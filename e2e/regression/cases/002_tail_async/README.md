@@ -2,6 +2,9 @@
 
 ### Scenario:
 
+This scenario tests data async data ingestion.
+
+
 BqTail function is notified once data is upload to gs://${config.Bucket}/data/case002/dummy[1..2].json
 It matches the the following route to submit load Job to BiqQuery. 
 

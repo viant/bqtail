@@ -40,6 +40,7 @@ pipeline:
         availableMemoryMb: 512
         entryPoint: BqTailFn
         runtime: go111
+        serviceAccountEmail: ${gcp.serviceAccount}
         environmentVariables:
           CONFIG: ${config.BqTailConfigURL}
         eventTrigger:
@@ -53,6 +54,7 @@ pipeline:
         '@name': BqDispatch
         timeout: 180s
         public: true
+        serviceAccountEmail: ${gcp.serviceAccount}
         availableMemoryMb: 512
         entryPoint: BqDispatchFn
         runtime: go111

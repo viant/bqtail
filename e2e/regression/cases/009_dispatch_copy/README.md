@@ -1,33 +1,51 @@
-### Data export trigger by Query with destination 
+### Data copy trigger by Query with destination 
 
 ### Scenario:
 
-BqTail function is notified once data is upload to gs://${config.Bucket}/data/case007/dummy[1-2].json
-It matches the the following route, to ingest data with transient table in temp dataset, followed by deduplicated final destination ingestion.
-In this scenario deduplication process has to handle nested [data structure](data/dummy1.json)
+This scenario tests data copy triggered  by loading data to a target table.
+
+BqDispatch function is notified with all Big Query jobs completion, it matches actions to run
+with the following route to export destination table to google storage gs://${config.Bucket}/export/dummy.json.gz
  
 
 ```json
  {
       "When": {
-        "Prefix": "/data/case007",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "bqtail.dummy",
-        "TransientDataset": "temp",
-        "UniqueColumns": ["id"]
+        "Dest": ".+:bqdispatch\\.dummy_v3",
+        "Type": "LOAD"
       },
       "OnSuccess": [
         {
-          "Action": "delete"
+          "Action": "copy",
+          "Request": {
+            "Dest": "bqdispatch.dummy_v4"
+          }
         }
-      ],
-      "Batch": {
-        "Window": {
-          "DurationInSec": 10
-        }
-      }
+      ]
 }
 ```
 
+
+
+### BqDispatch
+
+
+#### Input:
+
+* **Trigger**:
+  - eventType: google.cloud.bigquery.job.complete
+  - resource: projects/${projectID}/jobs/{jobId}
+* **Configuration:** [gs://e2e-data/config/bqdispatch.json](../../../config/bqdispatch.json)
+
+* **Data**:
+
+Big Query Load Job with destination bqdispatch.dummy_v3  table. 
+
+#### Output
+
+* **Logs:** 
+
+- gs://${config.Bucket}/journal/
+
+* **Data:**
+- gs://${config.Bucket}/export/dummy.json.gz
