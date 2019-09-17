@@ -4,6 +4,8 @@ The following action are supported:
 
 #### notify
 
+1. Notify example with slack oauth token encrypted with GCP KMS
+
 ```json
 {
   "Action": "notify",
@@ -18,6 +20,23 @@ The following action are supported:
       "URL": "gs://${config.Bucket}/config/slack.json.enc",
       "Key": "BqTailRing/BqTailKey"
     }
+  }
+}
+```
+
+2. Notify example with inline token 
+
+```json
+{
+  "Action": "notify",
+  "Request": {
+    "Channels": [
+      "#e2e"
+    ],
+    "From": "BqTail",
+    "Title": "bqtail.wrong_dummy ingestion",
+    "Message": "$Error",
+    "Token": "myslack token"
   }
 }
 ```
