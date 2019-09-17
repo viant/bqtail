@@ -87,6 +87,16 @@ for example: [@config.json](usage/config.json) defines routes and on success and
 
 ### Configuration
 
+**Configuration options:**
+
+- JournalURL: job history location 
+- ErrorURL: - errors location
+- DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
+- Routes: post job tasks matching rules (only one route can be matched)
+
+
+
+
 
 ### Deployment
 

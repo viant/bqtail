@@ -53,6 +53,15 @@ All these limitations are addressed by asynchronous and batch mode.
 }
 ```
 
+**Configuration options:**
+
+- JournalURL: job history location 
+- ErrorURL: - errors location
+- DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
+- BatchURL: transient storage location for managing event batching.
+- Routes: data ingestion matching rules (only one route can be matched)
+
+
 #### Asynchronous mode
 
 In asynchronous mode BqTailFn cloud function schedules post task execution using deferred task base URL and submit load job. 
