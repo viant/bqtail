@@ -229,8 +229,12 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 	if dest.Schema.Table != nil {
 		return nil
 	}
-	if dest.Schema.Template != nil {
-		table, err := s.bq.Table(ctx, dest.Schema.Template)
+	if dest.Schema.Template != "" {
+		templateReference, err := base.NewTableReference(dest.Schema.Template)
+		if err != nil {
+			return errors.Wrapf(err, "invalid schema.template table name: %v", dest.Schema.Template)
+		}
+		table, err := s.bq.Table(ctx, templateReference)
 		if err != nil {
 			return errors.Wrapf(err, "failed to updated schema for: %v", dest.Schema.Template)
 		}

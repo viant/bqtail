@@ -1,0 +1,18 @@
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "JournalURL": "gs://YYY/journal/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Dest": {
+        "Table": "mydataset.mytable",
+        "Schema": {
+          "Template": "mydataset.template_table"
+        }
+      }
+    }
+  ]
+}

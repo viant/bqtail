@@ -258,6 +258,29 @@ When using transient table you can specify unique columns to deduplicate data wh
 
 #### Template table
 
+In case destination table does not exists you can specify schema source table with schema.template attribute.
+
+[@config/bqtail.json](usage/template.json)
+```json
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "JournalURL": "gs://YYY/journal/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Dest": {
+        "Table": "mydataset.mytable",
+        "Schema": {
+          "Template": "mydataset.template_table"
+        }
+      }
+    }
+  ]
+}
+```
 
 
 #### Destination
