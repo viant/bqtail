@@ -52,7 +52,7 @@ The following define configuration to ingest data in batches within 30 sec time 
       "Async": true,
       "Batch": {
         "Window": {
-          "DurationInSec": 15
+          "DurationInSec": 30
         }
       },
       "OnSuccess": [
