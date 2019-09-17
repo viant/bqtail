@@ -48,5 +48,15 @@ The generic task format use the following structure
 
 }
 ```
+
+The request can use the following expressions:
+
+- $Error: error message
+- $JobId: job ID
+- $EvetID: originated cloud function event ID
+- $SourceTable: Big Query job dataset.source table
+- $DestTable: Big Query job dataset.dest table
+
+
 The task services uses [Cloud Services](../service/README.md) with various actions. 
 
