@@ -66,6 +66,21 @@ The following define configuration to ingest data in batches within 30 sec time 
           "Request": {
             "DestURL": "gs://myBucket/errors"
           }
+        },
+        {
+          "Action": "notify",
+          "Request": {
+            "Channels": [
+              "#e2e"
+            ],
+            "From": "BqTail",
+            "Title": "bqtail.wrong_dummy ingestion",
+            "Message": "$Error",
+            "Secret": {
+              "URL": "gs://${config.Bucket}/config/slack.json.enc",
+              "Key": "bqtail_ring/bqtail_key"
+            }
+          }
         }
       ]
     }
@@ -80,6 +95,77 @@ The following define configuration to ingest data in batches within 30 sec time 
   "DeferTaskURL": "gs://myBucket/tasks/"
 }
 ``` 
+
+- **Data ingestion with deduplication**
+
+The following define configuration to ingest data in batches within 30 sec time window in async mode.
+
+[@config/bqtail.json](usage/dedupe/tail.json)
+```json
+{
+  "BatchURL": "gs://myBucket/batch/",
+  "ErrorURL": "gs://myBucket/errors/",
+  "JournalURL": "gs://myBucket/journal/",
+  "DeferTaskURL": "gs://myBucket/tasks/",
+  "Routes": [
+    {
+      "Async": true,
+      "When": {
+        "Prefix": "/data/",
+        "Suffix": ".avro"
+      },
+      "Dest": {
+        "Table": "mydataset.mytable",
+        "TempDataset": "transfer",
+        "UniqueColumns": ["id"]
+      },
+      "Batch": {
+        "Window": {
+          "DurationInSec": 60
+        }
+      },
+      "OnSuccess": [
+        {
+          "Action": "query",
+          "Request": {
+            "SQL": "SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $DestTable",
+            "Dest": "mydataset.summary"
+          }
+        },
+        {
+          "Action": "delete"
+        }
+      ],
+      "OnFailure": [
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "gs://myBucket/errors"
+          }
+        },
+        {
+          "Action": "notify",
+          "Request": {
+            "Channels": [
+              "#e2e"
+            ],
+            "From": "BqTail",
+            "Title": "bqtail.wrong_dummy ingestion",
+            "Message": "$Error",
+            "Secret": {
+              "URL": "gs://${config.Bucket}/config/slack.json.enc",
+              "Key": "bqtail_ring/bqtail_key"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+
+
 
 - **Data extraction**
 
@@ -110,7 +196,7 @@ The following define configuration to extract data to google storate after targe
 
 ## Deployment
 
-**Prerequiries**
+**Prerequisites**
 
 The following URL are used by tail/dispatch services:
 
@@ -121,8 +207,8 @@ The following URL are used by tail/dispatch services:
 
 **Cloud function deployments**
 
-- [Tail](tail/README.md#deployment)
-- [Dispatch](dispatch/README.md#deployment)
+- [BqTail](tail/README.md#deployment)
+- [BqDispatch](dispatch/README.md#deployment)
 
 
 ### Monitoring

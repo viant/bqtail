@@ -9,7 +9,21 @@ const (
 	JobExt               = ".json"
 	JobElement           = "-job"
 	PathElementSeparator = "--"
-	JobIDKey             = "JobID"
 	SourceURLKey         = "SourceURL"
 	SourceKey            = "Source"
+	BodyKey              = "body"
+
+	OnSuccessKey = "OnSuccess"
+	OnFailureKey = "OnFailure"
+
+	ErrorKey        = "error"
+	ErrorExpr       = "$Error"
+	JobIDKey        = "JobID"
+	JobIDExpr       = "$JobID"
+	EventIDKey      = "eventID"
+	EventIDExpr     = "$EventID"
+	SourceTableKey  = "sourceTable"
+	SourceTableExpr = "$SourceTable"
+	DestTableKey    = "destTable"
+	DestTableExpr   = "$DestTable"
 )

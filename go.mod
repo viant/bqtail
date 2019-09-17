@@ -7,6 +7,7 @@ require (
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
+	github.com/nlopes/slack v0.6.0
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0
 	github.com/viant/afs v0.0.0-20190904201629-d19294259635

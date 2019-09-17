@@ -1,20 +1,20 @@
 package config
 
 import (
+	"bqtail/task"
 	"fmt"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/url"
-	"bqtail/task"
 	"path"
 	"time"
 )
 
 //Route represent matching resource route
 type Route struct {
-	Dest     *Destination
-	When     matcher.Basic
-	Batch    *Batch
+	Dest  *Destination
+	When  matcher.Basic
+	Batch *Batch
 	task.Actions
 }
 

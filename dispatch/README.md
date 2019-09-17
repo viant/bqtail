@@ -89,3 +89,51 @@ for example: [@config.json](usage/config.json) defines routes and on success and
 
 
 ### Deployment
+
+```bash
+gcloud functions deploy BqDispatch --entry-point BqDispatchFn --trigger-resource projects/MY_PROJECT_ID/jobs/{jobId} --trigger-event google.cloud.bigquery.job.complete  \n
+ --set-env-vars=CONFIG=gs://YYY/config/bqdispatch.json
+--runtime go111
+```
+
+Where:
+- XXX is data bucket name
+- bqdispatch.json is configuration file
+```json
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "JournalURL": "gs://YYY/journal/",
+  "DeferTaskURL": "gs://YYY/tasks/",
+  "Routes": [
+    {
+      "When": {
+        "Dest": ".+:mydataset\\.mytable",
+        "Type": "QUERY"
+      },
+      "OnSuccess": [
+        {
+          "Action": "export",
+          "Request": {
+            "DestURL": "gs://${config.Bucket}/export/dummy.json.gz"
+          }
+        }
+      ]
+    },
+    {
+      "When": {
+        "Dest": ".+:mydataset\\.mytable2",
+        "Type": "LOAD"
+      },
+      "OnSuccess": [
+        {
+          "Action": "copy",
+          "Request": {
+            "Dest": "mydataset.mytable3"
+          }
+        }
+      ]
+    }
+  ]
+}
+
+```

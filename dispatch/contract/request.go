@@ -1,8 +1,10 @@
 package contract
 
+import "bqtail/base"
+
 type Request struct {
-	EventID string
+	EventID   string
 	ProjectID string
-	JobID string
-	Job *Job
+	JobID     string
+	Job       *base.Job
 }

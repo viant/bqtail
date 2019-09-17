@@ -14,5 +14,3 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	call.Context(ctx)
 	return call.Do()
 }
-
-

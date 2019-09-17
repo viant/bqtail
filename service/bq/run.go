@@ -1,14 +1,14 @@
 package bq
 
 import (
+	"bqtail/base"
+	"bqtail/task"
 	"context"
 	"fmt"
-	"bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 )
 
 func (s *service) Run(ctx context.Context, request task.Request) error {
-
 	var job *bigquery.Job
 	var err error
 	switch req := request.(type) {
@@ -29,5 +29,5 @@ func (s *service) Run(ctx context.Context, request task.Request) error {
 	if err != nil {
 		return err
 	}
-	return JobError(job)
+	return base.JobError(job)
 }

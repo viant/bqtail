@@ -1,9 +1,9 @@
 package bq
 
 import (
+	"bqtail/base"
 	"context"
 	"fmt"
-	"bqtail/base"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
 )

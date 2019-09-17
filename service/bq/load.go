@@ -10,7 +10,7 @@ import (
 type LoadRequest struct {
 	*bigquery.JobConfigurationLoad
 	Request
-	Append   bool
+	Append bool
 }
 
 func (s *service) Load(ctx context.Context, request *LoadRequest) (*bigquery.Job, error) {

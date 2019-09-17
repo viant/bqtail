@@ -23,7 +23,9 @@ func RunWithService(ctx context.Context, registry Registry, serviceName string, 
 	if err != nil {
 		return err
 	}
-	//	fmt.Printf("running %T\n", service)
-	//	toolbox.Dump(request)
-	return service.Run(ctx, request)
+	//fmt.Printf("running %T\n", service)
+	//toolbox.Dump(request)
+	err = service.Run(ctx, request)
+	//fmt.Printf("err: %v\n", err)
+	return err
 }

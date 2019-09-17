@@ -15,21 +15,237 @@ Tail service ingests data to Big Query with Load API.
 
 ### Configuration
 
-#### Batch ingestion
+Configuration is defined as [config.go](config.go)
 
-By default individual 
+The following example defines single route to ingested any JSON file matching /data/folder prefix to mydataset.mytable.
 
+In this configuration scenario each data file is ingested  to Big Query by dedicated cloud function instance.
+After initiating a load Job, the function waits for job completion to finally run on success tasks. 
 
-#### Synchronous mode
+This per data file synchronous mode is very cost inefficient, since each data file uses dedicated cloud function for the whole data ingestion duration.
+Another limitation that needs to be consider is number of data files, if you expect more than 1K per day you reach daily load job count restriction.
+On top of that if Big Query load job takes more than cloud function max execution time, the function is terminated 
+and the post task execution does not run at all.
 
+All these limitations are addressed by asynchronous and batch mode. 
+ 
+[@config/bqtail.json](usage/sync.json)
+```json
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "JournalURL": "gs://YYY/journal/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Dest": {
+        "Table": "mydataset.mytable"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ]
+    }
+  ]
+}
+```
 
 #### Asynchronous mode
+
+In asynchronous mode BqTailFn cloud function schedules post task execution using deferred task base URL and submit load job. 
+Once BigQuery job completes it is picked up by BqDispatchFn cloud function to run post tasks. 
+
+In this mode cloud function execution time is stremlined to actual task run without unnecessary waits.
+
+
+[@config/bqtail.json](usage/async.json)
+```json
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "JournalURL": "gs://YYY/journal/",
+  "DeferTaskURL": "gs://e2e-data/tasks/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Async": true,
+      "Dest": {
+        "Table": "mydataset.mytable"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ],
+      "OnFailure": [
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "gs://e2e-data/errors"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### Batch ingestion
+
+In batch mode, storage event are batch by time window, in this mode only one cloud function manages batching while others ends
+after scheduling event source.  The batching process is details [here](batch/README.md).
+
+Batch URL is used to manged batch windowing process.
+
+The following configuration specify batch sync mode.
+
+[@config/bqtail.json](usage/batch.json)
+```json
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "BatchURL": "gs://e2e-data/batch/",
+  "JournalURL": "gs://YYY/journal/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Batch": {
+        "Window": {
+          "DurationInSec": 45
+        }
+      },
+      "Dest": {
+        "Table": "mydataset.mytable"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ]
+    }
+  ]
+}
+```
+
+The following configuration specify batch asynchronous  mode.
+
+[@config/bqtail.json](usage/async_batch.json)
+```json
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "BatchURL": "gs://e2e-data/batch/",
+  "JournalURL": "gs://YYY/journal/",
+  "DeferTaskURL": "gs://e2e-data/tasks/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Async": true,
+      "Batch": {
+        "Window": {
+          "DurationInSec": 45
+        }
+      },
+      "Dest": {
+        "Table": "mydataset.mytable"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ]
+    }
+  ]
+}
+```
 
 
 #### Transient Dataset
 
+When ingesting data, from one or many datafiles, some entries may be corrupted impacting data quality.
+To add extra data quality check you use  transient dataset. In this case data is moved to destination table
+only if temp table data ingestion was successful.
+Temp table is constructed from destination table suffixed by event ID.
+
+The following configuration specify transient dataset.
+
+
+[@config/bqtail.json](usage/transient.json)
+```json
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "JournalURL": "gs://YYY/journal/",
+  "Routes": [
+
+    {
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Dest": {
+        "Table": "mydataset.mytable",
+        "TransientDataset": "temp"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ]
+    }
+  ]
+}
+
+```
 
 #### Data deduplication
+
+When using transient table you can specify unique columns to deduplicate data while moving to destination table.
+
+
+[@config/bqtail.json](usage/dedupe.json)
+```json
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "JournalURL": "gs://YYY/journal/",
+  "BatchURL": "gs://e2e-data/batch/",
+  "DeferTaskURL": "gs://e2e-data/tasks/",
+  "Routes": [
+    {
+      "Async": true,
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Dest": {
+        "Table": "mydataset.mytable",
+        "TransientDataset": "temp",
+        "UniqueColumns": [
+          "id"
+        ]
+      },
+      "Batch": {
+        "Window": {
+          "DurationInSec": 80
+        }
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ]
+    }
+  ]
+}
+```
 
 
 #### Destination
@@ -56,7 +272,7 @@ With table defined as "proj:dataset:table_$1$2$3" and source URL "gs://bucket/da
 ### Deployment
 
 ```bash
-gcloud functions deploy XXXBQTailFn --entry-point BqTail --trigger-resource XXX --trigger-event google.storage.object.finalize  \n
+gcloud functions deploy XXXBQTail --entry-point BqTailFn --trigger-resource XXX --trigger-event google.storage.object.finalize  \n
  --set-env-vars=CONFIG=gs://YYY/config/bqtail.json
 --runtime go111
 ```

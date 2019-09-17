@@ -1,7 +1,7 @@
 package config
 
 import (
-	"bqtail/dispatch/contract"
+	"bqtail/base"
 	"regexp"
 	"strings"
 )
@@ -31,7 +31,7 @@ func (f *Filter) Init() error {
 }
 
 //Match return true if an event is matched
-func (f *Filter) Match(event *contract.Job) bool {
+func (f *Filter) Match(event *base.Job) bool {
 	matched := false
 	if f.Type != "" {
 		if strings.ToLower(f.Type) != strings.ToLower(event.Type()) {
@@ -40,13 +40,13 @@ func (f *Filter) Match(event *contract.Job) bool {
 	}
 
 	if f.source != nil {
-		if ! f.source.MatchString(event.Source()) {
+		if !f.source.MatchString(event.Source()) {
 			return false
 		}
 		matched = true
 	}
 	if f.dest != nil {
-		if ! f.dest.MatchString(event.Dest()) {
+		if !f.dest.MatchString(event.Dest()) {
 			return false
 		}
 		matched = true

@@ -1,6 +1,8 @@
 package batch
 
 import (
+	"bqtail/tail/config"
+	"bqtail/tail/contract"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -11,8 +13,6 @@ import (
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
-	"bqtail/tail/config"
-	"bqtail/tail/contract"
 	"io/ioutil"
 	"path"
 	"sort"
@@ -30,8 +30,7 @@ type Service interface {
 	TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Route) (*Window, error)
 
 	//MatchWindowData updates the window with the window span matched transfer datafiles
-	MatchWindowData(ctx context.Context, now time.Time,  window *Window, route *config.Route) error
-
+	MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Route) error
 }
 
 type service struct {
@@ -70,7 +69,7 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	return err
 }
 
-func (s *service) getSchedule(ctx context.Context, created time.Time,  request *contract.Request, route *config.Route) (storage.Object, error) {
+func (s *service) getSchedule(ctx context.Context, created time.Time, request *contract.Request, route *config.Route) (storage.Object, error) {
 	URL, err := s.scheduleURL(created, request, route)
 	if err != nil {
 		return nil, err
@@ -88,7 +87,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	if err != nil {
 		return nil, err
 	}
-	eventSchedule, err := s.getSchedule(ctx, source.ModTime(),  request, route)
+	eventSchedule, err := s.getSchedule(ctx, source.ModTime(), request, route)
 	if err != nil {
 		return nil, err
 	}
@@ -135,32 +134,27 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	return window, s.AcquireWindow(ctx, baseURL, window)
 }
 
-
-
-
-
 func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Datafile, error) {
 	reader, err := s.Download(ctx, object)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {_ = reader.Close()}()
+	defer func() { _ = reader.Close() }()
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}
 	_, name := url.Split(object.URL(), file.Scheme)
-	name  = string(name[:len(name)-4])
-	return &Datafile{SourceURL:string(data), EventID:name, Created:object.ModTime(), URL:object.URL()}, nil
+	name = string(name[:len(name)-4])
+	return &Datafile{SourceURL: string(data), EventID: name, Created: object.ModTime(), URL: object.URL()}, nil
 }
 
-
 //MatchWindowData matches window data, it waits for window to ends if needed
-func (s *service) MatchWindowData(ctx context.Context, now time.Time,  window *Window, route *config.Route) error {
+func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Route) error {
 	tillWindowEnd := window.End.Sub(now)
-	if tillWindowEnd > 0  {
+	if tillWindowEnd > 0 {
 		//wait for window to end
-		time.Sleep(tillWindowEnd+1)
+		time.Sleep(tillWindowEnd + 1)
 	}
 	eventMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
 	parentURL, _ := url.Split(window.URL, file.Scheme)
@@ -178,8 +172,6 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time,  window *W
 	}
 	return nil
 }
-
-
 
 func windowToTime(window storage.Object) (*time.Time, error) {
 	name := window.Name()

@@ -38,7 +38,6 @@ func (o Objects) Lookup(eventId string) (storage.Object, error) {
 	return nil, fmt.Errorf("failed to lookup %v", name)
 }
 
-
 func (o Objects) Before(target storage.Object) Objects {
 	var result = make([]storage.Object, 0)
 	for i := range o {
@@ -57,10 +56,9 @@ func (o Objects) Before(target storage.Object) Objects {
 	return result
 }
 
-
 func (o Objects) After(target time.Time) Objects {
 	var result = make([]storage.Object, 0)
-	for i:= len(o)-1;i>=0;i-- {
+	for i := len(o) - 1; i >= 0; i-- {
 		if o[i].ModTime().After(target) {
 			result = append(result, o[i])
 			continue

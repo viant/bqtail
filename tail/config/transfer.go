@@ -2,7 +2,7 @@ package config
 
 //Batch transfer config
 type Batch struct {
-	Window *Window
+	Window   *Window
 	StageURL string
 }
 

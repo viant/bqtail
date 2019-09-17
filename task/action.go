@@ -1,9 +1,9 @@
 package task
 
 import (
-	"bqtail/base"
 	"github.com/viant/toolbox"
 	"reflect"
+	"strings"
 )
 
 //Action represents route action
@@ -12,13 +12,10 @@ type Action struct {
 	Request map[string]interface{}
 }
 
-func (a *Action) SetJobID(jobID string) {
-	a.Request[base.JobIDKey] = jobID
-}
-
 //SetRequest set reqeust for supplied req instance
 func (a *Action) SetRequest(req interface{}) error {
 	a.Request = map[string]interface{}{}
+
 	return toolbox.DefaultConverter.AssignConverted(&a.Request, req)
 }
 
@@ -51,7 +48,27 @@ type ServiceAction struct {
 //NewRequest creates a new request
 func (a *ServiceAction) NewRequest(action *Action) (Request, error) {
 	result := reflect.New(a.RequestType).Interface()
-	err := toolbox.DefaultConverter.AssignConverted(result, action.Request)
+	var req = map[string]interface{}{}
+
+	for k, v := range action.Request {
+		req[k] = v
+		text, ok := v.(string)
+		if !ok {
+			continue
+		}
+		for key, exp := range replacements {
+			value, ok := action.Request[key]
+			if !ok {
+				continue
+			}
+			exprValue := value.(string)
+			if count := strings.Count(text, exp); count > 0 {
+				text = strings.Replace(text, exp, exprValue, count)
+			}
+		}
+		req[k] = text
+	}
+	err := toolbox.DefaultConverter.AssignConverted(result, req)
 	return result, err
 }
 

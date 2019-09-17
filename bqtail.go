@@ -21,7 +21,10 @@ func BqTailFn(ctx context.Context, event contract.GSEvent) (err error) {
 		SourceURL: event.URL(),
 	}
 	_, err = handleTailEvent(ctx, request)
-	return err
+	if err != nil {
+		log.Print(err)
+	}
+	return nil
 }
 
 func handleTailEvent(ctx context.Context, request *contract.Request) (*contract.Response, error) {

@@ -25,7 +25,7 @@ func (c *Config) Init(ctx context.Context) error {
 		return err
 	}
 	if len(c.Routes) == 0 {
-		return nil
+		return err
 	}
 	for _, route := range c.Routes {
 		if route.Actions.Async && route.Actions.DeferTaskURL == "" {

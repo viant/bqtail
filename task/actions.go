@@ -2,6 +2,8 @@ package task
 
 import (
 	"bqtail/base"
+	"encoding/json"
+	"fmt"
 )
 
 type Actions struct {
@@ -10,6 +12,59 @@ type Actions struct {
 	JobID        string    `json:",ommittempty"`
 	OnSuccess    []*Action `json:",ommittempty"`
 	OnFailure    []*Action `json:",ommittempty"`
+}
+
+type Source struct {
+	Value interface{}
+	JobID string
+	Dest  string
+}
+
+//ToRun returns actions to run
+func (j Actions) ToRun(err error, job *base.Job) []*Action {
+	var toRun []*Action
+	if err == nil {
+		toRun = j.OnSuccess
+	} else {
+		error := err.Error()
+		toRun = j.OnFailure
+		for i := range toRun {
+			toRun[i].Request[base.ErrorKey] = error
+		}
+	}
+
+	for i := range toRun {
+
+		jobSuffix := ""
+		if hasPostTasks := toRun[i].Request[base.OnSuccessKey] != nil || toRun[i].Request[base.OnFailureKey] != nil; !hasPostTasks {
+			jobSuffix = "_nop"
+		}
+
+		if bqJobs[toRun[i].Action] {
+			toRun[i].Request[base.JobIDKey] = job.ChildJobID(fmt.Sprintf("%03d_%v", i, toRun[i].Action)) + jobSuffix
+
+		}
+
+		if bodyAppendable[toRun[i].Action] {
+			if body, err := json.Marshal(j); err == nil {
+				toRun[i].Request[base.BodyKey] = string(body)
+			}
+		}
+		if _, ok := toRun[i].Request[base.JobIDKey]; !ok {
+			toRun[i].Request[base.JobIDKey] = job.JobID()
+		}
+		if _, ok := toRun[i].Request[base.EventIDKey]; !ok {
+			toRun[i].Request[base.EventIDKey] = job.EventID()
+		}
+		if _, ok := toRun[i].Request[base.DestTableKey]; !ok {
+			toRun[i].Request[base.DestTableKey] = job.DestTable()
+		}
+		if _, ok := toRun[i].Request[base.SourceTableKey]; !ok {
+			toRun[i].Request[base.SourceTableKey] = job.SourceTable()
+		}
+
+	}
+	return toRun
 }
 
 //IsEmpty returns is actions are empty
@@ -95,11 +150,6 @@ func NewActions(async bool, baseURL, jobID string, onSuccess, onFailure []*Actio
 		OnSuccess:    onSuccess,
 		OnFailure:    onFailure,
 	}
-}
-
-var sourceURLExpandable = map[string]bool{
-	"move":   true,
-	"delete": true,
 }
 
 func appendSourceURLExpandableActions(source []*Action, dest *[]*Action, expandable *base.Expandable) {

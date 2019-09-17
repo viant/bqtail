@@ -1,0 +1,26 @@
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "BatchURL": "gs://e2e-data/batch/",
+  "JournalURL": "gs://YYY/journal/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Batch": {
+        "Window": {
+          "DurationInSec": 45
+        }
+      },
+      "Dest": {
+        "Table": "mydataset.mytable"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ]
+    }
+  ]
+}

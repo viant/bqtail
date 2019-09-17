@@ -11,4 +11,3 @@ type GSEvent struct {
 func (e *GSEvent) URL() string {
 	return fmt.Sprintf("gs://%v/%v", e.Bucket, e.Name)
 }
-

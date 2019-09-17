@@ -4,6 +4,8 @@ import (
 	"bqtail/base"
 	"bqtail/dispatch/contract"
 	"bqtail/service/bq"
+	"bqtail/service/secret"
+	"bqtail/service/slack"
 	"bqtail/service/storage"
 	"bqtail/task"
 	"bytes"
@@ -34,6 +36,8 @@ func (s *service) Init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	slackService := slack.New(s.config.Region, s.config.ProjectID, s.storage, secret.New())
+	slack.InitRegistry(s.Registry, slackService)
 	bqService, err := bigquery.NewService(ctx)
 	if err != nil {
 		return err
@@ -41,6 +45,7 @@ func (s *service) Init(ctx context.Context) error {
 	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.storage)
 	bq.InitRegistry(s.Registry, s.bq)
 	storage.InitRegistry(s.Registry, storage.New(s.storage))
+
 	return err
 }
 
@@ -59,7 +64,7 @@ func (s *service) initRequest(ctx context.Context, request *contract.Request) er
 	if err != nil {
 		return err
 	}
-	contractJob := contract.Job(*job)
+	contractJob := base.Job(*job)
 	request.Job = &contractJob
 	return nil
 }
@@ -118,7 +123,6 @@ func (s *service) dispatch(ctx context.Context, request *contract.Request, respo
 	if err != nil {
 		return err
 	}
-
 	job := NewJob(request.Job, response)
 	defer func() {
 		if response.Matched || err != nil {
@@ -154,7 +158,7 @@ func (s *service) dispatch(ctx context.Context, request *contract.Request, respo
 }
 
 func (s *service) run(ctx context.Context, job *Job) error {
-	toRun := job.ToRun()
+	toRun := job.Actions.ToRun(job.Error(), job.Job)
 	var err error
 	for i := range toRun {
 		if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {

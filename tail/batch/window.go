@@ -1,10 +1,10 @@
 package batch
 
 import (
-	"fmt"
-	"github.com/viant/afs/url"
 	"bqtail/tail/config"
 	"bqtail/tail/contract"
+	"fmt"
+	"github.com/viant/afs/url"
 	"time"
 )
 

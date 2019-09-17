@@ -8,13 +8,17 @@ import (
 )
 
 const (
-	cloudFunctionProjectEnvKey = "GCLOUD_PROJECT"
+	defaultRegion = "us-central1"
 )
+
+var cloudFunctionProjectEnvKeys = []string{"GCLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT"}
+var cloudFunctionRegionEnvKeys = []string{"FUNCTION_REGION", "GOOGLE_CLOUD_REGION"}
 
 //Config represents base config
 type Config struct {
 	RunOnce      bool
 	ProjectID    string
+	Region       string
 	DeferTaskURL string
 	JournalURL   string
 	ErrorURL     string
@@ -30,15 +34,31 @@ func (c *Config) OutputURL(hasError bool) string {
 
 func (c *Config) Init(ctx context.Context) error {
 	if c.ProjectID == "" {
-		if project := os.Getenv(cloudFunctionProjectEnvKey); project != "" {
-			c.ProjectID = project
-			return nil
+		for _, key := range cloudFunctionProjectEnvKeys {
+			if project := os.Getenv(key); project != "" {
+				c.ProjectID = project
+				break
+			}
 		}
-		credentials, err := google.FindDefaultCredentials(ctx)
-		if err != nil {
-			return err
+		if c.ProjectID == "" {
+			credentials, err := google.FindDefaultCredentials(ctx)
+			if err != nil {
+				return err
+			}
+			c.ProjectID = credentials.ProjectID
 		}
-		c.ProjectID = credentials.ProjectID
+	}
+
+	if c.Region == "" {
+		for _, key := range cloudFunctionRegionEnvKeys {
+			if region := os.Getenv(key); region != "" {
+				c.Region = region
+				break
+			}
+		}
+	}
+	if c.Region == "" {
+		c.Region = defaultRegion
 	}
 	return nil
 }

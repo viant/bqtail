@@ -1,6 +1,8 @@
 package batch
 
 import (
+	"bqtail/tail/config"
+	"bqtail/tail/contract"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,8 +11,6 @@ import (
 	"github.com/viant/afs/asset"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/mem"
-	"bqtail/tail/config"
-	"bqtail/tail/contract"
 	"path"
 	"strings"
 	"testing"
@@ -96,14 +96,13 @@ func TestService_TryAcquireWindow(t *testing.T) {
 					Table: "proj:dset:table1",
 				},
 			},
-			expectWinURL:fmt.Sprintf("mem://localhost/stage001/proj:dset:table1/%v.win", now.Add(20 * time.Second).UnixNano()),
+			expectWinURL: fmt.Sprintf("mem://localhost/stage001/proj:dset:table1/%v.win", now.Add(20*time.Second).UnixNano()),
 			expect: &Window{
 				Start:   now.Add(-10 * time.Second),
 				End:     now.Add(20 * time.Second),
 				EventID: "event1",
 			},
 		},
-
 
 		{
 			description: "the second event instance - can not acquire window",
@@ -169,7 +168,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 					Table: "proj:dset:table1",
 				},
 			},
-			expectWinURL:fmt.Sprintf("mem://localhost/stage003/proj:dset:table1/%v.win", now.Add(21 * time.Second).UnixNano()),
+			expectWinURL: fmt.Sprintf("mem://localhost/stage003/proj:dset:table1/%v.win", now.Add(21*time.Second).UnixNano()),
 			expect: &Window{
 				Start:   now.Add(-9 * time.Second),
 				End:     now.Add(21 * time.Second),
@@ -199,7 +198,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			windows: testWindows{
-				fmt.Sprintf("%v.win", now.Add(-15 * time.Second).UnixNano()): &Window{
+				fmt.Sprintf("%v.win", now.Add(-15*time.Second).UnixNano()): &Window{
 					EventID: "event0",
 					Start:   now.Add(-45 * time.Second),
 					End:     now.Add(-15 * time.Second),
@@ -217,7 +216,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 
-			expectWinURL: fmt.Sprintf("mem://localhost/stage004/proj:dset:table1/%v.win", now.Add(21 * time.Second).UnixNano()),
+			expectWinURL: fmt.Sprintf("mem://localhost/stage004/proj:dset:table1/%v.win", now.Add(21*time.Second).UnixNano()),
 			expect: &Window{
 				Start:   now.Add(-9 * time.Second),
 				End:     now.Add(21 * time.Second),
@@ -246,12 +245,12 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			windows: testWindows{
-				fmt.Sprintf("%v.win", now.Add(-15 * time.Second).UnixNano()): &Window{
+				fmt.Sprintf("%v.win", now.Add(-15*time.Second).UnixNano()): &Window{
 					EventID: "event0",
 					Start:   now.Add(-45 * time.Second),
 					End:     now.Add(-15 * time.Second),
 				},
-				fmt.Sprintf("%v.win", now.Add(16 * time.Second).UnixNano()): &Window{
+				fmt.Sprintf("%v.win", now.Add(16*time.Second).UnixNano()): &Window{
 					EventID: "event00",
 					Start:   now.Add(-14 * time.Second),
 					End:     now.Add(16 * time.Second),
@@ -270,7 +269,6 @@ func TestService_TryAcquireWindow(t *testing.T) {
 			},
 		},
 
-
 		{
 			description: "the first event instance - can acquire window",
 			stageURL:    "mem://localhost/stage006",
@@ -285,7 +283,6 @@ func TestService_TryAcquireWindow(t *testing.T) {
 					URL:     "mem://localhost/data/file2.avro",
 					modTime: now.Add(-10 * time.Second),
 				},
-
 			},
 			request: contract.NewRequest("event1", "mem://localhost/data/file2.avro", now.Add(-10*time.Second)),
 			route: &config.Route{
@@ -298,14 +295,13 @@ func TestService_TryAcquireWindow(t *testing.T) {
 					Table: "proj:dset:table1",
 				},
 			},
-			expectWinURL:fmt.Sprintf("mem://localhost/stage006/proj:dset:table1/%v.win", now.Add(20 * time.Second).UnixNano()),
+			expectWinURL: fmt.Sprintf("mem://localhost/stage006/proj:dset:table1/%v.win", now.Add(20*time.Second).UnixNano()),
 			expect: &Window{
 				Start:   now.Add(-10 * time.Second),
 				End:     now.Add(20 * time.Second),
 				EventID: "event1",
 			},
 		},
-
 	}
 
 	ctx := context.Background()
@@ -317,7 +313,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 			setupResources = append(setupResources, useCase.windows.Resources(useCase.route.Dest.Table)...)
 		}
 		err := asset.Create(mgr, useCase.stageURL, setupResources)
-		if ! assert.Nil(t, err, useCase.description) {
+		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
 
@@ -331,11 +327,11 @@ func TestService_TryAcquireWindow(t *testing.T) {
 			assert.NotNil(t, err, useCase.description)
 			continue
 		}
-		if ! assert.Nil(t, err, useCase.description) {
+		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
 		if useCase.expect != nil {
-			if !  assert.NotNil(t, window, useCase.description) {
+			if !assert.NotNil(t, window, useCase.description) {
 				continue
 			}
 			assert.EqualValues(t, useCase.expect.EventID, window.EventID, useCase.description)
@@ -346,7 +342,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 		}
 
 		if useCase.expectWinURL != "" {
-			has, _  := storage.Exists(ctx, useCase.expectWinURL)
+			has, _ := storage.Exists(ctx, useCase.expectWinURL)
 			assert.True(t, has, useCase.description+", window file no found: "+useCase.expectWinURL)
 		}
 	}

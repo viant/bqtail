@@ -3,6 +3,8 @@ package tail
 import (
 	"bqtail/base"
 	"bqtail/service/bq"
+	"bqtail/service/secret"
+	"bqtail/service/slack"
 	"bqtail/service/storage"
 	"bqtail/tail/batch"
 	"bqtail/tail/config"
@@ -18,7 +20,6 @@ import (
 	"github.com/viant/afs/file"
 	store "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
-	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"path"
 	"time"
@@ -42,6 +43,9 @@ func (s *service) Init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	slackService := slack.New(s.config.Region, s.config.ProjectID, s.storage, secret.New())
+	slack.InitRegistry(s.Registry, slackService)
 	bqService, err := bigquery.NewService(ctx)
 	if err != nil {
 		return err
@@ -158,7 +162,7 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, 
 	if err == nil {
 		job.JobStatus = bqJob.Status
 		job.Statistics = bqJob.Statistics
-		err = bq.JobError(bqJob)
+		err = base.JobError(bqJob)
 		response.JobRef = bqJob.JobReference
 	}
 	return err
@@ -173,14 +177,12 @@ func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 	for _, datafile := range window.Datafiles {
 		URLsToDelete = append(URLsToDelete, datafile.URL)
 	}
-	delete := storage.DeleteRequest{URLs: URLsToDelete}
-	deleteAction, err := task.NewAction("delete", delete)
+	deleteReq := storage.DeleteRequest{URLs: URLsToDelete}
+	deleteAction, err := task.NewAction("delete", deleteReq)
 	if err != nil {
 		return err
 	}
 	actions.AddOnSuccess(deleteAction)
-	fmt.Printf("delte action %v\n", delete)
-	toolbox.Dump(deleteAction)
 	return nil
 }
 

@@ -36,7 +36,6 @@ func (r *DeleteRequest) Init() {
 	}
 }
 
-
 //Validate check if request is valid
 func (r *DeleteRequest) Validate() error {
 	if len(r.URLs) == 0 {

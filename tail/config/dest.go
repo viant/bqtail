@@ -1,11 +1,11 @@
 package config
 
 import (
+	"bqtail/base"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
-	"bqtail/base"
 	"google.golang.org/api/bigquery/v2"
 	"regexp"
 	"strconv"
@@ -34,12 +34,12 @@ type Destination struct {
 
 func (d Destination) Clone() *Destination {
 	return &Destination{
-		Table:d.Table,
-		Pattern:d.Pattern,
-		pattern:d.pattern,
-		Schema:d.Schema,
-		TransientDataset:d.TransientDataset,
-		UniqueColumns:d.UniqueColumns,
+		Table:            d.Table,
+		Pattern:          d.Pattern,
+		pattern:          d.pattern,
+		Schema:           d.Schema,
+		TransientDataset: d.TransientDataset,
+		UniqueColumns:    d.UniqueColumns,
 	}
 }
 
@@ -50,7 +50,6 @@ func (d *Destination) Validate() error {
 	}
 	return nil
 }
-
 
 //ExpandTable returns sourced table
 func (d *Destination) ExpandTable(created time.Time, source string) (table string, err error) {
@@ -111,7 +110,7 @@ func expandDate(table string, created time.Time, count int) string {
 	return strings.Replace(table, DateExpr, date, count)
 }
 
-func expandWithPattern(expr *regexp.Regexp, sourceURL string, table string) (string) {
+func expandWithPattern(expr *regexp.Regexp, sourceURL string, table string) string {
 	_, URLPath := url.Base(sourceURL, file.Scheme)
 	URLPath = strings.Trim(URLPath, "/")
 	matched := expr.FindStringSubmatch(URLPath)

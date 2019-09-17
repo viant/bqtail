@@ -1,12 +1,11 @@
 package bq
 
 import (
+	"bqtail/task"
 	"context"
 	"github.com/viant/afs"
-	"bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 )
-
 
 type Service interface {
 	task.Service
@@ -22,22 +21,20 @@ type Service interface {
 	Wait(ctx context.Context, ref *bigquery.JobReference) (*bigquery.Job, error)
 }
 
-
 type service struct {
 	*bigquery.Service
-	Registry task.Registry
-	jobs *bigquery.JobsService
+	Registry  task.Registry
+	jobs      *bigquery.JobsService
 	projectID string
-	storage afs.Service
+	storage   afs.Service
 }
-
 
 //New creates bq service
 func New(bq *bigquery.Service, registry task.Registry, projectID string, storageService afs.Service) Service {
 	return &service{
-		Service:bq,
+		Service:   bq,
 		Registry:  registry,
-		projectID:projectID,
-		storage:storageService,
+		projectID: projectID,
+		storage:   storageService,
 	}
 }

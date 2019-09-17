@@ -1,12 +1,12 @@
 package storage
 
 import (
+	"bqtail/task"
 	"context"
 	"fmt"
-	"bqtail/task"
 )
 
-
+//Run handles storage request
 func (s *service) Run(ctx context.Context, request task.Request) error {
 	switch req := request.(type) {
 	case *DeleteRequest:
@@ -17,4 +17,3 @@ func (s *service) Run(ctx context.Context, request task.Request) error {
 		return fmt.Errorf("unsupported request type:%T", request)
 	}
 }
-

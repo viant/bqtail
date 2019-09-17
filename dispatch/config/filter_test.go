@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
 	"bqtail/dispatch/contract"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/bigquery/v2"
 	"testing"
 )
@@ -64,7 +64,7 @@ func TestEvent_Match(t *testing.T) {
 			description: "filter by job type and URI match",
 			expect:      true,
 			filter: &Filter{
-				Type:        "EXTRACT",
+				Type: "EXTRACT",
 				Dest: ".+table10",
 			},
 			event: &contract.Job{
@@ -85,7 +85,7 @@ func TestEvent_Match(t *testing.T) {
 			description: "filter by job type and URI does not match",
 			expect:      false,
 			filter: &Filter{
-				Type:        "EXTRACT",
+				Type: "EXTRACT",
 				Dest: ".+table2",
 			},
 			event: &contract.Job{
@@ -150,7 +150,7 @@ func TestEvent_Match(t *testing.T) {
 			description: "filter by dest  match",
 			expect:      true,
 			filter: &Filter{
-				Type:   "QUERY",
+				Type: "QUERY",
 				Dest: ".+myDataset\\.myDestTable",
 			},
 			event: &contract.Job{
@@ -183,4 +183,3 @@ func TestEvent_Match(t *testing.T) {
 	}
 
 }
-

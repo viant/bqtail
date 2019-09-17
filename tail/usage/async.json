@@ -1,0 +1,30 @@
+{
+  "ErrorURL": "gs://YYY/errors/",
+  "JournalURL": "gs://YYY/journal/",
+  "DeferTaskURL": "gs://e2e-data/tasks/",
+  "Routes": [
+    {
+      "When": {
+        "Prefix": "/data/folder",
+        "Suffix": ".json"
+      },
+      "Async": true,
+      "Dest": {
+        "Table": "mydataset.mytable"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete"
+        }
+      ],
+      "OnFailure": [
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "gs://e2e-data/errors"
+          }
+        }
+      ]
+    }
+  ]
+}

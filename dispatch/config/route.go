@@ -4,9 +4,6 @@ import "bqtail/task"
 
 //Route represents trigger route
 type Route struct {
-	When    Filter
+	When Filter
 	task.Actions
 }
-
-
-

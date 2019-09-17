@@ -15,7 +15,7 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 
 type MoveRequest struct {
 	SourceURL string
-	DestURL string
+	DestURL   string
 }
 
 func (r MoveRequest) Validate() error {
@@ -27,4 +27,3 @@ func (r MoveRequest) Validate() error {
 	}
 	return nil
 }
-

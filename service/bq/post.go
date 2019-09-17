@@ -16,6 +16,7 @@ import (
 func (s *service) setJobID(ctx context.Context, actions *task.Actions) (*bigquery.JobReference, error) {
 	var ID string
 	var err error
+
 	if actions != nil {
 		if ID, err = actions.ID(base.JobPrefix); err != nil {
 			return nil, errors.Wrapf(err, "failed to generate job ID: %v", actions.JobID)
@@ -42,18 +43,17 @@ func (s *service) schedulePostTask(ctx context.Context, jobReference *bigquery.J
 	return s.storage.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
-
 func (s *service) Post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 
 	job, err := s.post(ctx, projectID, job, onDoneActions)
 	if err == nil {
-		err = JobError(job)
+		err = base.JobError(job)
 	}
 	if onDoneActions != nil && onDoneActions.IsSyncMode() {
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
 			if err == nil {
-				err = JobError(job)
+				err = base.JobError(job)
 			}
 		}
 		if e := s.runActions(ctx, err, job, onDoneActions); e != nil {
@@ -74,7 +74,7 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 		job.JobReference.JobId = base.EncodePathSeparator(job.JobReference.JobId)
 	}
 
-	if err = s.schedulePostTask(ctx, job.JobReference, onDoneActions);err != nil {
+	if err = s.schedulePostTask(ctx, job.JobReference, onDoneActions); err != nil {
 		return nil, err
 	}
 	jobService := bigquery.NewJobsService(s.Service)

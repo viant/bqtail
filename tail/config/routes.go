@@ -13,18 +13,15 @@ func (r Routes) Match(URL string) *Route {
 	return nil
 }
 
-
 //Validate checks if routes are valid
 func (r Routes) Validate() error {
 	for i := range r {
-		if err := r[i].Validate();err != nil {
+		if err := r[i].Validate(); err != nil {
 			return err
 		}
 	}
 	return nil
 }
-
-
 
 //UsesBatch returns true if routes uses batch
 func (r Routes) UsesBatch() bool {
@@ -39,7 +36,7 @@ func (r Routes) UsesBatch() bool {
 //UsesAsync returns true if routes uses async mode
 func (r Routes) UsesAsync() bool {
 	for i := range r {
-		if r[i].Async  {
+		if r[i].Async {
 			return true
 		}
 	}

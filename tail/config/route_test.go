@@ -20,8 +20,8 @@ func TestRoute_HasMatch(t *testing.T) {
 				Basic: matcher.Basic{
 					Prefix: "/folder/",
 				},
-				Dest:&Destination{
-					Table:"project:dataset:table1",
+				Dest: &Destination{
+					Table: "project:dataset:table1",
 				},
 			},
 			URL:    "ssh:///folder/abc.xom",
@@ -33,10 +33,9 @@ func TestRoute_HasMatch(t *testing.T) {
 				Basic: matcher.Basic{
 					Prefix: "folder/",
 				},
-				Dest:&Destination{
-					Table:"project:dataset:table2",
+				Dest: &Destination{
+					Table: "project:dataset:table2",
 				},
-
 			},
 			URL:    "ssh:///f/abc.xom",
 			expect: false,
@@ -47,10 +46,9 @@ func TestRoute_HasMatch(t *testing.T) {
 				Basic: matcher.Basic{
 					Suffix: ".csv",
 				},
-				Dest:&Destination{
-					Table:"project:dataset:table3",
+				Dest: &Destination{
+					Table: "project:dataset:table3",
 				},
-
 			},
 			URL:    "ssh:///folder/abc.csv",
 			expect: true,
@@ -61,10 +59,9 @@ func TestRoute_HasMatch(t *testing.T) {
 				Basic: matcher.Basic{
 					Suffix: ".tsv",
 				},
-				Dest:&Destination{
-					Table:"project:dataset:table4",
+				Dest: &Destination{
+					Table: "project:dataset:table4",
 				},
-
 			},
 			URL:    "ssh:///f/abc.ts",
 			expect: false,
@@ -76,10 +73,9 @@ func TestRoute_HasMatch(t *testing.T) {
 					Suffix: ".tsv",
 					Filter: `^[a-z]*/data/\\d+/`,
 				},
-				Dest:&Destination{
-					Table:"project:dataset:table5",
+				Dest: &Destination{
+					Table: "project:dataset:table5",
 				},
-
 			},
 			URL:    "ssh://host/123/abc.tsv",
 			expect: false,
@@ -91,10 +87,9 @@ func TestRoute_HasMatch(t *testing.T) {
 					Suffix: ".tsv",
 					Filter: `^\/[a-z]+/data/\d+/`,
 				},
-				Dest:&Destination{
-					Table:"project:dataset:table6",
+				Dest: &Destination{
+					Table: "project:dataset:table6",
 				},
-
 			},
 			URL:    "ssh://host/aa/data/002/abc.tsv",
 			expect: true,

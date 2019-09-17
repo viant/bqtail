@@ -19,7 +19,10 @@ func BqDispatchFn(ctx context.Context, event interface{}) (err error) {
 	}
 	request := newRequest(meta)
 	_, err = handleDispatchEvent(ctx, request)
-	return err
+	if err != nil {
+		log.Print(err)
+	}
+	return nil
 }
 
 func newRequest(meta *metadata.Metadata) *contract.Request {
