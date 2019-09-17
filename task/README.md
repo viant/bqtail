@@ -48,5 +48,5 @@ The generic task format use the following structure
 
 }
 ```
-The task services uses [Cloud Services](../service/README.md) with supported actions. 
+The task services uses [Cloud Services](../service/README.md) with various actions. 
 
