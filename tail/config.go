@@ -26,7 +26,9 @@ func (c *Config) loadRoutes(ctx context.Context) error {
 		return nil
 	}
 	fs := afs.New()
-	routesObject, err := fs.List(ctx, c.RoutesBaseURL, matcher.NewBasic("", ".json", ""))
+
+	suffixMatcher, _ := matcher.NewBasic("", ".json", "")
+	routesObject, err := fs.List(ctx, c.RoutesBaseURL, suffixMatcher)
 	if err != nil {
 		return err
 	}
