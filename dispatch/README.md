@@ -20,7 +20,6 @@ for example: [@$JobID.json](usage/dispatch.json) defines on success and or failu
 {
   "DeferTaskURL": "gs://${config.Bucket}/tasks/",
   "Async": true,
-  "JobID": "~/\\d+/",
   "OnSuccess": [
     {
       "Action": "delete",
@@ -90,8 +89,16 @@ for example: [@config.json](usage/config.json) defines routes and on success and
 - JournalURL: job history location 
 - ErrorURL: - errors location
 - DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
-- Routes: post job tasks matching rules (only one route can be matched)
+- Routes: post job tasks matching rules (no more than one route can be matched)
+- RoutesBaseURL: base URL where each route is JSON file with routes arrays
 
+- Routes.When defines matching filter 
+    - Dest: destination table reg expressions against event dest table in the format: project:dataset.table
+    - Source: destination table reg expressions against event source table in the format: project:dataset.table
+    - Type: big query job type (can be empty), QUERY, LOAD, COPY, EXPORT
+    
+- Routes.OnSuccess: actions to run when job completed without errors
+- Routes.OnFailure: actions to run when job completed with errors
 
 ### Deployment
 

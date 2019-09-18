@@ -59,7 +59,13 @@ All these limitations are addressed by asynchronous and batch mode.
 - ErrorURL: - errors location
 - DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
 - BatchURL: transient storage location for managing event batching.
-- Routes: data ingestion matching rules (only one route can be matched)
+- Routes: data ingestion matching rules (no more than one route can be matched)
+
+- Routes.When defines matching filter
+    - Prefix: path prefix
+    - Suffix: path suffix
+- Routes.OnSuccess: actions to run when job completed without errors
+- Routes.OnFailure: actions to run when job completed with errors
 
 
 #### Asynchronous mode

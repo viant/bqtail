@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	"github.com/viant/afs/matcher"
+	"github.com/viant/afs/storage"
 	"os"
 	"strings"
 )
@@ -16,13 +18,51 @@ import (
 type Config struct {
 	base.Config
 	Routes config.Routes
+	RoutesBaseURL string
 }
+
+func (c *Config) loadRoutes(ctx context.Context) error {
+	if c.RoutesBaseURL == "" {
+		return nil
+	}
+	fs := afs.New()
+	routesObject, err := fs.List(ctx, c.RoutesBaseURL, matcher.NewBasic("", ".json", ""))
+	if err != nil {
+		return err
+	}
+	for _, object := range routesObject {
+		if err = c.loadRoute(ctx, fs, object);err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Config) loadRoute(ctx context.Context, storage afs.Service, object storage.Object) error {
+	reader, err := storage.Download(ctx, object)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+	routes := config.Routes{}
+	if err = json.NewDecoder(reader).Decode(&routes);err == nil {
+		c.Routes = append(c.Routes, routes...)
+	}
+	return err
+}
+
 
 //Init initialises config
 func (c *Config) Init(ctx context.Context) error {
 	if len(c.Routes) == 0 {
 		c.Routes = make(config.Routes, 0)
 	}
+	if err := c.loadRoutes(ctx);err != nil {
+		return err
+	}
+
 	for i := range c.Routes {
 		if err := c.Routes[i].When.Init(); err != nil {
 			return errors.Wrap(err, "failed to initialise rotues")
@@ -30,6 +70,7 @@ func (c *Config) Init(ctx context.Context) error {
 	}
 	return c.Config.Init(ctx)
 }
+
 
 //NewConfigFromEnv creates config from env
 func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
