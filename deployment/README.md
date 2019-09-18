@@ -31,7 +31,7 @@ This bucket stores all configuration files:
 
 ##### Operational data flow bucket
 
-This bucket stores all transient cloud function data and errors and history journal 
+This bucket stores all transient data and history journal including errors 
 
 **${gcp.projectID}-dataflow-ops**
 
