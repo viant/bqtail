@@ -51,7 +51,7 @@ This bucket stores data exported from BigQuery, it can be source for [storage mi
 
 # Deployment
 
-With [endly](https://github.com/viant/endly/) automation runner
+You can deploy the described infrasturctre with BqTail and BqDispatch cloud function with [endly](https://github.com/viant/endly/) automation runner.
 
 ```bash
 git checkout https://github.com/viant/bqtail.git
