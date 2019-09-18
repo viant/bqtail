@@ -1,0 +1,51 @@
+init:
+
+  bqTail: $Cat('config/tail.json')
+  bqTailConfig:  $AsString($bqTail)
+
+  bqDispatch: $Cat('config/dispatch.json')
+  bqDispatchConfig:  $AsString($bqDispatch)
+  info: 'bqtail'
+
+pipeline:
+  createBuckets:
+    dataflow:
+      action: storage:upload
+      sourceKey: info
+      dest:
+        URL: gs://${config.bucket}/config/info.txt
+        credentials: $gcpCredentials
+    dataflow-ops:
+      action: storage:upload
+      sourceKey: info
+      dest:
+        URL: gs://${config.bucket}-ops/journal/info.txt
+        credentials: $gcpCredentials
+    dataflow-inbound:
+      action: storage:upload
+      sourceKey: info
+      dest:
+        URL: gs://${config.bucket}-inbound/info.txt
+        credentials: $gcpCredentials
+    dataflow-outbound:
+      action: storage:upload
+      sourceKey: info
+      dest:
+        URL: gs://${config.bucket}-outbound/info.txt
+        credentials: $gcpCredentials
+
+  uploadConfigs:
+    bqTail:
+      action: storage:upload
+      sourceKey: bqTailConfig
+      dest:
+        URL: gs://${config.bucket}/config/bqtail.json
+        credentials: $gcpCredentials
+
+    bqDispatch:
+      action: storage:upload
+      sourceKey: bqDispatchConfig
+      dest:
+        URL: gs://${config.bucket}/config/bqdispatch.json
+        credentials: $gcpCredentials
+

@@ -191,15 +191,8 @@ The following URL are used by tail/dispatch services:
 - [BqDispatch](dispatch/README.md#deployment)
 
 
+The following [Deployment](deployment/README.md) details geneic deployment.
 
-
-With [endly](https://github.com/viant/endly/) automation runner
-
-```bash
-
-endly deploy.yaml
-
-```
 
 Where: [@deploy.yaml](deployment/deploy.yaml) 
 

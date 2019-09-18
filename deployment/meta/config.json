@@ -1,0 +1,3 @@
+{
+  "bucket": "${projectID}-dataflow"
+}

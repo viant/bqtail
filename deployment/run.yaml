@@ -1,0 +1,22 @@
+init:
+  appPath: /tmp/build/bqtail
+  gcpCredentials: ${env.GOOGLE_APPLICATION_CREDENTIALS}
+  gcpMap: $AsMap($Cat($gcpCredentials))
+  projectID: $gcpMap.project_id
+
+  configText: $Cat('meta/config.json')
+  config: $AsMap(${configText})
+
+
+pipeline:
+  init:
+    action: run
+    request: '@init'
+
+  build:
+    action: run
+    request: '@build'
+
+  deploy:
+    action: run
+    request: '@deploy'

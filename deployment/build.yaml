@@ -1,0 +1,19 @@
+pipeline:
+  checkout:
+    action: vc/git:checkout
+    origin:
+      URL: https://github.com/viant/bqtail.git
+    dest:
+      URL: $appPath
+
+  package:
+    action: exec:run
+    target: $target
+    checkError: true
+    commands:
+      - cd $appPath
+      - export GIT_TERMINAL_PROMPT=1
+      - export GO111MODULE=on
+      - unset GOPATH
+      - go mod vendor
+      - go build

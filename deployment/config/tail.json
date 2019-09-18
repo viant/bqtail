@@ -1,1 +1,7 @@
-{}
+{
+  "BatchURL": "gs://${config.bucket}-ops/batch/",
+  "ErrorURL": "gs://${config.bucket}-ops/errors/",
+  "JournalURL": "gs://${config.bucket}-ops/journal/",
+  "DeferTaskURL": "gs://${config.bucket}-ops/tasks/",
+  "RoutesBaseURL": "gs://${config.bucket}/config/bqtail/"
+}
