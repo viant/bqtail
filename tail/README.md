@@ -60,6 +60,8 @@ All these limitations are addressed by asynchronous and batch mode.
 - DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
 - BatchURL: transient storage location for managing event batching.
 - Routes: data ingestion matching rules (no more than one route can be matched)
+- RoutesBaseURL: base URL where each route is JSON file with routes arrays
+
 
 - Routes.When defines matching filter
     - Prefix: path prefix

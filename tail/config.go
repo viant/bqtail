@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/afs"
+	"github.com/viant/afs/matcher"
+	"github.com/viant/afs/storage"
 	"os"
 	"strings"
 )
@@ -19,6 +21,39 @@ type Config struct {
 	BatchURL string
 }
 
+func (c *Config) loadRoutes(ctx context.Context) error {
+	if c.RoutesBaseURL == "" {
+		return nil
+	}
+	fs := afs.New()
+	routesObject, err := fs.List(ctx, c.RoutesBaseURL, matcher.NewBasic("", ".json", ""))
+	if err != nil {
+		return err
+	}
+	for _, object := range routesObject {
+		if err = c.loadRoute(ctx, fs, object);err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Config) loadRoute(ctx context.Context, storage afs.Service, object storage.Object) error {
+	reader, err := storage.Download(ctx, object)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+	routes := config.Routes{}
+	if err = json.NewDecoder(reader).Decode(&routes);err == nil {
+		c.Routes = append(c.Routes, routes...)
+	}
+	return err
+}
+
+
 //Init initializes config
 func (c *Config) Init(ctx context.Context) error {
 	err := c.Config.Init(ctx)
@@ -26,6 +61,10 @@ func (c *Config) Init(ctx context.Context) error {
 		return err
 	}
 	if len(c.Routes) == 0 {
+		c.Routes  = config.Routes{}
+	}
+
+	if err := c.loadRoutes(ctx);err != nil {
 		return err
 	}
 	for _, route := range c.Routes {

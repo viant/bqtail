@@ -89,8 +89,10 @@ for example: [@config.json](usage/config.json) defines routes and on success and
 - JournalURL: job history location 
 - ErrorURL: - errors location
 - DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
-- Routes: post job tasks matching rules (no more than one route can be matched)
+- Routes: post job tasks matching rules (no more than one route can be matched)  
 - RoutesBaseURL: base URL where each route is JSON file with routes arrays
+  
+
 
 - Routes.When defines matching filter 
     - Dest: destination table reg expressions against event dest table in the format: project:dataset.table
