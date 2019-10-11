@@ -1,11 +1,15 @@
 package contract
 
-import "bqtail/base"
+import (
+	"bqtail/base"
+	"bqtail/dispatch/config"
+)
 
 //Response represents response
 type Response struct {
 	base.Response
-	JobError string
+	Rule *config.Rule `json:",omitempty"`
+	JobError string `json:",omitempty"`
 }
 
 //NewResponse creates a new response

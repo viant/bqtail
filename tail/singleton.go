@@ -2,7 +2,7 @@ package tail
 
 import (
 	"context"
-	//use google storage connector
+	//use google fs connector
 	_ "github.com/viant/afsc/gs"
 )
 

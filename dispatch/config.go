@@ -3,13 +3,12 @@ package dispatch
 import (
 	"bqtail/base"
 	"bqtail/dispatch/config"
+
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
-	"github.com/viant/afs/matcher"
-	"github.com/viant/afs/storage"
 	"os"
 	"strings"
 )
@@ -17,60 +16,26 @@ import (
 //Config represents dispatch config
 type Config struct {
 	base.Config
-	Routes config.Routes
+	config.Ruleset
 	RoutesBaseURL string
-}
-
-func (c *Config) loadRoutes(ctx context.Context) error {
-	if c.RoutesBaseURL == "" {
-		return nil
-	}
-	fs := afs.New()
-	suffixMatcher, _ := matcher.NewBasic("", ".json", "")
-	routesObject, err := fs.List(ctx, c.RoutesBaseURL, suffixMatcher)
-	if err != nil {
-		return err
-	}
-	for _, object := range routesObject {
-		if err = c.loadRoute(ctx, fs, object);err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *Config) loadRoute(ctx context.Context, storage afs.Service, object storage.Object) error {
-	reader, err := storage.Download(ctx, object)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = reader.Close()
-	}()
-	routes := config.Routes{}
-	if err = json.NewDecoder(reader).Decode(&routes);err == nil {
-		c.Routes = append(c.Routes, routes...)
-	}
-	return err
 }
 
 
 //Init initialises config
-func (c *Config) Init(ctx context.Context) error {
-	if len(c.Routes) == 0 {
-		c.Routes = make(config.Routes, 0)
-	}
-	if err := c.loadRoutes(ctx);err != nil {
+func (c *Config) Init(ctx context.Context, fs afs.Service) error {
+	err := c.Config.Init(ctx)
+	if err != nil {
 		return err
 	}
-
-	for i := range c.Routes {
-		if err := c.Routes[i].When.Init(); err != nil {
-			return errors.Wrap(err, "failed to initialise rotues")
-		}
-	}
-	return c.Config.Init(ctx)
+	return  c.Ruleset.Init(ctx, fs, c.ProjectID)
 }
+
+//ReloadIfNeeded reloads rules if needed
+func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {
+	_, err := c.Ruleset.ReloadIfNeeded(ctx, fs)
+	return err
+}
+
 
 
 //NewConfigFromEnv creates config from env
@@ -85,13 +50,15 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 	cfg := &Config{}
 	err := json.NewDecoder(strings.NewReader(data)).Decode(cfg)
 	if err == nil {
-		if err = cfg.Init(ctx); err != nil {
+		if err = cfg.Init(ctx, afs.New()); err != nil {
 			return nil, err
 		}
-		err = cfg.Validate()
+		err = cfg.Config.Validate()
 	}
 	return cfg, err
 }
+
+
 
 //NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
@@ -103,10 +70,10 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	cfg := &Config{}
 	err = json.NewDecoder(reader).Decode(cfg)
 	if err == nil {
-		if err = cfg.Init(ctx); err != nil {
+		if err = cfg.Init(ctx, afs.New()); err != nil {
 			return cfg, err
 		}
-		err = cfg.Validate()
+		err = cfg.Config.Validate()
 	}
 	return cfg, err
 }

@@ -1,12 +1,13 @@
 package bqtail
 
 import (
-	"bqtail/base"
 	"bqtail/dispatch"
 	"bqtail/dispatch/contract"
 	"cloud.google.com/go/functions/metadata"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 )
@@ -43,14 +44,8 @@ func handleDispatchEvent(ctx context.Context, request *contract.Request) (*contr
 	if response.Error != "" {
 		return response, errors.New(response.Error)
 	}
-	if response.Status != base.StatusOK {
-		log.Printf("Status: %v, Error: %v", response.Status, response.Error)
-	} else {
-		jobID := ""
-		if response.JobRef != nil {
-			jobID = response.JobRef.JobId
-		}
-		log.Printf("Status: %v, Time: %v, Matched: %v, Job: %v", response.Status, response.TimeTaken, response.Matched, jobID)
+	if data, err := json.Marshal(response); err == nil {
+		fmt.Printf("%v\n", string(data))
 	}
 	return response, nil
 }

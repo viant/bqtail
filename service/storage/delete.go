@@ -13,7 +13,7 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 		return err
 	}
 	for i := range request.URLs {
-		if e := s.storage.Delete(ctx, request.URLs[i]); e != nil {
+		if e := s.fs.Delete(ctx, request.URLs[i]); e != nil {
 			err = e
 		}
 	}

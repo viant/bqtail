@@ -1,12 +1,13 @@
 package bqtail
 
 import (
-	"bqtail/base"
 	"bqtail/tail"
 	"bqtail/tail/contract"
 	"cloud.google.com/go/functions/metadata"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 )
 
@@ -36,14 +37,9 @@ func handleTailEvent(ctx context.Context, request *contract.Request) (*contract.
 	if response.Error != "" {
 		return response, errors.New(response.Error)
 	}
-	if response.Status != base.StatusOK {
-		log.Printf("Status: %v, Error: %v", response.Status, response.Error)
-	} else {
-		jobID := ""
-		if response.JobRef != nil {
-			jobID = response.JobRef.JobId
-		}
-		log.Printf("Status: %v, Time: %v, Matched: %v, Batched: %v, job: %v", response.Status, response.TimeTaken, response.Matched, response.Batched, jobID)
+
+	if data, err := json.Marshal(response); err == nil {
+		fmt.Printf("%v\n", string(data))
 	}
 	return response, nil
 }

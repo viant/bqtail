@@ -8,12 +8,13 @@ import (
 
 //Actions represents actions
 type Actions struct {
-	DeferTaskURL string    `json:",ommittempty"`
-	Async        bool      `json:",ommittempty"`
-	JobID        string    `json:",ommittempty"`
-	OnSuccess    []*Action `json:",ommittempty"`
-	OnFailure    []*Action `json:",ommittempty"`
+	DeferTaskURL string    `json:",omitempty"`
+	Async        bool      `json:",omitempty"`
+	JobID        string    `json:",omitempty"`
+	OnSuccess    []*Action `json:",omitempty"`
+	OnFailure    []*Action `json:",omitempty"`
 }
+
 
 //ToRun returns actions to run
 func (a Actions) ToRun(err error, job *base.Job) []*Action {

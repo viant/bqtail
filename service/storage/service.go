@@ -5,16 +5,16 @@ import (
 	"github.com/viant/afs"
 )
 
-//Service represents storage service
+//Service represents fs service
 type Service interface {
 	task.Service
 }
 
 type service struct {
-	storage afs.Service
+	fs afs.Service
 }
 
-//New creates storage service
+//New creates fs service
 func New(storage afs.Service) Service {
-	return &service{storage: storage}
+	return &service{fs: storage}
 }

@@ -23,13 +23,12 @@ const (
 type Destination struct {
 	Table string
 	//Pattern uses URI relative path (without leading backslash)
-
-	Pattern string
-	pattern *regexp.Regexp
-	Schema  Schema
-
-	TransientDataset string
-	UniqueColumns    []string
+	bigquery.JobConfigurationLoad
+	Pattern          string `json:",omitempty"`
+	pattern          *regexp.Regexp
+	Schema           Schema `json:",omitempty"`
+	TransientDataset string `json:",omitempty"`
+	UniqueColumns    []string `json:",omitempty"`
 }
 
 func (d Destination) Clone() *Destination {
@@ -130,11 +129,11 @@ func (d *Destination) NewJobConfigurationLoad(created time.Time, URIs ...string)
 		return nil, fmt.Errorf("URIs were empty")
 	}
 	var err error
-	result := &bigquery.JobConfigurationLoad{}
+	result :=  d.JobConfigurationLoad
 	result.DestinationTable, err = d.TableReference(created, URIs[0])
 	if err != nil {
 		return nil, err
 	}
 	result.SourceUris = URIs
-	return result, nil
+	return &result, nil
 }

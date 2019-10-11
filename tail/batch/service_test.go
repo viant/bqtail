@@ -58,7 +58,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 		description  string
 		stageURL     string
 		request      *contract.Request
-		route        *config.Route
+		route        *config.Rule
 		transfers    testTransfers
 		windows      testWindows
 		expect       *Window
@@ -86,7 +86,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			request: contract.NewRequest("event1", "mem://localhost/data/file2.avro", now.Add(-10*time.Second)),
-			route: &config.Route{
+			route: &config.Rule{
 				Batch: &config.Batch{
 					Window: &config.Window{
 						Duration: 30 * time.Second,
@@ -125,7 +125,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			request: contract.NewRequest("event2", "mem://localhost/data/file2.avro", now.Add(-9*time.Second)),
-			route: &config.Route{
+			route: &config.Rule{
 				Batch: &config.Batch{
 					Window: &config.Window{
 						Duration: 30 * time.Second,
@@ -158,7 +158,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			request: contract.NewRequest("event2", "mem://localhost/data/file2.avro", now.Add(-9*time.Second)),
-			route: &config.Route{
+			route: &config.Rule{
 				Batch: &config.Batch{
 					Window: &config.Window{
 						Duration: 30 * time.Second,
@@ -205,7 +205,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			request: contract.NewRequest("event2", "mem://localhost/data/file2.avro", now.Add(-9*time.Second)),
-			route: &config.Route{
+			route: &config.Rule{
 				Batch: &config.Batch{
 					Window: &config.Window{
 						Duration: 30 * time.Second,
@@ -257,7 +257,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			request: contract.NewRequest("event2", "mem://localhost/data/file2.avro", now.Add(-9*time.Second)),
-			route: &config.Route{
+			route: &config.Rule{
 				Batch: &config.Batch{
 					Window: &config.Window{
 						Duration: 30 * time.Second,
@@ -285,7 +285,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			request: contract.NewRequest("event1", "mem://localhost/data/file2.avro", now.Add(-10*time.Second)),
-			route: &config.Route{
+			route: &config.Rule{
 				Batch: &config.Batch{
 					Window: &config.Window{
 						Duration: 30 * time.Second,

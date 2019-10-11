@@ -33,29 +33,29 @@ type Service interface {
 
 type service struct {
 	task.Registry
-	bq      bq.Service
-	batch   batch.Service
-	storage afs.Service
-	config  *Config
+	bq     bq.Service
+	batch  batch.Service
+	fs     afs.Service
+	config *Config
 }
 
 func (s *service) Init(ctx context.Context) error {
-	err := s.config.Init(ctx)
+	err := s.config.Init(ctx, s.fs)
 	if err != nil {
 		return err
 	}
 
-	slackService := slack.New(s.config.Region, s.config.ProjectID, s.storage, secret.New())
+	slackService := slack.New(s.config.Region, s.config.ProjectID, s.fs, secret.New())
 	slack.InitRegistry(s.Registry, slackService)
 	bqService, err := bigquery.NewService(ctx)
 	if err != nil {
 		return err
 	}
-	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.storage)
-	s.batch = batch.New(s.config.BatchURL, s.storage)
+	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs)
+	s.batch = batch.New(s.config.BatchURL, s.fs)
 
 	bq.InitRegistry(s.Registry, s.bq)
-	storage.InitRegistry(s.Registry, storage.New(s.storage))
+	storage.InitRegistry(s.Registry, storage.New(s.fs))
 	return err
 }
 
@@ -70,20 +70,25 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 }
 
 func (s *service) tail(ctx context.Context, request *contract.Request, response *contract.Response) error {
-	route := s.config.Routes.Match(request.SourceURL)
-	if route == nil {
+	if err := s.config.ReloadIfNeeded(ctx, s.fs); err != nil {
+		return err
+	}
+	rule := s.config.Match(request.SourceURL)
+	if rule == nil {
+		response.Status = base.StatusNoMatch
 		return nil
 	}
+	response.Rule = rule
 	response.Matched = true
 	response.MatchedURL = request.SourceURL
-	source, err := s.storage.Object(ctx, request.SourceURL)
+	source, err := s.fs.Object(ctx, request.SourceURL)
 	if err != nil {
 		return errors.Wrapf(err, "event source not found:%v", request.SourceURL)
 	}
-	if route.Batch != nil {
-		return s.tailInBatch(ctx, source, route, request, response)
+	if rule.Batch != nil {
+		return s.tailInBatch(ctx, source, rule, request, response)
 	}
-	return s.tailIndividually(ctx, source, route, request, response)
+	return s.tailIndividually(ctx, source, rule, request, response)
 }
 
 func (s *service) onDone(ctx context.Context, job *Job) error {
@@ -94,7 +99,7 @@ func (s *service) onDone(ctx context.Context, job *Job) error {
 	baseURL := s.config.OutputURL(job.Status == base.StatusError)
 	name := path.Join(job.SourceCreated.Format(dateLayout), path.Join(base.DecodePathSeparator(job.Dest()), job.EventID, base.TailJob+base.JobElement+base.JobExt))
 	URL := url.Join(baseURL, name)
-	return s.storage.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
+	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
 func (s *service) buildLoadRequest(ctx context.Context, job *Job, dest *config.Destination) (*bq.LoadRequest, error) {
@@ -131,7 +136,7 @@ func getJobID(job *Job) string {
 	return path.Join(job.Dest(), job.EventID, suffix)
 }
 
-func (s *service) submitJob(ctx context.Context, job *Job, route *config.Route, response *contract.Response) (err error) {
+func (s *service) submitJob(ctx context.Context, job *Job, route *config.Rule, response *contract.Response) (err error) {
 	if len(job.Load.SourceUris) == 0 {
 		return fmt.Errorf("SourceUris was empty")
 	}
@@ -187,7 +192,7 @@ func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 	return nil
 }
 
-func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID string, job *Job, route *config.Route, actions *task.Actions) (*task.Actions, error) {
+func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID string, job *Job, route *config.Rule, actions *task.Actions) (*task.Actions, error) {
 	if route.Dest.TransientDataset == "" {
 		return actions, nil
 	}
@@ -210,8 +215,8 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 	return result, nil
 }
 
-func (s *service) tailIndividually(ctx context.Context, source store.Object, route *config.Route, request *contract.Request, response *contract.Response) error {
-	object, err := s.storage.Object(ctx, request.SourceURL)
+func (s *service) tailIndividually(ctx context.Context, source store.Object, route *config.Rule, request *contract.Request, response *contract.Response) error {
+	object, err := s.fs.Object(ctx, request.SourceURL)
 	if err != nil {
 		return errors.Wrapf(err, "event source not found:%v", request.SourceURL)
 	}
@@ -219,9 +224,10 @@ func (s *service) tailIndividually(ctx context.Context, source store.Object, rou
 		Status:        base.StatusOK,
 		EventID:       request.EventID,
 		SourceCreated: object.ModTime(),
-		Load:          &bigquery.JobConfigurationLoad{},
 	}
-	job.Load.SourceUris = []string{request.SourceURL}
+	if job.Load, err = route.Dest.NewJobConfigurationLoad(time.Now(), request.SourceURL); err != nil {
+		return err
+	}
 	return s.submitJob(ctx, job, route, response)
 }
 
@@ -252,7 +258,7 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 	return nil
 }
 
-func (s *service) tailInBatch(ctx context.Context, source store.Object, route *config.Route, request *contract.Request, response *contract.Response) error {
+func (s *service) tailInBatch(ctx context.Context, source store.Object, route *config.Rule, request *contract.Request, response *contract.Response) error {
 	err := s.batch.Add(ctx, source.ModTime(), request, route)
 	if err != nil {
 		return err
@@ -271,12 +277,15 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 		EventID:       request.EventID,
 		SourceCreated: source.ModTime(),
 		Window:        window,
-		Load:          &bigquery.JobConfigurationLoad{},
 	}
-	job.Load.SourceUris = make([]string, 0)
+	var URIs = make([]string, 0)
 	for i := range window.Datafiles {
-		job.Load.SourceUris = append(job.Load.SourceUris, window.Datafiles[i].SourceURL)
+		URIs = append(URIs, window.Datafiles[i].SourceURL)
 	}
+	if job.Load, err = route.Dest.NewJobConfigurationLoad(time.Now(), URIs...); err != nil {
+		return err
+	}
+
 	return s.submitJob(ctx, job, route, response)
 }
 
@@ -284,7 +293,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 func New(ctx context.Context, config *Config) (Service, error) {
 	srv := &service{
 		config:   config,
-		storage:  afs.New(),
+		fs:       afs.New(),
 		Registry: task.NewRegistry(),
 	}
 	return srv, srv.Init(ctx)

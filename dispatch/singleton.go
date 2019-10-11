@@ -2,7 +2,7 @@ package dispatch
 
 import (
 	"context"
-	//load google storage connector
+	//load google fs connector
 	_ "github.com/viant/afsc/gs"
 )
 

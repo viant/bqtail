@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/viant/afs/url"
 )
 
 //Move move source to destination
@@ -11,7 +12,9 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 	if err != nil {
 		return err
 	}
-	return s.storage.Move(ctx, request.SourceURL, request.DestURL)
+	_,  sourceLocation := url.Base(request.SourceURL, "file")
+	destURL := url.Join(request.DestURL, sourceLocation)
+	return s.fs.Move(ctx, request.SourceURL, destURL)
 }
 
 //MoveRequest represnets a move resource request

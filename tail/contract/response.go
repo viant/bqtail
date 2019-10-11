@@ -1,12 +1,16 @@
 package contract
 
-import "bqtail/base"
+import (
+	"bqtail/base"
+	"bqtail/tail/config"
+)
 
 //Response represents a response
 type Response struct {
 	base.Response
-	Batched     bool
-	BatchRunner bool
+	Rule *config.Rule `json:",omitempty"`
+	Batched     bool `json:",omitempty"`
+	BatchRunner bool `json:",omitempty"`
 }
 
 //NewResponse creates a new response

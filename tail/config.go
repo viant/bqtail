@@ -8,8 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/afs"
-	"github.com/viant/afs/matcher"
-	"github.com/viant/afs/storage"
 	"os"
 	"strings"
 )
@@ -17,59 +15,29 @@ import (
 //Config represents a tail config
 type Config struct {
 	base.Config
-	Routes   config.Routes
+	config.Ruleset
 	BatchURL string
 }
 
-func (c *Config) loadRoutes(ctx context.Context) error {
-	if c.RoutesBaseURL == "" {
-		return nil
-	}
-	fs := afs.New()
-
-	suffixMatcher, _ := matcher.NewBasic("", ".json", "")
-	routesObject, err := fs.List(ctx, c.RoutesBaseURL, suffixMatcher)
-	if err != nil {
-		return err
-	}
-	for _, object := range routesObject {
-		if err = c.loadRoute(ctx, fs, object);err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *Config) loadRoute(ctx context.Context, storage afs.Service, object storage.Object) error {
-	reader, err := storage.Download(ctx, object)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = reader.Close()
-	}()
-	routes := config.Routes{}
-	if err = json.NewDecoder(reader).Decode(&routes);err == nil {
-		c.Routes = append(c.Routes, routes...)
-	}
-	return err
-}
-
-
 //Init initializes config
-func (c *Config) Init(ctx context.Context) error {
+func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	err := c.Config.Init(ctx)
 	if err != nil {
 		return err
 	}
-	if len(c.Routes) == 0 {
-		c.Routes  = config.Routes{}
-	}
 
-	if err := c.loadRoutes(ctx);err != nil {
+	if err = c.Ruleset.Init(ctx, fs, c.ProjectID); err != nil {
 		return err
 	}
-	for _, route := range c.Routes {
+	c.initRules()
+	return nil
+}
+
+func (c *Config) initRules() {
+	if len(c.Rules) == 0 {
+		return
+	}
+	for _, route := range c.Rules {
 		if route.Actions.Async && route.Actions.DeferTaskURL == "" {
 			route.Actions.DeferTaskURL = c.DeferTaskURL
 		}
@@ -77,7 +45,20 @@ func (c *Config) Init(ctx context.Context) error {
 			route.Batch.Init()
 		}
 	}
-	return nil
+}
+
+
+
+//ReloadIfNeeded reloads rules if needed
+func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {
+	changed, err := c.Ruleset.ReloadIfNeeded(ctx, fs)
+	if err != nil {
+		return err
+	}
+	if changed {
+		c.initRules()
+	}
+	return err
 }
 
 //Validate checks if config is valid
@@ -86,13 +67,10 @@ func (c *Config) Validate() error {
 	if err != nil {
 		return err
 	}
-	if len(c.Routes) == 0 {
-		return fmt.Errorf("routes were empty")
-	}
-	if c.Routes.UsesBatch() && c.BatchURL == "" {
+	if c.Ruleset.UsesBatch() && c.BatchURL == "" {
 		return fmt.Errorf("batchURL were empty")
 	}
-	return c.Routes.Validate()
+	return c.Ruleset.Validate()
 }
 
 //NewConfigFromEnv creates config from env
@@ -107,7 +85,7 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 	cfg := &Config{}
 	err := json.NewDecoder(strings.NewReader(data)).Decode(cfg)
 	if err == nil {
-		if err = cfg.Init(ctx); err != nil {
+		if err = cfg.Init(ctx, afs.New()); err != nil {
 			return nil, err
 		}
 		err = cfg.Validate()
@@ -125,7 +103,7 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	cfg := &Config{}
 	err = json.NewDecoder(reader).Decode(cfg)
 	if err == nil {
-		if err = cfg.Init(ctx); err != nil {
+		if err = cfg.Init(ctx, afs.New()); err != nil {
 			return cfg, err
 		}
 		err = cfg.Validate()

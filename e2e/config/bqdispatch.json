@@ -3,7 +3,8 @@
   "JournalURL": "gs://e2e-data/journal/",
   "ErrorURL": "gs://e2e-data/errors/",
   "DeferTaskURL": "gs://e2e-data/tasks/",
-  "Routes": [
+
+  "Rules": [
     {
       "When": {
         "Dest": ".+:bqdispatch\\.dummy_v2",

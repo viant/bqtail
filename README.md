@@ -191,7 +191,7 @@ The following URL are used by tail/dispatch services:
 - [BqDispatch](dispatch/README.md#deployment)
 
 
-The following [Deployment](deployment/README.md) details geneic deployment.
+The following [Deployment](deployment/README.md) details generic deployment.
 
 
 Where: [@deploy.yaml](deployment/deploy.yaml) 

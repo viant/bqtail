@@ -32,22 +32,23 @@ pipeline:
         config: $AsMap(${configText})
 
     deploay:
-      bqtail:
-        action: gcp/cloudfunctions:deploy
-        '@name': E2eDataBqTail
-        timeout: 180s
-        public: true
-        availableMemoryMb: 512
-        entryPoint: BqTail
-        runtime: go111
-        serviceAccountEmail: ${gcp.serviceAccount}
-        environmentVariables:
-          CONFIG: ${config.BqTailConfigURL}
-        eventTrigger:
-          eventType: google.storage.object.finalize
-          resource: projects/_/buckets/${config.Bucket}
-        source:
-          URL: ${appPath}/
+#      bqtail:
+#        action: gcp/cloudfunctions:deploy
+#        '@name': E2eDataBqTail
+#        timeout: 180s
+#        public: true
+#        availableMemoryMb: 512
+#        entryPoint: BqTail
+#        runtime: go111
+#        serviceAccountEmail: ${gcp.serviceAccount}
+#        environmentVariables:
+#          CONFIG: ${config.BqTailConfigURL}
+#        eventTrigger:
+#          eventType: google.storage.object.finalize
+#          resource: projects/_/buckets/${config.Bucket}
+#        source:
+#          URL: ${appPath}/
+
 
       bqdisaptch:
         action: gcp/cloudfunctions:deploy

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bqtail/base"
 	"bqtail/task"
 	"fmt"
 	"github.com/viant/afs/file"
@@ -10,24 +11,25 @@ import (
 	"time"
 )
 
-//Route represent matching resource route
-type Route struct {
-	Dest  *Destination
-	When  matcher.Basic
-	Batch *Batch
-	task.Actions
+//Rule represent matching resource route
+type Rule struct {
+	Dest  *Destination `json:",omitempty"`
+	When  matcher.Basic `json:",omitempty"`
+	Batch *Batch `json:",omitempty"`
+	task.Actions `json:",omitempty"`
+	Info *base.Info `json:",omitempty"`
 }
 
 //HasMatch returns true if URL matches prefix or suffix
-func (r *Route) HasMatch(URL string) bool {
+func (r *Rule) HasMatch(URL string) bool {
 	location := url.Path(URL)
 	parent, name := path.Split(location)
 	return r.When.Match(parent, file.NewInfo(name, 0, 0644, time.Now(), false))
 }
 
-func (r Route) Validate() error {
+func (r Rule) Validate() error {
 	if r.Dest == nil {
-		return fmt.Errorf("Dest was empty")
+		return fmt.Errorf("dest was empty")
 	}
 	return r.Dest.Validate()
 }

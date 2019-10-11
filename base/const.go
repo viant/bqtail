@@ -3,8 +3,13 @@ package base
 const (
 	//StatusOK response status
 	StatusOK = "ok"
+	//StatusNoMatch status no match
+	StatusNoMatch = "noMatch"
+
 	//StatusError response status
 	StatusError = "error"
+
+
 	//DispatchJob dispatch job name
 	DispatchJob = "dispatch"
 	//TailJob tail job name

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"bqtail/dispatch/contract"
+	"bqtail/base"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/bigquery/v2"
 	"testing"
@@ -12,7 +12,7 @@ func TestEvent_Match(t *testing.T) {
 	var useCases = []struct {
 		description string
 		filter      *Filter
-		event       *contract.Job
+		event       *base.Job
 		hasError    bool
 		expect      bool
 	}{
@@ -22,7 +22,7 @@ func TestEvent_Match(t *testing.T) {
 			filter: &Filter{
 				Source: ".+:myDataset\\..+",
 			},
-			event: &contract.Job{
+			event: &base.Job{
 				Configuration: &bigquery.JobConfiguration{
 					JobType: "COPY",
 					Copy: &bigquery.JobConfigurationTableCopy{
@@ -46,7 +46,7 @@ func TestEvent_Match(t *testing.T) {
 			filter: &Filter{
 				Dest: ".+myDestTable2",
 			},
-			event: &contract.Job{
+			event: &base.Job{
 				Configuration: &bigquery.JobConfiguration{
 					JobType: "LOAD",
 					Load: &bigquery.JobConfigurationLoad{
@@ -67,7 +67,7 @@ func TestEvent_Match(t *testing.T) {
 				Type: "EXTRACT",
 				Dest: ".+table10",
 			},
-			event: &contract.Job{
+			event: &base.Job{
 				Configuration: &bigquery.JobConfiguration{
 					JobType: "EXTRACT",
 					Extract: &bigquery.JobConfigurationExtract{
@@ -88,7 +88,7 @@ func TestEvent_Match(t *testing.T) {
 				Type: "EXTRACT",
 				Dest: ".+table2",
 			},
-			event: &contract.Job{
+			event: &base.Job{
 				Configuration: &bigquery.JobConfiguration{
 					JobType: "EXTRACT",
 					Extract: &bigquery.JobConfigurationExtract{
@@ -110,7 +110,7 @@ func TestEvent_Match(t *testing.T) {
 				Type:   "QUERY",
 				Source: ".+tableX",
 			},
-			event: &contract.Job{
+			event: &base.Job{
 				Configuration: &bigquery.JobConfiguration{
 					JobType: "QUERY",
 					Query: &bigquery.JobConfigurationQuery{
@@ -132,7 +132,7 @@ func TestEvent_Match(t *testing.T) {
 				Type:   "QUERY",
 				Source: ".+tableX.*",
 			},
-			event: &contract.Job{
+			event: &base.Job{
 				Configuration: &bigquery.JobConfiguration{
 					JobType: "QUERY",
 					Query: &bigquery.JobConfigurationQuery{
@@ -153,7 +153,7 @@ func TestEvent_Match(t *testing.T) {
 				Type: "QUERY",
 				Dest: ".+myDataset\\.myDestTable",
 			},
-			event: &contract.Job{
+			event: &base.Job{
 				Configuration: &bigquery.JobConfiguration{
 					JobType: "QUERY",
 					Query: &bigquery.JobConfigurationQuery{

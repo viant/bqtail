@@ -26,28 +26,30 @@ type Service interface {
 
 type service struct {
 	task.Registry
-	config  *Config
-	bq      bq.Service
-	storage afs.Service
+	config *Config
+	bq     bq.Service
+	fs     afs.Service
 }
 
+
 func (s *service) Init(ctx context.Context) error {
-	err := s.config.Init(ctx)
+	err := s.config.Init(ctx, s.fs)
 	if err != nil {
 		return err
 	}
-	slackService := slack.New(s.config.Region, s.config.ProjectID, s.storage, secret.New())
+	slackService := slack.New(s.config.Region, s.config.ProjectID, s.fs, secret.New())
 	slack.InitRegistry(s.Registry, slackService)
 	bqService, err := bigquery.NewService(ctx)
 	if err != nil {
 		return err
 	}
-	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.storage)
+	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs)
 	bq.InitRegistry(s.Registry, s.bq)
-	storage.InitRegistry(s.Registry, storage.New(s.storage))
+	storage.InitRegistry(s.Registry, storage.New(s.fs))
 
 	return err
 }
+
 
 func (s *service) Dispatch(ctx context.Context, request *contract.Request) *contract.Response {
 	response := contract.NewResponse(request.EventID)
@@ -59,6 +61,7 @@ func (s *service) Dispatch(ctx context.Context, request *contract.Request) *cont
 	return response
 }
 
+
 func (s *service) initRequest(ctx context.Context, request *contract.Request) error {
 	job, err := s.bq.GetJob(ctx, request.ProjectID, request.JobID)
 	if err != nil {
@@ -68,6 +71,7 @@ func (s *service) initRequest(ctx context.Context, request *contract.Request) er
 	request.Job = &contractJob
 	return nil
 }
+
 
 //move moves schedule file to output folder
 func (s *service) move(ctx context.Context, baseURL string, job *Job) error {
@@ -82,8 +86,9 @@ func (s *service) move(ctx context.Context, baseURL string, job *Job) error {
 	}
 	name := path.Join(job.Completed().Format(dateLayout), sourceName)
 	URL := url.Join(baseURL, name)
-	return s.storage.Move(ctx, matchedURL, URL)
+	return s.fs.Move(ctx, matchedURL, URL)
 }
+
 
 func (s *service) onDone(ctx context.Context, job *Job) error {
 	baseURL := s.config.OutputURL(job.Response.Status == base.StatusError)
@@ -97,8 +102,9 @@ func (s *service) onDone(ctx context.Context, job *Job) error {
 	jobFilename := path.Join(base.DecodePathSeparator(job.JobReference.JobId))
 	name := path.Join(job.Completed().Format(dateLayout), jobFilename+base.JobElement+base.JobExt)
 	URL := url.Join(baseURL, name)
-	return s.storage.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
+	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
+
 
 func (s *service) getActions(ctx context.Context, request *contract.Request, response *contract.Response) (*task.Actions, error) {
 	jobID := base.DecodePathSeparator(request.JobID)
@@ -106,7 +112,7 @@ func (s *service) getActions(ctx context.Context, request *contract.Request, res
 		URL := url.Join(s.config.DeferTaskURL, jobID+base.JobExt)
 		response.MatchedURL = URL
 		response.Matched = true
-		reader, err := s.storage.DownloadWithURL(ctx, URL)
+		reader, err := s.fs.DownloadWithURL(ctx, URL)
 		if err != nil {
 			return nil, err
 		}
@@ -118,6 +124,7 @@ func (s *service) getActions(ctx context.Context, request *contract.Request, res
 	return nil, nil
 }
 
+
 func (s *service) dispatch(ctx context.Context, request *contract.Request, response *contract.Response) (err error) {
 	err = s.initRequest(ctx, request)
 	if err != nil {
@@ -125,6 +132,9 @@ func (s *service) dispatch(ctx context.Context, request *contract.Request, respo
 	}
 	job := NewJob(request.Job, response)
 	defer func() {
+		if ! response.Matched {
+			response.Status = base.StatusNoMatch
+		}
 		if response.Matched || err != nil {
 			response.SetIfError(err)
 			if e := s.onDone(ctx, job); e != nil && err == nil {
@@ -136,19 +146,22 @@ func (s *service) dispatch(ctx context.Context, request *contract.Request, respo
 	if err := request.Job.Error(); err != nil {
 		response.JobError = err.Error()
 	}
-	route := s.config.Routes.Match(request.Job)
-	if route != nil {
+	if err = s.config.ReloadIfNeeded(ctx, s.fs); err != nil {
+		return err
+	}
+	rule := s.config.Match(request.Job)
+	if rule != nil {
+		response.Rule = rule
 		expandable := &base.Expandable{}
-		if route.When.Dest != "" {
+		if rule.When.Dest != "" {
 			expandable.Source = request.Job.Dest()
-		} else if route.When.Source != "" {
+		} else if rule.When.Source != "" {
 			expandable.Source = request.Job.Source()
 		}
 		response.Matched = true
-		job.Actions = route.Actions.Expand(expandable)
+		job.Actions = rule.Actions.Expand(expandable)
 		return s.run(ctx, job)
 	}
-
 	job.Actions, err = s.getActions(ctx, request, response)
 	if err != nil || job.Actions == nil || job.Actions.IsEmpty() {
 		return err
@@ -172,8 +185,9 @@ func (s *service) run(ctx context.Context, job *Job) error {
 func New(ctx context.Context, config *Config) (Service, error) {
 	srv := &service{
 		config:   config,
-		storage:  afs.New(),
+		fs:       afs.New(),
 		Registry: task.NewRegistry(),
 	}
 	return srv, srv.Init(ctx)
 }
+

@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-//Run handles storage request
+//Run handles fs request
 func (s *service) Run(ctx context.Context, request task.Request) error {
 	switch req := request.(type) {
 	case *DeleteRequest:

@@ -10,14 +10,14 @@ func TestRoute_HasMatch(t *testing.T) {
 
 	var useCases = []struct {
 		description string
-		Route
+		Rule
 		URL    string
 		expect bool
 	}{
 		{
 			description: "prefix match",
-			Route: Route{
-				Basic: matcher.Basic{
+			Rule: Rule{
+				When: matcher.Basic{
 					Prefix: "/folder/",
 				},
 				Dest: &Destination{
@@ -29,8 +29,8 @@ func TestRoute_HasMatch(t *testing.T) {
 		},
 		{
 			description: "prefix no match",
-			Route: Route{
-				Basic: matcher.Basic{
+			Rule: Rule{
+				When: matcher.Basic{
 					Prefix: "folder/",
 				},
 				Dest: &Destination{
@@ -42,8 +42,8 @@ func TestRoute_HasMatch(t *testing.T) {
 		},
 		{
 			description: "suffix match",
-			Route: Route{
-				Basic: matcher.Basic{
+			Rule: Rule{
+				When: matcher.Basic{
 					Suffix: ".csv",
 				},
 				Dest: &Destination{
@@ -55,8 +55,8 @@ func TestRoute_HasMatch(t *testing.T) {
 		},
 		{
 			description: "suffix no match",
-			Route: Route{
-				Basic: matcher.Basic{
+			Rule: Rule{
+				When: matcher.Basic{
 					Suffix: ".tsv",
 				},
 				Dest: &Destination{
@@ -68,8 +68,8 @@ func TestRoute_HasMatch(t *testing.T) {
 		},
 		{
 			description: "filter no match",
-			Route: Route{
-				Basic: matcher.Basic{
+			Rule: Rule{
+				When: matcher.Basic{
 					Suffix: ".tsv",
 					Filter: `^[a-z]*/data/\\d+/`,
 				},
@@ -82,8 +82,8 @@ func TestRoute_HasMatch(t *testing.T) {
 		},
 		{
 			description: "filter match",
-			Route: Route{
-				Basic: matcher.Basic{
+			Rule: Rule{
+				When: matcher.Basic{
 					Suffix: ".tsv",
 					Filter: `^\/[a-z]+/data/\d+/`,
 				},

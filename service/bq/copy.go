@@ -30,6 +30,7 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest) (*bigquery.Job
 //CopyRequest represents a copy request
 type CopyRequest struct {
 	Request
+	Append      bool
 	Source      string
 	sourceTable *bigquery.TableReference
 	Dest        string

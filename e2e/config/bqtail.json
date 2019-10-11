@@ -4,7 +4,8 @@
   "DeferTaskURL": "gs://e2e-data/tasks/",
   "ErrorURL": "gs://e2e-data/errors/",
   "JournalURL": "gs://e2e-data/journal/",
-  "Routes": [
+
+  "Rules": [
     {
       "When": {
         "Prefix": "/data/case001",

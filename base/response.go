@@ -8,18 +8,18 @@ import (
 //Response represents response
 type Response struct {
 	Status     string
-	Error      string
-	EventID    string
-	Matched    bool
-	MatchedURL string
-	JobRef     *bigquery.JobReference
+	Error      string `json:",omitempty"`
+	EventID    string `json:",omitempty"`
+	Matched    bool `json:",omitempty"`
+	MatchedURL string `json:",omitempty"`
+	JobRef     *bigquery.JobReference `json:",omitempty"`
 	Started    time.Time
-	TimeTaken  time.Duration
+	TimeTakenMs  int
 }
 
 //SetTimeTaken set time taken
 func (r *Response) SetTimeTaken(startTime time.Time) {
-	r.TimeTaken = time.Now().Sub(startTime)
+	r.TimeTakenMs = int(time.Now().Sub(startTime) / time.Millisecond)
 }
 
 //SetIfError sets non nil error

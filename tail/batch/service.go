@@ -24,13 +24,13 @@ import (
 type Service interface {
 
 	//Add adds transfer events to batch stage
-	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, route *config.Route) error
+	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, route *config.Rule) error
 
 	//Try to acquire batch window
-	TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Route) (*Window, error)
+	TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*Window, error)
 
 	//MatchWindowData updates the window with the window span matched transfer datafiles
-	MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Route) error
+	MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Rule) error
 }
 
 type service struct {
@@ -38,7 +38,7 @@ type service struct {
 	afs.Service
 }
 
-func (s *service) scheduleURL(created time.Time, request *contract.Request, route *config.Route) (string, error) {
+func (s *service) scheduleURL(created time.Time, request *contract.Request, route *config.Rule) (string, error) {
 	dest, err := route.Dest.ExpandTable(created, request.SourceURL)
 	if err != nil {
 		return "", err
@@ -48,7 +48,7 @@ func (s *service) scheduleURL(created time.Time, request *contract.Request, rout
 }
 
 //Add adds matched transfer event to batch stage
-func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, route *config.Route) error {
+func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, route *config.Rule) error {
 	URL, err := s.scheduleURL(sourceCreated, request, route)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	return err
 }
 
-func (s *service) getSchedule(ctx context.Context, created time.Time, request *contract.Request, route *config.Route) (storage.Object, error) {
+func (s *service) getSchedule(ctx context.Context, created time.Time, request *contract.Request, route *config.Rule) (storage.Object, error) {
 	URL, err := s.scheduleURL(created, request, route)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (s *service) getSchedule(ctx context.Context, created time.Time, request *c
 }
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
-func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Route) (*Window, error) {
+func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*Window, error) {
 	source, err := s.Object(ctx, request.SourceURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "source event was missing: %v", request.SourceURL)
@@ -150,7 +150,7 @@ func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Dat
 }
 
 //MatchWindowData matches window data, it waits for window to ends if needed
-func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Route) error {
+func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Rule) error {
 	tillWindowEnd := window.End.Sub(now)
 	if tillWindowEnd > 0 {
 		//wait for window to end
@@ -185,7 +185,7 @@ func windowToTime(window storage.Object) (*time.Time, error) {
 }
 
 func windowedMatcher(after, before time.Time, ext string) *matcher.Modification {
-	extMatcher, _ := matcher.NewBasic("", ext, "")
+	extMatcher, _ := matcher.NewBasic("", ext, "", nil)
 	modTimeMatcher := matcher.NewModification(&before, &after, extMatcher.Match)
 	return modTimeMatcher
 }
