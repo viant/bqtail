@@ -1,6 +1,5 @@
 init:
-  configText: $Cat('config/config.json')
-  config: $AsMap(${configText})
+
   expectedData: $Cat(${parent.path}/data/expect/dummy.json)
 
 pipeline:
@@ -11,11 +10,21 @@ pipeline:
       datastore: bqdispatch
       config:
         driverName: bigquery
-        credentials: $gcpSecrets
+        credentials: $gcpCredentials
         parameters:
           datasetId: bqdispatch
       scripts:
         - URL: ${parent.path}/bqdispatch/schema.sql
+
+  setupRule:
+    action: storage:copy
+    expand: true
+    source:
+      URL: ${parent.path}/rule.json
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${configBucket}/BqDispatch/Rules/case_${parent.index}.json
+
 
   trigger:
     action: dsunit:prepare

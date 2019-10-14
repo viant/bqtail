@@ -1,0 +1,30 @@
+[
+  {
+    "When": {
+      "Prefix": "/data/case004",
+      "Suffix": ".json"
+    },
+    "Dest": {
+      "Table": "bqtail.dummy"
+    },
+    "Batch": {
+      "Window": {
+        "DurationInSec": 10
+      }
+    },
+    "Async": true,
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ],
+    "OnFailure": [
+      {
+        "Action": "move",
+        "Request": {
+          "DestURL": "gs://e2e-data/errors"
+        }
+      }
+    ]
+  }
+]

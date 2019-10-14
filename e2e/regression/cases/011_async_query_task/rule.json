@@ -1,0 +1,31 @@
+[
+  {
+    "When": {
+      "Prefix": "/data/case011",
+      "Suffix": ".json"
+    },
+    "Async": true,
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "UniqueColumns": ["id"]
+    },
+    "Batch": {
+      "Window": {
+        "DurationInSec": 15
+      }
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      },
+      {
+        "Action": "query",
+        "Request": {
+          "SQL": "SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $DestTable",
+          "Dest": "bqtail.summary"
+        }
+      }
+    ]
+  }
+]

@@ -1,6 +1,4 @@
 init:
-  configText: $Cat('config/config.json')
-  config: $AsMap(${configText})
   expectedData: $Cat(${parent.path}/data/expect/dummy.json)
 
 pipeline:
@@ -11,7 +9,7 @@ pipeline:
       datastore: bqdispatch
       config:
         driverName: bigquery
-        credentials: $gcpSecrets
+        credentials: $gcpCredentials
         parameters:
           datasetId: bqdispatch
       scripts:
@@ -22,9 +20,28 @@ pipeline:
       datastore: bqdispatch
       URL:  ${parent.path}/bqdispatch/prepare
 
+
+
+  setupRule:
+    action: storage:copy
+    expand: true
+    source:
+      URL: ${parent.path}/rule.json
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${configBucket}/BqDispatch/Rules/case_${parent.index}.json
+
+
+
+  cleanup:
+    action: storage:remove
+    assets:
+      - URL: gs://${exportBucket}/BqDispatch/export/dummy.json.gz
+        credentials: $gcpCredentials
+
   trigger:
     action: gcp/bigquery:query
-    credentials: $gcpSecrets
+    credentials: $gcpCredentials
     query: SELECT * FROM bqdispatch.dummy_v1
     destinationTable:
       projectId: ${gcp.ProjectID}
@@ -39,8 +56,8 @@ pipeline:
     action: storage:download
     udf: UnzipText
     source:
-      URL:   gs://${config.Bucket}/export/dummy.json.gz
-      credentials: $gcpSecrets
+      URL:   gs://${exportBucket}/BqDispatch/export/dummy.json.gz
+      credentials: $gcpCredentials
     destKey: dummy
     expect: $expectedData
 

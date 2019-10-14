@@ -1,0 +1,16 @@
+[
+  {
+    "When": {
+      "Dest": ".+:bqdispatch\\.dummy_v2",
+      "Type": "QUERY"
+    },
+    "OnSuccess": [
+      {
+        "Action": "export",
+        "Request": {
+          "DestURL": "gs://${exportBucket}/BqDispatch/export/dummy.json.gz"
+        }
+      }
+    ]
+  }
+]

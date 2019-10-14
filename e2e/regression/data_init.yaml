@@ -5,7 +5,7 @@ pipeline:
       datastore: db1
       config:
         driverName: bigquery
-        credentials: $gcpSecrets
+        credentials: $gcpCredentials
         parameters:
           datasetId: db1
 

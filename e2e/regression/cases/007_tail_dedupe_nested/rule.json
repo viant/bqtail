@@ -1,0 +1,25 @@
+[
+  {
+    "When": {
+      "Prefix": "/data/case007",
+      "Suffix": ".json"
+    },
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "UniqueColumns": [
+        "id"
+      ]
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ],
+    "Batch": {
+      "Window": {
+        "DurationInSec": 15
+      }
+    }
+  }
+]

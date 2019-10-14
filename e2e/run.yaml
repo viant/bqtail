@@ -5,10 +5,17 @@ init:
   appHost: $Hostname($target.URL)
   appPath: $WorkingDirectory(..)
 
-  gcpSecrets: gcp-e2e
-  gcp: ${secrets.$gcpSecrets}
+  gcpCredentials: gcp-e2e
+  gcp: ${secrets.$gcpCredentials}
   projectID: $gcp.ProjectID
+  bucketPrefix: $Replace($projectID,'-','_')
   serviceAccount: $gcp.ClientEmail
+
+  configBucket: ${bucketPrefix}_config
+  triggerBucket: ${bucketPrefix}_bqtail
+  dispatchBucket: ${bucketPrefix}_bqdispatch
+  opsBucket: ${bucketPrefix}_operations
+  exportBucket: ${bucketPrefix}_export
 
 pipeline:
 

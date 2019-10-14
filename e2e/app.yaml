@@ -1,5 +1,5 @@
 defaults:
-  credentials: $gcpSecrets
+  credentials: $gcpCredentials
 
 pipeline:
 #  undeploy:
@@ -25,42 +25,37 @@ pipeline:
         - go mod vendor
         - go build
 
-    loadConifg:
-      action: nop
-      init:
-        configText: $Cat('config/config.json')
-        config: $AsMap(${configText})
 
     deploay:
-#      bqtail:
-#        action: gcp/cloudfunctions:deploy
-#        '@name': E2eDataBqTail
-#        timeout: 180s
-#        public: true
-#        availableMemoryMb: 512
-#        entryPoint: BqTail
-#        runtime: go111
-#        serviceAccountEmail: ${gcp.serviceAccount}
-#        environmentVariables:
-#          CONFIG: ${config.BqTailConfigURL}
-#        eventTrigger:
-#          eventType: google.storage.object.finalize
-#          resource: projects/_/buckets/${config.Bucket}
-#        source:
-#          URL: ${appPath}/
+      bqtail:
+        action: gcp/cloudfunctions:deploy
+        '@name': BqTail
+        timeout: 540s
+        public: true
+        availableMemoryMb: 256
+        entryPoint: BqTail
+        runtime: go111
+        serviceAccountEmail: ${gcp.serviceAccount}
+        environmentVariables:
+          CONFIG: gs://${configBucket}/BqTail/config.json
+        eventTrigger:
+          eventType: google.storage.object.finalize
+          resource: projects/_/buckets/${triggerBucket}
+        source:
+          URL: ${appPath}/
 
 
       bqdisaptch:
         action: gcp/cloudfunctions:deploy
         '@name': BqDispatch
-        timeout: 180s
+        timeout: 540s
         public: true
         serviceAccountEmail: ${gcp.serviceAccount}
-        availableMemoryMb: 512
+        availableMemoryMb: 256
         entryPoint: BqDispatch
         runtime: go111
         environmentVariables:
-          CONFIG: ${config.BqDispatchConfigURL}
+          CONFIG: gs://${configBucket}/BqDispatch/config.json
         eventTrigger:
           eventType: google.cloud.bigquery.job.complete
           resource: projects/${projectID}/jobs/{jobId}

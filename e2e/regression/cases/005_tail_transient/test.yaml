@@ -1,6 +1,3 @@
-init:
-  configText: $Cat('config/config.json')
-  config: $AsMap(${configText})
 
 pipeline:
   prepare:
@@ -9,7 +6,7 @@ pipeline:
       datastore: temp
       config:
         driverName: bigquery
-        credentials: $gcpSecrets
+        credentials: $gcpCredentials
         parameters:
           datasetId: temp
       recreate: true
@@ -19,7 +16,7 @@ pipeline:
       datastore: bqtail
       config:
         driverName: bigquery
-        credentials: $gcpSecrets
+        credentials: $gcpCredentials
         parameters:
           datasetId: bqtail
       scripts:
@@ -31,14 +28,23 @@ pipeline:
       URL:  ${parent.path}/bqtail/prepare
 
 
+  setupRule:
+    action: storage:copy
+    expand: true
+    source:
+      URL: ${parent.path}/rule.json
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}.json
+
   trigger:
     action: storage:copy
     sleepTimeMs: 10000
     source:
       URL: ${parent.path}/data/trigger/dummy.json
     dest:
-      URL: gs://${config.Bucket}/data/case005/dummy.json
-      credentials: $gcpSecrets
+      URL: gs://${triggerBucket}/data/case005/dummy.json
+      credentials: $gcpCredentials
 
   waitForServerless:
     action: nop

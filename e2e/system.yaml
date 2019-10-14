@@ -1,6 +1,4 @@
 init:
-  configText: $Cat('config/config.json')
-  config: $AsMap(${configText})
 
   bqTail: $Cat('config/bqtail.json')
   bqTailConfig:  $AsString($bqTail)
@@ -12,28 +10,53 @@ init:
 
 pipeline:
 
-
-
+  createTriggerBucket:
+    bqTail:
+      action: storage:create
+      isDir: true
+      dest:
+        URL: gs://${triggerBucket}
+        credentials: $gcpCredentials
+    bqDispatch:
+      action: storage:create
+      isDir: true
+      dest:
+        URL: gs://${dispatchBucket}
+        credentials: $gcpCredentials
+    operation:
+      action: storage:create
+      isDir: true
+      dest:
+        URL: gs://${opsBucket}
+        credentials: $gcpCredentials
+    export:
+      action: storage:create
+      isDir: true
+      dest:
+        URL: gs://${exportBucket}
+        credentials: $gcpCredentials
 
   uploadConfigs:
     bqTail:
       action: storage:upload
       sourceKey: bqTailConfig
       dest:
-        URL: ${config.BqTailConfigURL}
-        credentials: $gcpSecrets
+        URL: gs://${configBucket}/BqTail/config.json
+        credentials: $gcpCredentials
 
     bqDispatch:
       action: storage:upload
       sourceKey: bqDispatchConfig
       dest:
-        URL: ${config.BqDispatchConfigURL}
-        credentials: $gcpSecrets
+        URL: gs://${configBucket}/BqDispatch/config.json
+        credentials: $gcpCredentials
+
+
 
 
     deployBqTailKMSKey:
       action: gcp/kms:deployKey
-      credentials: $gcpSecrets
+      credentials: $gcpCredentials
       ring: BqTailRing
       key: BqTailKey
       purpose: ENCRYPT_DECRYPT
@@ -49,23 +72,15 @@ pipeline:
       key: BqTailKey
       plainData: $AsString($slackOAuth)
       dest:
-        URL: gs://${config.Bucket}/config/slack.json.enc
-        credentials: ${gcpSecrets}
+        URL: gs://${configBucket}/Secrets/slack.json.enc
+        credentials: ${gcpCredentials}
       logging: false
 
 
   cleanup:
     action: storage:remove
     assets:
-      - URL: gs://${config.Bucket}/data
-        credentials: $gcpSecrets
-      - URL: gs://${config.Bucket}/errors
-        credentials: $gcpSecrets
-      - URL: gs://${config.Bucket}/tasks
-        credentials: $gcpSecrets
-      - URL: gs://${config.Bucket}/journal
-        credentials: $gcpSecrets
-      - URL: gs://${config.Bucket}/batch
-        credentials: $gcpSecrets
-      - URL: gs://${config.Bucket}/export
-        credentials: $gcpSecrets
+      - URL: gs://${opsBucket}/BqTail
+        credentials: $gcpCredentials
+      - URL: gs://${opsBucket}/BqDispatch
+        credentials: $gcpCredentials

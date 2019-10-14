@@ -1,6 +1,0 @@
-{
-  "Bucket": "e2e-data",
-  "BqTailConfigURL": "gs://e2e-data/config/bqtail.json",
-  "BqDispatchConfigURL": "gs://e2e-data/config/bqdispatch.json"
-
-}

@@ -1,0 +1,16 @@
+[
+  {
+    "When": {
+      "Dest": ".+:bqdispatch\\.dummy_v3",
+      "Type": "LOAD"
+    },
+    "OnSuccess": [
+      {
+        "Action": "copy",
+        "Request": {
+          "Dest": "bqdispatch.dummy_v4"
+        }
+      }
+    ]
+  }
+]
