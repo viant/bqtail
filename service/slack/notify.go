@@ -24,6 +24,16 @@ type NotifyRequest struct {
 }
 
 func (s *service) Notify(ctx context.Context, request *NotifyRequest) error {
+	err := s.notify(ctx, request)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to notify on slack: %v", request.Channels)
+		fmt.Printf("%v\n", err)
+	}
+	return err
+}
+
+
+func (s *service) notify(ctx context.Context, request *NotifyRequest) error {
 	err := request.Init(s.Region, s.projectID)
 	if err == nil {
 		err = request.Validate()

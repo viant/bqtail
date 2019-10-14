@@ -59,13 +59,22 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 		job = callerJob
 	}
 
+
 	if onDoneActions != nil && onDoneActions.IsSyncMode() {
+
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
 			if err == nil {
 				err = base.JobError(job)
 			}
 		}
+
+		toolbox.Dump(onDoneActions)
+
+		if job == nil {
+			job = callerJob
+		}
+
 		if e := s.runActions(ctx, err, job, onDoneActions); e != nil {
 			if err == nil {
 				err = e

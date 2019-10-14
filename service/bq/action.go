@@ -12,7 +12,6 @@ func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Jo
 	if parent == nil {
 		return fmt.Errorf("parent was empty")
 	}
-
 	baseJob := base.Job(*parent)
 	toRun := onDone.ToRun(err, &baseJob, s.deferTaskURL)
 	if len(toRun) == 0 {
