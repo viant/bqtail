@@ -36,7 +36,7 @@ func (s *service) Init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	slackService := slack.New(s.config.Region, s.config.ProjectID, s.fs, secret.New())
+	slackService := slack.New(s.config.Region, s.config.ProjectID, s.fs, secret.New(), s.config.SlackCredentials)
 	slack.InitRegistry(s.Registry, slackService)
 	bqService, err := bigquery.NewService(ctx)
 	if err != nil {

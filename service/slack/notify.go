@@ -32,6 +32,9 @@ func (s *service) Notify(ctx context.Context, request *NotifyRequest) error {
 		return err
 	}
 	if request.OAuthToken.Token == "" {
+		if request.Secret == nil {
+			request.Secret = s.defaultSecrets
+		}
 		err = s.Secret.Decode(ctx, s.Storage, request.Secret, &request.OAuthToken)
 		if err != nil {
 			return err

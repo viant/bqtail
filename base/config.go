@@ -23,6 +23,8 @@ type Config struct {
 	DeferTaskURL  string
 	JournalURL    string
 	ErrorURL      string
+	SlackCredentials *Secret
+
 }
 
 //OutputURL returns an output URL
