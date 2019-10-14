@@ -31,7 +31,6 @@ type service struct {
 	fs     afs.Service
 }
 
-
 func (s *service) Init(ctx context.Context) error {
 	err := s.config.Init(ctx, s.fs)
 	if err != nil {
@@ -43,13 +42,11 @@ func (s *service) Init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs)
+	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.DeferTaskURL)
 	bq.InitRegistry(s.Registry, s.bq)
 	storage.InitRegistry(s.Registry, storage.New(s.fs))
-
 	return err
 }
-
 
 func (s *service) Dispatch(ctx context.Context, request *contract.Request) *contract.Response {
 	response := contract.NewResponse(request.EventID)
@@ -61,7 +58,6 @@ func (s *service) Dispatch(ctx context.Context, request *contract.Request) *cont
 	return response
 }
 
-
 func (s *service) initRequest(ctx context.Context, request *contract.Request) error {
 	job, err := s.bq.GetJob(ctx, request.ProjectID, request.JobID)
 	if err != nil {
@@ -71,7 +67,6 @@ func (s *service) initRequest(ctx context.Context, request *contract.Request) er
 	request.Job = &contractJob
 	return nil
 }
-
 
 //move moves schedule file to output folder
 func (s *service) move(ctx context.Context, baseURL string, job *Job) error {
@@ -89,7 +84,6 @@ func (s *service) move(ctx context.Context, baseURL string, job *Job) error {
 	return s.fs.Move(ctx, matchedURL, URL)
 }
 
-
 func (s *service) onDone(ctx context.Context, job *Job) error {
 	baseURL := s.config.OutputURL(job.Response.Status == base.StatusError)
 	if err := s.move(ctx, baseURL, job); err != nil {
@@ -105,9 +99,9 @@ func (s *service) onDone(ctx context.Context, job *Job) error {
 	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
-
 func (s *service) getActions(ctx context.Context, request *contract.Request, response *contract.Response) (*task.Actions, error) {
 	jobID := base.DecodePathSeparator(request.JobID)
+
 	if strings.HasSuffix(jobID, base.DispatchJob) {
 		URL := url.Join(s.config.DeferTaskURL, jobID+base.JobExt)
 		response.MatchedURL = URL
@@ -118,12 +112,12 @@ func (s *service) getActions(ctx context.Context, request *contract.Request, res
 		}
 		defer func() { _ = reader.Close() }()
 		actions := &task.Actions{}
-		return actions, json.NewDecoder(reader).Decode(actions)
+		err = json.NewDecoder(reader).Decode(actions)
+		return actions, err
 	}
 
 	return nil, nil
 }
-
 
 func (s *service) dispatch(ctx context.Context, request *contract.Request, response *contract.Response) (err error) {
 	err = s.initRequest(ctx, request)
@@ -132,7 +126,7 @@ func (s *service) dispatch(ctx context.Context, request *contract.Request, respo
 	}
 	job := NewJob(request.Job, response)
 	defer func() {
-		if ! response.Matched {
+		if !response.Matched {
 			response.Status = base.StatusNoMatch
 		}
 		if response.Matched || err != nil {
@@ -162,6 +156,7 @@ func (s *service) dispatch(ctx context.Context, request *contract.Request, respo
 		job.Actions = rule.Actions.Expand(expandable)
 		return s.run(ctx, job)
 	}
+
 	job.Actions, err = s.getActions(ctx, request, response)
 	if err != nil || job.Actions == nil || job.Actions.IsEmpty() {
 		return err
@@ -171,7 +166,7 @@ func (s *service) dispatch(ctx context.Context, request *contract.Request, respo
 }
 
 func (s *service) run(ctx context.Context, job *Job) error {
-	toRun := job.Actions.ToRun(job.Error(), job.Job)
+	toRun := job.Actions.ToRun(job.Error(), job.Job, s.config.DeferTaskURL)
 	var err error
 	for i := range toRun {
 		if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {
@@ -190,4 +185,3 @@ func New(ctx context.Context, config *Config) (Service, error) {
 	}
 	return srv, srv.Init(ctx)
 }
-

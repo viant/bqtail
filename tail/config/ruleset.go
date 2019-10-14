@@ -22,22 +22,21 @@ type Ruleset struct {
 	meta         *base.Meta
 	initialRules []*Rule
 	inited       int32
-
 }
 
 //HasMatch returns the first match route
-func (r Ruleset) Match(URL string) *Rule {
+func (r Ruleset) Match(URL string) []*Rule {
 	if len(r.Rules) == 0 {
 		return nil
 	}
+	var matched = make([]*Rule, 0)
 	for i := range r.Rules {
 		if r.Rules[i].HasMatch(URL) {
-			return r.Rules[i]
+			matched = append(matched, r.Rules[i])
 		}
 	}
-	return nil
+	return matched
 }
-
 
 //Validate checks if routes are valid
 func (r Ruleset) Validate() error {
@@ -77,8 +76,6 @@ func (r Ruleset) UsesAsync() bool {
 	}
 	return false
 }
-
-
 
 //Init initialises resources
 func (r *Ruleset) Init(ctx context.Context, fs afs.Service, projectID string) error {
@@ -146,6 +143,7 @@ func (c *Ruleset) loadResources(ctx context.Context, storage afs.Service, object
 	}
 
 	for i := range routes {
+
 		if routes[i].Info.Workflow == "" {
 			name := object.Name()
 			if strings.HasSuffix(name, ".json") {

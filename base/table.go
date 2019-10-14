@@ -25,3 +25,11 @@ func NewTableReference(table string) (*bigquery.TableReference, error) {
 		ProjectId: projectID,
 	}, nil
 }
+
+//EncodeTableReference encodes table reference
+func EncodeTableReference(table *bigquery.TableReference) string {
+	if table.ProjectId == "" {
+		return fmt.Sprintf("%v.%v", table.DatasetId, table.TableId)
+	}
+	return fmt.Sprintf("%v:%v.%v", table.ProjectId, table.DatasetId, table.TableId)
+}

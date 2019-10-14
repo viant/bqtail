@@ -20,14 +20,13 @@ type Config struct {
 	RoutesBaseURL string
 }
 
-
 //Init initialises config
 func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	err := c.Config.Init(ctx)
 	if err != nil {
 		return err
 	}
-	return  c.Ruleset.Init(ctx, fs, c.ProjectID)
+	return c.Ruleset.Init(ctx, fs, c.ProjectID)
 }
 
 //ReloadIfNeeded reloads rules if needed
@@ -35,8 +34,6 @@ func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {
 	_, err := c.Ruleset.ReloadIfNeeded(ctx, fs)
 	return err
 }
-
-
 
 //NewConfigFromEnv creates config from env
 func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
@@ -57,8 +54,6 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 	}
 	return cfg, err
 }
-
-
 
 //NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {

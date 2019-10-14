@@ -2,6 +2,7 @@ package bq
 
 import (
 	"bqtail/base"
+	"bqtail/task"
 	"context"
 	"fmt"
 	"google.golang.org/api/bigquery/v2"
@@ -81,4 +82,23 @@ func (r *CopyRequest) Validate() error {
 		return fmt.Errorf("destTable was empty")
 	}
 	return nil
+}
+
+//NewCopyRequest creates a new copy request
+func NewCopyRequest(source, dest string, finally *task.Actions) *CopyRequest {
+	result := &CopyRequest{
+		Source: source,
+		Dest:   dest,
+		Append: true,
+	}
+	if source != "" {
+		result.sourceTable, _ = base.NewTableReference(source)
+	}
+	if dest != "" {
+		result.destTable, _ = base.NewTableReference(dest)
+	}
+	if finally != nil {
+		result.Actions = *finally
+	}
+	return result
 }

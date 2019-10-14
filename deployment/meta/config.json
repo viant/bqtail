@@ -1,3 +1,6 @@
 {
-  "bucket": "${projectID}-dataflow"
+  "configBucket": "${bucketPrefix}_config",
+  "triggerBucket": "${bucketPrefix}_bqtail",
+  "dispatchBucket": "${bucketPrefix}_bqdispatch",
+  "opsBucket": "${bucketPrefix}_operations"
 }

@@ -1,12 +1,13 @@
 init:
   appPath: /tmp/build/bqtail
-  gcpCredentials: ${env.GOOGLE_APPLICATION_CREDENTIALS}
+  '!gcpCredentials': $params.authWith
   gcpMap: $AsMap($Cat($gcpCredentials))
   projectID: $gcpMap.project_id
 
   configText: $Cat('meta/config.json')
   config: $AsMap(${configText})
 
+  bucketPrefix: $Replace(${projectID},'-','_')
 
 pipeline:
   init:

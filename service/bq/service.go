@@ -23,6 +23,7 @@ type Service interface {
 }
 
 type service struct {
+	deferTaskURL string
 	*bigquery.Service
 	Registry  task.Registry
 	jobs      *bigquery.JobsService
@@ -31,7 +32,7 @@ type service struct {
 }
 
 //New creates bq service
-func New(bq *bigquery.Service, registry task.Registry, projectID string, storageService afs.Service) Service {
+func New(bq *bigquery.Service, registry task.Registry, projectID string, storageService afs.Service, deferTaskURL string) Service {
 	return &service{
 		Service:   bq,
 		Registry:  registry,

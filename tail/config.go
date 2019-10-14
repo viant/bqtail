@@ -42,12 +42,10 @@ func (c *Config) initRules() {
 			route.Actions.DeferTaskURL = c.DeferTaskURL
 		}
 		if route.Batch != nil {
-			route.Batch.Init()
+			route.Batch.Init(c.BatchURL)
 		}
 	}
 }
-
-
 
 //ReloadIfNeeded reloads rules if needed
 func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {

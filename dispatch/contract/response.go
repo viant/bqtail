@@ -8,8 +8,8 @@ import (
 //Response represents response
 type Response struct {
 	base.Response
-	Rule *config.Rule `json:",omitempty"`
-	JobError string `json:",omitempty"`
+	Rule     *config.Rule `json:",omitempty"`
+	JobError string       `json:",omitempty"`
 }
 
 //NewResponse creates a new response

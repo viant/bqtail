@@ -13,11 +13,12 @@ import (
 
 //Rule represent matching resource route
 type Rule struct {
-	Dest  *Destination `json:",omitempty"`
-	When  matcher.Basic `json:",omitempty"`
-	Batch *Batch `json:",omitempty"`
+	Dest         *Destination  `json:",omitempty"`
+	When         matcher.Basic `json:",omitempty"`
+	Batch        *Batch        `json:",omitempty"`
 	task.Actions `json:",omitempty"`
-	Info *base.Info `json:",omitempty"`
+	Info         base.Info `json:",omitempty"`
+	Group        string    `json:",omitempty"`
 }
 
 //HasMatch returns true if URL matches prefix or suffix

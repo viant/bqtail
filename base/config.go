@@ -16,13 +16,13 @@ var cloudFunctionRegionEnvKeys = []string{"FUNCTION_REGION", "GOOGLE_CLOUD_REGIO
 
 //Config represents base config
 type Config struct {
-	RunOnce      bool
+	RunOnce       bool
 	RoutesBaseURL string
-	ProjectID    string
-	Region       string
-	DeferTaskURL string
-	JournalURL   string
-	ErrorURL     string
+	ProjectID     string
+	Region        string
+	DeferTaskURL  string
+	JournalURL    string
+	ErrorURL      string
 }
 
 //OutputURL returns an output URL

@@ -12,7 +12,7 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 	if err != nil {
 		return err
 	}
-	_,  sourceLocation := url.Base(request.SourceURL, "file")
+	_, sourceLocation := url.Base(request.SourceURL, "file")
 	destURL := url.Join(request.DestURL, sourceLocation)
 	return s.fs.Move(ctx, request.SourceURL, destURL)
 }

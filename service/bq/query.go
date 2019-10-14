@@ -88,7 +88,7 @@ func NewQueryRequest(SQL string, dest *bigquery.TableReference, finally *task.Ac
 		destTable: dest,
 	}
 	if dest != nil {
-		result.Dest = dest.DatasetId + "." + dest.TableId
+		result.Dest = base.EncodeTableReference(dest)
 	}
 	if finally != nil {
 		result.Actions = *finally

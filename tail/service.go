@@ -51,7 +51,7 @@ func (s *service) Init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs)
+	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.DeferTaskURL)
 	s.batch = batch.New(s.config.BatchURL, s.fs)
 
 	bq.InitRegistry(s.Registry, s.bq)
@@ -61,6 +61,7 @@ func (s *service) Init(ctx context.Context) error {
 
 func (s *service) Tail(ctx context.Context, request *contract.Request) *contract.Response {
 	response := contract.NewResponse(request.EventID)
+	response.TriggerURL = request.SourceURL
 	defer response.SetTimeTaken(response.Started)
 	err := s.tail(ctx, request, response)
 	if err != nil {
@@ -73,7 +74,16 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 	if err := s.config.ReloadIfNeeded(ctx, s.fs); err != nil {
 		return err
 	}
-	rule := s.config.Match(request.SourceURL)
+	var rule *config.Rule
+	matched := s.config.Match(request.SourceURL)
+	switch len(matched) {
+	case 0:
+	case 1:
+		rule = matched[0]
+	default:
+		JSON, _ := json.Marshal(matched)
+		return errors.Errorf("multi rule match currently not supported: %v", JSON)
+	}
 	if rule == nil {
 		response.Status = base.StatusNoMatch
 		return nil
@@ -203,15 +213,29 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		return nil, err
 	}
 	actions.AddOnSuccess(dropAction)
+
 	destTable, _ := route.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
 	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns)
-	query := bq.NewQueryRequest(selectAll, destTable, actions)
-	query.Append = true
-	queryAction, err := task.NewAction("query", query)
-	if err != nil {
-		return nil, err
+	if len(route.Dest.UniqueColumns) > 0 {
+		query := bq.NewQueryRequest(selectAll, destTable, actions)
+		query.Append = true
+		queryAction, err := task.NewAction("query", query)
+		if err != nil {
+			return nil, err
+		}
+		result.AddOnSuccess(queryAction)
+	} else {
+		source := base.EncodeTableReference(job.Load.DestinationTable)
+		dest := base.EncodeTableReference(destTable)
+		copyRequest := bq.NewCopyRequest(source, dest, actions)
+		copyRequest.Append = true
+		queryAction, err := task.NewAction("copy", copyRequest)
+		if err != nil {
+			return nil, err
+		}
+		result.AddOnSuccess(queryAction)
 	}
-	result.AddOnSuccess(queryAction)
+
 	return result, nil
 }
 
@@ -263,6 +287,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	if err != nil {
 		return err
 	}
+
 	response.Batched = true
 	window, err := s.batch.TryAcquireWindow(ctx, request, route)
 	if window == nil {

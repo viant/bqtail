@@ -15,17 +15,16 @@ type Actions struct {
 	OnFailure    []*Action `json:",omitempty"`
 }
 
-
 //ToRun returns actions to run
-func (a Actions) ToRun(err error, job *base.Job) []*Action {
+func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 	var toRun []*Action
 	if err == nil {
 		toRun = a.OnSuccess
 	} else {
-		error := err.Error()
+		e := err.Error()
 		toRun = a.OnFailure
 		for i := range toRun {
-			toRun[i].Request[base.ErrorKey] = error
+			toRun[i].Request[base.ErrorKey] = e
 		}
 	}
 
@@ -38,7 +37,6 @@ func (a Actions) ToRun(err error, job *base.Job) []*Action {
 
 		if bqJobs[toRun[i].Action] {
 			toRun[i].Request[base.JobIDKey] = job.ChildJobID(fmt.Sprintf("%03d_%v", i, toRun[i].Action)) + jobSuffix
-
 		}
 
 		if bodyAppendable[toRun[i].Action] {
@@ -57,6 +55,9 @@ func (a Actions) ToRun(err error, job *base.Job) []*Action {
 		}
 		if _, ok := toRun[i].Request[base.SourceTableKey]; !ok {
 			toRun[i].Request[base.SourceTableKey] = job.SourceTable()
+		}
+		if _, ok := toRun[i].Request[base.DeferTaskURL]; !ok {
+			toRun[i].Request[base.DeferTaskURL] = deferredURL
 		}
 
 	}

@@ -12,41 +12,60 @@ The following google storage layout is used:
 
 This bucket stores all configuration files:
 
-**${gcp.projectID}-dataflow:**
-
+**${configBucket}:**
 
 ```bash
     /
-    | - config
-    |      |- dispatch.json
-    |      |- dispatch
+    | - BqTail
+    |      |- config.json
+    |      |- Rules
     |      |     | - process1_routes.json
     |      |     | - processN_routes.json        
-    |      |- tail.json        
-    |      |- tail
+    | - BqDispatch    
+    |      |- config.json        
+    |      |- rules
     |      |     | - process1_routes.json
     |      |     | - processN_routes.json        
         
 ```            
 
-##### Operational data flow bucket
+##### Operations bucket
 
 This bucket stores all transient data and history journal including errors 
 
-**${gcp.projectID}-dataflow-ops**
+**${opsBucket}:**
 
-##### Inbound data flow bucket
+```bash
+    /
+    | - BqTail/errors
+    | - BqDispatch/errors
+```
+
+
+
+##### Trigger Bucket
 
 This bucket stores all data that needs to be ingested to Big Query, 
 
-**${gcp.projectID}-dataflow-indound**
+**${triggerBucket}**
 
 
-##### Outbound data flow bucket
+```bash
+    /
+    | - processX/YYYY/MM/DD/tableL_0000xxx.avro
+    | - processZ/YYYY/MM/DD/tableM_0000xxx.avro
+
+```
+
+
+
+
+##### Export bucket
 
 This bucket stores data exported from BigQuery, it can be source for [storage mirror FaaS](https://github.com/viant/smirror/) cloud function. 
 
-**${gcp.projectID}-dataflow-outbound**
+**${exportBucket}**
+
 
 
 # Deployment
@@ -56,5 +75,5 @@ You can deploy the described infrasturctre with BqTail and BqDispatch cloud func
 ```bash
 git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment
-endly run
+endly run authWith=myGoogleSecret.json
 ```

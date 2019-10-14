@@ -5,33 +5,36 @@ init:
 
   bqDispatch: $Cat('config/dispatch.json')
   bqDispatchConfig:  $AsString($bqDispatch)
-  info: 'bqtail'
 
 pipeline:
+
   createBuckets:
-    dataflow:
-      action: storage:upload
-      sourceKey: info
+    configBucket:
+      action: storage:create
+      isDir: true
       dest:
-        URL: gs://${config.bucket}/config/info.txt
+        URL: gs://${config.configBucket}/
         credentials: $gcpCredentials
-    dataflow-ops:
-      action: storage:upload
-      sourceKey: info
+
+    opsBucket:
+      action: storage:create
+      isDir: true
       dest:
-        URL: gs://${config.bucket}-ops/journal/info.txt
+        URL: gs://${config.opsBucket}/
         credentials: $gcpCredentials
-    dataflow-inbound:
-      action: storage:upload
-      sourceKey: info
+
+    triggerBucket:
+      action: storage:create
+      isDir: true
       dest:
-        URL: gs://${config.bucket}-inbound/info.txt
+        URL: gs://${config.triggerBucket}/
         credentials: $gcpCredentials
-    dataflow-outbound:
-      action: storage:upload
-      sourceKey: info
+
+    dispatchBucket:
+      action: storage:create
+      isDir: true
       dest:
-        URL: gs://${config.bucket}-outbound/info.txt
+        URL: gs://${config.dispatchBucket}/
         credentials: $gcpCredentials
 
   uploadConfigs:
@@ -39,13 +42,13 @@ pipeline:
       action: storage:upload
       sourceKey: bqTailConfig
       dest:
-        URL: gs://${config.bucket}/config/bqtail.json
+        URL: gs://${configBucket}/BqTail/config.json
         credentials: $gcpCredentials
 
     bqDispatch:
       action: storage:upload
       sourceKey: bqDispatchConfig
       dest:
-        URL: gs://${config.bucket}/config/bqdispatch.json
+        URL: gs://${configBucket}/BqDispatch/config.json
         credentials: $gcpCredentials
 

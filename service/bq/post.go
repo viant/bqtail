@@ -6,9 +6,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
+	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"path"
 )
@@ -33,23 +35,30 @@ func (s *service) schedulePostTask(ctx context.Context, jobReference *bigquery.J
 	}
 	data, err := json.Marshal(actions)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to encode actions: %v", actions)
 	}
 	filename := base.DecodePathSeparator(jobReference.JobId)
 	if path.Ext(filename) == "" {
 		filename += base.JobExt
 	}
+
 	URL := url.Join(actions.DeferTaskURL, filename)
 	return s.storage.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
 //Post post big query job
-func (s *service) Post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
+func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 
-	job, err := s.post(ctx, projectID, job, onDoneActions)
+	job, err := s.post(ctx, projectID, callerJob, onDoneActions)
 	if err == nil {
 		err = base.JobError(job)
 	}
+
+	if job == nil {
+		fmt.Printf("job was empty, %v, using caller Job: %v\n", err, callerJob)
+		job = callerJob
+	}
+
 	if onDoneActions != nil && onDoneActions.IsSyncMode() {
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
@@ -78,6 +87,7 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	if err = s.schedulePostTask(ctx, job.JobReference, onDoneActions); err != nil {
 		return nil, err
 	}
+	toolbox.Dump(job)
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)

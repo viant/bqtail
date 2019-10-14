@@ -1,7 +1,8 @@
 {
-  "BatchURL": "gs://${config.bucket}-ops/batch/",
-  "ErrorURL": "gs://${config.bucket}-ops/errors/",
-  "JournalURL": "gs://${config.bucket}-ops/journal/",
-  "DeferTaskURL": "gs://${config.bucket}-ops/tasks/",
-  "RoutesBaseURL": "gs://${config.bucket}/config/bqdispatch/"
+  "BatchURL": "gs://${opsBucket}/BqDispatch/Batch/",
+  "ErrorURL": "gs://${opsBucket}/BqDispatch/Errors/",
+  "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
+  "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
+  "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
+  "CheckInMs": 50000
 }

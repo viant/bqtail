@@ -1,6 +1,5 @@
 package base
 
-
 //Info represents meta route information
 type Info struct {
 	Workflow     string `json:",omitempty"`
@@ -8,4 +7,3 @@ type Info struct {
 	ProjectURL   string `json:",omitempty"`
 	LeadEngineer string `json:",omitempty"`
 }
-

@@ -9,10 +9,10 @@ pipeline:
     runtime: go111
     serviceAccountEmail: ${gcp.serviceAccount}
     environmentVariables:
-      CONFIG: gs://${config.bucket}/config/bqtail.json
+      CONFIG: gs://${configBucket}/BqTail/config.json
     eventTrigger:
       eventType: google.storage.object.finalize
-      resource: projects/_/buckets/${config.bucket}-inbound
+      resource: projects/_/buckets/${triggerBucket}
     source:
       URL: ${appPath}
 
@@ -26,7 +26,7 @@ pipeline:
     entryPoint: BqDispatch
     runtime: go111
     environmentVariables:
-      CONFIG: gs://${config.bucket}/config/bqdispatch.json
+      CONFIG: gs://${configBucket}/BqDispatch/config.json
     eventTrigger:
       eventType: google.cloud.bigquery.job.complete
       resource: projects/${projectID}/jobs/{jobId}

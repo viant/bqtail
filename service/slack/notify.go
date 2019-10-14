@@ -10,6 +10,19 @@ import (
 	"strings"
 )
 
+//NotifyRequest represents a notify request
+type NotifyRequest struct {
+	Channels []string
+	From     string
+	Title    string
+	Message  string
+	Filename string
+	Body     interface{}
+	Secret   *base.Secret
+	BodyType string
+	OAuthToken
+}
+
 func (s *service) Notify(ctx context.Context, request *NotifyRequest) error {
 	err := request.Init(s.Region, s.projectID)
 	if err == nil {
@@ -28,46 +41,65 @@ func (s *service) Notify(ctx context.Context, request *NotifyRequest) error {
 	return s.postMessage(ctx, client, request)
 }
 
+func (s *service) uploadFile(context context.Context, client *slack.Client, request *NotifyRequest) error {
+	if request.Body == nil {
+		return nil
+	}
+	body := ""
+	switch value := request.Body.(type) {
+	case []byte:
+		body = string(value)
+	case string:
+		body = value
+	default:
+		data, err := json.MarshalIndent(value, "", "\t")
+		if err != nil {
+			err = errors.Wrapf(err, "failed to decode body: %v", value)
+			return err
+		}
+		body = string(data)
+	}
+	if body == "" {
+		return nil
+	}
+
+	fileType := "text"
+	if json.Valid([]byte(body)) {
+		fileType = "json"
+	}
+	uploadRequest := slack.FileUploadParameters{
+		Filename: request.Filename,
+		Title:    request.Title,
+		Filetype: fileType,
+		Content:  string(body),
+		Channels: request.Channels,
+	}
+	_, err := client.UploadFile(uploadRequest)
+	return err
+}
+
 func (s *service) postMessage(context context.Context, client *slack.Client, request *NotifyRequest) error {
-	body, err := getBody(request)
-	if err != nil {
+	err := s.sendMessage(context, client, request)
+	if err == nil {
+		err = s.uploadFile(context, client, request)
+	}
+	return err
+}
+
+func (s *service) sendMessage(context context.Context, client *slack.Client, request *NotifyRequest) (err error) {
+	if request.Message == "" {
 		return nil
 	}
 	attachment := slack.Attachment{
 		Text:       request.Message,
 		AuthorName: request.From,
-		MarkdownIn: []string{"json"},
-	}
-	if body != nil {
-		attachment.Fields = []slack.AttachmentField{
-			{
-				Value: string(body),
-			},
-		}
 	}
 	for _, channel := range request.Channels {
-		_, _, err = client.PostMessage(channel, slack.MsgOptionText(request.Title, false), slack.MsgOptionAttachments(attachment))
+		if _, _, e := client.PostMessage(channel, slack.MsgOptionText(request.Title, false), slack.MsgOptionAttachments(attachment)); e != nil {
+			err = e
+		}
 	}
 	return err
-}
-
-func getBody(request *NotifyRequest) ([]byte, error) {
-	if request.Body != nil {
-		return json.Marshal(request.Body)
-	}
-	return nil, nil
-}
-
-//NotifyRequest represents a notify request
-type NotifyRequest struct {
-	Channels []string
-	From     string
-	Title    string
-	Message  string
-	Body     interface{}
-	Secret   *base.Secret
-	BodyType string
-	OAuthToken
 }
 
 //Init initializes request
@@ -85,7 +117,7 @@ func (r *NotifyRequest) Init(location, projectID string) error {
 
 //Validate checks if request is valid
 func (r *NotifyRequest) Validate() error {
-	if r.Secret == nil {
+	if r.Secret == nil && r.OAuthToken.Token == "" {
 		return errors.New("secret was empty")
 	}
 	if len(r.Channels) == 0 {

@@ -9,12 +9,11 @@ import (
 type Rule struct {
 	When Filter `json:",omitempty"`
 	task.Actions
-	Info *base.Info `json:",omitempty"`
+	Info base.Info `json:",omitempty"`
 }
 
-
 func (r *Rule) Init() error {
-	if err := r.When.Init();err != nil {
+	if err := r.When.Init(); err != nil {
 		return err
 	}
 	return nil

@@ -9,7 +9,6 @@ const (
 	//StatusError response status
 	StatusError = "error"
 
-
 	//DispatchJob dispatch job name
 	DispatchJob = "dispatch"
 	//TailJob tail job name
@@ -48,6 +47,10 @@ const (
 	EventIDExpr = "$EventID"
 	//SourceTableKey source table key
 	SourceTableKey = "sourceTable"
+
+	//DeferTaskURL deferred URL
+	DeferTaskURL = "DeferTaskURL"
+
 	//SourceTableExpr source table epxression
 	SourceTableExpr = "$SourceTable"
 	//DestTableKey dest table key
