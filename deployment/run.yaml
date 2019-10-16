@@ -1,13 +1,16 @@
 init:
   appPath: /tmp/build/bqtail
   '!gcpCredentials': $params.authWith
-  gcpMap: $AsMap($Cat($gcpCredentials))
-  projectID: $gcpMap.project_id
-
+  gcp: ${secrets.$gcpCredentials}
+  projectID: $gcp.ProjectID
   configText: $Cat('meta/config.json')
   config: $AsMap(${configText})
 
   bucketPrefix: $Replace(${projectID},'-','_')
+  configBucket: ${bucketPrefix}_config
+  triggerBucket: ${bucketPrefix}_bqtail
+  opsBucket: ${bucketPrefix}_operations
+  dispatchBucket: ${bucketPrefix}_bqdispatch
 
 pipeline:
   init:

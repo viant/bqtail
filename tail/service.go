@@ -20,6 +20,7 @@ import (
 	"github.com/viant/afs/file"
 	store "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"path"
 	"time"
@@ -125,9 +126,12 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, dest *config.D
 	result.JobID = getJobID(job)
 
 	if dest.TransientDataset != "" {
+		tableReference.ProjectId  = s.config.ProjectID
 		tableReference.DatasetId = dest.TransientDataset
 		tableReference.TableId += "_" + job.EventID
 	}
+	toolbox.Dump(tableReference)
+
 	job.Load.Schema = dest.Schema.Table
 	if job.Load.Schema == nil && dest.Schema.Autodetect {
 		job.Load.Autodetect = dest.Schema.Autodetect
