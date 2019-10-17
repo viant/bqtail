@@ -61,20 +61,18 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 
 
 	if onDoneActions != nil && onDoneActions.IsSyncMode() {
-
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
 			if err == nil {
 				err = base.JobError(job)
 			}
 		}
-
-		toolbox.Dump(onDoneActions)
-
 		if job == nil {
 			job = callerJob
 		}
-
+		if base.IsLoggingEnabled() {
+			toolbox.Dump(onDoneActions)
+		}
 		if e := s.runActions(ctx, err, job, onDoneActions); e != nil {
 			if err == nil {
 				err = e
@@ -96,7 +94,9 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	if err = s.schedulePostTask(ctx, job.JobReference, onDoneActions); err != nil {
 		return nil, err
 	}
-	toolbox.Dump(job)
+	if base.IsLoggingEnabled() {
+		toolbox.Dump(job)
+	}
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)

@@ -70,7 +70,7 @@ func (r *LoadRequest) Init(projectID string) {
 func (r *LoadRequest) Validate() error {
 	table := r.JobConfigurationLoad.DestinationTable
 	if table == nil {
-		return fmt.Errorf("DestinationTable was empty")
+		return fmt.Errorf("destinationTable was empty")
 	}
 	if table.TableId == "" {
 		return fmt.Errorf("destinationTable.TableId was empty")

@@ -31,6 +31,9 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 	for i := range toRun {
 
 		jobSuffix := ""
+		if ! a.Async {
+			jobSuffix = "_sycn"
+		}
 		if hasPostTasks := toRun[i].Request[base.OnSuccessKey] != nil || toRun[i].Request[base.OnFailureKey] != nil; !hasPostTasks {
 			jobSuffix = "_nop"
 		}
