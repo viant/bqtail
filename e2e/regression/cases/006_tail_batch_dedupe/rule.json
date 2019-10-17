@@ -18,9 +18,9 @@
     ],
     "Batch": {
       "Window": {
-        "DurationInSec": 15
+        "DurationInSec": 25
       }
     },
     "Async": true
-  }
+    }
 ]

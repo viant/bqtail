@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
@@ -55,7 +54,6 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 	}
 
 	if job == nil {
-		fmt.Printf("job was empty, %v, using caller Job: %v\n", err, callerJob)
 		job = callerJob
 	}
 

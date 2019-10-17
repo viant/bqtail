@@ -3,6 +3,7 @@ package tail
 import (
 	"bqtail/base"
 	"bqtail/tail/batch"
+	"bqtail/tail/config"
 	"bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"time"
@@ -19,9 +20,23 @@ type Job struct {
 	Status        string                         `json:",ommittempty"`
 	*task.Actions
 	Window *batch.Window `json:",ommittempty"`
+	Rule *config.Rule
+
 }
 
+//IDSuffix returns job suffix
+func (j Job) IDSuffix() string {
+	suffix := base.DispatchJob
+	if j.IsSyncMode() {
+		suffix = base.TailJob
+	}
+	return suffix
+}
 
+//IsSyncMode returns true if in sync mode
+func (j Job) IsSyncMode() bool {
+	return ! j.Rule.Async
+}
 
 //Dest returns dataset and table destination
 func (j Job) Dest() string {

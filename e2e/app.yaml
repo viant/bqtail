@@ -27,6 +27,8 @@ pipeline:
 
 
     deploay:
+
+
       bqtail:
         action: gcp/cloudfunctions:deploy
         '@name': BqTail
@@ -38,6 +40,7 @@ pipeline:
         serviceAccountEmail: ${gcp.serviceAccount}
         environmentVariables:
           CONFIG: gs://${configBucket}/BqTail/config.json
+          LOGGING: true
         eventTrigger:
           eventType: google.storage.object.finalize
           resource: projects/_/buckets/${triggerBucket}
@@ -56,9 +59,9 @@ pipeline:
         runtime: go111
         environmentVariables:
           CONFIG: gs://${configBucket}/BqDispatch/config.json
+          LOGGING: true
         eventTrigger:
           eventType: google.cloud.bigquery.job.complete
           resource: projects/${projectID}/jobs/{jobId}
         source:
           URL: ${appPath}/
-

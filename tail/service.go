@@ -139,11 +139,7 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, dest *config.D
 }
 
 func getJobID(job *Job) string {
-	suffix := base.DispatchJob
-	if job.Actions != nil && job.IsSyncMode() {
-		suffix = base.TailJob
-	}
-	return path.Join(job.Dest(), job.EventID, suffix)
+	return path.Join(job.Dest(), job.EventID, job.IDSuffix())
 }
 
 func (s *service) submitJob(ctx context.Context, job *Job, route *config.Rule, response *contract.Response) (err error) {
@@ -155,11 +151,7 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Rule, r
 		return err
 	}
 	actions := route.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
-		suffix := base.DispatchJob
-	if ! route.Async {
-		suffix += base.SyncJobSuffix
-	}
-	actions.JobID = path.Join(job.Dest(), job.EventID, suffix)
+	actions.JobID = path.Join(job.Dest(), job.EventID, job.IDSuffix())
 
 	if err = appendBatchAction(job.Window, actions); err == nil {
 		actions, err = s.addTransientDatasetActions(ctx, load.JobID, job, route, actions)
@@ -249,6 +241,7 @@ func (s *service) tailIndividually(ctx context.Context, source store.Object, rou
 		return errors.Wrapf(err, "event source not found:%v", request.SourceURL)
 	}
 	job := &Job{
+		Rule:route,
 		Status:        base.StatusOK,
 		EventID:       request.EventID,
 		SourceCreated: object.ModTime(),
@@ -297,11 +290,13 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	if window == nil {
 		return err
 	}
+	response.Window = window
 	response.BatchRunner = true
 	if err = s.batch.MatchWindowData(ctx, time.Now(), window, route); err != nil {
 		return err
 	}
 	job := &Job{
+		Rule:route,
 		Status:        base.StatusOK,
 		EventID:       request.EventID,
 		SourceCreated: source.ModTime(),

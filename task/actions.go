@@ -32,7 +32,7 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 
 		jobSuffix := ""
 		if ! a.Async {
-			jobSuffix = "_sycn"
+			jobSuffix = "_sync"
 		}
 		if hasPostTasks := toRun[i].Request[base.OnSuccessKey] != nil || toRun[i].Request[base.OnFailureKey] != nil; !hasPostTasks {
 			jobSuffix = "_nop"
@@ -84,7 +84,6 @@ func (a Actions) ID(prefix string) (string, error) {
 
 //IsSyncMode returns true if route uses synchronous mode
 func (a Actions) IsSyncMode() bool {
-
 	return !a.Async
 }
 
