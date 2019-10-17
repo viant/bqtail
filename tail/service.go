@@ -125,7 +125,7 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, dest *config.D
 	result.JobID = getJobID(job)
 
 	if dest.TransientDataset != "" {
-		tableReference.ProjectId  = s.config.ProjectID
+		tableReference.ProjectId = s.config.ProjectID
 		tableReference.DatasetId = dest.TransientDataset
 		tableReference.TableId += "_" + job.EventID
 	}
@@ -143,6 +143,9 @@ func getJobID(job *Job) string {
 	if job.Actions != nil && job.IsSyncMode() {
 		suffix = base.TailJob
 	}
+	if ! job.Async {
+		suffix += base.SyncJobSuffix
+	}
 	return path.Join(job.Dest(), job.EventID, suffix)
 }
 
@@ -155,7 +158,11 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Rule, r
 		return err
 	}
 	actions := route.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
-	actions.JobID = path.Join(job.Dest(), job.EventID, base.DispatchJob)
+	suffix := base.DispatchJob
+	if !job.Async {
+		suffix += base.SyncJobSuffix
+	}
+	actions.JobID = path.Join(job.Dest(), job.EventID, suffix)
 
 	if err = appendBatchAction(job.Window, actions); err == nil {
 		actions, err = s.addTransientDatasetActions(ctx, load.JobID, job, route, actions)

@@ -28,6 +28,8 @@ const (
 	//BodyKey body key
 	BodyKey = "body"
 
+	//SyncJobSuffix sync job suffix
+	SyncJobSuffix = "sync"
 	//OnSuccessKey OnSuccess key
 	OnSuccessKey = "OnSuccess"
 	//OnFailureKey OnFailure key
