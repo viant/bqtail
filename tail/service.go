@@ -143,9 +143,6 @@ func getJobID(job *Job) string {
 	if job.Actions != nil && job.IsSyncMode() {
 		suffix = base.TailJob
 	}
-	if ! job.Async {
-		suffix += base.SyncJobSuffix
-	}
 	return path.Join(job.Dest(), job.EventID, suffix)
 }
 
@@ -158,8 +155,8 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Rule, r
 		return err
 	}
 	actions := route.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
-	suffix := base.DispatchJob
-	if !job.Async {
+		suffix := base.DispatchJob
+	if ! route.Async {
 		suffix += base.SyncJobSuffix
 	}
 	actions.JobID = path.Join(job.Dest(), job.EventID, suffix)

@@ -21,6 +21,8 @@ type Job struct {
 	Window *batch.Window `json:",ommittempty"`
 }
 
+
+
 //Dest returns dataset and table destination
 func (j Job) Dest() string {
 	if j.Load == nil {

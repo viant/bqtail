@@ -84,6 +84,7 @@ func (a Actions) ID(prefix string) (string, error) {
 
 //IsSyncMode returns true if route uses synchronous mode
 func (a Actions) IsSyncMode() bool {
+
 	return !a.Async
 }
 
