@@ -18,11 +18,13 @@ type Actions struct {
 //ToRun returns actions to run
 func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 	var toRun []*Action
+
 	if err == nil {
-		toRun = a.OnSuccess
+		toRun = append([]*Action{}, a.OnSuccess...)
+
 	} else {
+		toRun = append([]*Action{}, a.OnFailure...)
 		e := err.Error()
-		toRun = a.OnFailure
 		for i := range toRun {
 			toRun[i].Request[base.ErrorKey] = e
 		}
@@ -31,7 +33,7 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 	for i := range toRun {
 
 		jobSuffix := ""
-		if ! a.Async {
+		if !a.Async {
 			jobSuffix = "_sync"
 		}
 		if hasPostTasks := toRun[i].Request[base.OnSuccessKey] != nil || toRun[i].Request[base.OnFailureKey] != nil; !hasPostTasks {
@@ -43,8 +45,8 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 		}
 
 		if bodyAppendable[toRun[i].Action] {
-			if body, err := json.Marshal(a); err == nil {
-				toRun[i].Request[base.BodyKey] = string(body)
+			if responseJSON, err := json.Marshal(a); err == nil {
+				toRun[i].Request[base.ResponseKey] = string(responseJSON)
 			}
 		}
 		if _, ok := toRun[i].Request[base.JobIDKey]; !ok {
@@ -61,6 +63,9 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 		}
 		if _, ok := toRun[i].Request[base.DeferTaskURL]; !ok {
 			toRun[i].Request[base.DeferTaskURL] = deferredURL
+		}
+		if _, ok := toRun[i].Request[base.SourceKey]; !ok {
+			toRun[i].Request[base.SourceKey] = job.Source()
 		}
 
 	}
@@ -120,19 +125,23 @@ func expandSource(actions []*Action, expandable *base.Expandable) {
 }
 
 //AddOnSuccess adds on sucess action
-func (a *Actions) AddOnSuccess(action *Action) {
+func (a *Actions) AddOnSuccess(actions ...*Action) {
 	if len(a.OnSuccess) == 0 {
 		a.OnSuccess = make([]*Action, 0)
 	}
-	a.OnSuccess = append(a.OnSuccess, action)
+	for i := range actions {
+		a.OnSuccess = append(a.OnSuccess, actions[i])
+	}
 }
 
 //AddOnFailure adds on failure action
-func (a *Actions) AddOnFailure(action *Action) {
+func (a *Actions) AddOnFailure(actions ...*Action) {
 	if len(a.OnFailure) == 0 {
 		a.OnFailure = make([]*Action, 0)
 	}
-	a.OnFailure = append(a.OnFailure, action)
+	for i := range actions {
+		a.OnFailure = append(a.OnFailure, actions[i])
+	}
 }
 
 //NewActions creates an actions
