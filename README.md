@@ -13,7 +13,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 ## Motivation
 
-The goal of this project is to provide cost effective events driven, data ingestion and extraction.
+The goal of this project is to provide cost effective events driven, data ingestion and extraction with Big Query.
 
 ## Introduction
 
