@@ -81,10 +81,14 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 		rule = matched[0]
 	default:
 		JSON, _ := json.Marshal(matched)
-		return errors.Errorf("multi rule match currently not supported: %v", JSON)
+		return errors.Errorf("multi rule match currently not supported: %s", JSON)
 	}
 	if rule == nil {
 		response.Status = base.StatusNoMatch
+		return nil
+	}
+	if exists, _ := s.fs.Exists(ctx, request.SourceURL); !exists {
+		response.Status = base.StatusNotFound
 		return nil
 	}
 	response.Rule = rule
@@ -144,7 +148,7 @@ func getJobID(job *Job) string {
 
 func (s *service) submitJob(ctx context.Context, job *Job, route *config.Rule, response *contract.Response) (err error) {
 	if len(job.Load.SourceUris) == 0 {
-		return fmt.Errorf("SourceUris was empty")
+		return fmt.Errorf("sourceUris was empty")
 	}
 	var load *bq.LoadRequest
 	if load, err = s.buildLoadRequest(ctx, job, route.Dest); err != nil {
@@ -230,8 +234,10 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 			return nil, err
 		}
 		result.AddOnSuccess(queryAction)
+
 	}
 
+	result.AddOnFailure(actions.OnFailure...)
 	return result, nil
 }
 
@@ -241,7 +247,7 @@ func (s *service) tailIndividually(ctx context.Context, source store.Object, rou
 		return errors.Wrapf(err, "event source not found:%v", request.SourceURL)
 	}
 	job := &Job{
-		Rule:route,
+		Rule:          route,
 		Status:        base.StatusOK,
 		EventID:       request.EventID,
 		SourceCreated: object.ModTime(),
@@ -296,7 +302,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 		return err
 	}
 	job := &Job{
-		Rule:route,
+		Rule:          route,
 		Status:        base.StatusOK,
 		EventID:       request.EventID,
 		SourceCreated: source.ModTime(),

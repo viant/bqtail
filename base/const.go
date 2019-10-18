@@ -5,6 +5,8 @@ const (
 	StatusOK = "ok"
 	//StatusNoMatch status no match
 	StatusNoMatch = "noMatch"
+	//StatusNotFound status not found
+	StatusNotFound = "notFound"
 
 	//StatusError response status
 	StatusError = "error"
@@ -23,10 +25,8 @@ const (
 	PathElementSeparator = "--"
 	//SourceURLKey source key
 	SourceURLKey = "SourceURL"
-	//SourceKey source key
-	SourceKey = "Source"
-	//BodyKey body key
-	BodyKey = "body"
+	//ResponseKey response key
+	ResponseKey = "Response"
 
 	//OnSuccessKey OnSuccess key
 	OnSuccessKey = "OnSuccess"
@@ -34,7 +34,7 @@ const (
 	OnFailureKey = "OnFailure"
 
 	//ErrorKey error key
-	ErrorKey = "error"
+	ErrorKey = "Error"
 	//ErrorExpr error expression
 	ErrorExpr = "$Error"
 	//JobIDKey job id key
@@ -50,6 +50,9 @@ const (
 
 	//DeferTaskURL deferred URL
 	DeferTaskURL = "DeferTaskURL"
+
+	//SourceKey source URI
+	SourceKey = "Source"
 
 	//SourceTableExpr source table epxression
 	SourceTableExpr = "$SourceTable"

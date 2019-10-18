@@ -34,12 +34,11 @@ func handleTailEvent(ctx context.Context, request *contract.Request) (*contract.
 		return nil, err
 	}
 	response := service.Tail(ctx, request)
-	if response.Error != "" {
-		return response, errors.New(response.Error)
-	}
-
 	if data, err := json.Marshal(response); err == nil {
 		fmt.Printf("%v\n", string(data))
+	}
+	if response.Error != "" {
+		return response, errors.New(response.Error)
 	}
 	return response, nil
 }

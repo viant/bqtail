@@ -169,5 +169,10 @@ func (r *Ruleset) initRules() error {
 			r.initialRules = make([]*Rule, 0)
 		}
 	}
+	if len(r.initialRules) > 0 {
+		if base.IsLoggingEnabled() {
+			fmt.Printf("initialy loaded rules: %v\n", len(r.initialRules))
+		}
+	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package base
 
 import (
+	"encoding/json"
 	"fmt"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -20,7 +21,9 @@ func (e *Job) Source() string {
 	case "QUERY":
 		return strings.Replace(e.Configuration.Query.Query, "\n", " ", strings.Count(e.Configuration.Query.Query, "\n"))
 	case "LOAD":
-		return ""
+		if e.Configuration.Load != nil {
+			return strings.Join(e.Configuration.Load.SourceUris, ",")
+		}
 	case "EXTRACT":
 		source := e.Configuration.Extract.SourceTable
 		return source.ProjectId + ":" + source.DatasetId + "." + source.TableId
@@ -146,7 +149,8 @@ func (e *Job) Error() error {
 //JobError check job status and returns error or nil
 func JobError(job *bigquery.Job) error {
 	if job.Status.ErrorResult != nil {
-		return fmt.Errorf("failed to run job: %s", job.Status.ErrorResult.Message)
+		JSON, _ := json.Marshal(job.Status.Errors)
+		return fmt.Errorf("failed to run job: %s, %s", job.Status.ErrorResult.Message, JSON)
 	}
 	return nil
 }

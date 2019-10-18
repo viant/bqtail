@@ -25,15 +25,14 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	if err != nil {
 		return err
 	}
-
 	if err = c.Ruleset.Init(ctx, fs, c.ProjectID); err != nil {
 		return err
 	}
-	c.initRules()
+	c.initLoadedRules()
 	return nil
 }
 
-func (c *Config) initRules() {
+func (c *Config) initLoadedRules() {
 	if len(c.Rules) == 0 {
 		return
 	}
@@ -54,7 +53,7 @@ func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {
 		return err
 	}
 	if changed {
-		c.initRules()
+		c.initLoadedRules()
 	}
 	return err
 }

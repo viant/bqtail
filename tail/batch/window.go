@@ -10,12 +10,12 @@ import (
 
 //Window represent batching window
 type Window struct {
-	URL           string `json:",omitempty"`
-	Start         time.Time `json:",omitempty"`
-	End           time.Time `json:",omitempty"`
-	SourceCreated time.Time `json:",omitempty"`
-	EventTime     time.Time `json:",omitempty"`
-	EventID       string `json:",omitempty"`
+	URL           string      `json:",omitempty"`
+	Start         time.Time   `json:",omitempty"`
+	End           time.Time   `json:",omitempty"`
+	SourceCreated time.Time   `json:",omitempty"`
+	EventTime     time.Time   `json:",omitempty"`
+	EventID       string      `json:",omitempty"`
 	Datafiles     []*Datafile `json:",omitempty"`
 }
 

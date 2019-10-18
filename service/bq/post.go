@@ -47,16 +47,13 @@ func (s *service) schedulePostTask(ctx context.Context, jobReference *bigquery.J
 
 //Post post big query job
 func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
-
 	job, err := s.post(ctx, projectID, callerJob, onDoneActions)
 	if err == nil {
 		err = base.JobError(job)
 	}
-
 	if job == nil {
 		job = callerJob
 	}
-
 
 	if onDoneActions != nil && onDoneActions.IsSyncMode() {
 		if err == nil {
@@ -68,12 +65,11 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 		if job == nil {
 			job = callerJob
 		}
-		if base.IsLoggingEnabled() {
-			toolbox.Dump(onDoneActions)
-		}
 		if e := s.runActions(ctx, err, job, onDoneActions); e != nil {
 			if err == nil {
 				err = e
+			} else {
+				err = errors.Wrapf(err, "failed to run post action: %v", e)
 			}
 		}
 	}

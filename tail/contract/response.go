@@ -12,7 +12,7 @@ type Response struct {
 	Batched     bool         `json:",omitempty"`
 	BatchRunner bool         `json:",omitempty"`
 	TriggerURL  string
-	Window interface{} `json:",omitempty"`
+	Window      interface{} `json:",omitempty"`
 }
 
 //NewResponse creates a new response

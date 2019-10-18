@@ -12,14 +12,17 @@ import (
 
 //NotifyRequest represents a notify request
 type NotifyRequest struct {
-	Channels []string
-	From     string
-	Title    string
-	Message  string
-	Filename string
-	Body     interface{}
-	Secret   *base.Secret
-	BodyType string
+	Channels    []string
+	From        string
+	Title       string
+	Message     string
+	Filename    string
+	Error       string
+	Body        interface{}
+	Response    interface{}
+	Source      string
+	Credentials *base.Secret
+	BodyType    string
 	OAuthToken
 }
 
@@ -27,13 +30,14 @@ func (s *service) Notify(ctx context.Context, request *NotifyRequest) error {
 	err := s.notify(ctx, request)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to notify on slack: %v", request.Channels)
-		fmt.Printf("%v\n", err)
 	}
 	return err
 }
 
-
 func (s *service) notify(ctx context.Context, request *NotifyRequest) error {
+	if request.Credentials == nil {
+		request.Credentials = s.defaultSecrets
+	}
 	err := request.Init(s.Region, s.projectID)
 	if err == nil {
 		err = request.Validate()
@@ -42,10 +46,7 @@ func (s *service) notify(ctx context.Context, request *NotifyRequest) error {
 		return err
 	}
 	if request.OAuthToken.Token == "" {
-		if request.Secret == nil {
-			request.Secret = s.defaultSecrets
-		}
-		err = s.Secret.Decode(ctx, s.Storage, request.Secret, &request.OAuthToken)
+		err = s.Secret.Decode(ctx, s.Storage, request.Credentials, &request.OAuthToken)
 		if err != nil {
 			return err
 		}
@@ -58,20 +59,25 @@ func (s *service) uploadFile(context context.Context, client *slack.Client, requ
 	if request.Body == nil {
 		return nil
 	}
+
 	body := ""
 	switch value := request.Body.(type) {
 	case []byte:
 		body = string(value)
 	case string:
 		body = value
+		if body == "$Response" {
+			request.Body = request.Response
+		}
 	default:
-		data, err := json.MarshalIndent(value, "", "\t")
+		data, err := json.MarshalIndent(request.Body, "", "\t")
 		if err != nil {
 			err = errors.Wrapf(err, "failed to decode body: %v", value)
 			return err
 		}
 		body = string(data)
 	}
+
 	if body == "" {
 		return nil
 	}
@@ -117,20 +123,32 @@ func (s *service) sendMessage(context context.Context, client *slack.Client, req
 
 //Init initializes request
 func (r *NotifyRequest) Init(location, projectID string) error {
-	if r.Secret != nil {
-		if strings.Count(r.Secret.Key, "/") == 1 {
-			pair := strings.Split(r.Secret.Key, "/")
+	if r.Credentials != nil {
+		if strings.Count(r.Credentials.Key, "/") == 1 {
+			pair := strings.Split(r.Credentials.Key, "/")
 			ring := strings.TrimSpace(pair[0])
 			key := strings.TrimSpace(pair[1])
-			r.Secret.Key = fmt.Sprintf("projects/%v/locations/%v/keyRings/%v/cryptoKeys/%v", projectID, location, ring, key)
+			r.Credentials.Key = fmt.Sprintf("projects/%v/locations/%v/keyRings/%v/cryptoKeys/%v", projectID, location, ring, key)
 		}
+	}
+	if r.Message != "" {
+		r.Message = strings.Replace(r.Message, "$Source", r.Source, 1)
+		r.Message = strings.Replace(r.Message, "$Error", r.Error, 1)
+	}
+
+	if r.Title != "" {
+		r.Title = strings.Replace(r.Title, "$Source", r.Source, 1)
+	}
+	if r.Filename != "" {
+		r.Filename = strings.Replace(r.Filename, "$Source", r.Source, 1)
+
 	}
 	return nil
 }
 
 //Validate checks if request is valid
 func (r *NotifyRequest) Validate() error {
-	if r.Secret == nil && r.OAuthToken.Token == "" {
+	if r.Credentials == nil && r.OAuthToken.Token == "" {
 		return errors.New("secret was empty")
 	}
 	if len(r.Channels) == 0 {

@@ -17,4 +17,3 @@ func IsLoggingEnabled() bool {
 func IsFnLoggingEnabled(key string) bool {
 	return strings.ToLower(os.Getenv(key)) == "true"
 }
-

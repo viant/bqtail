@@ -1,6 +1,6 @@
 package base
 
-//Secret represents a secret config
+//SlackCredentials represents a secret config
 type Secret struct {
 	URL       string
 	Parameter string
