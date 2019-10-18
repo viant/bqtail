@@ -6,10 +6,12 @@ This scenario tests data async data ingestion.
 
 
 BqTail function is notified once data is upload to gs://${config.Bucket}/data/case002/dummy[1..2].json
-It matches the the following route to submit load Job to BiqQuery. 
+It matches the the following rule to submit load Job to BiqQuery. 
 
+
+[@rule.json](rule.json)
 ```json
- {
+ [{
       "When": {
         "Prefix": "/data/case002",
         "Suffix": ".json"
@@ -23,7 +25,7 @@ It matches the the following route to submit load Job to BiqQuery.
           "Action": "delete"
         }
       ]
-    }
+}]
 ```
 
 BqTail function does not wait for job completion, but instead if generate post action JSON file with job ID

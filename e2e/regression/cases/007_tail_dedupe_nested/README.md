@@ -6,12 +6,12 @@ This scenario tests data deduplication with nested table schema.
 
 
 BqTail function is notified once data is upload to gs://${config.Bucket}/data/case007/dummy[1-2].json
-It matches the the following route, to ingest data with transient table in temp dataset,  then it deduplicate data in the destination table.
+It matches the the following rule, to ingest data with transient table in temp dataset,  then it deduplicate data in the destination table.
 
  
 
 ```json
- {
+[{
       "When": {
         "Prefix": "/data/case007",
         "Suffix": ".json"
@@ -31,7 +31,7 @@ It matches the the following route, to ingest data with transient table in temp 
           "DurationInSec": 10
         }
       }
-}
+}]
 ```
 
 Since table uses nested column the following SQL is used for de duplications

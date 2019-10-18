@@ -6,10 +6,12 @@ This scenario tests data ingestion with summary query in async mode.
 
 
 BqTail function is notified once data is upload to gs://${config.Bucket}/data/case011/dummy[1..2].json
-It matches the the following route to submit load Job to BiqQuery. 
+It matches the the following rule to submit load Job to BiqQuery. 
 
+
+[@rule.json](rule.json)
 ```json
-{
+[{
       "When": {
         "Prefix": "/data/case010",
         "Suffix": ".json"
@@ -35,7 +37,7 @@ It matches the the following route to submit load Job to BiqQuery.
             "Dest": "bqtail.summary"
           }
         }
-      ]
-}
+   ]
+}]
 ```
 

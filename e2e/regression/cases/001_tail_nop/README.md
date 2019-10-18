@@ -5,10 +5,11 @@
 This scenario tests data basic data ingestion.
 
 BqTail function is notified once data is upload to gs://${config.Bucket}/data/case001/dummy.json
-It matches the the following route to submit load Job to BiqQuery and wait till job is done synchronusly.
+It matches the the following rule to submit load Job to BiqQuery and wait till job is done synchronusly.
 
+[@rule.json](rule.json)
 ```json
- {
+ [{
       "When": {
         "Prefix": "/data/case1",
         "Suffix": ".json"
@@ -16,7 +17,7 @@ It matches the the following route to submit load Job to BiqQuery and wait till 
       "Dest": {
         "Table": "db1.dummy"
       }
-    }
+ }]
 ```
 
 

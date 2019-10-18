@@ -6,11 +6,12 @@ This scenario tests data usage of transient/temp dataset and table.
 
 
 BqTail function is notified once data is upload to gs://${config.Bucket}/data/case005/dummy.json
-It matches the the following route, to ingest data with transient table in temp dataset, followed by final destination ingestion.
+It matches the the following rule, to ingest data with transient table in temp dataset, followed by final destination ingestion.
 
 
+[@rule.json](rule.json)
 ```json
-  {
+  [{
       "When": {
         "Prefix": "/data/case005",
         "Suffix": ".json"
@@ -24,10 +25,10 @@ It matches the the following route, to ingest data with transient table in temp 
           "Action": "delete"
         }
       ]
-    }
+    }]
 ```
 
-Since route is configured in asynchronous mode, all post actions inherit that mode.
+Since rule is configured in asynchronous mode, all post actions inherit that mode.
 If there is no error temp table is dropped after appending data to dest table.
 Name of transient table uses event ID as suffix.
 

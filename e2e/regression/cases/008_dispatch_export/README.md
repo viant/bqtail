@@ -6,11 +6,12 @@ This scenario tests data extract triggered by loading data to a target table.
 
 
 BqDispatch function is notified with all Big Query jobs completion, it matches actions to run
-with the following route to export destination table to google storage gs://${config.Bucket}/export/dummy.json.gz
+with the following rule to export destination table to google storage gs://${config.Bucket}/export/dummy.json.gz
 
 
+[@rule.json](rule.json)
 ```json
-  {
+ [{
     "When": {
       "Dest": ".+:bqdispatch\\.dummy_v2",
       "Type": "QUERY"
@@ -23,7 +24,7 @@ with the following route to export destination table to google storage gs://${co
         }
       }
     ]
-  }
+  }]
 ```
 
 ### BqDispatch

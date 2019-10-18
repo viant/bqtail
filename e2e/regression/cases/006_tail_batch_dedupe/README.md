@@ -6,12 +6,12 @@ This scenario tests data deduplication with basic table schema.
 
 
 BqTail function is notified once data is upload to gs://${config.Bucket}/data/case006/dummy[1-2].json
-It matches the the following route, to ingest data with transient table in temp dataset,  then it deduplicate data in the destination table.
+It matches the the following rule, to ingest data with transient table in temp dataset,  then it deduplicate data in the destination table.
 
 
-
+[@rule.json](rule.json)
 ```json
-  {
+ [{
       "When": {
         "Prefix": "/data/case006",
         "Suffix": ".json"
@@ -32,7 +32,7 @@ It matches the the following route, to ingest data with transient table in temp 
         }
       },
       "Async": true
-    }
+   }]
 ```
 
 

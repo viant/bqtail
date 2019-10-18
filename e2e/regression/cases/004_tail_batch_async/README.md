@@ -5,12 +5,12 @@
 This scenario tests data async data ingestion in batch.
 
 BqTail function is notified once data is upload to gs://${config.Bucket}/data/case004/dummy[1..2].json
-It matches the the following route, to ingest data in batch. All BqTail cloud functions write event sourceURL to ${batchURL}/$dest/ base location.
+It matches the the following rule, to ingest data in batch. All BqTail cloud functions write event sourceURL to ${batchURL}/$dest/ base location.
 Only one function manages the batching while the other quite, once batch window is closed function runs BigQuery Load Job with batch sourceURLs and defer actions.
 
-
+[@rule.json](rule.json)
 ```json
-  {
+[{
       "When": {
         "Prefix": "/data/case003",
         "Suffix": ".json"
@@ -28,7 +28,7 @@ Only one function manages the batching while the other quite, once batch window 
           "Action": "delete"
         }
       ]
-   }
+}]
 ```
 
 
