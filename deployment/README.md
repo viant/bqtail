@@ -81,6 +81,7 @@ endly run authWith=myGoogleSecret.json
 
 All automation testing workflow copy rule to  gs://${configBucket}/BqTail/Rules/, 
 followed by uploading data file to gs://${triggerBucket}/xxxxxx matching the rule, to trigger data ingestion.
+In the final step the workflow waits and validate that data exists in dest tables.
 
 
 ###### Synchronous CSV data ingestion test
