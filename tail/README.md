@@ -29,7 +29,7 @@ and the post task execution does not run at all.
 
 All these limitations are addressed by asynchronous and batch mode. 
  
-[@config/bqtail.json](usage/sync.json)
+[@config/sync.json](usage/sync.json)
 ```json
 [
     {
@@ -55,15 +55,20 @@ All these limitations are addressed by asynchronous and batch mode.
 - ErrorURL: - errors location
 - DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
 - BatchURL: transient storage location for managing event batching.
-- Routes: data ingestion matching rules (no more than one route can be matched)
-- RoutesBaseURL: base URL where each rule is JSON file with routes arrays
+- RulesURL: base URL where each rule is JSON file with routes arrays
 
 
-- Routes.When defines matching filter
-    - Prefix: path prefix
-    - Suffix: path suffix
-- Routes.OnSuccess: actions to run when job completed without errors
-- Routes.OnFailure: actions to run when job completed with errors
+
+**Individual rule** can has the following attributes:
+
+- When defines matching filter
+  - Prefix: path prefix or
+  - Suffix: path suffix or
+  - Filter: path regexp
+- OnSuccess: actions to run when job completed without errors
+- OnFailure: actions to run when job completed with errors
+
+Post actions can use predefined [Cloud Service](../service/README.md) operations.
 
 
 #### Asynchronous mode
@@ -74,7 +79,7 @@ Once BigQuery job completes it is picked up by BqDispatchFn cloud function to ru
 In this mode cloud function execution time is stremlined to actual task run without unnecessary waits.
 
 
-[@config/bqtail.json](usage/async.json)
+[@config/async.json](usage/async.json)
 ```json
  [
     {
@@ -112,7 +117,7 @@ Batch URL is used to manged batch windowing process.
 
 The following configuration specify batch sync mode.
 
-[@config/bqtail.json](usage/batch.json)
+[@config/batch.json](usage/batch.json)
 ```json
 [
     {
@@ -139,7 +144,7 @@ The following configuration specify batch sync mode.
 
 The following configuration specify batch asynchronous  mode.
 
-[@config/bqtail.json](usage/async_batch.json)
+[@config/async_batch.json](usage/async_batch.json)
 ```json
 [
     {
@@ -176,7 +181,7 @@ Temp table is constructed from destination table suffixed by event ID.
 The following configuration specify transient dataset.
 
 
-[@config/bqtail.json](usage/transient.json)
+[@config/transient.json](usage/transient.json)
 ```json
 [
 
@@ -203,7 +208,7 @@ The following configuration specify transient dataset.
 When using transient table you can specify unique columns to deduplicate data while moving to destination table.
 
 
-[@config/bqtail.json](usage/dedupe.json)
+[@config/dedupe.json](usage/dedupe.json)
 ```json
 [
   {
@@ -237,7 +242,7 @@ When using transient table you can specify unique columns to deduplicate data wh
 
 In case destination table does not exists you can specify schema source table with schema.template attribute.
 
-[@config/bqtail.json](usage/template.json)
+[@config/template.json](usage/template.json)
 ```json
 [
     {

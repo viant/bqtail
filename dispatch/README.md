@@ -86,18 +86,21 @@ for example: [@rule.json](usage/rule.json) defines routes and on success and or 
 - JournalURL: job history location 
 - ErrorURL: - errors location
 - DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
-- Routes: post job tasks matching rules (no more than one route can be matched)  
-- RoutesBaseURL: base URL where each rule is JSON file with routes arrays
+- RulesURL: base URL where each rule is JSON file with routes arrays
   
+**Individual rule** can has the following attributes:
 
 
-- Routes.When defines matching filter 
+- When defines matching filter 
     - Dest: destination table reg expressions against event dest table in the format: project:dataset.table
     - Source: destination table reg expressions against event source table in the format: project:dataset.table
     - Type: big query job type (can be empty), QUERY, LOAD, COPY, EXPORT
     
-- Routes.OnSuccess: actions to run when job completed without errors
-- Routes.OnFailure: actions to run when job completed with errors
+- OnSuccess: actions to run when job completed without errors
+- OnFailure: actions to run when job completed with errors
+
+
+Post actions can use predefined [Cloud Service](../service/README.md) operations.
 
 ### Deployment
 
