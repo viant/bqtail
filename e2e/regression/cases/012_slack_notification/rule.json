@@ -14,7 +14,6 @@
           "Channels": [
             "#e2e"
           ],
-          "From": "BqTail",
           "Title": "bqtail.wrong_dummy ingestion",
           "Message": "$Error"
         }
