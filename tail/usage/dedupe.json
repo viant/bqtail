@@ -1,33 +1,26 @@
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "JournalURL": "gs://YYY/journal/",
-  "BatchURL": "gs://e2e-data/batch/",
-  "DeferTaskURL": "gs://e2e-data/tasks/",
-
-  "Routes": [
-    {
-      "Async": true,
-      "When": {
-        "Prefix": "/data/folder",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "mydataset.mytable",
-        "TransientDataset": "temp",
-        "UniqueColumns": [
-          "id"
-        ]
-      },
-      "Batch": {
-        "Window": {
-          "DurationInSec": 80
-        }
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
+[
+  {
+    "Async": true,
+    "When": {
+      "Prefix": "/data/folder",
+      "Suffix": ".json"
+    },
+    "Dest": {
+      "Table": "mydataset.mytable",
+      "TransientDataset": "temp",
+      "UniqueColumns": [
+        "id"
       ]
-    }
-  ]
-}
+    },
+    "Batch": {
+      "Window": {
+        "DurationInSec": 80
+      }
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ]
+  }
+]

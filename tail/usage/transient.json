@@ -1,22 +1,17 @@
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "JournalURL": "gs://YYY/journal/",
-  "Routes": [
-
-    {
-      "When": {
-        "Prefix": "/data/folder",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "mydataset.mytable",
-        "TransientDataset": "temp"
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "When": {
+      "Prefix": "/data/folder",
+      "Suffix": ".json"
+    },
+    "Dest": {
+      "Table": "mydataset.mytable",
+      "TransientDataset": "temp"
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ]
+  }
+]

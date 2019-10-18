@@ -43,12 +43,10 @@ for example: [@$JobID.json](usage/dispatch.json) defines on success and or failu
 
 
 Another matching method uses configuration routes with [When filter](config/filter.go), 
-for example: [@config.json](usage/config.json) defines routes and on success and or failure actions.
+for example: [@rule.json](usage/rule.json) defines routes and on success and or failure actions.
 
 ```json
-{
-  "DeferTaskURL": "gs://${config.Bucket}/tasks/",
-  "Routes": [
+[
     {
       "When": {
         "Dest": ".+:mydataset\\.my_table_v2",
@@ -77,8 +75,7 @@ for example: [@config.json](usage/config.json) defines routes and on success and
         }
       ]
     }
-  ]
-}
+]
 ``` 
 
 
@@ -90,7 +87,7 @@ for example: [@config.json](usage/config.json) defines routes and on success and
 - ErrorURL: - errors location
 - DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
 - Routes: post job tasks matching rules (no more than one route can be matched)  
-- RoutesBaseURL: base URL where each route is JSON file with routes arrays
+- RoutesBaseURL: base URL where each rule is JSON file with routes arrays
   
 
 
@@ -106,48 +103,22 @@ for example: [@config.json](usage/config.json) defines routes and on success and
 
 ```bash
 gcloud functions deploy BqDispatch --entry-point BqDispatchFn --trigger-resource projects/MY_PROJECT_ID/jobs/{jobId} --trigger-event google.cloud.bigquery.job.complete  \n
- --set-env-vars=CONFIG=gs://YYY/config/bqdispatch.json
+ --set-env-vars=CONFIG=gs://${configBucket}/BqDispatch/config.json
 --runtime go111
 ```
 
 Where:
-- XXX is data bucket name
-- bqdispatch.json is configuration file
+- gs://${configBucket}/BqDispatch/config.jsonis configuration file
 ```json
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "JournalURL": "gs://YYY/journal/",
-  "DeferTaskURL": "gs://YYY/tasks/",
-  "Routes": [
-    {
-      "When": {
-        "Dest": ".+:mydataset\\.mytable",
-        "Type": "QUERY"
-      },
-      "OnSuccess": [
-        {
-          "Action": "export",
-          "Request": {
-            "DestURL": "gs://${config.Bucket}/export/dummy.json.gz"
-          }
-        }
-      ]
-    },
-    {
-      "When": {
-        "Dest": ".+:mydataset\\.mytable2",
-        "Type": "LOAD"
-      },
-      "OnSuccess": [
-        {
-          "Action": "copy",
-          "Request": {
-            "Dest": "mydataset.mytable3"
-          }
-        }
-      ]
-    }
-  ]
-}
 
+{
+  "BatchURL": "gs://${opsBucket}/BqDispatch/Batch/",
+  "ErrorURL": "gs://${opsBucket}/BqDispatch/Errors/",
+  "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
+  "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
+  "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
+  "CheckInMs": 10
+}
 ```
+
+See [Generic Deployment](../deployment/README.md) automation and post deployment testing  

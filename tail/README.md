@@ -31,10 +31,7 @@ All these limitations are addressed by asynchronous and batch mode.
  
 [@config/bqtail.json](usage/sync.json)
 ```json
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "JournalURL": "gs://YYY/journal/",
-  "Routes": [
+[
     {
       "When": {
         "Prefix": "/data/folder",
@@ -49,8 +46,7 @@ All these limitations are addressed by asynchronous and batch mode.
         }
       ]
     }
-  ]
-}
+]
 ```
 
 **Configuration options:**
@@ -60,7 +56,7 @@ All these limitations are addressed by asynchronous and batch mode.
 - DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
 - BatchURL: transient storage location for managing event batching.
 - Routes: data ingestion matching rules (no more than one route can be matched)
-- RoutesBaseURL: base URL where each route is JSON file with routes arrays
+- RoutesBaseURL: base URL where each rule is JSON file with routes arrays
 
 
 - Routes.When defines matching filter
@@ -80,11 +76,7 @@ In this mode cloud function execution time is stremlined to actual task run with
 
 [@config/bqtail.json](usage/async.json)
 ```json
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "JournalURL": "gs://YYY/journal/",
-  "DeferTaskURL": "gs://e2e-data/tasks/",
-  "Routes": [
+ [
     {
       "When": {
         "Prefix": "/data/folder",
@@ -108,8 +100,7 @@ In this mode cloud function execution time is stremlined to actual task run with
         }
       ]
     }
-  ]
-}
+]
 ```
 
 #### Batch ingestion
@@ -123,11 +114,7 @@ The following configuration specify batch sync mode.
 
 [@config/bqtail.json](usage/batch.json)
 ```json
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "BatchURL": "gs://e2e-data/batch/",
-  "JournalURL": "gs://YYY/journal/",
-  "Routes": [
+[
     {
       "When": {
         "Prefix": "/data/folder",
@@ -148,19 +135,13 @@ The following configuration specify batch sync mode.
       ]
     }
   ]
-}
 ```
 
 The following configuration specify batch asynchronous  mode.
 
 [@config/bqtail.json](usage/async_batch.json)
 ```json
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "BatchURL": "gs://e2e-data/batch/",
-  "JournalURL": "gs://YYY/journal/",
-  "DeferTaskURL": "gs://e2e-data/tasks/",
-  "Routes": [
+[
     {
       "When": {
         "Prefix": "/data/folder",
@@ -182,7 +163,6 @@ The following configuration specify batch asynchronous  mode.
       ]
     }
   ]
-}
 ```
 
 
@@ -198,10 +178,7 @@ The following configuration specify transient dataset.
 
 [@config/bqtail.json](usage/transient.json)
 ```json
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "JournalURL": "gs://YYY/journal/",
-  "Routes": [
+[
 
     {
       "When": {
@@ -218,9 +195,7 @@ The following configuration specify transient dataset.
         }
       ]
     }
-  ]
-}
-
+]
 ```
 
 #### Data deduplication
@@ -230,13 +205,8 @@ When using transient table you can specify unique columns to deduplicate data wh
 
 [@config/bqtail.json](usage/dedupe.json)
 ```json
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "JournalURL": "gs://YYY/journal/",
-  "BatchURL": "gs://e2e-data/batch/",
-  "DeferTaskURL": "gs://e2e-data/tasks/",
-  "Routes": [
-    {
+[
+  {
       "Async": true,
       "When": {
         "Prefix": "/data/folder",
@@ -259,9 +229,8 @@ When using transient table you can specify unique columns to deduplicate data wh
           "Action": "delete"
         }
       ]
-    }
-  ]
-}
+  }
+]
 ```
 
 #### Template table
@@ -270,10 +239,7 @@ In case destination table does not exists you can specify schema source table wi
 
 [@config/bqtail.json](usage/template.json)
 ```json
-{
-  "ErrorURL": "gs://YYY/errors/",
-  "JournalURL": "gs://YYY/journal/",
-  "Routes": [
+[
     {
       "When": {
         "Prefix": "/data/folder",
@@ -285,9 +251,8 @@ In case destination table does not exists you can specify schema source table wi
           "Template": "mydataset.template_table"
         }
       }
-    }
-  ]
-}
+   }
+]
 ```
 
 
@@ -315,33 +280,24 @@ With table defined as "proj:dataset:table_$1$2$3" and source URL "gs://bucket/da
 ### Deployment
 
 ```bash
-gcloud functions deploy XXXBQTail --entry-point BqTailFn --trigger-resource XXX --trigger-event google.storage.object.finalize  \n
- --set-env-vars=CONFIG=gs://YYY/config/bqtail.json
+gcloud functions deploy XXXBQTail --entry-point BqTailFn --trigger-resource ${triggerBucket} --trigger-event google.storage.object.finalize  \n
+ --set-env-vars=CONFIG=gs://${configBucket}/BqDispatch/config.json
 --runtime go111
 ```
 
 Where:
-- XXX is data bucket name
-- YYY is confiuration/meta/logging bucket name
-- bqtail.json is configuration file
+- gs://${configBucket}/BqDispatch/config.json is configuration file (with expanded $variables)
+
 ```json
 {
-
-"BatchURL": "gs://YYY/batch/",
-"ErrorURL": "gs://YYY/errors/",
-"JournalURL": "gs://YYY/journal/",
-"DeferTaskURL": "gs://YYY/tasks/",
-"Routes": [
-  {
-    "When": {
-      "Prefix": "/data/",
-      "Suffix": ".json"
-    },
-    "Dest": {
-      "Table": "mydataset.mytable"
-    }
-  }]
+  "BatchURL": "gs://${opsBucket}/BqTail/Batch/",
+  "ErrorURL": "gs://${opsBucket}/BqTail/Errors/",
+  "JournalURL": "gs://${opsBucket}/BqTail/Journal/",
+  "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
+  "RulesURL": "gs://${configBucket}/BqTail/Rules/",
+  "CheckInMs": 10
 }
-
 ```
 
+
+See [Generic Deployment](../deployment/README.md) automation and post deployment testing

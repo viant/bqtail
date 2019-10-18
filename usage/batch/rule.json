@@ -1,12 +1,17 @@
 [
   {
     "When": {
-      "Prefix": "/data/folder",
-      "Suffix": ".json"
+      "Prefix": "/data/",
+      "Suffix": ".avro"
     },
-    "Async": true,
     "Dest": {
       "Table": "mydataset.mytable"
+    },
+    "Async": true,
+    "Batch": {
+      "Window": {
+        "DurationInSec": 30
+      }
     },
     "OnSuccess": [
       {
@@ -17,7 +22,7 @@
       {
         "Action": "move",
         "Request": {
-          "DestURL": "gs://e2e-data/errors"
+          "DestURL": "gs://myBucket/errors"
         }
       }
     ]

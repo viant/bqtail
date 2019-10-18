@@ -31,16 +31,11 @@ The goal of this project is to provide cost effective events driven, data ingest
 
 - **Data ingestion**
 
-The following define configuration to ingest data in batches within 30 sec time window in async mode.
+The following define rule to ingest data in batches within 30 sec time window in async mode.
 
-[@config/bqtail.json](usage/batch/tail.json)
+[@myrule.json](usage/batch/rule.json)
 ```json
-{
-  "BatchURL": "gs://myBucket/batch/",
-  "ErrorURL": "gs://myBucket/errors/",
-  "JournalURL": "gs://myBucket/journal/",
-  "DeferTaskURL": "gs://myBucket/tasks/",
-  "Routes": [
+[
     {
       "When": {
         "Prefix": "/data/",
@@ -59,7 +54,6 @@ The following define configuration to ingest data in batches within 30 sec time 
         {
           "Action": "delete"
         }
-      
       ],
       "OnFailure": [
         {
@@ -70,30 +64,17 @@ The following define configuration to ingest data in batches within 30 sec time 
         }
       ]
     }
-  ]
-}
+]
 ```
-[@config/dispatch.json](usage/batch/dispatch.json)
-```json
-{
-  "JournalURL": "gs://myBucket/journal/",
-  "ErrorURL": "gs://myBucket/errors/",
-  "DeferTaskURL": "gs://myBucket/tasks/"
-}
-``` 
+
 
 - **Data ingestion with deduplication**
 
-The following define configuration to ingest data in batches within 60 sec time window in async mode.
+The following define rule to ingest data in batches within 60 sec time window in async mode.
 
-[@config/bqtail.json](usage/dedupe/tail.json)
+[@config/bqtail.json](usage/dedupe/rule.json)
 ```json
-{
-  "BatchURL": "gs://myBucket/batch/",
-  "ErrorURL": "gs://myBucket/errors/",
-  "JournalURL": "gs://myBucket/journal/",
-  "DeferTaskURL": "gs://myBucket/tasks/",
-  "Routes": [
+ [
     {
       "Async": true,
       "When": {
@@ -143,35 +124,31 @@ The following define configuration to ingest data in batches within 60 sec time 
         }
       ]
     }
-  ]
-}
+]
 ```
 
 - **Data extraction**
 
-The following define configuration to extract data to google storate after target table is modified.
+The following define rule to extract data to google storate after target table is modified.
 
+[@config/bqtail.json](usage/ingest/rule.json)
 ```json
-{
-   "JournalURL": "gs://myBucket/journal/",
-   "ErrorURL": "gs://myBucket/errors/",
-   "Routes": [
+[
+ {
+   "When": {
+     "Dest": ".+:mydataset\\.mytable",
+     "Type": "QUERY"
+   },
+   "OnSuccess": [
      {
-       "When": {
-         "Dest": ".+:mydataset\\.mytable",
-         "Type": "QUERY"
-       },
-       "OnSuccess": [
-         {
-           "Action": "export",
-           "Request": {
-             "DestURL": "gs://${config.Bucket}/export/mytable.json.gz"
-           }
-         }
-       ]
+       "Action": "export",
+       "Request": {
+         "DestURL": "gs://${config.Bucket}/export/mytable.json.gz"
+       }
      }
    ]
  }
+]
 ```
 
 ## Deployment
@@ -194,14 +171,14 @@ The following URL are used by tail/dispatch services:
 The following [Deployment](deployment/README.md) details generic deployment.
 
 
-Where: [@deploy.yaml](deployment/deploy.yaml) 
-
 
 ### Monitoring
+
 
 - Check for any files under ErrorURL
 - DeferTaskURL should not have very old files, unless there is processsing error
 - BatchURL should not have very old files, unless there is processing error
+
 
 
 ## End to end testing

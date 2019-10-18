@@ -1,5 +1,0 @@
-{
-  "JournalURL": "gs://myBucket/journal/",
-  "ErrorURL": "gs://myBucket/errors/",
-  "DeferTaskURL": "gs://myBucket/tasks/"
-}
