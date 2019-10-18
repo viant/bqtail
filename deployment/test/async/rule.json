@@ -1,12 +1,18 @@
 [
   {
     "When": {
-      "Prefix": "/data/dummytest/",
+      "Prefix": "/deployment_test/",
       "Suffix": ".json"
     },
+    "Async": true,
     "Dest": {
-      "Table": "viant-e2e:bqtail.dummy",
+      "Table": "${gcp.ProjectID}:test.dummy",
       "TransientDataset": "temp"
+    },
+    "Batch": {
+      "Window": {
+        "DurationInSec": 30
+      }
     },
     "OnSuccess": [
       {

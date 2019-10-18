@@ -1,0 +1,44 @@
+init:
+  '!gcpCredentials': $params.authWith
+  gcp: ${secrets.$gcpCredentials}
+  projectID: $gcp.ProjectID
+  prefix: $Replace(${projectID},'-','_')
+  configBucket: ${prefix}_config
+  triggerBucket: ${prefix}_bqtail
+
+pipeline:
+
+  init:
+    action: dsunit:init
+    datastore: test
+    config:
+      driverName: bigquery
+      credentials: $gcpCredentials
+      parameters:
+        datasetId: test
+    scripts:
+      - URL: schema.sql
+
+  setupRule:
+    action: storage:copy
+    expand: true
+    source:
+      URL: rule.json
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${configBucket}/BqTail/Rules/deployment_async_test.json
+
+  trigger:
+    action: storage:copy
+    sleepTimeMs: 45000
+    source:
+      URL: data/
+    dest:
+      URL: gs://${triggerBucket}/deployment_test/${tzTime.now}
+      credentials: $gcpCredentials
+
+  validate:
+    action: dsunit:expect
+    datastore: test
+    URL: expect
+

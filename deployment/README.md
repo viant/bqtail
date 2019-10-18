@@ -1,6 +1,6 @@
 # Deployment
 
-The following document describes global shared data flow BqTail deployments for various data flow processes, with one
+The following document describes generic shared deployments for various rules, with one
 BqTail and BqDispatch cloud functions per project.
 
 
@@ -19,13 +19,13 @@ This bucket stores all configuration files:
     | - BqTail
     |      |- config.json
     |      |- Rules
-    |      |     | - process1_routes.json
-    |      |     | - processN_routes.json        
+    |      |     | - rule1.json
+    |      |     | - ruleN.json        
     | - BqDispatch    
     |      |- config.json        
-    |      |- rules
-    |      |     | - process1_routes.json
-    |      |     | - processN_routes.json        
+    |      |- Rules
+    |      |     | - rule_1.json
+    |      |     | - ruke_N.json        
         
 ```            
 
@@ -58,11 +58,9 @@ This bucket stores all data that needs to be ingested to Big Query,
 ```
 
 
-
-
 ##### Export bucket
 
-This bucket stores data exported from BigQuery, it can be source for [storage mirror FaaS](https://github.com/viant/smirror/) cloud function. 
+This bucket stores data exported from BigQuery, it can be source for [Storage Mirror FaaS](https://github.com/viant/smirror/) cloud function. 
 
 **${exportBucket}**
 
@@ -77,3 +75,38 @@ git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment
 endly run authWith=myGoogleSecret.json
 ```
+
+
+## Testing deployments
+
+All automation testing workflow copy rule to  gs://${configBucket}/BqTail/Rules/, 
+followed by uploading data file to gs://${triggerBucket}/xxxxxx matching the rule, to trigger data ingestion.
+
+
+###### Synchronous CSV data ingestion test
+
+```bash
+git checkout https://github.com/viant/bqtail.git
+cd bqtail/deployment/test/async
+endly test authWith=myTestProjectSecrets.json
+```
+Where:
+- [@rule.json](test/sync/rule.json)
+- [@test.yaml](test/sync/test.yaml)
+
+
+###### Asynchronous batched JSON data ingestion test
+
+```bash
+git checkout https://github.com/viant/bqtail.git
+cd bqtail/deployment/test/async
+endly test authWith=myTestProjectSecrets.json
+```
+Where:
+- [@rule.json](test/async/rule.json)
+- [@test.yaml](test/async/test.yaml)
+
+
+##### More rules examples
+
+You can find more example for various configuration setting in [end to end tetst cases](https://github.com/viant/bqtail/tree/master/e2e)

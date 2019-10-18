@@ -1,0 +1,39 @@
+[
+  {
+    "When": {
+      "Prefix": "/deployment_test/",
+      "Suffix": ".csv"
+    },
+    "Dest": {
+      "Table": "${gcp.ProjectID}:test.dummy",
+      "TransientDataset": "temp",
+      "SkipLeadingRows": 1,
+      "MaxBadRecords": 3,
+      "FieldDelimiter": ",",
+      "IgnoreUnknownValues": true
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ],
+    "OnFailure": [
+      {
+        "Action": "move",
+        "Request": {
+          "DestURL": "gs://${opsBucket}/BqTail/Errors"
+        }
+      },
+      {
+        "Action": "notify",
+        "Request": {
+          "Channels": [
+            "#e2e"
+          ],
+          "Title": "Failed to load $Source to ${gcp.ProjectID}:test.dummy",
+          "Message": "$Error"
+        }
+      }
+    ]
+  }
+]
