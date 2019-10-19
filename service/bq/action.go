@@ -5,7 +5,11 @@ import (
 	"bqtail/task"
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
+	"github.com/viant/afs/file"
+	"github.com/viant/afs/url"
 	"google.golang.org/api/bigquery/v2"
+	"strings"
 )
 
 func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Job, onDone *task.Actions) error {
@@ -14,9 +18,16 @@ func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Jo
 	}
 	baseJob := base.Job(*parent)
 
-	toRun := onDone.ToRun(err, &baseJob, s.deferTaskURL)
+	toRun := onDone.ToRun(err, &baseJob, s.Config.DeferTaskURL)
 	if len(toRun) == 0 {
 		return nil
+	}
+	if err != nil && onDone.SourceURL != "" {
+		sourcePath := url.Path(onDone.SourceURL)
+		errorURL := url.Join(s.Config.ErrorURL, sourcePath+base.ErrorSuffix)
+		if e := s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(err.Error())); e != nil {
+			return errors.Wrapf(err, "failed to write error file: %v %v", errorURL, e)
+		}
 	}
 	for i := range toRun {
 		if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {

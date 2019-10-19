@@ -10,7 +10,7 @@ require (
 	github.com/nlopes/slack v0.6.0
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0
-	github.com/viant/afs v0.4.1
+	github.com/viant/afs v0.4.2
 	github.com/viant/afsc v0.3.2
 	github.com/viant/assertly v0.5.1 // indirect
 	github.com/viant/toolbox v0.29.0

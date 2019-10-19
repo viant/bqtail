@@ -1,0 +1,44 @@
+init:
+
+  '!gcpCredentials': $params.authWith
+  appPath: /tmp/bqmonitor
+  functionName: BqTailMonitor
+  gcp: ${secrets.$gcpCredentials}
+  serviceAccount: $gcp.ClientEmail
+
+pipeline:
+
+  deploy:
+    checkOut:
+      action: vc/git:checkout
+      Origin:
+        URL: https://github.com/viant/smirror.git
+      Dest:
+        URL: ${appPath}
+
+    package:
+      action: exec:run
+      target: $target
+      checkError: true
+      commands:
+        - cd ${appPath}
+        - unset GOPATH
+        - export GO111MODULE=on
+        - rm -rf vendor
+        - go mod vendor
+
+    upload:
+      action: gcp/cloudfunctions:deploy
+      credentials: $gcpCredentials
+      public: true
+      '@name': $functionName
+      entryPoint: $functionName
+      runtime: go111
+      availableMemoryMb: 256
+      timeout: 540s
+      serviceAccountEmail: $serviceAccount
+      environmentVariables:
+        LOGGING: 'true'
+      source:
+        URL: ${appPath}/
+      sleepTimeMs: 5000

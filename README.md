@@ -167,15 +167,36 @@ The following URL are used by tail/dispatch services:
 - [BqTail](tail/README.md#deployment)
 - [BqDispatch](dispatch/README.md#deployment)
 
-
 The following [Deployment](deployment/README.md) details generic deployment.
 
 
+## Monitoring 
 
-### Monitoring
+[BqTailMonitor](mon) can be used to monitor trigger and error buckets.
 
 
-- Check for any files under ErrorURL
+**On Google Cloud Platform:**
+
+```bash
+curl -d @monitor.json -X POST  -H "Content-Type: application/json"  $monitorEndpoint
+```
+
+[@monitor.json](usage/monitor.json)
+```json
+{
+  "ConfigURL":    "gs://${configBucket}/BqTail/config.json",
+  "TriggerURL":   "gs://${triggerBucket}",
+  "UnprocessedDuration": "1hours",
+  "ErrorURL":     "gs://${opsBucket}/BqTail/Errors/",
+  "ErrorRecency": "3hours"
+}
+```
+
+_where:_
+- **UnprocessedDuration** - check for any unprocessed data file over specified time
+- **ErrorRecency** - specified errors within specified time
+
+- TriggerBucket should not have very old files
 - DeferTaskURL should not have very old files, unless there is processsing error
 - BatchURL should not have very old files, unless there is processing error
 

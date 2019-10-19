@@ -1,13 +1,11 @@
 package tail
 
 import (
+	"bqtail/base"
 	"context"
 	//use google fs connector
 	_ "github.com/viant/afsc/gs"
 )
-
-//ConfigKey represents a config env key
-const ConfigKey = "CONFIG"
 
 var srv Service
 
@@ -16,7 +14,7 @@ func Singleton(ctx context.Context) (Service, error) {
 	if srv != nil {
 		return srv, nil
 	}
-	config, err := NewConfig(ctx, ConfigKey)
+	config, err := NewConfig(ctx, base.ConfigEnvKey)
 	if err != nil {
 		return nil, err
 	}

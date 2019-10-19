@@ -42,7 +42,7 @@ func (s *service) Init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.DeferTaskURL)
+	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.Config)
 	bq.InitRegistry(s.Registry, s.bq)
 	storage.InitRegistry(s.Registry, storage.New(s.fs))
 	return err

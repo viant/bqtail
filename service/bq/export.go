@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//Export export table data to google storage
+//Export export table data to google fs
 func (s *service) Export(ctx context.Context, request *ExportRequest) (*bigquery.Job, error) {
 	if err := request.Init(s.projectID); err != nil {
 		return nil, err

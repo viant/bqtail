@@ -68,7 +68,9 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 
 # Deployment
 
-You can deploy the described infrasturctre with BqTail and BqDispatch cloud function with [endly](https://github.com/viant/endly/) automation runner.
+## BqTail/BqDispatch
+
+You can deploy the described infrastructure with BqTail and BqDispatch cloud function with [endly](https://github.com/viant/endly/) automation runner.
 
 ```bash
 git checkout https://github.com/viant/bqtail.git
@@ -77,7 +79,7 @@ endly run authWith=myGoogleSecret.json
 ```
 
 
-## Testing deployments
+### Testing deployments
 
 All automation testing workflow copy rule to  gs://${configBucket}/BqTail/Rules/, 
 followed by uploading data file to gs://${triggerBucket}/xxxxxx matching the rule, to trigger data ingestion.
@@ -111,3 +113,14 @@ Where:
 ##### More rules examples
 
 You can find more example for various configuration setting in [end to end tetst cases](https://github.com/viant/bqtail/tree/master/e2e)
+
+
+## Monitoring
+
+You can deploy the described infrastructure Monitor cloud function with [endly](https://github.com/viant/endly/) automation runner.
+
+```bash
+git checkout https://github.com/viant/bqtail.git
+cd bqtail/deployment/monitor
+endly deploy authWith=myGoogleSecret.json
+```

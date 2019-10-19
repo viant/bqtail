@@ -16,7 +16,6 @@ import (
 type Config struct {
 	base.Config
 	config.Ruleset
-	BatchURL string
 }
 
 //Init initializes config

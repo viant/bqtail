@@ -48,6 +48,13 @@ const (
 	//SourceTableKey source table key
 	SourceTableKey = "sourceTable"
 
+	//UnclassifiedStatus
+	UnclassifiedStatus = "unclassified"
+	//StatusUnProcess status for unprocessed file
+	StatusUnProcess = "unprocessed"
+	//ErrorSuffix error suffix
+	ErrorSuffix = "-error"
+
 	//DeferTaskURL deferred URL
 	DeferTaskURL = "DeferTaskURL"
 
@@ -60,4 +67,7 @@ const (
 	DestTableKey = "destTable"
 	//DestTableExpr dest table expression
 	DestTableExpr = "$DestTable"
+
+	//ConfigEnvKey config env key
+	ConfigEnvKey = "CONFIG"
 )

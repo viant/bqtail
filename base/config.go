@@ -20,6 +20,7 @@ type Config struct {
 	ProjectID        string
 	Region           string
 	DeferTaskURL     string
+	BatchURL         string
 	JournalURL       string
 	ErrorURL         string
 	SlackCredentials *Secret

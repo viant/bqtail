@@ -1,6 +1,7 @@
 package bq
 
 import (
+	"bqtail/base"
 	"bqtail/task"
 	"context"
 	"github.com/viant/afs"
@@ -23,20 +24,21 @@ type Service interface {
 }
 
 type service struct {
-	deferTaskURL string
+	base.Config
 	*bigquery.Service
 	Registry  task.Registry
 	jobs      *bigquery.JobsService
 	projectID string
-	storage   afs.Service
+	fs        afs.Service
 }
 
 //New creates bq service
-func New(bq *bigquery.Service, registry task.Registry, projectID string, storageService afs.Service, deferTaskURL string) Service {
+func New(bq *bigquery.Service, registry task.Registry, projectID string, storageService afs.Service, config base.Config) Service {
 	return &service{
 		Service:   bq,
+		Config:    config,
 		Registry:  registry,
 		projectID: projectID,
-		storage:   storageService,
+		fs:        storageService,
 	}
 }

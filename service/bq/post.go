@@ -40,9 +40,8 @@ func (s *service) schedulePostTask(ctx context.Context, jobReference *bigquery.J
 	if path.Ext(filename) == "" {
 		filename += base.JobExt
 	}
-
 	URL := url.Join(actions.DeferTaskURL, filename)
-	return s.storage.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
+	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
 //Post post big query job

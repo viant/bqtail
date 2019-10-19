@@ -50,7 +50,7 @@ func (s *service) Init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.DeferTaskURL)
+	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.Config)
 	s.batch = batch.New(s.config.BatchURL, s.fs)
 
 	bq.InitRegistry(s.Registry, s.bq)
@@ -207,13 +207,15 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		return actions, nil
 	}
 	var result = task.NewActions(actions.Async, actions.DeferTaskURL, parentJobID, nil, nil)
+	if actions != nil {
+		result.SourceURL = actions.SourceURL
+	}
 	dropDDL := fmt.Sprintf("DROP TABLE %v.%v", job.Load.DestinationTable.DatasetId, job.Load.DestinationTable.TableId)
 	dropAction, err := task.NewAction("query", bq.NewQueryRequest(dropDDL, nil, nil))
 	if err != nil {
 		return nil, err
 	}
 	actions.AddOnSuccess(dropAction)
-
 	destTable, _ := route.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
 	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns)
 	if len(route.Dest.UniqueColumns) > 0 {

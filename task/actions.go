@@ -8,6 +8,7 @@ import (
 
 //Actions represents actions
 type Actions struct {
+	SourceURL    string
 	DeferTaskURL string    `json:",omitempty"`
 	Async        bool      `json:",omitempty"`
 	JobID        string    `json:",omitempty"`
@@ -103,6 +104,9 @@ func (a *Actions) Expand(expandable *base.Expandable) *Actions {
 		JobID:        a.JobID,
 		OnSuccess:    make([]*Action, 0),
 		OnFailure:    make([]*Action, 0),
+	}
+	if len(expandable.SourceURLs) > 0 {
+		result.SourceURL = expandable.SourceURLs[0]
 	}
 	appendSourceURLExpandableActions(a.OnSuccess, &result.OnSuccess, expandable)
 	appendSourceURLExpandableActions(a.OnFailure, &result.OnFailure, expandable)
