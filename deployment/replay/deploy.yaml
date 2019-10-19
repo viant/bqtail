@@ -14,7 +14,7 @@ pipeline:
       action: storage:create
       isDir: true
       dest:
-        URL: gs://${config.replayBucket}/
+        URL: gs://${replayBucket}/
         credentials: $gcpCredentials
 
 
