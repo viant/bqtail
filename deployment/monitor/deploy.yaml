@@ -12,7 +12,7 @@ pipeline:
     checkOut:
       action: vc/git:checkout
       Origin:
-        URL: https://github.com/viant/smirror.git
+        URL: https://github.com/viant/bqtail.git
       Dest:
         URL: ${appPath}
 
