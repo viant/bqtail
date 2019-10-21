@@ -34,7 +34,7 @@ pipeline:
     source:
       URL: data/
     dest:
-      URL: gs://${triggerBucket}/deployment_test/${tzTime.now}
+      URL: gs://${triggerBucket}/deployment_test/async/${tzTime.now}
       credentials: $gcpCredentials
 
   validate:

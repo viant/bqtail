@@ -31,7 +31,7 @@ pipeline:
       URL: rule.json
     dest:
       credentials: $gcpCredentials
-      URL: gs://${configBucket}/BqTail/Rules/deployment_sync_test.json
+      URL: gs://${configBucket}/BqTail/Rules/deployment_override_test.json
 
   trigger:
     action: storage:copy
@@ -39,7 +39,7 @@ pipeline:
     source:
       URL: data/
     dest:
-      URL: gs://${triggerBucket}/deployment_test/${tzTime.now}
+      URL: gs://${triggerBucket}/deployment_test/override/${tzTime.now}
       credentials: $gcpCredentials
 
   validate:

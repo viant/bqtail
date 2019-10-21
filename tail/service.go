@@ -272,6 +272,7 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 	if dest.Schema.Table != nil {
 		return nil
 	}
+
 	if dest.Schema.Template != "" {
 		templateReference, err := base.NewTableReference(dest.Schema.Template)
 		if err != nil {

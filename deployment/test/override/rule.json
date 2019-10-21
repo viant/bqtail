@@ -1,7 +1,7 @@
 [
   {
     "When": {
-      "Prefix": "/deployment_test/sync/",
+      "Prefix": "/deployment_test/override/",
       "Suffix": ".csv"
     },
     "Dest": {
