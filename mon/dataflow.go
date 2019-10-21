@@ -4,8 +4,8 @@ import (
 	"bqtail/base"
 )
 
-//RuleStatus represents workflow info with unprocessed files
-type RuleStatus struct {
+//RuleInfo represents workflow info with unprocessed files
+type RuleInfo struct {
 	base.Info
 	ProcessedCount   int
 	MaxProcessedSize int
@@ -16,8 +16,8 @@ type RuleStatus struct {
 }
 
 //NewRuleStatus create a workflow
-func NewRuleStatus(info base.Info) *RuleStatus {
-	return &RuleStatus{
+func NewRuleStatus(info base.Info) *RuleInfo {
+	return &RuleInfo{
 		Info:        info,
 		Unprocessed: make([]*File, 0),
 	}

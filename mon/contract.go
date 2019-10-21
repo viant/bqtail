@@ -41,13 +41,13 @@ type Response struct {
 	ProcessCount     int `json:",omitempty"`
 	ProcessedBytes   int `json:",omitempty"`
 	ErrorCount       int
-	Rules            []*RuleStatus `json:",omitempty"`
+	Rules            []*RuleInfo `json:",omitempty"`
 	DeferTasks       []*File
 	Batches          []*File
 	Errors           []*Error `json:",omitempty"`
 	Status           string
 	Error            string `json:",omitempty"`
-	workflowMap      map[string]*RuleStatus
+	workflowMap      map[string]*RuleInfo
 }
 
 func (r *Response) AddError(object storage.Object, message string) {
@@ -182,8 +182,8 @@ func (r *Request) Validate() (err error) {
 func NewResponse() *Response {
 	return &Response{
 		Status:      base.StatusOK,
-		workflowMap: make(map[string]*RuleStatus),
-		Rules:       make([]*RuleStatus, 0),
+		workflowMap: make(map[string]*RuleInfo),
+		Rules:       make([]*RuleInfo, 0),
 		Errors:      make([]*Error, 0),
 	}
 }
