@@ -10,7 +10,7 @@ init:
 pipeline:
 
   create:
-    triggerBucket:
+    replayBucket:
       action: storage:create
       isDir: true
       dest:

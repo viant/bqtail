@@ -174,13 +174,17 @@ The following configuration specify batch asynchronous  mode.
 #### Transient Dataset
 
 When ingesting data, from one or many datafiles, some entries may be corrupted impacting data quality.
-To add extra data quality check you use  transient dataset. In this case data is moved to destination table
+To add extra data quality check you can use transient dataset. In this case data is moved to destination table
 only if temp table data ingestion was successful.
+
+Additional benefits of transient transfer is using dedicated transient project for ingestion only, where BqDispatch only
+get ingestion notification. Finally separating transinet and final destination project allows you to better control 
+various BigQuery limits lik 1K load jobs per table or 100K load jobs per project.
+
+
 Temp table is constructed from destination table suffixed by event ID.
 
 The following configuration specify transient dataset.
-
-
 [@config/transient.json](usage/transient.json)
 ```json
 [
