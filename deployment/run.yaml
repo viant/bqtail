@@ -6,11 +6,12 @@ init:
   configText: $Cat('meta/config.json')
   config: $AsMap(${configText})
 
-  bucketPrefix: $Replace(${projectID},'-','_')
-  configBucket: ${bucketPrefix}_config
-  triggerBucket: ${bucketPrefix}_bqtail
-  opsBucket: ${bucketPrefix}_operations
-  dispatchBucket: ${bucketPrefix}_bqdispatch
+
+  prefix: $Replace(${projectID},'-','_')
+  configBucket: ${prefix}_config
+  triggerBucket: ${prefix}_bqtail
+  opsBucket: ${prefix}_operations
+  dispatchBucket: ${prefix}_bqdispatch
 
 pipeline:
   init:

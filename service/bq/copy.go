@@ -26,6 +26,8 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest) (*bigquery.Job
 	}
 	if request.Append {
 		job.Configuration.Copy.WriteDisposition = "WRITE_APPEND"
+	} else {
+		job.Configuration.Copy.WriteDisposition = "WRITE_TRUNCATE"
 	}
 	job.Configuration.Copy.CreateDisposition = "CREATE_IF_NEEDED"
 	job.JobReference = request.jobReference()

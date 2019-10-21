@@ -1,0 +1,7 @@
+[
+  {"@indexBy@": "id"},
+  {"id": 11, "name": "dummy 11", "type_id": 1},
+  {"id": 12, "name": "dummy 12", "type_id": 1},
+  {"id": 13, "name": "dummy 13", "type_id": 1},
+  {"id": 14, "name": "dummy 14", "type_id": 1}
+]

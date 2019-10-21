@@ -4,8 +4,8 @@ init:
   functionName: BqTailReplay
   gcp: ${secrets.$gcpCredentials}
   serviceAccount: $gcp.ClientEmail
-  bucketPrefix: $Replace(${gcp.ProjectID},'-','_')
-  replayBucket: ${bucketPrefix}_replay
+  prefix: $Replace(${gcp.ProjectID},'-','_')
+  replayBucket: ${prefix}_replay
 
 pipeline:
 

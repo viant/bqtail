@@ -1,6 +1,6 @@
 {
-  "configBucket": "${bucketPrefix}_config",
-  "triggerBucket": "${bucketPrefix}_bqtail",
-  "dispatchBucket": "${bucketPrefix}_bqdispatch",
-  "opsBucket": "${bucketPrefix}_operations"
+  "configBucket": "${prefix}_config",
+  "triggerBucket": "${prefix}_bqtail",
+  "dispatchBucket": "${prefix}_bqdispatch",
+  "opsBucket": "${prefix}_operations"
 }

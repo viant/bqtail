@@ -1,7 +1,7 @@
 [
   {
     "When": {
-      "Prefix": "/deployment_test/",
+      "Prefix": "/deployment_test/async/",
       "Suffix": ".json"
     },
     "Async": true,

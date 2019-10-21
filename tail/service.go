@@ -115,7 +115,8 @@ func (s *service) onDone(ctx context.Context, job *Job) error {
 	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
-func (s *service) buildLoadRequest(ctx context.Context, job *Job, dest *config.Destination) (*bq.LoadRequest, error) {
+func (s *service) buildLoadRequest(ctx context.Context, job *Job, rule *config.Rule) (*bq.LoadRequest, error) {
+	dest := rule.Dest
 	tableReference, err := dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
 	if err != nil {
 		return nil, err
@@ -132,6 +133,12 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, dest *config.D
 		tableReference.ProjectId = s.config.ProjectID
 		tableReference.DatasetId = dest.TransientDataset
 		tableReference.TableId += "_" + job.EventID
+	} else {
+		if rule.IsAppend() {
+			job.Load.WriteDisposition = "WRITE_APPEND"
+		} else {
+			job.Load.WriteDisposition = "WRITE_TRUNCATE"
+		}
 	}
 	job.Load.Schema = dest.Schema.Table
 	if job.Load.Schema == nil && dest.Schema.Autodetect {
@@ -151,7 +158,7 @@ func (s *service) submitJob(ctx context.Context, job *Job, route *config.Rule, r
 		return fmt.Errorf("sourceUris was empty")
 	}
 	var load *bq.LoadRequest
-	if load, err = s.buildLoadRequest(ctx, job, route.Dest); err != nil {
+	if load, err = s.buildLoadRequest(ctx, job, route); err != nil {
 		return err
 	}
 	actions := route.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
@@ -218,9 +225,10 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 	actions.AddOnSuccess(dropAction)
 	destTable, _ := route.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
 	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns)
+
 	if len(route.Dest.UniqueColumns) > 0 {
 		query := bq.NewQueryRequest(selectAll, destTable, actions)
-		query.Append = true
+		query.Append = route.IsAppend()
 		queryAction, err := task.NewAction("query", query)
 		if err != nil {
 			return nil, err
@@ -230,7 +238,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		source := base.EncodeTableReference(job.Load.DestinationTable)
 		dest := base.EncodeTableReference(destTable)
 		copyRequest := bq.NewCopyRequest(source, dest, actions)
-		copyRequest.Append = true
+		copyRequest.Append = route.IsAppend()
 		queryAction, err := task.NewAction("copy", copyRequest)
 		if err != nil {
 			return nil, err

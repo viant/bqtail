@@ -8,14 +8,14 @@ init:
   gcpCredentials: gcp-e2e
   gcp: ${secrets.$gcpCredentials}
   projectID: $gcp.ProjectID
-  bucketPrefix: $Replace($projectID,'-','_')
+  prefix: $Replace($projectID,'-','_')
   serviceAccount: $gcp.ClientEmail
 
-  configBucket: ${bucketPrefix}_config
-  triggerBucket: ${bucketPrefix}_bqtail
-  dispatchBucket: ${bucketPrefix}_bqdispatch
-  opsBucket: ${bucketPrefix}_operations
-  exportBucket: ${bucketPrefix}_export
+  configBucket: ${prefix}_config
+  triggerBucket: ${prefix}_bqtail
+  dispatchBucket: ${prefix}_bqdispatch
+  opsBucket: ${prefix}_operations
+  exportBucket: ${prefix}_export
 
 pipeline:
 

@@ -19,7 +19,21 @@ type Rule struct {
 	task.Actions `json:",omitempty"`
 	Info         base.Info `json:",omitempty"`
 	Group        string    `json:",omitempty"`
+	Override     *bool
 }
+
+//IsAppend returns true if appends
+func (r *Rule) IsAppend() bool {
+	if r.Dest == nil {
+		return true
+	}
+	if r.Override != nil {
+		return ! *r.Override
+	}
+	return r.Dest.WriteDisposition == "" || r.Dest.WriteDisposition == "WRITE_APPEND"
+}
+
+
 
 //HasMatch returns true if URL matches prefix or suffix
 func (r *Rule) HasMatch(URL string) bool {

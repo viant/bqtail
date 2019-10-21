@@ -60,10 +60,14 @@ func (r *LoadRequest) Init(projectID string) {
 			r.SourceFormat = "NEWLINE_DELIMITED_JSON"
 		}
 	}
-	if r.Append {
-		r.WriteDisposition = "WRITE_APPEND"
+	if r.WriteDisposition == "" {
+		if r.Append {
+			r.WriteDisposition = "WRITE_APPEND"
+		}
 	}
-	r.CreateDisposition = "CREATE_IF_NEEDED"
+	if r.CreateDisposition == "" {
+		r.CreateDisposition = "CREATE_IF_NEEDED"
+	}
 }
 
 //Validate checks if request is valid

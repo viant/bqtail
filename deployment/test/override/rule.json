@@ -1,11 +1,12 @@
 [
   {
     "When": {
-      "Prefix": "/deployment_test/sync",
+      "Prefix": "/deployment_test/sync/",
       "Suffix": ".csv"
     },
     "Dest": {
-      "Table": "${gcp.ProjectID}:test.dummy",
+      "Override": true,
+      "Table": "${gcp.ProjectID}:test.dummy_v1$$Date",
       "TransientDataset": "temp",
       "SkipLeadingRows": 1,
       "MaxBadRecords": 3,
