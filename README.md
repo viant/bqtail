@@ -29,7 +29,7 @@ The goal of this project is to provide cost effective events driven, data ingest
 ## Usage
 
 
-- **Data ingestion**
+##### **Data ingestion**
 
 The following define rule to ingest data in batches within 30 sec time window in async mode.
 
@@ -68,7 +68,7 @@ The following define rule to ingest data in batches within 30 sec time window in
 ```
 
 
-- **Data ingestion with deduplication**
+##### **Data ingestion with deduplication**
 
 The following define rule to ingest data in batches within 60 sec time window in async mode.
 
@@ -127,7 +127,7 @@ The following define rule to ingest data in batches within 60 sec time window in
 ]
 ```
 
-- **Data ingestion with partition override**
+##### **Data ingestion with partition override**
 
 [@rule.json](usage/override/rule.json)
 ```json
@@ -165,7 +165,7 @@ The following define rule to ingest data in batches within 60 sec time window in
 ]
 ```
 
-- **Data extraction**
+##### **Data extraction**
 
 The following define rule to extract data to google storate after target table is modified.
 
