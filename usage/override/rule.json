@@ -1,13 +1,13 @@
 [
   {
     "When": {
-      "Prefix": "/deployment_test/override/",
+      "Prefix": "/data/",
       "Suffix": ".csv"
     },
     "Async": true,
     "Dest": {
       "Override": true,
-      "Table": "${gcp.ProjectID}:test.dummy_v1",
+      "Table": "myproject:mydataset.mytable",
       "Partition": "$Date",
       "TransientDataset": "temp",
       "SkipLeadingRows": 1,

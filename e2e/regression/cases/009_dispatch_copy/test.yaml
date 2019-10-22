@@ -1,7 +1,3 @@
-init:
-
-  expectedData: $Cat(${parent.path}/data/expect/dummy.json)
-
 pipeline:
 
   prepare:

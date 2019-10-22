@@ -110,6 +110,20 @@ Where:
 - [@test.yaml](test/async/test.yaml)
 
 
+###### Asynchronous partition override CSV data ingestion test
+
+```bash
+git checkout https://github.com/viant/bqtail.git
+cd bqtail/deployment/test/override
+endly test authWith=myTestProjectSecrets.json
+```
+
+Where:
+- [@rule.json](test/override/rule.json)
+- [@test.yaml](test/override/test.yaml)
+
+
+
 ##### More rules examples
 
 You can find more example for various configuration setting in [end to end tetst cases](https://github.com/viant/bqtail/tree/master/e2e)

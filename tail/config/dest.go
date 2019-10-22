@@ -21,7 +21,9 @@ const (
 )
 
 type Destination struct {
-	Table string
+	Table string `json:"table,omitempty"`
+
+	Partition string `json:"partition,omitempty"`
 	//Pattern uses URI relative path (without leading backslash)
 	bigquery.JobConfigurationLoad
 	Pattern          string `json:",omitempty"`
@@ -29,6 +31,7 @@ type Destination struct {
 	Schema           Schema   `json:",omitempty"`
 	TransientDataset string   `json:",omitempty"`
 	UniqueColumns    []string `json:",omitempty"`
+	Override         *bool
 }
 
 func (d Destination) Clone() *Destination {
@@ -50,18 +53,22 @@ func (d *Destination) Validate() error {
 	return nil
 }
 
-//ExpandTable returns sourced table
-func (d *Destination) ExpandTable(created time.Time, source string) (table string, err error) {
-	table = d.Table
-	if count := strings.Count(table, ModExpr); count > 0 {
-		if table, err = expandMod(table, created, count); err != nil {
-			return table, err
+//Expand returns sourced table
+func (d *Destination) ExpandTable(created time.Time, source string) (string, error) {
+	return d.Expand(d.Table, created, source)
+}
+
+//Expand returns sourced table
+func (d *Destination) Expand(dest string, created time.Time, source string) (string, error) {
+	var err error
+	if count := strings.Count(dest, ModExpr); count > 0 {
+		if dest, err = expandMod(dest, created, count); err != nil {
+			return dest, err
 		}
 	}
-	if count := strings.Count(table, DateExpr); count > 0 {
-		table = expandDate(table, created, count)
+	if count := strings.Count(dest, DateExpr); count > 0 {
+		dest = expandDate(dest, created, count)
 	}
-
 	if d.Pattern != "" {
 		if d.pattern == nil {
 			d.pattern, err = regexp.Compile(d.Pattern)
@@ -69,10 +76,9 @@ func (d *Destination) ExpandTable(created time.Time, source string) (table strin
 				return "", err
 			}
 		}
-		table = expandWithPattern(d.pattern, source, table)
+		dest = expandWithPattern(d.pattern, source, dest)
 	}
-
-	return table, err
+	return dest, err
 }
 
 //TableReference returns table reference, source table syntax: project:dataset:table
@@ -81,7 +87,22 @@ func (d *Destination) TableReference(created time.Time, source string) (*bigquer
 	if err != nil {
 		return nil, err
 	}
-	return base.NewTableReference(table)
+	reference, err := base.NewTableReference(table)
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get table reference %v", table)
+	}
+	if d.Partition != "" {
+		partition, err := d.Expand(d.Partition, created, source)
+		if err != nil {
+			return nil, err
+		}
+		if partition == "" {
+			return nil, errors.Errorf("expanded partition was empty: %v", d.Partition)
+		}
+		reference.TableId = reference.TableId + "$" + partition
+	}
+	return reference, nil
 }
 
 func expandMod(table string, created time.Time, count int) (string, error) {

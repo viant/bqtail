@@ -33,7 +33,7 @@
       {
         "Action": "move",
         "Request": {
-          "DestURL": "gs://myBucket/errors"
+          "DestURL": "gs://${opsBucket}/BqTail/Errors"
         }
       },
       {
@@ -44,8 +44,7 @@
           ],
           "From": "BqTail",
           "Title": "bqtail.wrong_dummy ingestion",
-          "Message": "$Error",
-          "Token": "SlackToken"
+          "Message": "$Error"
         }
       }
     ]

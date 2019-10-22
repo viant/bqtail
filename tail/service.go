@@ -121,30 +121,27 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, rule *config.R
 	if err != nil {
 		return nil, err
 	}
-	if err = s.updateSchemaIfNeeded(ctx, dest, tableReference); err != nil {
+	if err = s.updateSchemaIfNeeded(ctx, dest, tableReference, job); err != nil {
 		return nil, err
 	}
-	result := &bq.LoadRequest{Append: true}
-	job.Load.DestinationTable = tableReference
-
-	result.JobID = getJobID(job)
-
+	result := &bq.LoadRequest{
+		Append:               rule.IsAppend(),
+		JobConfigurationLoad: job.Load,
+	}
 	if dest.TransientDataset != "" {
 		tableReference.ProjectId = s.config.ProjectID
 		tableReference.DatasetId = dest.TransientDataset
-		tableReference.TableId += "_" + job.EventID
+		tableReference.TableId = base.TableID(tableReference.TableId) + "_" + job.EventID
+		result.WriteDisposition = "WRITE_TRUNCATE"
 	} else {
 		if rule.IsAppend() {
-			job.Load.WriteDisposition = "WRITE_APPEND"
+			result.WriteDisposition = "WRITE_APPEND"
 		} else {
-			job.Load.WriteDisposition = "WRITE_TRUNCATE"
+			result.WriteDisposition = "WRITE_TRUNCATE"
 		}
 	}
-	job.Load.Schema = dest.Schema.Table
-	if job.Load.Schema == nil && dest.Schema.Autodetect {
-		job.Load.Autodetect = dest.Schema.Autodetect
-	}
-	result.JobConfigurationLoad = job.Load
+	result.DestinationTable = tableReference
+	result.JobID = getJobID(job)
 	return result, nil
 
 }
@@ -214,19 +211,24 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		return actions, nil
 	}
 	var result = task.NewActions(actions.Async, actions.DeferTaskURL, parentJobID, nil, nil)
+	var onFailureAction *task.Actions
 	if actions != nil {
 		result.SourceURL = actions.SourceURL
+		onFailureAction = actions.CloneOnFailure()
+		result.AddOnFailure(actions.OnFailure...)
 	}
-	dropDDL := fmt.Sprintf("DROP TABLE %v.%v", job.Load.DestinationTable.DatasetId, job.Load.DestinationTable.TableId)
-	dropAction, err := task.NewAction("query", bq.NewQueryRequest(dropDDL, nil, nil))
+
+	tableID := base.TableID(job.Load.DestinationTable.TableId)
+	dropDDL := fmt.Sprintf("DROP TABLE %v.%v", job.Load.DestinationTable.DatasetId, tableID)
+	dropAction, err := task.NewAction("query", bq.NewQueryRequest(dropDDL, nil, onFailureAction))
 	if err != nil {
 		return nil, err
 	}
 	actions.AddOnSuccess(dropAction)
 	destTable, _ := route.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
 	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns)
-
-	if len(route.Dest.UniqueColumns) > 0 {
+	partition := base.TablePartition(destTable.TableId)
+	if len(route.Dest.UniqueColumns) > 0 || partition != "" {
 		query := bq.NewQueryRequest(selectAll, destTable, actions)
 		query.Append = route.IsAppend()
 		queryAction, err := task.NewAction("query", query)
@@ -239,15 +241,12 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		dest := base.EncodeTableReference(destTable)
 		copyRequest := bq.NewCopyRequest(source, dest, actions)
 		copyRequest.Append = route.IsAppend()
-		queryAction, err := task.NewAction("copy", copyRequest)
+		copyAction, err := task.NewAction("copy", copyRequest)
 		if err != nil {
 			return nil, err
 		}
-		result.AddOnSuccess(queryAction)
-
+		result.AddOnSuccess(copyAction)
 	}
-
-	result.AddOnFailure(actions.OnFailure...)
 	return result, nil
 }
 
@@ -268,30 +267,41 @@ func (s *service) tailIndividually(ctx context.Context, source store.Object, rou
 	return s.submitJob(ctx, job, route, response)
 }
 
-func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destination, tableReference *bigquery.TableReference) error {
+func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destination, tableReference *bigquery.TableReference, job *Job) error {
 	if dest.Schema.Table != nil {
 		return nil
 	}
+	var err error
+	var table *bigquery.Table
 
 	if dest.Schema.Template != "" {
 		templateReference, err := base.NewTableReference(dest.Schema.Template)
 		if err != nil {
 			return errors.Wrapf(err, "invalid schema.template table name: %v", dest.Schema.Template)
 		}
-		table, err := s.bq.Table(ctx, templateReference)
-		if err != nil {
-			return errors.Wrapf(err, "failed to updated schema for: %v", dest.Schema.Template)
+		if table, err = s.bq.Table(ctx, templateReference); err != nil {
+			return err
 		}
-		dest.Schema.Table = table.Schema
-		return nil
+	} else if dest.TransientDataset != "" {
+		if table, err = s.bq.Table(ctx, tableReference); err != nil {
+			return err
+		}
 	}
 
-	if dest.TransientDataset != "" {
-		table, err := s.bq.Table(ctx, tableReference)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get schema for %v.%v", tableReference.DatasetId, tableReference.TableId)
+	if table != nil {
+		job.Load.Schema = table.Schema
+		if job.Load.Schema == nil && dest.Schema.Autodetect {
+			job.Load.Autodetect = dest.Schema.Autodetect
 		}
-		dest.Schema.Table = table.Schema
+		if table.TimePartitioning != nil {
+			job.Load.TimePartitioning = table.TimePartitioning
+		}
+		if table.RangePartitioning != nil {
+			job.Load.RangePartitioning = table.RangePartitioning
+		}
+		if table.Clustering != nil {
+			job.Load.Clustering = table.Clustering
+		}
 	}
 	return nil
 }

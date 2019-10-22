@@ -36,6 +36,7 @@ pipeline:
   trigger:
     action: storage:copy
     sleepTimeMs: 45000
+    expand: true
     source:
       URL: data/
     dest:

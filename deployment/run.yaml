@@ -1,5 +1,7 @@
 init:
   appPath: /tmp/build/bqtail
+#  appPath: $Pwd('..')
+
   '!gcpCredentials': $params.authWith
   gcp: ${secrets.$gcpCredentials}
   projectID: $gcp.ProjectID

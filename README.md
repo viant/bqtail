@@ -33,7 +33,7 @@ The goal of this project is to provide cost effective events driven, data ingest
 
 The following define rule to ingest data in batches within 30 sec time window in async mode.
 
-[@myrule.json](usage/batch/rule.json)
+[@rule.json](usage/batch/rule.json)
 ```json
 [
     {
@@ -59,7 +59,7 @@ The following define rule to ingest data in batches within 30 sec time window in
         {
           "Action": "move",
           "Request": {
-            "DestURL": "gs://myBucket/errors"
+            "DestURL": "gs://${opsBucket}/BqTail/Errors"
           }
         }
       ]
@@ -72,7 +72,7 @@ The following define rule to ingest data in batches within 30 sec time window in
 
 The following define rule to ingest data in batches within 60 sec time window in async mode.
 
-[@config/bqtail.json](usage/dedupe/rule.json)
+[@rule.json](usage/dedupe/rule.json)
 ```json
  [
     {
@@ -107,7 +107,7 @@ The following define rule to ingest data in batches within 60 sec time window in
         {
           "Action": "move",
           "Request": {
-            "DestURL": "gs://myBucket/errors"
+            "DestURL": "gs://${opsBucket}/BqTail/Errors"
           }
         },
         {
@@ -127,11 +127,49 @@ The following define rule to ingest data in batches within 60 sec time window in
 ]
 ```
 
+- **Data ingestion with partition override**
+
+[@rule.json](usage/override/rule.json)
+```json
+[
+  {
+    "When": {
+      "Prefix": "/data/",
+      "Suffix": ".csv"
+    },
+    "Async": true,
+    "Dest": {
+      "Override": true,
+      "Table": "myproject:mydataset.mytable",
+      "Partition": "$Date",
+      "TransientDataset": "temp",
+      "SkipLeadingRows": 1,
+      "MaxBadRecords": 3,
+      "FieldDelimiter": ",",
+      "IgnoreUnknownValues": true
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ],
+    "OnFailure": [
+      {
+        "Action": "move",
+        "Request": {
+          "DestURL": "gs://${opsBucket}/BqTail/Errors"
+        }
+      }
+    ]
+  }
+]
+```
+
 - **Data extraction**
 
 The following define rule to extract data to google storate after target table is modified.
 
-[@config/bqtail.json](usage/ingest/rule.json)
+[@rule.json](usage/export/rule.json)
 ```json
 [
  {
@@ -150,6 +188,9 @@ The following define rule to extract data to google storate after target table i
  }
 ]
 ```
+
+
+
 
 ## Deployment
 

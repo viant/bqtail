@@ -14,6 +14,9 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 	}
 	_, sourceLocation := url.Base(request.SourceURL, "file")
 	destURL := url.Join(request.DestURL, sourceLocation)
+	if exists, _ := s.fs.Exists(ctx, request.SourceURL); !exists {
+		return nil
+	}
 	return s.fs.Move(ctx, request.SourceURL, destURL)
 }
 

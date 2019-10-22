@@ -22,7 +22,7 @@ func (s *service) downloadBase64(ctx context.Context, URL string) (string, error
 	if err != nil {
 		return "", err
 	}
-	defer func() {_ = reader.Close()}()
+	defer func() { _ = reader.Close() }()
 	data, err := ioutil.ReadAll(reader)
 	_, err = base64.StdEncoding.DecodeString(string(data))
 	if err == nil {
@@ -44,8 +44,8 @@ func (s *service) Decrypt(ctx context.Context, secret *base.Secret) ([]byte, err
 	}
 	service := cloudkms.NewProjectsLocationsKeyRingsCryptoKeysService(kmsService)
 
-	request :=  &cloudkms.DecryptRequest{Ciphertext: plainText}
-	response, err := service.Decrypt(secret.Key,request).Context(ctx).Do()
+	request := &cloudkms.DecryptRequest{Ciphertext: plainText}
+	response, err := service.Decrypt(secret.Key, request).Context(ctx).Do()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decrypt with key '%v'", secret.Key)
 	}
@@ -54,5 +54,5 @@ func (s *service) Decrypt(ctx context.Context, secret *base.Secret) ([]byte, err
 
 //New creates GCP kms service
 func New(storageService afs.Service) kms.Service {
-	return &service{Service:storageService}
+	return &service{Service: storageService}
 }

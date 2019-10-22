@@ -7,6 +7,6 @@
   "CheckInMs": 10,
   "SlackCredentials": {
     "URL": "gs://${configBucket}/Secrets/slack.json.enc",
-    "Key": "BqTailRing/BqTailKey"
+    "Key": "${prefix}_ring/${prefix}_key"
   }
 }

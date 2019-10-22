@@ -26,7 +26,6 @@ func BqTailReplay(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
 func replayUnprocessed(writer http.ResponseWriter, httpRequest *http.Request) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -44,4 +43,3 @@ func replayUnprocessed(writer http.ResponseWriter, httpRequest *http.Request) (e
 	}
 	return err
 }
-

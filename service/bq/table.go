@@ -1,9 +1,10 @@
 package bq
 
 import (
+	"bqtail/base"
 	"context"
+	"github.com/pkg/errors"
 	"google.golang.org/api/bigquery/v2"
-	"strings"
 )
 
 //Table returns bif query table
@@ -11,11 +12,12 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	if reference.ProjectId == "" {
 		reference.ProjectId = s.projectID
 	}
-	tableId := reference.TableId
-	if index:=strings.Index(tableId, "$");index !=-1{
-		tableId = string(tableId[:index])
-	}
+	tableId := base.TableID(reference.TableId)
 	call := bigquery.NewTablesService(s.Service).Get(reference.ProjectId, reference.DatasetId, tableId)
 	call.Context(ctx)
-	return call.Do()
+	table, err := call.Do()
+	if err != nil {
+		err = errors.Wrapf(err, "failed to get scheme for [%v:%v.%v]", reference.ProjectId, reference.DatasetId, tableId)
+	}
+	return table, err
 }

@@ -57,8 +57,8 @@ pipeline:
     deployBqTailKMSKey:
       action: gcp/kms:deployKey
       credentials: $gcpCredentials
-      ring: BqTailRing
-      key: BqTailKey
+      ring: ${prefix}_ring
+      key: ${prefix}_key
       purpose: ENCRYPT_DECRYPT
       bindings:
         - role: roles/cloudkms.cryptoKeyEncrypterDecrypter
@@ -68,8 +68,8 @@ pipeline:
 
     encryptSlackOAuthToken:
       action: gcp/kms:encrypt
-      ring: BqTailRing
-      key: BqTailKey
+      ring: ${prefix}_ring
+      key: ${prefix}_key
       plainData: $AsString($slackOAuth)
       dest:
         URL: gs://${configBucket}/Secrets/slack.json.enc

@@ -1,7 +1,10 @@
 package task
 
 import (
+	"bqtail/base"
 	"context"
+	"fmt"
+	"github.com/viant/toolbox"
 )
 
 //Run execute supplied actions
@@ -23,9 +26,13 @@ func RunWithService(ctx context.Context, registry Registry, serviceName string, 
 	if err != nil {
 		return err
 	}
-	//fmt.Printf("running %T\n", service)
-	//toolbox.Dump(request)
+	if base.IsLoggingEnabled() {
+		fmt.Printf("running %T\n", service)
+		toolbox.Dump(request)
+	}
 	err = service.Run(ctx, request)
-	//fmt.Printf("err: %v\n", err)
+	if base.IsLoggingEnabled() && err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
 	return err
 }

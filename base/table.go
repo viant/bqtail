@@ -8,7 +8,7 @@ import (
 
 //NewTableReference creates a table reference for table in the following syntax [project:]dataset.table
 func NewTableReference(table string) (*bigquery.TableReference, error) {
-	dotIndex := strings.Index(table, ".")
+	dotIndex := strings.LastIndex(table, ".")
 	if dotIndex == -1 {
 		return nil, fmt.Errorf("datasetID is missing, invalid table format: %v", table)
 	}
@@ -32,4 +32,22 @@ func EncodeTableReference(table *bigquery.TableReference) string {
 		return fmt.Sprintf("%v.%v", table.DatasetId, table.TableId)
 	}
 	return fmt.Sprintf("%v:%v.%v", table.ProjectId, table.DatasetId, table.TableId)
+}
+
+//TableID returns a table id
+func TableID(table string) string {
+	tableId := table
+	if index := strings.Index(tableId, "$"); index != -1 {
+		return string(tableId[:index])
+	}
+	return tableId
+}
+
+//TablePartition returns a table partition
+func TablePartition(table string) string {
+	tableId := table
+	if index := strings.Index(tableId, "$"); index != -1 {
+		return string(tableId[index+1:])
+	}
+	return ""
 }

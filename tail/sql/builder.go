@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"bqtail/base"
 	"fmt"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -44,7 +45,8 @@ GROUP BY %v`,
 
 //BuildSelect returns select SQL statement for specified parameter, if uniqueColumns SQL de-duplicates data
 func BuildSelect(source *bigquery.TableReference, tableScheme *bigquery.TableSchema, uniqueColumns []string) string {
-	sourceTable := source.DatasetId + "." + source.TableId
+	tableId := base.TableID(source.TableId)
+	sourceTable := source.DatasetId + "." + tableId
 	if len(uniqueColumns) == 0 {
 		return fmt.Sprintf("SELECT * FROM %v", sourceTable)
 	}

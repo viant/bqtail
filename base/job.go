@@ -169,6 +169,9 @@ func EncodePathSeparator(jobID string) string {
 	if count := strings.Count(jobID, "/"); count > 0 {
 		jobID = strings.Replace(jobID, "/", PathElementSeparator, count)
 	}
+	if count := strings.Count(jobID, "$"); count > 0 {
+		jobID = strings.Replace(jobID, "$", "_", count)
+	}
 	if count := strings.Count(jobID, ":"); count > 0 {
 		jobID = strings.Replace(jobID, ":", "_", count)
 	}

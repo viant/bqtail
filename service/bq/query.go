@@ -25,10 +25,14 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 			},
 		},
 	}
-	if request.Append {
-		job.Configuration.Query.WriteDisposition = "WRITE_APPEND"
-	} else {
-		job.Configuration.Copy.WriteDisposition = "WRITE_TRUNCATE"
+
+	if job.Configuration.Query.DestinationTable != nil {
+		if request.Append {
+			job.Configuration.Query.WriteDisposition = "WRITE_APPEND"
+		} else {
+			job.Configuration.Query.WriteDisposition = "WRITE_TRUNCATE"
+		}
+
 	}
 
 	if request.UseLegacy {

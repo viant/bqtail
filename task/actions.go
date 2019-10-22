@@ -17,6 +17,18 @@ type Actions struct {
 }
 
 //ToRun returns actions to run
+func (a Actions) CloneOnFailure() *Actions {
+	result := &Actions{
+		SourceURL:    a.SourceURL,
+		DeferTaskURL: a.DeferTaskURL,
+		Async:        a.Async,
+		JobID:        a.JobID,
+		OnFailure:    a.OnFailure,
+	}
+	return result
+}
+
+//ToRun returns actions to run
 func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 	var toRun []*Action
 
