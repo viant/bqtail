@@ -12,7 +12,7 @@ init:
   prefix: $Replace(${projectID},'-','_')
   configBucket: ${prefix}_config
   triggerBucket: ${prefix}_bqtail
-  opsBucket: ${prefix}_operations
+  opsBucket: ${prefix}_operation
   dispatchBucket: ${prefix}_bqdispatch
 
 pipeline:

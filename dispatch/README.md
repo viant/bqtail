@@ -100,7 +100,7 @@ for example: [@rule.json](usage/rule.json) defines routes and on success and or 
 - OnFailure: actions to run when job completed with errors
 
 
-Post actions can use predefined [Cloud Service](../service/README.md) operations.
+Post actions can use predefined [Cloud Service](../service/README.md) operation.
 
 ### Deployment
 

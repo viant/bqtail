@@ -14,7 +14,7 @@ init:
   configBucket: ${prefix}_config
   triggerBucket: ${prefix}_bqtail
   dispatchBucket: ${prefix}_bqdispatch
-  opsBucket: ${prefix}_operations
+  opsBucket: ${prefix}_operation
   exportBucket: ${prefix}_export
 
 pipeline:

@@ -68,7 +68,7 @@ All these limitations are addressed by asynchronous and batch mode.
 - OnSuccess: actions to run when job completed without errors
 - OnFailure: actions to run when job completed with errors
 
-Post actions can use predefined [Cloud Service](../service/README.md) operations.
+Post actions can use predefined [Cloud Service](../service/README.md) operation.
 
 
 #### Asynchronous mode

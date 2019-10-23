@@ -11,7 +11,7 @@ Both transfer files modification time and previous window file end time is used 
  
 ## Service
 
-The batch service defines the following operations:
+The batch service defines the following operation:
 
 ```go
 type Service interface {
