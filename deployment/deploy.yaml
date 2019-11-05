@@ -27,6 +27,7 @@ pipeline:
     availableMemoryMb: 256
     entryPoint: BqDispatch
     runtime: go111
+    retry: true
     environmentVariables:
       CONFIG: gs://${configBucket}/BqDispatch/config.json
       LOGGING: false

@@ -22,7 +22,6 @@ import (
 )
 
 type Service interface {
-
 	//Add adds transfer events to batch stage
 	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, route *config.Rule) error
 
@@ -52,6 +51,9 @@ func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *con
 	URL, err := s.scheduleURL(sourceCreated, request, route)
 	if err != nil {
 		return err
+	}
+	if exists, _ := s.Exists(ctx, URL); exists {
+		return nil
 	}
 	if err = s.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err != nil {
 		return err
@@ -108,12 +110,12 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	window := NewWindow(baseURL, request, eventSchedule.ModTime(), route, source.ModTime())
 	before := sortedTransfers.Before(eventSchedule)
 	if len(before) == 0 {
-		return &BatchedWindow{Window:window}, s.AcquireWindow(ctx, baseURL, window)
+		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 	}
 	windowMatcher := windowedMatcher(windowMin.Add(-route.Batch.Window.Duration), windowMax, windowExtension)
 	windows, err := s.List(ctx, baseURL, windowMatcher.Match)
 
-	batchingEventID:= ""
+	batchingEventID := ""
 	if windowCount := len(windows); windowCount > 0 {
 		if reader, err := s.DownloadWithURL(ctx, windows[windowCount-1].URL()); err == nil {
 			defer reader.Close()
@@ -130,7 +132,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 		//this instance can not acquire batch when
 		//- no active window, and has some earlier transfer
 		//- more than 1 windows, meaning has to be acquire by other instance
-		return &BatchedWindow{BatchingEventID:batchingEventID}, nil
+		return &BatchedWindow{BatchingEventID: batchingEventID}, nil
 	}
 	windowEndTime, err := windowToTime(windows[0])
 	if err != nil {
@@ -138,13 +140,13 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 
 	if source.ModTime().Before(*windowEndTime) {
-		return &BatchedWindow{BatchingEventID:batchingEventID}, nil
+		return &BatchedWindow{BatchingEventID: batchingEventID}, nil
 	}
 	beforeMe := before.After(*windowEndTime)
 	if len(beforeMe) > 0 { //has other transfer after last batch window, thus this instance can be acquire window
 		return nil, err
 	}
-	return &BatchedWindow{Window:window}, s.AcquireWindow(ctx, baseURL, window)
+	return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 }
 
 func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Datafile, error) {
