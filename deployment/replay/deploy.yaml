@@ -6,6 +6,7 @@ init:
   serviceAccount: $gcp.ClientEmail
   prefix: $Replace(${gcp.ProjectID},'-','_')
   replayBucket: ${prefix}_replay
+  triggerBucket: viant_dataflow_bqtail
 
 pipeline:
 
@@ -36,22 +37,22 @@ pipeline:
         - export GO111MODULE=on
         - rm -rf vendor
         - go mod vendor
-#
-#    upload:
-#      action: gcp/cloudfunctions:deploy
-#      credentials: $gcpCredentials
-#      public: true
-#      '@name': $functionName
-#      entryPoint: $functionName
-#      runtime: go111
-#      availableMemoryMb: 128
-#      timeout: 540s
-#      serviceAccountEmail: $serviceAccount
-#      environmentVariables:
-#        LOGGING: 'true'
-#      source:
-#        URL: ${appPath}/
-#      sleepTimeMs: 5000
+
+    upload:
+      action: gcp/cloudfunctions:deploy
+      credentials: $gcpCredentials
+      public: true
+      '@name': $functionName
+      entryPoint: $functionName
+      runtime: go111
+      availableMemoryMb: 128
+      timeout: 540s
+      serviceAccountEmail: $serviceAccount
+      environmentVariables:
+        LOGGING: 'true'
+      source:
+        URL: ${appPath}/
+      sleepTimeMs: 5000
 
 
   schedule:
@@ -62,7 +63,7 @@ pipeline:
     name: BqTailReplay
     schedule: 0 * * * *
     body: $body
-    timeZone: UTC
+    timeZone: GMT
     httpTarget:
       headers:
         User-Agent: Google-Cloud-Scheduler
