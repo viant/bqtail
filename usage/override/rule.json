@@ -24,7 +24,7 @@
       {
         "Action": "move",
         "Request": {
-          "DestURL": "gs://${opsBucket}/BqTail/Errors"
+          "DestURL": "gs://${opsBucket}/BqTail/errors"
         }
       },
       {

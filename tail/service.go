@@ -315,10 +315,13 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	}
 	response.Batched = true
 	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, route)
-	if batchWindow == nil || batchWindow.Window == nil {
+	if batchWindow == nil{
 		return err
 	}
 	response.BatchingEventID = batchWindow.BatchingEventID
+	if batchWindow.Window == nil {
+		return err
+	}
 	window := batchWindow.Window
 	response.Window = window
 	response.BatchRunner = true
