@@ -27,7 +27,7 @@ type Service interface {
 	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, route *config.Rule) error
 
 	//Try to acquire batch window
-	TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*Window, error)
+	TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*BatchedWindow, error)
 
 	//MatchWindowData updates the window with the window span matched transfer datafiles
 	MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Rule) error
@@ -60,7 +60,7 @@ func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *con
 }
 
 func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) error {
-	URL := url.Join(baseURL, fmt.Sprintf("%v.win", window.End.UnixNano()))
+	URL := url.Join(baseURL, fmt.Sprintf("%v%v", window.End.UnixNano()), windowExtension)
 	data, err := json.Marshal(window)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (s *service) getSchedule(ctx context.Context, created time.Time, request *c
 }
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
-func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*Window, error) {
+func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*BatchedWindow, error) {
 	source, err := s.Object(ctx, request.SourceURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "source event was missing: %v", request.SourceURL)
@@ -94,6 +94,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	baseURL := url.Join(s.URL, path.Join(dest))
 	windowMin := eventSchedule.ModTime().Add(-(route.Batch.Window.Duration + 1))
 	windowMax := eventSchedule.ModTime().Add(route.Batch.Window.Duration + 1)
+
 	transferableMatcher := windowedMatcher(windowMin, windowMax, transferableExtension)
 	transfers, err := s.List(ctx, baseURL, transferableMatcher.Match)
 	if err != nil {
@@ -107,31 +108,43 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	window := NewWindow(baseURL, request, eventSchedule.ModTime(), route, source.ModTime())
 	before := sortedTransfers.Before(eventSchedule)
 	if len(before) == 0 {
-		return window, s.AcquireWindow(ctx, baseURL, window)
+		return &BatchedWindow{Window:window}, s.AcquireWindow(ctx, baseURL, window)
 	}
-
 	windowMatcher := windowedMatcher(windowMin.Add(-route.Batch.Window.Duration), windowMax, windowExtension)
 	windows, err := s.List(ctx, baseURL, windowMatcher.Match)
+
+	batchingEventID:= ""
+	if windowCount := len(windows); windowCount > 0 {
+		if reader, err := s.DownloadWithURL(ctx, windows[windowCount-1].URL()); err == nil {
+			defer reader.Close()
+			if data, err := ioutil.ReadAll(reader); err == nil {
+				batchOwner := &Window{}
+				if err = json.Unmarshal(data, batchOwner); err == nil {
+					batchingEventID = batchOwner.EventID
+				}
+			}
+
+		}
+	}
 	if len(windows) != 1 {
 		//this instance can not acquire batch when
 		//- no active window, and has some earlier transfer
 		//- more than 1 windows, meaning has to be acquire by other instance
-		return nil, nil
+		return &BatchedWindow{BatchingEventID:batchingEventID}, nil
 	}
-
 	windowEndTime, err := windowToTime(windows[0])
 	if err != nil {
 		return nil, err
 	}
 
 	if source.ModTime().Before(*windowEndTime) {
-		return nil, nil
+		return &BatchedWindow{BatchingEventID:batchingEventID}, nil
 	}
 	beforeMe := before.After(*windowEndTime)
 	if len(beforeMe) > 0 { //has other transfer after last batch window, thus this instance can be acquire window
 		return nil, err
 	}
-	return window, s.AcquireWindow(ctx, baseURL, window)
+	return &BatchedWindow{Window:window}, s.AcquireWindow(ctx, baseURL, window)
 }
 
 func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Datafile, error) {

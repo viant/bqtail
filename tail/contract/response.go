@@ -8,11 +8,12 @@ import (
 //Response represents a response
 type Response struct {
 	base.Response
-	Rule        *config.Rule `json:",omitempty"`
-	Batched     bool         `json:",omitempty"`
-	BatchRunner bool         `json:",omitempty"`
-	TriggerURL  string
-	Window      interface{} `json:",omitempty"`
+	Rule            *config.Rule `json:",omitempty"`
+	Batched         bool         `json:",omitempty"`
+	BatchRunner     bool         `json:",omitempty"`
+	BatchingEventID string       `json:",omitempty"`
+	TriggerURL      string
+	Window          interface{} `json:",omitempty"`
 }
 
 //NewResponse creates a new response

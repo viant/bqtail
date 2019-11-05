@@ -322,7 +322,11 @@ func TestService_TryAcquireWindow(t *testing.T) {
 		}
 
 		srv := New(useCase.stageURL, storage)
-		window, err := srv.TryAcquireWindow(ctx, useCase.request, useCase.route)
+		var window *Window
+		batchWindow, err := srv.TryAcquireWindow(ctx, useCase.request, useCase.route)
+		if batchWindow != nil {
+			window = batchWindow.Window
+		}
 		if useCase.hasError {
 			assert.NotNil(t, err, useCase.description)
 			continue

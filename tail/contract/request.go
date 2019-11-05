@@ -7,7 +7,7 @@ type Request struct {
 	EventID   string
 	SourceURL string
 	Started   time.Time
-	Attempt int
+	Attempt   int
 }
 
 //NewRequest creates a request

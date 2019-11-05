@@ -39,6 +39,7 @@ type service struct {
 	config *Config
 }
 
+
 func (s *service) Init(ctx context.Context) error {
 	err := s.config.Init(ctx, s.fs)
 	if err != nil {
@@ -66,17 +67,6 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	err := s.tail(ctx, request, response)
 	if err != nil {
 		response.SetIfError(err)
-	}
-	if base.IsBackendError(response.Error) {
-		if request.Attempt < s.config.MaxRetries {
-			//extra sleep before retrying
-			time.Sleep(3 * time.Second)
-			response.Error = ""
-			response.Status = base.StatusOK
-			if err = s.tail(ctx, request, response); err != nil {
-				response.SetIfError(err)
-			}
-		}
 	}
 	return response
 }
@@ -324,10 +314,12 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 		return err
 	}
 	response.Batched = true
-	window, err := s.batch.TryAcquireWindow(ctx, request, route)
-	if window == nil {
+	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, route)
+	if batchWindow == nil || batchWindow.Window == nil {
 		return err
 	}
+	response.BatchingEventID = batchWindow.BatchingEventID
+	window := batchWindow.Window
 	response.Window = window
 	response.BatchRunner = true
 	if err = s.batch.MatchWindowData(ctx, time.Now(), window, route); err != nil {

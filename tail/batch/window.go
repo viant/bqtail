@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+
+
+type BatchedWindow struct {
+	*Window
+	BatchingEventID string
+}
+
 //Window represent batching window
 type Window struct {
 	URL           string      `json:",omitempty"`
