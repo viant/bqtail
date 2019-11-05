@@ -69,6 +69,8 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	}
 	if base.IsBackendError(response.Error) {
 		if request.Attempt < s.config.MaxRetries {
+			//extra sleep before retrying
+			time.Sleep(3 * time.Second)
 			response.Error = ""
 			response.Status = base.StatusOK
 			if err = s.tail(ctx, request, response); err != nil {

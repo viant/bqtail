@@ -12,6 +12,7 @@ import (
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"path"
+	"time"
 )
 
 func (s *service) setJobID(ctx context.Context, actions *task.Actions) (*bigquery.JobReference, error) {
@@ -97,6 +98,8 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 		return job, err
 	}
 	if base.IsBackendError(err.Error()) {
+		//do extra sleep before retrying
+		time.Sleep(3 * time.Second)
 		return call.Do()
 	}
 	return job, err

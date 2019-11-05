@@ -11,7 +11,7 @@ init:
 pipeline:
 
   create:
-    replayBucket:
+    bucket:
       action: storage:create
       isDir: true
       dest:
