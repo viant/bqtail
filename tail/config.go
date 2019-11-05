@@ -12,8 +12,11 @@ import (
 	"strings"
 )
 
+const maxRetries = 3
+
 //Config represents a tail config
 type Config struct {
+	MaxRetries int
 	base.Config
 	config.Ruleset
 }
@@ -23,6 +26,9 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	err := c.Config.Init(ctx)
 	if err != nil {
 		return err
+	}
+	if c.MaxRetries == 0 {
+		c.MaxRetries = maxRetries
 	}
 	if err = c.Ruleset.Init(ctx, fs, c.ProjectID); err != nil {
 		return err

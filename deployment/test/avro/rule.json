@@ -1,0 +1,47 @@
+[
+  {
+    "When": {
+      "Prefix": "/sitematch/",
+      "Suffix": ".avro"
+    },
+    "Async": true,
+    "Dest": {
+      "Table": "viant-siteprofile:sitemgmt.SITE_LIST_RAW_MATCH_V1",
+      "TransientDataset": "temp"
+    },
+    "Batch": {
+      "Window": {
+        "DurationInSec": 60
+      }
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ],
+    "OnFailure": [
+      {
+        "Action": "move",
+        "Request": {
+          "DestURL": "gs://${opsBucket}/BqTail/Errors"
+        }
+      },
+      {
+        "Action": "notify",
+        "Request": {
+          "Channels": [
+            "#e2e"
+          ],
+          "Title": "Failed to load $Source to viant-siteprofile:sitemgmt.SITE_LIST_RAW_MATCH_V1",
+          "Message": "$Error"
+        }
+      }
+    ],
+    "Info": {
+      "Workflow": "site_matching",
+      "Description": "Site matching raw data ingestion",
+      "ProjectURL": "https://github.vianttech.com/adelphic/siteprofile/tree/master/sitelist",
+      "LeadEngineer": "Terry Zhao, Adrian Witas"
+    }
+  }
+]

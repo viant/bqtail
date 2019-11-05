@@ -62,9 +62,19 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	response := contract.NewResponse(request.EventID)
 	response.TriggerURL = request.SourceURL
 	defer response.SetTimeTaken(response.Started)
+	request.Attempt++
 	err := s.tail(ctx, request, response)
 	if err != nil {
 		response.SetIfError(err)
+	}
+	if base.IsBackendError(response.Error) {
+		if request.Attempt < s.config.MaxRetries {
+			response.Error = ""
+			response.Status = base.StatusOK
+			if err = s.tail(ctx, request, response); err != nil {
+				response.SetIfError(err)
+			}
+		}
 	}
 	return response
 }
@@ -311,7 +321,6 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	if err != nil {
 		return err
 	}
-
 	response.Batched = true
 	window, err := s.batch.TryAcquireWindow(ctx, request, route)
 	if window == nil {

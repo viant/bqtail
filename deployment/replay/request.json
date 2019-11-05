@@ -1,0 +1,5 @@
+{
+  "TriggerURL": "gs://${triggerBucket}",
+  "ReplayBucket":"${replayBucket}",
+  "UnprocessedDuration": "12min"
+}

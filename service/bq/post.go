@@ -93,5 +93,11 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)
-	return call.Do()
+	if job, err = call.Do(); err == nil {
+		return job, err
+	}
+	if base.IsBackendError(err.Error()) {
+		return call.Do()
+	}
+	return job, err
 }

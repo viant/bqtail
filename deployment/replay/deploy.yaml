@@ -36,19 +36,35 @@ pipeline:
         - export GO111MODULE=on
         - rm -rf vendor
         - go mod vendor
+#
+#    upload:
+#      action: gcp/cloudfunctions:deploy
+#      credentials: $gcpCredentials
+#      public: true
+#      '@name': $functionName
+#      entryPoint: $functionName
+#      runtime: go111
+#      availableMemoryMb: 128
+#      timeout: 540s
+#      serviceAccountEmail: $serviceAccount
+#      environmentVariables:
+#        LOGGING: 'true'
+#      source:
+#        URL: ${appPath}/
+#      sleepTimeMs: 5000
 
-    upload:
-      action: gcp/cloudfunctions:deploy
-      credentials: $gcpCredentials
-      public: true
-      '@name': $functionName
-      entryPoint: $functionName
-      runtime: go111
-      availableMemoryMb: 256
-      timeout: 540s
-      serviceAccountEmail: $serviceAccount
-      environmentVariables:
-        LOGGING: 'true'
-      source:
-        URL: ${appPath}/
-      sleepTimeMs: 5000
+
+  schedule:
+    action: gcp/cloudscheduler:deploy
+    credentials: $gcpCredentials
+    init:
+      body: $Cat('request.json')
+    name: BqTailReplay
+    schedule: 0 * * * *
+    body: $body
+    timeZone: UTC
+    httpTarget:
+      headers:
+        User-Agent: Google-Cloud-Scheduler
+      httpMethod: POST
+      uri: https://us-central1-${gcp.ProjectID}.cloudfunctions.net/StorageReplay
