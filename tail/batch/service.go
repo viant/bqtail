@@ -62,7 +62,7 @@ func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *con
 }
 
 func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) error {
-	URL := url.Join(baseURL, fmt.Sprintf("%v%v", window.End.UnixNano()), windowExtension)
+	URL := url.Join(baseURL, fmt.Sprintf("%v%v", window.End.UnixNano(), windowExtension))
 	data, err := json.Marshal(window)
 	if err != nil {
 		return err
