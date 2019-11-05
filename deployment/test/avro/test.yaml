@@ -15,5 +15,5 @@ pipeline:
       URL: rule.json
     dest:
       credentials: $gcpCredentials
-      URL: gs://${configBucket}/BqTail/Rules/sitematch.json
+      URL: gs://${configBucket}/BqTail/Rules/myrule.json
 
