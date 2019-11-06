@@ -14,6 +14,7 @@ import (
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"io/ioutil"
+	"log"
 	"path"
 	"sort"
 	"strconv"
@@ -103,7 +104,10 @@ func (s *service) getBatchingWindowID(ctx context.Context, sourceTime time.Time,
 		if err != nil {
 			return "", err
 		}
-		if sourceTime.Before(window.Start)  {
+		if !windowEnd.Equal(window.End) {
+			log.Printf("invalid window end tiem %v %v %v %v\n", window.EventID, window.Start, window.End, windowEnd)
+		}
+		if sourceTime.Before(window.Start) ||sourceTime.After(window.End)  {
 			continue
 		}
 		return window.EventID, nil

@@ -42,7 +42,7 @@ func (t testWindows) Resources(table string) []*asset.Resource {
 	for name, window := range t {
 		data, _ := json.Marshal(window)
 		resource := asset.NewFile(path.Join(table, name), data, file.DefaultFileOsMode)
-		resource.ModTime = &window.Start
+		resource.ModTime = &window.End
 		result = append(result, resource)
 	}
 	return result
