@@ -76,6 +76,7 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 	return job, err
 }
 
+
 func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 	var err error
 	if job.JobReference, err = s.setJobID(ctx, onDoneActions); err != nil {
@@ -84,7 +85,6 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	if job.JobReference != nil {
 		job.JobReference.JobId = base.EncodePathSeparator(job.JobReference.JobId)
 	}
-
 	if err = s.schedulePostTask(ctx, job.JobReference, onDoneActions); err != nil {
 		return nil, err
 	}
@@ -94,13 +94,20 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)
-	if job, err = call.Do(); err == nil {
-		return job, err
-	}
-	if base.IsBackendError(err.Error()) {
-		//do extra sleep before retrying
-		time.Sleep(3 * time.Second)
-		return call.Do()
+	var callJob * bigquery.Job
+	for i := 0; i < base.MaxRetries;i++ {
+		if callJob, err = call.Do(); err == nil {
+			return callJob, err
+		}
+		if base.IsRetryError(err) {
+			//do extra sleep before retrying
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		if i > 0 && base.IsDuplicateJobError(err) {
+			err = nil
+		}
 	}
 	return job, err
 }
+

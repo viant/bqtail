@@ -70,4 +70,7 @@ const (
 
 	//ConfigEnvKey config env key
 	ConfigEnvKey = "CONFIG"
+
+	//MaxRetries
+	MaxRetries = 3
 )
