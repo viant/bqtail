@@ -5,7 +5,8 @@ pipeline:
     '@name': BqTail
     timeout: 540s
     public: true
-    availableMemoryMb: 256
+    retry: true
+    availableMemoryMb: 128
     entryPoint: BqTail
     runtime: go111
     serviceAccountEmail: ${gcp.serviceAccount}
@@ -24,7 +25,7 @@ pipeline:
     timeout: 540s
     public: true
     serviceAccountEmail: ${gcp.serviceAccount}
-    availableMemoryMb: 256
+    availableMemoryMb: 128
     entryPoint: BqDispatch
     runtime: go111
     retry: true
