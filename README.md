@@ -54,14 +54,6 @@ The following define rule to ingest data in batches within 30 sec time window in
         {
           "Action": "delete"
         }
-      ],
-      "OnFailure": [
-        {
-          "Action": "move",
-          "Request": {
-            "DestURL": "gs://${opsBucket}/BqTail/Errors"
-          }
-        }
       ]
     }
 ]
@@ -105,12 +97,6 @@ The following define rule to ingest data in batches within 60 sec time window in
       ],
       "OnFailure": [
         {
-          "Action": "move",
-          "Request": {
-            "DestURL": "gs://${opsBucket}/BqTail/Errors"
-          }
-        },
-        {
           "Action": "notify",
           "Request": {
             "Channels": [
@@ -151,14 +137,6 @@ The following define rule to ingest data in batches within 60 sec time window in
     "OnSuccess": [
       {
         "Action": "delete"
-      }
-    ],
-    "OnFailure": [
-      {
-        "Action": "move",
-        "Request": {
-          "DestURL": "gs://${opsBucket}/BqTail/Errors"
-        }
       }
     ]
   }

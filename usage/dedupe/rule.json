@@ -31,12 +31,6 @@
     ],
     "OnFailure": [
       {
-        "Action": "move",
-        "Request": {
-          "DestURL": "gs://${opsBucket}/BqTail/errors"
-        }
-      },
-      {
         "Action": "notify",
         "Request": {
           "Channels": [

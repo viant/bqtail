@@ -17,14 +17,6 @@
       {
         "Action": "delete"
       }
-    ],
-    "OnFailure": [
-      {
-        "Action": "move",
-        "Request": {
-          "DestURL": "gs://${opsBucket}/BqTail/errors"
-        }
-      }
     ]
   }
 ]
