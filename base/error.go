@@ -8,7 +8,6 @@ import (
 
 const backendError = "backendError"
 
-
 //IsRetryError returns true if backend error
 func IsRetryError(err error) bool {
 	if err == nil {
@@ -35,7 +34,6 @@ func IsDuplicateJobError(err error) bool {
 	}
 	return false
 }
-
 
 //IsPermissionDenied returns true if permission job error
 func IsPermissionDenied(err error) bool {

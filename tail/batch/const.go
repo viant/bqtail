@@ -1,4 +1,7 @@
 package batch
 
-var transferableExtension = ".tnf"
-var windowExtension = ".win"
+const (
+	transferableExtension = ".tnf"
+	windowExtension       = ".win"
+	maxBatchOwnershipChecks = 120
+)

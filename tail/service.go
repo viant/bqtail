@@ -39,7 +39,6 @@ type service struct {
 	config *Config
 }
 
-
 func (s *service) Init(ctx context.Context) error {
 	err := s.config.Init(ctx, s.fs)
 	if err != nil {
@@ -315,7 +314,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	}
 	response.Batched = true
 	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, route)
-	if batchWindow == nil{
+	if batchWindow == nil {
 		return err
 	}
 	response.BatchingEventID = batchWindow.BatchingEventID
@@ -327,6 +326,9 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	response.BatchRunner = true
 	if err = s.batch.MatchWindowData(ctx, time.Now(), window, route); err != nil {
 		return err
+	}
+	if window.Collision {
+		return nil
 	}
 	job := &Job{
 		Rule:          route,

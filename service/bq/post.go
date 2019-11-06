@@ -95,6 +95,8 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)
 	var callJob * bigquery.Job
+
+
 	for i := 0; i < base.MaxRetries;i++ {
 		if callJob, err = call.Do(); err == nil {
 			return callJob, err

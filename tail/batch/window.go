@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-
-
 type BatchedWindow struct {
 	*Window
 	BatchingEventID string
@@ -19,6 +17,8 @@ type BatchedWindow struct {
 type Window struct {
 	URL           string      `json:",omitempty"`
 	Start         time.Time   `json:",omitempty"`
+	Collision     bool        `json:",omitempty"`
+	BaseURL       string      `json:",omitempty"`
 	End           time.Time   `json:",omitempty"`
 	SourceCreated time.Time   `json:",omitempty"`
 	EventTime     time.Time   `json:",omitempty"`
@@ -30,6 +30,7 @@ type Window struct {
 func NewWindow(baseURL string, request *contract.Request, windowStarted time.Time, route *config.Rule, sourceCreate time.Time) *Window {
 	end := windowStarted.Add(route.Batch.Window.Duration)
 	return &Window{
+		BaseURL:baseURL,
 		SourceCreated: sourceCreate,
 		URL:           url.Join(baseURL, fmt.Sprintf("%v%v", end.UnixNano(), windowExtension)),
 		EventID:       request.EventID,

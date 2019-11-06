@@ -34,7 +34,7 @@ type Service interface {
 
 type service struct {
 	URL string
-	afs.Service
+	fs  afs.Service
 }
 
 func (s *service) scheduleURL(created time.Time, request *contract.Request, route *config.Rule) (string, error) {
@@ -52,7 +52,7 @@ func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *con
 	if err != nil {
 		return err
 	}
-	if err = s.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err != nil {
+	if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err != nil {
 		return err
 	}
 	return nil
@@ -67,7 +67,7 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	if err != nil {
 		return err
 	}
-	err = s.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
+	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 	return err
 }
 
@@ -76,11 +76,11 @@ func (s *service) getSchedule(ctx context.Context, created time.Time, request *c
 	if err != nil {
 		return nil, err
 	}
-	return s.Object(ctx, URL)
+	return s.fs.Object(ctx, URL)
 }
 
 func (s *service) getWindow(ctx context.Context, URL string) (*Window, error) {
-	reader, err := s.DownloadWithURL(ctx, URL)
+	reader, err := s.fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (s *service) getBatchingWindowID(ctx context.Context, sourceTime time.Time,
 		if err != nil {
 			return "", err
 		}
-		if sourceTime.Before(window.Start) ||sourceTime.After(window.End)  {
+		if sourceTime.Before(window.Start) || sourceTime.After(window.End) {
 			continue
 		}
 		return window.EventID, nil
@@ -116,7 +116,7 @@ func (s *service) getBatchingWindowID(ctx context.Context, sourceTime time.Time,
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*BatchedWindow, error) {
-	source, err := s.Object(ctx, request.SourceURL)
+	source, err := s.fs.Object(ctx, request.SourceURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "source event was missing: %v", request.SourceURL)
 	}
@@ -133,7 +133,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	windowMax := eventSchedule.ModTime().Add(route.Batch.Window.Duration + 1)
 
 	transferableMatcher := windowedMatcher(windowMin, windowMax, transferableExtension)
-	transfers, err := s.List(ctx, baseURL, transferableMatcher.Match)
+	transfers, err := s.fs.List(ctx, baseURL, transferableMatcher)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 
 	windowMatcher := windowedMatcher(windowMin.Add(-route.Batch.Window.Duration), windowMax, windowExtension)
-	windows, err := s.List(ctx, baseURL, windowMatcher.Match)
+	windows, err := s.fs.List(ctx, baseURL, windowMatcher)
 
 	batchingEventID := before[0].Name()
 	if len(windows) == 0 {
@@ -167,7 +167,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 }
 
 func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Datafile, error) {
-	reader, err := s.Download(ctx, object)
+	reader, err := s.fs.Download(ctx, object)
 	if err != nil {
 		return nil, err
 	}
@@ -181,16 +181,57 @@ func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Dat
 	return &Datafile{SourceURL: string(data), EventID: name, Created: object.ModTime(), URL: object.URL()}, nil
 }
 
+func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (bool, error) {
+	halfDuration := window.End.Sub(window.Start) / 2
+	windowMatcher := windowedMatcher(window.Start.Add(-halfDuration), window.End, windowExtension)
+	windows, err := s.fs.List(ctx, window.BaseURL, windowMatcher)
+	if err != nil {
+		return false, err
+	}
+	if len(windows) <= 1 {
+		return true, nil
+	}
+	sortedwindows := Objects(windows)
+	sort.Sort(sortedwindows)
+	filtered := make([]storage.Object, 0)
+	for i := range sortedwindows {
+		windowEnd, err := windowToTime(sortedwindows[i])
+		if err != nil {
+			return false, err
+		}
+		if windowEnd.Equal(window.End) || windowEnd.After(window.Start) {
+			filtered = append(filtered, sortedwindows[i])
+		}
+	}
+	if len(filtered) == 1 {
+		return true, nil
+	}
+	if filtered[0].URL() == window.URL {
+		return true, nil
+	}
+	err = s.fs.Delete(ctx, window.URL)
+	return false, err
+}
+
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Rule) error {
 	tillWindowEnd := window.End.Sub(now)
-	if tillWindowEnd > 0 {
-		//wait for window to end
-		time.Sleep(tillWindowEnd + 1)
+
+	for i := 0; i < maxBatchOwnershipChecks; i++ {
+		if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
+			window.Collision = true
+			return err
+		}
+		tillWindowEnd -= time.Second
+		if tillWindowEnd <= 0 {
+			break
+		}
+		time.Sleep(time.Second)
 	}
+
 	eventMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
 	parentURL, _ := url.Split(window.URL, file.Scheme)
-	transferFiles, err := s.List(ctx, parentURL, eventMatcher)
+	transferFiles, err := s.fs.List(ctx, parentURL, eventMatcher)
 	if err != nil {
 		return err
 	}
@@ -222,7 +263,7 @@ func windowNameToTime(name string) (*time.Time, error) {
 	if err != nil {
 		return nil, err
 	}
-	result:= time.Unix(0, unixNano)
+	result := time.Unix(0, unixNano)
 	return &result, nil
 }
 
@@ -235,7 +276,7 @@ func windowedMatcher(after, before time.Time, ext string) *matcher.Modification 
 //New create stage service
 func New(batchURL string, storageService afs.Service) Service {
 	return &service{
-		URL:     batchURL,
-		Service: storageService,
+		URL: batchURL,
+		fs:  storageService,
 	}
 }
