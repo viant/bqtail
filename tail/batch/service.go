@@ -76,7 +76,6 @@ func (s *service) getSchedule(ctx context.Context, created time.Time, request *c
 	return s.Object(ctx, URL)
 }
 
-
 func (s *service) getWindow(ctx context.Context, URL string) (*Window, error) {
 	reader, err := s.DownloadWithURL(ctx, URL)
 	if err != nil {
@@ -91,10 +90,9 @@ func (s *service) getWindow(ctx context.Context, URL string) (*Window, error) {
 	return window, json.Unmarshal(data, window)
 }
 
-
 func (s *service) getBatchingWindowID(ctx context.Context, sourceTime time.Time, windows []storage.Object) (string, error) {
 	for i := range windows {
-		windowEnd ,err  := windowToTime(windows[i])
+		windowEnd, err := windowToTime(windows[i])
 		if err != nil {
 			return "", err
 		}
@@ -105,15 +103,13 @@ func (s *service) getBatchingWindowID(ctx context.Context, sourceTime time.Time,
 		if err != nil {
 			return "", err
 		}
-		windowStart := window.Start
-		if sourceTime.After(windowStart) && sourceTime.Before(*windowEnd) || windowStart.Equal(sourceTime) || windowEnd.Equal(sourceTime) {
-			return window.EventID, nil
+		if sourceTime.Before(window.Start)  {
+			continue
 		}
+		return window.EventID, nil
 	}
 	return "", nil
 }
-
-
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*BatchedWindow, error) {
@@ -149,7 +145,6 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 	}
 
-
 	windowMatcher := windowedMatcher(windowMin.Add(-route.Batch.Window.Duration), windowMax, windowExtension)
 	windows, err := s.List(ctx, baseURL, windowMatcher.Match)
 
@@ -161,8 +156,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 		return &BatchedWindow{BatchingEventID: batchingEventID}, nil
 	}
 
-
-	batchingEventID, err = s.getBatchingWindowID(ctx, source.ModTime() ,windows)
+	batchingEventID, err = s.getBatchingWindowID(ctx, source.ModTime(), windows)
 	if err != nil || batchingEventID != "" {
 		return nil, err
 	}
@@ -193,12 +187,15 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 	}
 	eventMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
 	parentURL, _ := url.Split(window.URL, file.Scheme)
-	transferFiles, err := s.List(ctx, parentURL, eventMatcher.Match)
+	transferFiles, err := s.List(ctx, parentURL, eventMatcher)
 	if err != nil {
 		return err
 	}
 	window.Datafiles = make([]*Datafile, 0)
 	for i := range transferFiles {
+		if transferFiles[i].ModTime().Before(window.Start) || transferFiles[i].ModTime().After(window.End) {
+			continue
+		}
 		datafile, err := s.loadDatafile(ctx, transferFiles[i])
 		if err != nil {
 			return err
