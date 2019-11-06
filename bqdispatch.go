@@ -1,7 +1,6 @@
 package bqtail
 
 import (
-	"bqtail/base"
 	"bqtail/dispatch"
 	"bqtail/dispatch/contract"
 	"cloud.google.com/go/functions/metadata"
@@ -22,12 +21,13 @@ func BqDispatch(ctx context.Context, event interface{}) (err error) {
 	request := newRequest(meta)
 	_, err = handleDispatchEvent(ctx, request)
 	if err != nil {
-		if base.IsPermissionDenied(err) {
-			log.Printf("ERROR: %v", err)
-			return nil
-		}
+		log.Printf("-ERROR: %v", err)
+		//if base.IsPermissionDenied(err) {
+		//
+		//	return nil
+		//}
 	}
-	return err
+	return nil
 }
 
 func newRequest(meta *metadata.Metadata) *contract.Request {
