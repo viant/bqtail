@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -20,14 +19,7 @@ func BqDispatch(ctx context.Context, event interface{}) (err error) {
 	}
 	request := newRequest(meta)
 	_, err = handleDispatchEvent(ctx, request)
-	if err != nil {
-		log.Printf("-ERROR: %v", err)
-		//if base.IsPermissionDenied(err) {
-		//
-		//	return nil
-		//}
-	}
-	return nil
+	return err
 }
 
 func newRequest(meta *metadata.Metadata) *contract.Request {
