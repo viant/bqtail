@@ -40,6 +40,7 @@ type testWindows map[string]*Window
 func (t testWindows) Resources(table string) []*asset.Resource {
 	var result = make([]*asset.Resource, 0)
 	for name, window := range t {
+		window.URL = path.Join(table, name)
 		data, _ := json.Marshal(window)
 		resource := asset.NewFile(path.Join(table, name), data, file.DefaultFileOsMode)
 		resource.ModTime = &window.End
@@ -96,7 +97,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 					Table: "proj:dset:table1",
 				},
 			},
-			expectWinURL: fmt.Sprintf("mem://localhost/stage001/proj:dset:table1/%v.win", now.Add(20*time.Second).UnixNano()),
+			expectWinURL: fmt.Sprintf("mem://localhost/stage001/proj:dset:table1/%v.win", now.Add(20 * time.Second).UnixNano()),
 			expect: &Window{
 				Start:   now.Add(-10 * time.Second),
 				End:     now.Add(20 * time.Second),
@@ -168,7 +169,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 					Table: "proj:dset:table1",
 				},
 			},
-			expectWinURL: fmt.Sprintf("mem://localhost/stage003/proj:dset:table1/%v.win", now.Add(21*time.Second).UnixNano()),
+			expectWinURL: fmt.Sprintf("mem://localhost/stage003/proj:dset:table1/%v.win", now.Add(21 * time.Second).UnixNano()),
 			expect: &Window{
 				Start:   now.Add(-9 * time.Second),
 				End:     now.Add(21 * time.Second),
@@ -198,7 +199,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			windows: testWindows{
-				fmt.Sprintf("%v.win", now.Add(-15*time.Second).UnixNano()): &Window{
+				fmt.Sprintf("%v.win", now.Add(-15 * time.Second).UnixNano()): &Window{
 					EventID: "event0",
 					Start:   now.Add(-45 * time.Second),
 					End:     now.Add(-15 * time.Second),
@@ -216,7 +217,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 
-			expectWinURL: fmt.Sprintf("mem://localhost/stage004/proj:dset:table1/%v.win", now.Add(21*time.Second).UnixNano()),
+			expectWinURL: fmt.Sprintf("mem://localhost/stage004/proj:dset:table1/%v.win", now.Add(21 * time.Second).UnixNano()),
 			expect: &Window{
 				Start:   now.Add(-9 * time.Second),
 				End:     now.Add(21 * time.Second),
@@ -246,13 +247,13 @@ func TestService_TryAcquireWindow(t *testing.T) {
 				},
 			},
 			windows: testWindows{
-				fmt.Sprintf("%v.win", now.Add(-15*time.Second).UnixNano()): &Window{
-					EventID: "event0",
+				fmt.Sprintf("%v.win", now.Add(-15 * time.Second).UnixNano()): &Window{
+					EventID: "event10",
 					Start:   now.Add(-45 * time.Second),
 					End:     now.Add(-15 * time.Second),
 				},
-				fmt.Sprintf("%v.win", now.Add(16*time.Second).UnixNano()): &Window{
-					EventID: "event00",
+				fmt.Sprintf("%v.win", now.Add(16 * time.Second).UnixNano()): &Window{
+					EventID: "event100",
 					Start:   now.Add(-14 * time.Second),
 					End:     now.Add(16 * time.Second),
 				},
@@ -296,7 +297,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 					Table: "proj:dset:table1",
 				},
 			},
-			expectWinURL: fmt.Sprintf("mem://localhost/stage006/proj:dset:table1/%v.win", now.Add(20*time.Second).UnixNano()),
+			expectWinURL: fmt.Sprintf("mem://localhost/stage006/proj:dset:table1/%v.win", now.Add(20 * time.Second).UnixNano()),
 			expect: &Window{
 				Start:   now.Add(-10 * time.Second),
 				End:     now.Add(20 * time.Second),
@@ -335,7 +336,6 @@ func TestService_TryAcquireWindow(t *testing.T) {
 		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
-
 
 		if useCase.expect != nil {
 			if !assert.NotNil(t, window, useCase.description) {

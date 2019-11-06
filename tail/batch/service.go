@@ -14,7 +14,6 @@ import (
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"io/ioutil"
-	"log"
 	"path"
 	"sort"
 	"strconv"
@@ -60,7 +59,10 @@ func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *con
 }
 
 func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) error {
-	URL := url.Join(baseURL, fmt.Sprintf("%v%v", window.End.UnixNano(), windowExtension))
+	URL := window.URL
+	if URL == "" {
+		URL = url.Join(baseURL, fmt.Sprintf("%v%v", window.End.UnixNano(), windowExtension))
+	}
 	data, err := json.Marshal(window)
 	if err != nil {
 		return err
@@ -100,12 +102,9 @@ func (s *service) getBatchingWindowID(ctx context.Context, sourceTime time.Time,
 		if sourceTime.After(*windowEnd) {
 			continue
 		}
-		window, err := s.getWindow(ctx, windows[0].URL())
+		window, err := s.getWindow(ctx, windows[i].URL())
 		if err != nil {
 			return "", err
-		}
-		if !windowEnd.Equal(window.End) {
-			log.Printf("invalid window end tiem %v %v %v %v\n", window.EventID, window.Start, window.End, windowEnd)
 		}
 		if sourceTime.Before(window.Start) ||sourceTime.After(window.End)  {
 			continue
@@ -210,13 +209,20 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 }
 
 func windowToTime(window storage.Object) (*time.Time, error) {
-	name := window.Name()
-	nanoTime := string(name[:len(name)-4])
-	unixNano, err := strconv.ParseInt(nanoTime, 10, 64)
+	result, err := windowNameToTime(window.Name())
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid nano time for URL: %v", window.URL())
 	}
-	result := time.Unix(0, unixNano)
+	return result, nil
+}
+
+func windowNameToTime(name string) (*time.Time, error) {
+	nanoTime := string(name[:len(name)-4])
+	unixNano, err := strconv.ParseInt(nanoTime, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	result:= time.Unix(0, unixNano)
 	return &result, nil
 }
 

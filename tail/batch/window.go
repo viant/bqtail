@@ -31,7 +31,7 @@ func NewWindow(baseURL string, request *contract.Request, windowStarted time.Tim
 	end := windowStarted.Add(route.Batch.Window.Duration)
 	return &Window{
 		SourceCreated: sourceCreate,
-		URL:           url.Join(baseURL, fmt.Sprintf("%v.win", end.UnixNano())),
+		URL:           url.Join(baseURL, fmt.Sprintf("%v%v", end.UnixNano(), windowExtension)),
 		EventID:       request.EventID,
 		EventTime:     request.Started,
 		Start:         windowStarted,
