@@ -112,10 +112,12 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	if len(before) == 0 {
 		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 	}
+
+
 	windowMatcher := windowedMatcher(windowMin.Add(-route.Batch.Window.Duration), windowMax, windowExtension)
 	windows, err := s.List(ctx, baseURL, windowMatcher.Match)
 
-	batchingEventID := ""
+	batchingEventID := before[0].Name()
 	if windowCount := len(windows); windowCount > 0 {
 		if reader, err := s.DownloadWithURL(ctx, windows[windowCount-1].URL()); err == nil {
 			defer reader.Close()
