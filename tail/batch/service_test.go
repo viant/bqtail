@@ -224,6 +224,7 @@ func TestService_TryAcquireWindow(t *testing.T) {
 			},
 		},
 		{
+
 			description: "the second  event instance in the  next window - can not acquire window",
 			stageURL:    "mem://localhost/stage005",
 			transfers: []*testTransfer{
@@ -334,6 +335,8 @@ func TestService_TryAcquireWindow(t *testing.T) {
 		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
+
+
 		if useCase.expect != nil {
 			if !assert.NotNil(t, window, useCase.description) {
 				continue

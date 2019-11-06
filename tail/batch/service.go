@@ -52,9 +52,6 @@ func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *con
 	if err != nil {
 		return err
 	}
-	if exists, _ := s.Exists(ctx, URL); exists {
-		return nil
-	}
 	if err = s.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err != nil {
 		return err
 	}
@@ -78,6 +75,45 @@ func (s *service) getSchedule(ctx context.Context, created time.Time, request *c
 	}
 	return s.Object(ctx, URL)
 }
+
+
+func (s *service) getWindow(ctx context.Context, URL string) (*Window, error) {
+	reader, err := s.DownloadWithURL(ctx, URL)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to read window: %v", URL)
+	}
+	window := &Window{}
+	return window, json.Unmarshal(data, window)
+}
+
+
+func (s *service) getBatchingWindowID(ctx context.Context, sourceTime time.Time, windows []storage.Object) (string, error) {
+	for i := range windows {
+		windowEnd ,err  := windowToTime(windows[i])
+		if err != nil {
+			return "", err
+		}
+		if sourceTime.After(*windowEnd) {
+			continue
+		}
+		window, err := s.getWindow(ctx, windows[0].URL())
+		if err != nil {
+			return "", err
+		}
+		windowStart := window.Start
+		if sourceTime.After(windowStart) && sourceTime.Before(*windowEnd) || windowStart.Equal(sourceTime) || windowEnd.Equal(sourceTime) {
+			return window.EventID, nil
+		}
+	}
+	return "", nil
+}
+
+
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*BatchedWindow, error) {
@@ -118,34 +154,16 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	windows, err := s.List(ctx, baseURL, windowMatcher.Match)
 
 	batchingEventID := before[0].Name()
-	if windowCount := len(windows); windowCount > 0 {
-		if reader, err := s.DownloadWithURL(ctx, windows[windowCount-1].URL()); err == nil {
-			defer reader.Close()
-			if data, err := ioutil.ReadAll(reader); err == nil {
-				batchOwner := &Window{}
-				if err = json.Unmarshal(data, batchOwner); err == nil {
-					batchingEventID = batchOwner.EventID
-				}
-			}
-
-		}
-	}
-	if len(windows) != 1 {
+	if len(windows) == 0 {
 		//this instance can not acquire batch when
 		//- no active window, and has some earlier transfer
 		//- more than 1 windows, meaning has to be acquire by other instance
 		return &BatchedWindow{BatchingEventID: batchingEventID}, nil
 	}
-	windowEndTime, err := windowToTime(windows[0])
-	if err != nil {
-		return nil, err
-	}
 
-	if source.ModTime().Before(*windowEndTime) {
-		return &BatchedWindow{BatchingEventID: batchingEventID}, nil
-	}
-	beforeMe := before.After(*windowEndTime)
-	if len(beforeMe) > 0 { //has other transfer after last batch window, thus this instance can be acquire window
+
+	batchingEventID, err = s.getBatchingWindowID(ctx, source.ModTime() ,windows)
+	if err != nil || batchingEventID != "" {
 		return nil, err
 	}
 	return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
