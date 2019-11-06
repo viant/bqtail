@@ -5,7 +5,6 @@ pipeline:
     '@name': BqTail
     timeout: 540s
     public: true
-    retry: true
     availableMemoryMb: 128
     entryPoint: BqTail
     runtime: go111
