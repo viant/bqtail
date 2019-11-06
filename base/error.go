@@ -35,3 +35,17 @@ func IsDuplicateJobError(err error) bool {
 	}
 	return false
 }
+
+
+//IsPermissionDenied returns true if permission job error
+func IsPermissionDenied(err error) bool {
+	if err == nil {
+		return false
+	}
+	if apiError, ok := err.(*googleapi.Error); ok {
+		if apiError.Code == http.StatusForbidden {
+			return true
+		}
+	}
+	return false
+}
