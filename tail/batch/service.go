@@ -161,7 +161,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 
 	batchingEventID, err = s.getBatchingWindowID(ctx, source.ModTime(), windows)
 	if err != nil || batchingEventID != "" {
-		return nil, err
+		return &BatchedWindow{BatchingEventID: batchingEventID}, err
 	}
 	return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 }

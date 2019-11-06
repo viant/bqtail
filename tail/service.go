@@ -62,7 +62,6 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	response := contract.NewResponse(request.EventID)
 	response.TriggerURL = request.SourceURL
 	defer response.SetTimeTaken(response.Started)
-	request.Attempt++
 	err := s.tail(ctx, request, response)
 	if err != nil {
 		response.SetIfError(err)
@@ -317,6 +316,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	if batchWindow == nil {
 		return err
 	}
+
 	response.BatchingEventID = batchWindow.BatchingEventID
 	if batchWindow.Window == nil {
 		return err
