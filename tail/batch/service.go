@@ -228,7 +228,8 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 		}
 		time.Sleep(time.Second)
 	}
-
+	//if a file is added as the window end make sure it is visible for this batch collection
+	time.Sleep(closingBatchWaitTime * time.Second)
 	eventMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
 	parentURL, _ := url.Split(window.URL, file.Scheme)
 	transferFiles, err := s.fs.List(ctx, parentURL, eventMatcher)
