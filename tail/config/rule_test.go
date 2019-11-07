@@ -94,6 +94,19 @@ func TestRoute_HasMatch(t *testing.T) {
 			URL:    "ssh://host/aa/data/002/abc.tsv",
 			expect: true,
 		},
+		{
+			description: "filter -  match",
+			Rule: Rule{
+				When: matcher.Basic{
+					Prefix: "/gcs-logging/",
+				},
+				Dest: &Destination{
+					Table: "project:dataset:table6",
+				},
+			},
+			URL:    "gs://viant_dataflow_bqtail/gcs-logging/PROJECT_viant-adelphic_BUCKET_adelphic-keys_usage_2019_10_23_22_00_00_00a90fd57818ed9df3_v0",
+			expect: true,
+		},
 	}
 
 	for _, useCase := range useCases {

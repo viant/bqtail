@@ -73,6 +73,7 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 	if err := s.config.ReloadIfNeeded(ctx, s.fs); err != nil {
 		return err
 	}
+	response.RuleCount = len(s.config.Rules)
 	var rule *config.Rule
 	matched := s.config.Match(request.SourceURL)
 	switch len(matched) {

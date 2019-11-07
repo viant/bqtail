@@ -9,13 +9,13 @@ import (
 func TestRoutes_HasMatch(t *testing.T) {
 	var useCases = []struct {
 		description string
-		Ruleset
+		Ruleset []*Rule
 		URL         string
 		expextTable string
 	}{
 		{
 			description: "suffix match",
-			Ruleset: Ruleset{
+			Ruleset: []*Rule{
 				&Rule{
 					When: matcher.Basic{
 						Suffix: ".tsv",
@@ -38,8 +38,8 @@ func TestRoutes_HasMatch(t *testing.T) {
 			expextTable: "project:dataset:table2",
 		},
 		{
-			description: "prefix no match",
-			Ruleset: Ruleset{
+			description: "prefix with long file",
+			Ruleset: []*Rule{
 				&Rule{
 					When: matcher.Basic{
 						Prefix: "/s",
@@ -64,7 +64,11 @@ func TestRoutes_HasMatch(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		actual := useCase.Match(useCase.URL)
+		rules := &Ruleset{
+			Rules:useCase.Ruleset,
+		}
+
+		actual := rules.Match(useCase.URL)
 		if useCase.expextTable == "" {
 			assert.Nil(t, actual, useCase.description)
 			continue
@@ -74,6 +78,6 @@ func TestRoutes_HasMatch(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, useCase.expextTable, actual.Dest.Table, useCase.description)
+		assert.Equal(t, useCase.expextTable, actual[0].Dest.Table, useCase.description)
 	}
 }

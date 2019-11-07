@@ -9,9 +9,10 @@ import (
 type Response struct {
 	base.Response
 	Rule            *config.Rule `json:",omitempty"`
-	Batched         bool         `json:",omitempty"`
-	BatchRunner     bool         `json:",omitempty"`
-	BatchingEventID string       `json:",omitempty"`
+	RuleCount       int
+	Batched         bool   `json:",omitempty"`
+	BatchRunner     bool   `json:",omitempty"`
+	BatchingEventID string `json:",omitempty"`
 	TriggerURL      string
 	Window          interface{} `json:",omitempty"`
 }
