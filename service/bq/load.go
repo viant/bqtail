@@ -14,19 +14,43 @@ type LoadRequest struct {
 	Append bool
 }
 
+const maxJobLoadURIs = 10000
+
 //Load loads data into BigQuery
-func (s *service) Load(ctx context.Context, request *LoadRequest) (*bigquery.Job, error) {
+func (s *service) Load(ctx context.Context, request *LoadRequest) (job *bigquery.Job, err error) {
 	request.Init(s.projectID)
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
-	job := &bigquery.Job{
+	job = &bigquery.Job{
 		Configuration: &bigquery.JobConfiguration{
 			Load: request.JobConfigurationLoad,
 		},
 	}
 	job.JobReference = request.jobReference()
-	return s.Post(ctx, request.DestinationTable.ProjectId, job, &request.Actions)
+	if len(job.Configuration.Load.SourceUris) <= maxJobLoadURIs {
+		return s.Post(ctx, request.DestinationTable.ProjectId, job, &request.Actions)
+	}
+	return s.loadInParts(ctx, job, request)
+}
+
+func (s *service) loadInParts(ctx context.Context, job *bigquery.Job, request *LoadRequest) (postJob *bigquery.Job, err error) {
+	URIs := job.Configuration.Load.SourceUris
+	parts := len(URIs) / maxJobLoadURIs
+	offset := 0
+	jobID := job.JobReference.JobId
+	for i := 0; i < parts; i++ {
+		limit := offset + maxJobLoadURIs
+		if limit >= len(URIs) {
+			limit = len(URIs) - 1
+		}
+		job.Configuration.Load.SourceUris = URIs[offset:limit]
+		job.JobReference.JobId = fmt.Sprintf("j%03d_%v", i, jobID)
+		if postJob, err = s.Post(ctx, request.DestinationTable.ProjectId, job, &request.Actions); err != nil {
+			return nil, err
+		}
+	}
+	return postJob, err
 }
 
 //Init initialises request

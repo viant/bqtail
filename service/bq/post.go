@@ -54,8 +54,7 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 	if job == nil {
 		job = callerJob
 	}
-
-	if onDoneActions != nil && onDoneActions.IsSyncMode() {
+	if onDoneActions != nil && (onDoneActions.IsSyncMode() || err != nil) {
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
 			if err == nil {
@@ -76,7 +75,6 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 	return job, err
 }
 
-
 func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 	var err error
 	if job.JobReference, err = s.setJobID(ctx, onDoneActions); err != nil {
@@ -94,10 +92,9 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)
-	var callJob * bigquery.Job
+	var callJob *bigquery.Job
 
-
-	for i := 0; i < base.MaxRetries;i++ {
+	for i := 0; i < base.MaxRetries; i++ {
 		if callJob, err = call.Do(); err == nil {
 			return callJob, err
 		}
@@ -112,4 +109,3 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	}
 	return job, err
 }
-

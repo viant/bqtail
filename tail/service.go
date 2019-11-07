@@ -88,7 +88,11 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 		response.Status = base.StatusNoMatch
 		return nil
 	}
-	if exists, _ := s.fs.Exists(ctx, request.SourceURL); !exists {
+
+	if exists, err := s.fs.Exists(ctx, request.SourceURL); !exists {
+		if err != nil {
+			response.NotFoundError = err.Error()
+		}
 		response.Status = base.StatusNotFound
 		return nil
 	}

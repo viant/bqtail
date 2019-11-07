@@ -108,6 +108,7 @@ func (s *service) getActions(ctx context.Context, request *contract.Request, res
 		response.Matched = true
 		reader, err := s.fs.DownloadWithURL(ctx, URL)
 		if err != nil {
+			response.NotFoundError = err.Error()
 			if exists, err := s.fs.Exists(ctx, URL); err == nil && !exists {
 				response.Status = base.StatusNotFound
 				return nil, nil

@@ -30,7 +30,7 @@ type Window struct {
 func NewWindow(baseURL string, request *contract.Request, windowStarted time.Time, route *config.Rule, sourceCreate time.Time) *Window {
 	end := windowStarted.Add(route.Batch.Window.Duration)
 	return &Window{
-		BaseURL:baseURL,
+		BaseURL:       baseURL,
 		SourceCreated: sourceCreate,
 		URL:           url.Join(baseURL, fmt.Sprintf("%v%v", end.UnixNano(), windowExtension)),
 		EventID:       request.EventID,

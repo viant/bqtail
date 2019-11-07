@@ -1,7 +1,7 @@
 package batch
 
 const (
-	transferableExtension = ".tnf"
-	windowExtension       = ".win"
+	transferableExtension   = ".tnf"
+	windowExtension         = ".win"
 	maxBatchOwnershipChecks = 120
 )

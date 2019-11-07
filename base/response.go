@@ -7,14 +7,15 @@ import (
 
 //Response represents response
 type Response struct {
-	Status      string
-	Error       string                 `json:",omitempty"`
-	EventID     string                 `json:",omitempty"`
-	Matched     bool                   `json:",omitempty"`
-	MatchedURL  string                 `json:",omitempty"`
-	JobRef      *bigquery.JobReference `json:",omitempty"`
-	Started     time.Time
-	TimeTakenMs int
+	Status        string
+	Error         string                 `json:",omitempty"`
+	NotFoundError string                 `json:",omitempty"`
+	EventID       string                 `json:",omitempty"`
+	Matched       bool                   `json:",omitempty"`
+	MatchedURL    string                 `json:",omitempty"`
+	JobRef        *bigquery.JobReference `json:",omitempty"`
+	Started       time.Time
+	TimeTakenMs   int
 }
 
 //SetTimeTaken set time taken
