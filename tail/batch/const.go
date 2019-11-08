@@ -4,5 +4,5 @@ const (
 	transferableExtension   = ".tnf"
 	windowExtension         = ".win"
 	maxBatchOwnershipChecks = 120
-	closingBatchWaitTime    = 3
+	closingBatchWaitTime    = 10
 )
