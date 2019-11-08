@@ -9,7 +9,7 @@
     },
     "Batch": {
       "Window": {
-        "DurationInSec": 20
+        "DurationInSec": 25
       }
     },
     "OnSuccess": [

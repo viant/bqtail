@@ -141,10 +141,10 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	if err != nil {
 		return nil, err
 	}
-
 	baseURL := url.Join(s.URL, path.Join(dest))
-	window := NewWindow(baseURL, request, eventSchedule.ModTime(), route, source.ModTime())
-	transferableMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
+	windowMin := eventSchedule.ModTime().Add(-(route.Batch.Window.Duration + 1))
+	windowMax := eventSchedule.ModTime().Add(route.Batch.Window.Duration + 1)
+	transferableMatcher := windowedMatcher(windowMin, windowMax, transferableExtension)
 	transfers, err := s.fs.List(ctx, baseURL, transferableMatcher)
 	if err != nil {
 		return nil, err
@@ -154,12 +154,15 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 	sortedTransfers := Objects(transfers)
 	sort.Sort(sortedTransfers)
+	window := NewWindow(baseURL, request, eventSchedule.ModTime(), route, source.ModTime())
 	before := sortedTransfers.Before(eventSchedule)
 	if len(before) == 0 {
 		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 	}
-	windowMatcher := windowedMatcher(window.Start.Add(-route.Batch.Window.Duration), window.End.Add(1), windowExtension)
+
+	windowMatcher := windowedMatcher(windowMin.Add(-route.Batch.Window.Duration), windowMax, windowExtension)
 	windows, err := s.fs.List(ctx, baseURL, windowMatcher)
+
 	batchingEventID := before[0].Name()
 	if len(windows) == 0 {
 		//this instance can not acquire batch when
@@ -174,6 +177,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 	return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 }
+
 
 func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Datafile, error) {
 	reader, err := s.fs.Download(ctx, object)
@@ -225,13 +229,13 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Rule) error {
 	tillWindowEnd := window.End.Sub(now)
-	closingBatchWaitTime := 4 * time.Second
+	closingBatchWaitTime := 2 * time.Second
 	for i := 0; i < 2; i++ {
-		time.Sleep(closingBatchWaitTime)
 		if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
 			window.LostOwnership = true
 			return err
 		}
+		time.Sleep(closingBatchWaitTime)
 	}
 	tillWindowEnd = window.End.Sub(now)
 	if tillWindowEnd > 0 {
