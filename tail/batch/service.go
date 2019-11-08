@@ -23,13 +23,13 @@ import (
 
 type Service interface {
 	//Add adds transfer events to batch stage
-	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, route *config.Rule) error
+	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) error
 
 	//Try to acquire batch window
-	TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*BatchedWindow, error)
+	TryAcquireWindow(ctx context.Context, request *contract.Request, rule *config.Rule) (*BatchedWindow, error)
 
 	//MatchWindowData updates the window with the window span matched transfer datafiles
-	MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Rule) error
+	MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) error
 }
 
 type service struct {
@@ -37,8 +37,8 @@ type service struct {
 	fs  afs.Service
 }
 
-func (s *service) scheduleURL(created time.Time, request *contract.Request, route *config.Rule) (string, error) {
-	dest, err := route.Dest.ExpandTable(created, request.SourceURL)
+func (s *service) scheduleURL(created time.Time, request *contract.Request, rule *config.Rule) (string, error) {
+	dest, err := rule.Dest.ExpandTable(created, request.SourceURL)
 	if err != nil {
 		return "", err
 	}
@@ -57,13 +57,12 @@ func (s *service) isDuplicate(ctx context.Context, URL string, sourceCreated tim
 
 
 //Add adds matched transfer event to batch stage
-func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, route *config.Rule) error {
-	URL, err := s.scheduleURL(sourceCreated, request, route)
+func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) error {
+	URL, err := s.scheduleURL(sourceCreated, request, rule)
 	if err != nil {
 		return err
 	}
-	//instead of 5 min it should be batch window duration
-	if s.isDuplicate(ctx, URL, sourceCreated, 5 * time.Minute) {
+	if s.isDuplicate(ctx, URL, sourceCreated, rule.Batch.Window.Duration) {
 		return nil
 	}
 	if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err != nil {
@@ -85,8 +84,8 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	return err
 }
 
-func (s *service) getSchedule(ctx context.Context, created time.Time, request *contract.Request, route *config.Rule) (storage.Object, error) {
-	URL, err := s.scheduleURL(created, request, route)
+func (s *service) getSchedule(ctx context.Context, created time.Time, request *contract.Request, rule *config.Rule) (storage.Object, error) {
+	URL, err := s.scheduleURL(created, request, rule)
 	if err != nil {
 		return nil, err
 	}
@@ -129,22 +128,22 @@ func (s *service) getBatchingWindowID(ctx context.Context, sourceTime time.Time,
 }
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
-func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Rule) (*BatchedWindow, error) {
+func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, rule *config.Rule) (*BatchedWindow, error) {
 	source, err := s.fs.Object(ctx, request.SourceURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "source event was missing: %v", request.SourceURL)
 	}
-	dest, err := route.Dest.ExpandTable(source.ModTime(), request.SourceURL)
+	dest, err := rule.Dest.ExpandTable(source.ModTime(), request.SourceURL)
 	if err != nil {
 		return nil, err
 	}
-	eventSchedule, err := s.getSchedule(ctx, source.ModTime(), request, route)
+	eventSchedule, err := s.getSchedule(ctx, source.ModTime(), request, rule)
 	if err != nil {
 		return nil, err
 	}
 	baseURL := url.Join(s.URL, path.Join(dest))
-	windowMin := eventSchedule.ModTime().Add(-(route.Batch.Window.Duration + 1))
-	windowMax := eventSchedule.ModTime().Add(route.Batch.Window.Duration + 1)
+	windowMin := eventSchedule.ModTime().Add(-(rule.Batch.Window.Duration + 1))
+	windowMax := eventSchedule.ModTime().Add(rule.Batch.Window.Duration + 1)
 
 	transferableMatcher := windowedMatcher(windowMin, windowMax, transferableExtension)
 	transfers, err := s.fs.List(ctx, baseURL, transferableMatcher)
@@ -156,13 +155,13 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 	sortedTransfers := Objects(transfers)
 	sort.Sort(sortedTransfers)
-	window := NewWindow(baseURL, request, eventSchedule.ModTime(), route, source.ModTime())
+	window := NewWindow(baseURL, request, eventSchedule.ModTime(), rule, source.ModTime())
 	before := sortedTransfers.Before(eventSchedule)
 	if len(before) == 0 {
 		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 	}
 
-	windowMatcher := windowedMatcher(windowMin.Add(-route.Batch.Window.Duration), windowMax, windowExtension)
+	windowMatcher := windowedMatcher(windowMin.Add(-rule.Batch.Window.Duration), windowMax, windowExtension)
 	windows, err := s.fs.List(ctx, baseURL, windowMatcher)
 
 	batchingEventID := before[0].Name()
@@ -194,6 +193,7 @@ func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Dat
 	name = string(name[:len(name)-4])
 	return &Datafile{SourceURL: string(data), EventID: name, Created: object.ModTime(), URL: object.URL()}, nil
 }
+
 
 func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (bool, error) {
 	halfDuration := window.End.Sub(window.Start) / 2
@@ -228,7 +228,7 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 }
 
 //MatchWindowData matches window data, it waits for window to ends if needed
-func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Rule) error {
+func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) error {
 	closingBatchWaitTime  := 2 * time.Second
 	tillWindowEnd := window.End.Sub(now) - closingBatchWaitTime
 	time.Sleep(closingBatchWaitTime)
