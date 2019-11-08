@@ -46,24 +46,11 @@ func (s *service) scheduleURL(created time.Time, request *contract.Request, rout
 	return url.Join(baseURL, request.EventID+transferableExtension), nil
 }
 
-func (s *service) isDuplicate(ctx context.Context, URL string, sourceCreated time.Time, loopbackWindow time.Duration) bool {
-	object, err := s.fs.Object(ctx, URL)
-	if err != nil || object == nil {
-		return false
-	}
-
-	duplicateGap := sourceCreated.Sub(object.ModTime())
-	return duplicateGap < loopbackWindow
-}
-
 //Add adds matched transfer event to batch stage
 func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, route *config.Rule) error {
 	URL, err := s.scheduleURL(sourceCreated, request, route)
 	if err != nil {
 		return err
-	}
-	if s.isDuplicate(ctx, request.SourceURL, sourceCreated, 5*time.Minute) {
-		return nil
 	}
 	if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err != nil {
 		return err
@@ -144,6 +131,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	baseURL := url.Join(s.URL, path.Join(dest))
 	windowMin := eventSchedule.ModTime().Add(-(route.Batch.Window.Duration + 1))
 	windowMax := eventSchedule.ModTime().Add(route.Batch.Window.Duration + 1)
+
 	transferableMatcher := windowedMatcher(windowMin, windowMax, transferableExtension)
 	transfers, err := s.fs.List(ctx, baseURL, transferableMatcher)
 	if err != nil {
@@ -177,7 +165,6 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 	return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 }
-
 
 func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Datafile, error) {
 	reader, err := s.fs.Download(ctx, object)
@@ -229,31 +216,25 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, route *config.Rule) error {
 	tillWindowEnd := window.End.Sub(now)
-	closingBatchWaitTime := 2 * time.Second
-	for i := 0; i < 2; i++ {
+
+	for i := 0; i < maxBatchOwnershipChecks; i++ {
 		if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
 			window.LostOwnership = true
 			return err
 		}
-		time.Sleep(closingBatchWaitTime)
-	}
-	tillWindowEnd = window.End.Sub(now)
-	if tillWindowEnd > 0 {
-		time.Sleep(tillWindowEnd)
+		tillWindowEnd -= time.Second
+		if tillWindowEnd <= 0 {
+			break
+		}
+		time.Sleep(time.Second)
 	}
 	//if a file is added as the window end make sure it is visible for this batch collection
-	time.Sleep(closingBatchWaitTime)
-
+	time.Sleep(closingBatchWaitTime * time.Second)
 	eventMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
 	parentURL, _ := url.Split(window.URL, file.Scheme)
 	transferFiles, err := s.fs.List(ctx, parentURL, eventMatcher)
 	if err != nil {
 		return err
-	}
-	if len(transferFiles) == 0 {
-		window.LostOwnership = true
-		err = s.fs.Delete(ctx, window.URL)
-		return nil
 	}
 	window.Datafiles = make([]*Datafile, 0)
 	for i := range transferFiles {
