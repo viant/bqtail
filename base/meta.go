@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/viant/afs"
 	"github.com/viant/afs/matcher"
+	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"sync"
 	"time"
@@ -55,7 +56,7 @@ func (m *Meta) HasChanged(ctx context.Context, fs afs.Service) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	routes, err := fs.List(ctx, m.baseURL, basicMatcher.Match)
+	routes, err := fs.List(ctx, m.baseURL, basicMatcher.Match, option.NewRecursive(true))
 	if err != nil {
 		return false, err
 	}

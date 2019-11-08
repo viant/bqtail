@@ -100,14 +100,6 @@ endly -t=init
     endly -t=test -i=dispatch_copy
 ```
 
-
-
-- [Copy data on target table modification](regression/cases/009_dispatch_copy)
-
-```bash
-    endly -t=test -i=dispatch_copy
-```
-
 - [Deduplication with summary task in sync mode](regression/cases/010_query_task)
 
 ```bash
