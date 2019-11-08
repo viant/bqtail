@@ -224,15 +224,13 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) error {
-	closingBatchWaitTime := 2 * time.Second
+	closingBatchWaitTime := time.Second
 	tillWindowEnd := window.End.Sub(now)
-	for i := 0; i < 3; i++ {
-		time.Sleep(closingBatchWaitTime)
-		closingBatchWaitTime -= closingBatchWaitTime
-		if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
-			window.LostOwnership = true
-			return err
-		}
+	time.Sleep(closingBatchWaitTime)
+	closingBatchWaitTime -= closingBatchWaitTime
+	if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
+		window.LostOwnership = true
+		return err
 	}
 	if tillWindowEnd > 0 {
 		time.Sleep(tillWindowEnd)
