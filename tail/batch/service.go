@@ -53,7 +53,7 @@ func (s *service) isDuplicate(ctx context.Context, URL string, sourceCreated tim
 	}
 
 	duplicateGap := sourceCreated.Sub(object.ModTime())
-	return duplicateGap > loopbackWindow
+	return duplicateGap < loopbackWindow
 }
 
 //Add adds matched transfer event to batch stage

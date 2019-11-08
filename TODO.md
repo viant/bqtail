@@ -3,3 +3,4 @@
 - Updated e2e test with journal log validation
 - Added e2e error cases
 - Add logic to split batching to not exceed max URIs limit 
+- Add hour bucket for batches
