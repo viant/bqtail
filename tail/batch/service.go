@@ -55,7 +55,6 @@ func (s *service) isDuplicate(ctx context.Context, URL string, sourceCreated tim
 	return duplicateGap < loopbackWindow
 }
 
-
 //Add adds matched transfer event to batch stage
 func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) error {
 	URL, err := s.scheduleURL(sourceCreated, request, rule)
@@ -169,7 +168,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 		//can not acquire batch when no active window, and has some earlier transfer
 		return &BatchedWindow{BatchingEventID: batchingEventID}, nil
 	}
-	batchingEventID, err = s.getBatchingWindowID(ctx, source.ModTime(), windows)
+	batchingEventID, err = s.getBatchingWindowID(ctx, eventSchedule.ModTime(), windows)
 	if err != nil || batchingEventID != "" {
 		return &BatchedWindow{BatchingEventID: batchingEventID}, err
 	}
@@ -190,7 +189,6 @@ func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Dat
 	name = string(name[:len(name)-4])
 	return &Datafile{SourceURL: string(data), EventID: name, Created: object.ModTime(), URL: object.URL()}, nil
 }
-
 
 func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (bool, error) {
 	halfDuration := window.End.Sub(window.Start) / 2
@@ -226,12 +224,15 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) error {
-	closingBatchWaitTime  := 2 * time.Second
-	tillWindowEnd := window.End.Sub(now) - closingBatchWaitTime
-	time.Sleep(closingBatchWaitTime)
-	if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
-		window.LostOwnership = true
-		return err
+	closingBatchWaitTime := 2 * time.Second
+	tillWindowEnd := window.End.Sub(now)
+	for i := 0; i < 3; i++ {
+		time.Sleep(closingBatchWaitTime)
+		closingBatchWaitTime -= closingBatchWaitTime
+		if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
+			window.LostOwnership = true
+			return err
+		}
 	}
 	if tillWindowEnd > 0 {
 		time.Sleep(tillWindowEnd)
