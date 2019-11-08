@@ -128,11 +128,10 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	if err != nil {
 		return nil, err
 	}
-	baseURL := url.Join(s.URL, path.Join(dest))
-	windowMin := eventSchedule.ModTime().Add(-(route.Batch.Window.Duration + 1))
-	windowMax := eventSchedule.ModTime().Add(route.Batch.Window.Duration + 1)
 
-	transferableMatcher := windowedMatcher(windowMin, windowMax, transferableExtension)
+	baseURL := url.Join(s.URL, path.Join(dest))
+	window := NewWindow(baseURL, request, eventSchedule.ModTime(), route, source.ModTime())
+	transferableMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
 	transfers, err := s.fs.List(ctx, baseURL, transferableMatcher)
 	if err != nil {
 		return nil, err
@@ -142,15 +141,12 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 	sortedTransfers := Objects(transfers)
 	sort.Sort(sortedTransfers)
-	window := NewWindow(baseURL, request, eventSchedule.ModTime(), route, source.ModTime())
 	before := sortedTransfers.Before(eventSchedule)
 	if len(before) == 0 {
 		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 	}
-
-	windowMatcher := windowedMatcher(windowMin.Add(-route.Batch.Window.Duration), windowMax, windowExtension)
+	windowMatcher := windowedMatcher(window.Start.Add(-route.Batch.Window.Duration), window.End.Add(1), windowExtension)
 	windows, err := s.fs.List(ctx, baseURL, windowMatcher)
-
 	batchingEventID := before[0].Name()
 	if len(windows) == 0 {
 		//this instance can not acquire batch when
@@ -219,7 +215,7 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 
 	for i := 0; i < maxBatchOwnershipChecks; i++ {
 		if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
-			window.Collision = true
+			window.LostOwnership = true
 			return err
 		}
 		tillWindowEnd -= time.Second
@@ -228,6 +224,8 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 		}
 		time.Sleep(time.Second)
 	}
+
+
 	//if a file is added as the window end make sure it is visible for this batch collection
 	time.Sleep(closingBatchWaitTime * time.Second)
 	eventMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
@@ -235,6 +233,11 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 	transferFiles, err := s.fs.List(ctx, parentURL, eventMatcher)
 	if err != nil {
 		return err
+	}
+	if len(transferFiles) == 0 {
+		window.LostOwnership = true
+		err = s.fs.Delete(ctx, window.URL)
+		return nil
 	}
 	window.Datafiles = make([]*Datafile, 0)
 	for i := range transferFiles {

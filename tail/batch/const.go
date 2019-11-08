@@ -3,6 +3,6 @@ package batch
 const (
 	transferableExtension   = ".tnf"
 	windowExtension         = ".win"
-	maxBatchOwnershipChecks = 120
-	closingBatchWaitTime    = 10
+	maxBatchOwnershipChecks = 360
+	closingBatchWaitTime    = 6
 )

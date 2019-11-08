@@ -332,7 +332,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	if err = s.batch.MatchWindowData(ctx, time.Now(), window, route); err != nil {
 		return err
 	}
-	if window.Collision {
+	if window.LostOwnership {
 		return nil
 	}
 	job := &Job{
