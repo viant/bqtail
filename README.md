@@ -206,7 +206,7 @@ curl -d @monitor.json -X POST  -H "Content-Type: application/json"  $monitorEndp
   "ConfigURL":    "gs://${configBucket}/BqTail/config.json",
   "TriggerURL":   "gs://${triggerBucket}",
   "UnprocessedDuration": "1hours",
-  "ErrorURL":     "gs://${opsBucket}/BqTail/Errors/",
+  "ErrorURL":     "gs://${opsBucket}/BqTail/errors/",
   "ErrorRecency": "3hours"
 }
 ```

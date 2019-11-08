@@ -116,7 +116,7 @@ Where:
 
 {
   "BatchURL": "gs://${opsBucket}/BqDispatch/Batch/",
-  "ErrorURL": "gs://${opsBucket}/BqDispatch/Errors/",
+  "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
   "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
   "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",

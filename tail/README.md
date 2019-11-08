@@ -300,7 +300,7 @@ Where:
 ```json
 {
   "BatchURL": "gs://${opsBucket}/BqTail/Batch/",
-  "ErrorURL": "gs://${opsBucket}/BqTail/Errors/",
+  "ErrorURL": "gs://${opsBucket}/BqTail/errors/",
   "JournalURL": "gs://${opsBucket}/BqTail/Journal/",
   "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "RulesURL": "gs://${configBucket}/BqTail/Rules/",
