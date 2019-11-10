@@ -141,10 +141,10 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 		return nil, err
 	}
 	baseURL := url.Join(s.URL, path.Join(dest))
-	windowMin := eventSchedule.ModTime().Add(-(rule.Batch.Window.Duration + 1))
-	windowMax := eventSchedule.ModTime().Add(rule.Batch.Window.Duration + 1)
+	rangeMin := eventSchedule.ModTime().Add(-(rule.Batch.Window.Duration + 1))
+	rangeMax := eventSchedule.ModTime().Add(rule.Batch.Window.Duration + 1)
 
-	transferableMatcher := windowedMatcher(windowMin, windowMax, transferableExtension)
+	transferableMatcher := windowedMatcher(rangeMin, rangeMax, transferableExtension)
 	transfers, err := s.fs.List(ctx, baseURL, transferableMatcher)
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 	}
 
-	windowMatcher := windowedMatcher(windowMin.Add(-rule.Batch.Window.Duration), windowMax, windowExtension)
+	windowMatcher := windowedMatcher(rangeMin.Add(-rule.Batch.Window.Duration), rangeMax, windowExtension)
 	windows, err := s.fs.List(ctx, baseURL, windowMatcher)
 
 	batchingEventID := before[0].Name()
@@ -190,6 +190,8 @@ func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Dat
 	return &Datafile{SourceURL: string(data), EventID: name, Created: object.ModTime(), URL: object.URL()}, nil
 }
 
+
+
 func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (bool, error) {
 	halfDuration := window.End.Sub(window.Start) / 2
 	windowMatcher := windowedMatcher(window.Start.Add(-halfDuration), window.End, windowExtension)
@@ -203,6 +205,7 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 	sortedwindows := Objects(windows)
 	sort.Sort(sortedwindows)
 	filtered := make([]storage.Object, 0)
+
 	for i := range sortedwindows {
 		windowEnd, err := windowToTime(sortedwindows[i])
 		if err != nil {
@@ -218,9 +221,20 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 	if filtered[0].URL() == window.URL {
 		return true, nil
 	}
+
+	//in case when more than one window is matched,
+	// double check that this event ID falls into current batch, not previous
+	if batchingEventID, err := s.getBatchingWindowID(ctx, window.EventTime, windows);err == nil {
+		if batchingEventID == window.EventID {
+			return true, nil
+		}
+	}
 	err = s.fs.Delete(ctx, window.URL)
 	return false, err
 }
+
+
+
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) error {
@@ -242,11 +256,6 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 	transferFiles, err := s.fs.List(ctx, parentURL, eventMatcher)
 	if err != nil {
 		return err
-	}
-	if len(transferFiles) == 0 {
-		window.LostOwnership = true
-		err = s.fs.Delete(ctx, window.URL)
-		return nil
 	}
 	window.Datafiles = make([]*Datafile, 0)
 	for i := range transferFiles {
