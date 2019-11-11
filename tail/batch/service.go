@@ -224,7 +224,7 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 
 	//in case when more than one window is matched,
 	// double check that this event ID falls into current batch, not previous
-	if batchingEventID, err := s.getBatchingWindowID(ctx, window.EventTime, windows);err == nil {
+	if batchingEventID, err := s.getBatchingWindowID(ctx, window.Start, windows);err == nil {
 		if batchingEventID == window.EventID {
 			return true, nil
 		}
@@ -249,6 +249,7 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 	if tillWindowEnd > 0 {
 		time.Sleep(tillWindowEnd)
 	}
+
 	//if a file is added as the window end make sure it is visible for this batch collection
 	time.Sleep(closingBatchWaitTime)
 	eventMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
@@ -257,6 +258,8 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 	if err != nil {
 		return err
 	}
+
+
 	window.Datafiles = make([]*Datafile, 0)
 	for i := range transferFiles {
 		if transferFiles[i].ModTime().Before(window.Start) || transferFiles[i].ModTime().After(window.End) {
