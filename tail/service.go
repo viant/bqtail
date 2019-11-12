@@ -155,20 +155,22 @@ func getJobID(job *Job) string {
 	return path.Join(job.Dest(), job.EventID, job.IDSuffix())
 }
 
-func (s *service) submitJob(ctx context.Context, job *Job, route *config.Rule, response *contract.Response) (err error) {
+func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, response *contract.Response) (err error) {
 	if len(job.Load.SourceUris) == 0 {
 		return fmt.Errorf("sourceUris was empty")
 	}
 	var load *bq.LoadRequest
-	if load, err = s.buildLoadRequest(ctx, job, route); err != nil {
+	if load, err = s.buildLoadRequest(ctx, job, rule); err != nil {
 		return err
 	}
-	actions := route.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
+	actions := rule.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
 	actions.JobID = path.Join(job.Dest(), job.EventID, job.IDSuffix())
 
+
 	if err = appendBatchAction(job.Window, actions); err == nil {
-		actions, err = s.addTransientDatasetActions(ctx, load.JobID, job, route, actions)
+		actions, err = s.addTransientDatasetActions(ctx, load.JobID, job, rule, actions)
 	}
+
 	if err != nil {
 		return err
 	}
@@ -285,13 +287,14 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 			return errors.Wrapf(err, "invalid schema.template table name: %v", dest.Schema.Template)
 		}
 		if table, err = s.bq.Table(ctx, templateReference); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to get tempalte table: %v", templateReference)
 		}
 	} else if dest.TransientDataset != "" {
-		if table, err = s.bq.Table(ctx, tableReference); err != nil {
-			return err
-		}
+			if table, err = s.bq.Table(ctx, tableReference); err != nil {
+				return err
+			}
 	}
+
 
 	if table != nil {
 		job.Load.Schema = table.Schema

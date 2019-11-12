@@ -1,6 +1,7 @@
 package bqtail
 
 import (
+	"bqtail/base"
 	"bqtail/dispatch"
 	"bqtail/dispatch/contract"
 	"cloud.google.com/go/functions/metadata"
@@ -13,6 +14,9 @@ import (
 
 //BqDispatch BigQuery trigger background cloud function entry point
 func BqDispatch(ctx context.Context, event interface{}) (err error) {
+	if base.IsLoggingEnabled() {
+		fmt.Printf("startning dispatch: %v\n", event)
+	}
 	meta, err := metadata.FromContext(ctx)
 	if err != nil {
 		return err

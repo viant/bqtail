@@ -84,6 +84,7 @@ func (r *LoadRequest) Init(projectID string) {
 			r.SourceFormat = "NEWLINE_DELIMITED_JSON"
 		}
 	}
+
 	if r.WriteDisposition == "" {
 		if r.Append {
 			r.WriteDisposition = "WRITE_APPEND"

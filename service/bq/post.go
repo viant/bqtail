@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
@@ -14,6 +15,8 @@ import (
 	"path"
 	"time"
 )
+
+var syncCheckTimeout = 3 * time.Second
 
 func (s *service) setJobID(ctx context.Context, actions *task.Actions) (*bigquery.JobReference, error) {
 	var ID string
@@ -53,6 +56,8 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 	}
 	if job == nil {
 		job = callerJob
+	} else {
+		callerJob.Id = job.Id
 	}
 	if onDoneActions != nil && (onDoneActions.IsSyncMode() || err != nil) {
 		if err == nil {
@@ -71,6 +76,12 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 				err = errors.Wrapf(err, "failed to run post action: %v", e)
 			}
 		}
+	} else {
+		job, err = s.waitWithTimeout(ctx, job.JobReference, syncCheckTimeout)
+		if base.IsLoggingEnabled() {
+			fmt.Printf("Job status: %v %v\n", callerJob.Id, err)
+			toolbox.Dump(job)
+		}
 	}
 	return job, err
 }
@@ -88,6 +99,7 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	}
 	if base.IsLoggingEnabled() {
 		toolbox.Dump(job)
+		toolbox.Dump(onDoneActions)
 	}
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Insert(projectID, job)
