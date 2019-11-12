@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/toolbox"
 	"log"
 	"net/http"
 )
@@ -38,6 +39,7 @@ func replayUnprocessed(writer http.ResponseWriter, httpRequest *http.Request) (e
 	}
 	service := replay.Singleton()
 	response := service.Replay(context.Background(), request)
+	toolbox.Dump(response)
 	if err = json.NewEncoder(writer).Encode(response); err != nil {
 		return err
 	}
