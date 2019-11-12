@@ -10,8 +10,9 @@ import (
 	"github.com/viant/toolbox"
 )
 
+
 //BqDispatch BigQuery trigger background cloud function entry point
-func BqDispatchReply(ctx context.Context, event interface{}) (err error) {
+func BqDispatchReplay(ctx context.Context, event interface{}) (err error) {
 	if base.IsLoggingEnabled() {
 		fmt.Printf("startning dispatch replay: %v\n", event)
 	}
