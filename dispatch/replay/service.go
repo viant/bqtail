@@ -71,10 +71,10 @@ func (s *service) replay(ctx context.Context, response *Response) error {
 		return errors.Wrapf(err, "failed to list jobs %v", s.Config().DeferTaskURL)
 	}
 	for i := range candidate {
-		jobID := JobID(s.Config().DeferTaskURL, candidate[i].URL())
-		if base.IsLoggingEnabled() {
-			fmt.Printf("checking %v %v\n", s.Config().DeferTaskURL, candidate[i].URL())
+		if candidate[i].IsDir() {
+			continue
 		}
+		jobID := JobID(s.Config().DeferTaskURL, candidate[i].URL())
 		if jobID == "" {
 			continue
 		}
@@ -82,7 +82,10 @@ func (s *service) replay(ctx context.Context, response *Response) error {
 		if err != nil || job == nil {
 			continue
 		}
-		baseJob := base.Job(*job)
+		if base.IsLoggingEnabled() {
+			fmt.Printf("checking %v %v\n", s.Config().DeferTaskURL, candidate[i].URL())
+		}
+			baseJob := base.Job(*job)
 		resp := s.Service.Dispatch(ctx, &contract.Request{
 			EventID:   fmt.Sprintf("eid%04d", i) + job.JobReference.JobId,
 			JobID:     job.JobReference.JobId,
