@@ -10,6 +10,7 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/option"
+	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
@@ -42,7 +43,10 @@ func (s *service) shallRun(ctx context.Context, jobID string) (*bigquery.Job, er
 	if err != nil {
 		return nil, err
 	}
-	if job.Status.State != base.DoneStatus {
+	if base.IsLoggingEnabled() {
+		toolbox.Dump(job)
+	}
+	if job.Status == nil || job.Status.State != base.DoneStatus {
 		return nil, nil
 	}
 	unixTimestamp := job.Statistics.EndTime / 1000
