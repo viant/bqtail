@@ -1,22 +1,18 @@
 package bqtail
 
 import (
-	"bqtail/base"
 	"bqtail/dispatch"
 	"bqtail/dispatch/replay"
 	"context"
-	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/toolbox"
+	"net/http"
 )
 
 
 //BqDispatch BigQuery trigger background cloud function entry point
-func BqDispatchReplay(ctx context.Context, event interface{}) (err error) {
-	if base.IsLoggingEnabled() {
-		fmt.Printf("startning dispatch replay: %v\n", event)
-	}
-
+func BqDispatchReplay(w http.ResponseWriter, r *http.Request) (err error) {
+	ctx := context.Background()
 	srv, err := dispatch.Singleton(ctx)
 	if err != nil {
 		return  err
