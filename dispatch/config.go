@@ -17,7 +17,8 @@ import (
 type Config struct {
 	base.Config
 	config.Ruleset
-	RoutesBaseURL string
+
+
 }
 
 //Init initialises config

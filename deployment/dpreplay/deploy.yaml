@@ -1,0 +1,64 @@
+
+init:
+  '!gcpCredentials': $params.authWith
+  appPath: /tmp/dpreplay
+  functionName: BqDispatchReplay
+  gcp: ${secrets.$gcpCredentials}
+  serviceAccount: $gcp.ClientEmail
+  prefix: $Replace(${gcp.ProjectID},'-','_')
+  configBucket: ${prefix}_config
+  triggerBucket: viant_dataflow_bqtail
+
+pipeline:
+
+  deploy:
+    checkOut:
+      action: vc/git:checkout
+      Origin:
+        URL: https://github.com/viant/bqtail.git
+      Dest:
+        URL: ${appPath}
+
+    package:
+      action: exec:run
+      target: $target
+      checkError: true
+      commands:
+        - cd ${appPath}
+        - unset GOPATH
+        - export GO111MODULE=on
+        - rm -rf vendor
+        - go mod vendor
+
+    upload:
+      action: gcp/cloudfunctions:deploy
+      credentials: $gcpCredentials
+      public: true
+      '@name': $functionName
+      entryPoint: $functionName
+      runtime: go111
+      availableMemoryMb: 128
+      timeout: 540s
+      serviceAccountEmail: $serviceAccount
+      environmentVariables:
+        LOGGING: 'true'
+        CONFIG: gs://${configBucket}/BqDispatch/config.json
+      source:
+        URL: ${appPath}/
+      sleepTimeMs: 5000
+
+
+  schedule:
+    action: gcp/cloudscheduler:deploy
+    credentials: $gcpCredentials
+    init:
+      body: $Cat('request.json')
+    name: BqDispatchReplay
+    schedule: 0 * * * *
+    body: $body
+    timeZone: GMT
+    httpTarget:
+      headers:
+        User-Agent: Google-Cloud-Scheduler
+      httpMethod: POST
+      uri: https://us-central1-${gcp.ProjectID}.cloudfunctions.net/BqDispatchReplay

@@ -1,3 +1,4 @@
+
 init:
   '!gcpCredentials': $params.authWith
   appPath: /tmp/bqreplay
@@ -68,4 +69,4 @@ pipeline:
       headers:
         User-Agent: Google-Cloud-Scheduler
       httpMethod: POST
-      uri: https://us-central1-${gcp.ProjectID}.cloudfunctions.net/StorageReplay
+      uri: https://us-central1-${gcp.ProjectID}.cloudfunctions.net/BqTailReplay

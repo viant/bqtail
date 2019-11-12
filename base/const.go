@@ -73,4 +73,9 @@ const (
 
 	//MaxRetries
 	MaxRetries = 3
+
+	//DoneStatus done status
+	DoneStatus = "DONE"
+
+
 )

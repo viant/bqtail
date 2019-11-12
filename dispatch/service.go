@@ -22,14 +22,28 @@ import (
 //Service represents event service
 type Service interface {
 	Dispatch(ctx context.Context, request *contract.Request) *contract.Response
+	Config() *Config
+	BQService() bq.Service
 }
 
 type service struct {
 	task.Registry
 	config *Config
-	bq     bq.Service
 	fs     afs.Service
+	bq     bq.Service
 }
+
+//Config returns service config
+func (s *service) Config() *Config {
+	return s.config
+}
+
+
+//BQService returns bq service
+func (s *service) BQService() bq.Service {
+	return s.bq
+}
+
 
 func (s *service) Init(ctx context.Context) error {
 	err := s.config.Init(ctx, s.fs)
@@ -59,6 +73,9 @@ func (s *service) Dispatch(ctx context.Context, request *contract.Request) *cont
 }
 
 func (s *service) initRequest(ctx context.Context, request *contract.Request) error {
+	if request.Job != nil {
+		return nil
+	}
 	job, err := s.bq.GetJob(ctx, request.ProjectID, request.JobID)
 	if err != nil {
 		return err
