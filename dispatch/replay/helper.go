@@ -7,8 +7,11 @@ import (
 
 //JobID returns job ID for supplied URL
 func JobID(baseURL string, URL string) string {
+	if len(baseURL) > len(URL) {
+		return ""
+	}
 	encoded := strings.Trim(string(URL[len(baseURL):]), "/")
-	encoded = string(encoded[:len(encoded)-5])
+	encoded = strings.Replace(encoded, ".json", "", 1)
 	jobID :=  base.EncodePathSeparator(encoded)
 	return jobID
 }
