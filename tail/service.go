@@ -300,6 +300,7 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 		}
 		if table.TimePartitioning != nil {
 			job.Load.TimePartitioning = table.TimePartitioning
+			job.Load.TimePartitioning.RequirePartitionFilter = false
 		}
 		if table.RangePartitioning != nil {
 			job.Load.RangePartitioning = table.RangePartitioning
