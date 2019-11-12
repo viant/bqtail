@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-var gracePeriod = 30 * time.Second
+var gracePeriod = time.Minute
 
 type Service interface {
 	Replay(ctx context.Context) *Response
