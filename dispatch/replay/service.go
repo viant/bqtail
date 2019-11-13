@@ -39,11 +39,6 @@ func (s *service) Replay(ctx context.Context) *Response {
 
 
 func (s *service) shallRun(ctx context.Context, jobID string) (*bigquery.Job, error) {
-
-	if base.IsLoggingEnabled() {
-		fmt.Printf("Project: %v, job: %v\n", s.Config().ProjectID, jobID)
-	}
-
 	job, err := s.BQService().GetJob(ctx, s.Config().ProjectID, jobID)
 	if err != nil {
 		return nil, err
@@ -82,10 +77,7 @@ func (s *service) replay(ctx context.Context, response *Response) error {
 		if err != nil || job == nil {
 			continue
 		}
-		if base.IsLoggingEnabled() {
-			fmt.Printf("checking %v %v\n", s.Config().DeferTaskURL, candidate[i].URL())
-		}
-			baseJob := base.Job(*job)
+		baseJob := base.Job(*job)
 		resp := s.Service.Dispatch(ctx, &contract.Request{
 			EventID:   fmt.Sprintf("eid%04d", i) + job.JobReference.JobId,
 			JobID:     job.JobReference.JobId,
