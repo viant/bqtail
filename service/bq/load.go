@@ -84,6 +84,9 @@ func (r *LoadRequest) Init(projectID string) {
 			r.SourceFormat = "NEWLINE_DELIMITED_JSON"
 		}
 	}
+	if r.SourceFormat == "AVRO" {
+		r.UseAvroLogicalTypes = true
+	}
 
 	if r.WriteDisposition == "" {
 		if r.Append {
