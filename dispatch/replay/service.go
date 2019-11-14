@@ -82,10 +82,12 @@ func (s *service) replay(ctx context.Context, response *Response) error {
 			ProjectID: s.Config().ProjectID,
 			Job:       &baseJob,
 		})
+		toolbox.Dump(resp.Error)
 		response.AddResponse(resp)
 	}
 	return nil
 }
+
 
 //New creates a new service
 func New(srv dispatch.Service, fs afs.Service) Service {

@@ -271,6 +271,7 @@ func (s *service) isDuplicatedEvent(ctx context.Context, now time.Time, window *
 	return scheduleDatafiles[0].EventID == window.EventID, nil
 }
 
+
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) (err error) {
 	closingBatchWaitTime := time.Second
