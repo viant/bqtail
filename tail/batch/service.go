@@ -46,7 +46,7 @@ func (s *service) scheduleURL(created time.Time, request *contract.Request, rule
 	return url.Join(baseURL, request.EventID+transferableExtension), nil
 }
 
-func (s *service) isDuplicate(ctx context.Context, URL string, sourceCreated time.Time, loopbackWindow time.Duration) bool {
+func (s *service) isEventDuplicated(ctx context.Context, URL string, sourceCreated time.Time, loopbackWindow time.Duration) bool {
 	object, err := s.fs.Object(ctx, URL)
 	if err != nil || object == nil {
 		return false
@@ -55,13 +55,14 @@ func (s *service) isDuplicate(ctx context.Context, URL string, sourceCreated tim
 	return duplicateGap < loopbackWindow
 }
 
+
 //Add adds matched transfer event to batch stage
 func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) (added storage.Object, err error) {
 	URL, err := s.scheduleURL(sourceCreated, request, rule)
 	if err != nil {
 		return nil, err
 	}
-	if s.isDuplicate(ctx, URL, sourceCreated, rule.Batch.Window.Duration) {
+	if s.isEventDuplicated(ctx, URL, sourceCreated, rule.Batch.Window.Duration) {
 		return nil, nil
 	}
 	if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err == nil {
@@ -261,7 +262,10 @@ func (s *service) isDuplicatedEvent(ctx context.Context, now time.Time, window *
 			scheduleDatafiles = append(scheduleDatafiles, datafiles[i])
 		}
 	}
-	if len(scheduleDatafiles) == 1 {
+	if len(scheduleDatafiles) == 0 {
+		return true, nil
+	}
+	if len(scheduleDatafiles) <= 1 {
 		return false, nil
 	}
 	return scheduleDatafiles[0].EventID == window.EventID, nil
@@ -283,7 +287,6 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 		window.LostOwnership = true
 		return err
 	}
-
 	if tillWindowEnd > 0 {
 		time.Sleep(tillWindowEnd)
 	}

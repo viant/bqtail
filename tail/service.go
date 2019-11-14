@@ -466,12 +466,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 		Window:        window,
 	}
 	var URIs = make([]string, 0)
-	var unique = map[string]bool{}
 	for i := range window.Datafiles {
-		if unique[window.Datafiles[i].SourceURL] {
-			continue
-		}
-		unique[window.Datafiles[i].SourceURL] = true
 		URIs = append(URIs, window.Datafiles[i].SourceURL)
 	}
 	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), URIs...); err != nil {

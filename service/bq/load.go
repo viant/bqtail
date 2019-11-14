@@ -28,10 +28,27 @@ func (s *service) Load(ctx context.Context, request *LoadRequest) (job *bigquery
 		},
 	}
 	job.JobReference = request.jobReference()
+	job.Configuration.Load.SourceUris = s.getValidURIs(ctx, job.Configuration.Load.SourceUris)
 	if len(job.Configuration.Load.SourceUris) <= maxJobLoadURIs {
 		return s.Post(ctx, request.DestinationTable.ProjectId, job, &request.Actions)
 	}
 	return s.loadInParts(ctx, job, request)
+}
+
+func (s *service) getValidURIs(ctx context.Context, candidates []string) []string {
+	var result = make([]string, 0)
+	var unique = map[string]bool{}
+	for i := range candidates {
+		if unique[candidates[i]] {
+			continue
+		}
+		unique[candidates[i]] = true
+		if exists, _ := s.fs.Exists(ctx, candidates[i]); !exists {
+			continue
+		}
+		result = append(result, candidates[i])
+	}
+	return result
 }
 
 func (s *service) loadInParts(ctx context.Context, job *bigquery.Job, request *LoadRequest) (postJob *bigquery.Job, err error) {
