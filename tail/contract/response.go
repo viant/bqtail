@@ -14,6 +14,7 @@ type Response struct {
 	BatchRunner     bool   `json:",omitempty"`
 	BatchingEventID string `json:",omitempty"`
 	TriggerURL      string
+	ScheduledURL    string      `json:",omitempty"`
 	Window          interface{} `json:",omitempty"`
 }
 

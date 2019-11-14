@@ -427,15 +427,16 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 }
 
 func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) error {
-	added, err := s.batch.Add(ctx, source.ModTime(), request, rule)
+	scheduled, err := s.batch.Add(ctx, source.ModTime(), request, rule)
 	if err != nil {
 		return errors.Wrapf(err, "failed to add event trace file")
 	}
-	if ! added {
+	if scheduled == nil {
 		response.Status = base.StatusDuplicate
 		return nil
 	}
 	response.Batched = true
+	response.ScheduledURL = scheduled.URL()
 	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, rule)
 	if batchWindow == nil || err != nil {
 		if err != nil {

@@ -24,7 +24,7 @@ import (
 
 type Service interface {
 	//Add adds transfer events to batch stage
-	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) (bool, error)
+	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) (storage.Object, error)
 
 	//Try to acquire batch window
 	TryAcquireWindow(ctx context.Context, request *contract.Request, rule *config.Rule) (*BatchedWindow, error)
@@ -57,18 +57,18 @@ func (s *service) isDuplicate(ctx context.Context, URL string, sourceCreated tim
 }
 
 //Add adds matched transfer event to batch stage
-func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) (added bool, err error) {
+func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) (added storage.Object, err error) {
 	URL, err := s.scheduleURL(sourceCreated, request, rule)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	if s.isDuplicate(ctx, URL, sourceCreated, rule.Batch.Window.Duration) {
-		return false, nil
+		return nil, nil
 	}
 	for i := 0; i < base.MaxRetries; i++ {
 		if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err == nil {
-			if ok, _ := s.fs.Exists(ctx, URL); ok {
-				return true, nil
+			if object, _ := s.fs.Object(ctx, URL); object != nil {
+				return object, nil
 			}
 		}
 		time.Sleep(time.Second * base.MaxRetries)
@@ -76,7 +76,7 @@ func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *con
 	if err == nil {
 		err = errors.Errorf("failed to check URL: %v", URL)
 	}
-	return false, err
+	return nil, err
 }
 
 func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) error {
@@ -92,6 +92,7 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	return err
 }
 
+
 func (s *service) getSchedule(ctx context.Context, created time.Time, request *contract.Request, rule *config.Rule) (storage.Object, error) {
 	URL, err := s.scheduleURL(created, request, rule)
 	if err != nil {
@@ -99,6 +100,7 @@ func (s *service) getSchedule(ctx context.Context, created time.Time, request *c
 	}
 	return s.fs.Object(ctx, URL)
 }
+
 
 func (s *service) getWindow(ctx context.Context, URL string) (*Window, error) {
 	reader, err := s.fs.DownloadWithURL(ctx, URL)
