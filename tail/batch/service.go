@@ -1,6 +1,7 @@
 package batch
 
 import (
+	"bqtail/base"
 	"bqtail/tail/config"
 	"bqtail/tail/contract"
 	"bytes"
@@ -23,7 +24,7 @@ import (
 
 type Service interface {
 	//Add adds transfer events to batch stage
-	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) error
+	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) (bool, error)
 
 	//Try to acquire batch window
 	TryAcquireWindow(ctx context.Context, request *contract.Request, rule *config.Rule) (*BatchedWindow, error)
@@ -56,18 +57,26 @@ func (s *service) isDuplicate(ctx context.Context, URL string, sourceCreated tim
 }
 
 //Add adds matched transfer event to batch stage
-func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) error {
+func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) (added bool, err error) {
 	URL, err := s.scheduleURL(sourceCreated, request, rule)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if s.isDuplicate(ctx, URL, sourceCreated, rule.Batch.Window.Duration) {
-		return nil
+		return false, nil
 	}
-	if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err != nil {
-		return err
+	for i := 0; i < base.MaxRetries; i++ {
+		if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err == nil {
+			if ok, _ := s.fs.Exists(ctx, URL); ok {
+				return true, nil
+			}
+		}
+		time.Sleep(time.Second * base.MaxRetries)
 	}
-	return nil
+	if err == nil {
+		err = errors.Errorf("failed to check URL: %v", URL)
+	}
+	return false, err
 }
 
 func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) error {
@@ -138,7 +147,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 	eventSchedule, err := s.getSchedule(ctx, source.ModTime(), request, rule)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to get schedule")
 	}
 	baseURL := url.Join(s.URL, path.Join(dest))
 	rangeMin := eventSchedule.ModTime().Add(-(rule.Batch.Window.Duration + 1))
@@ -241,7 +250,6 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 	return false, err
 }
 
-
 func (s *service) isDuplicatedEvent(ctx context.Context, now time.Time, window *Window, rule *config.Rule) (bool, error) {
 	datafiles, err := s.getWindowDatafiles(ctx, now, window, rule)
 	if err != nil {
@@ -258,7 +266,6 @@ func (s *service) isDuplicatedEvent(ctx context.Context, now time.Time, window *
 	}
 	return scheduleDatafiles[0].EventID == window.EventID, nil
 }
-
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) (err error) {

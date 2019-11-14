@@ -8,6 +8,9 @@ const (
 	//StatusNotFound status not found
 	StatusNotFound = "notFound"
 
+	//StatusDuplicate status duplicate
+	StatusDuplicate = "duplicate"
+
 	//StatusError response status
 	StatusError = "error"
 
@@ -73,6 +76,9 @@ const (
 
 	//MaxRetries
 	MaxRetries = 3
+
+	//RetrySleepInSec
+	RetrySleepInSec = 3
 
 	//DoneStatus done status
 	DoneStatus = "DONE"
