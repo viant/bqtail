@@ -7,7 +7,7 @@ import (
 )
 
 const backendError = "backendError"
-
+const internalError = "internal error"
 //IsRetryError returns true if backend error
 func IsRetryError(err error) bool {
 	if err == nil {
@@ -19,7 +19,7 @@ func IsRetryError(err error) bool {
 		}
 	}
 	message := err.Error()
-	return strings.Contains(message, backendError)
+	return strings.Contains(message, backendError) || strings.Contains(message, internalError)
 }
 
 //IsDuplicateJobError returns true if duplicate job error

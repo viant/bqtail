@@ -4,7 +4,7 @@
       "Prefix": "/data/case013",
       "Suffix": ".json"
     },
-    "Async": true,
+    "Async": false,
     "Dest": {
       "Table": "bqtail.dummy",
       "TransientDataset": "temp",

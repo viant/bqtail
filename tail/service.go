@@ -172,7 +172,9 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 		return err
 	}
 	if rule.Dest.HasSplit() {
-		s.updateTempTableScheme(ctx, load.JobConfigurationLoad, rule)
+		if err = s.updateTempTableScheme(ctx, load.JobConfigurationLoad, rule); err != nil {
+			return errors.Wrapf(err, "failed to upload load schema")
+		}
 	}
 	load.Actions = *actions
 	defer func() {
@@ -213,8 +215,8 @@ func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 	return nil
 }
 
-func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID string, job *Job, route *config.Rule, actions *task.Actions) (*task.Actions, error) {
-	if route.Dest.TransientDataset == "" {
+func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID string, job *Job, rule *config.Rule, actions *task.Actions) (*task.Actions, error) {
+	if rule.Dest.TransientDataset == "" {
 		return actions, nil
 	}
 	var result = task.NewActions(actions.Async, actions.DeferTaskURL, parentJobID, nil, nil)
@@ -232,19 +234,19 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		return nil, err
 	}
 	actions.AddOnSuccess(dropAction)
-	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns, route.Dest.Transform)
-	if route.Dest.HasSplit() {
-		return result, s.addSplitActions(ctx, selectAll, parentJobID, job, route, result, actions)
+	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, rule.Dest.UniqueColumns, rule.Dest.Transform)
+	if rule.Dest.HasSplit() {
+		return result, s.addSplitActions(ctx, selectAll, parentJobID, job, rule, result, actions)
 	}
 
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
-	destTable, _ := route.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
+	destTable, _ := rule.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
 
 	partition := base.TablePartition(destTable.TableId)
 
-	if len(route.Dest.UniqueColumns) > 0 || partition != "" {
+	if len(rule.Dest.UniqueColumns) > 0 || partition != "" {
 		query := bq.NewQueryRequest(selectAll, destTable, actions)
-		query.Append = route.IsAppend()
+		query.Append = rule.IsAppend()
 		queryAction, err := task.NewAction("query", query)
 		if err != nil {
 			return nil, err
@@ -254,7 +256,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		source := base.EncodeTableReference(job.Load.DestinationTable)
 		dest := base.EncodeTableReference(destTable)
 		copyRequest := bq.NewCopyRequest(source, dest, actions)
-		copyRequest.Append = route.IsAppend()
+		copyRequest.Append = rule.IsAppend()
 		copyAction, err := task.NewAction("copy", copyRequest)
 		if err != nil {
 			return nil, err
@@ -265,6 +267,14 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 }
 
 func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.TableFieldSchema {
+	if index := strings.Index(column, "."); index != -1 {
+		parent := string(column[:index])
+		for i := range fields {
+			if parent == strings.ToLower(fields[i].Name) {
+				return getColumn(fields[i].Fields, column[index+1:])
+			}
+		}
+	}
 	for i := range fields {
 		if column == strings.ToLower(fields[i].Name) {
 			return fields[i]
@@ -273,10 +283,10 @@ func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.Tab
 	return nil
 }
 
-func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobConfigurationLoad, route *config.Rule) {
-	split := route.Dest.Schema.Split
-	if split.TimeColumn == "" || job.Schema == nil {
-		return
+func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobConfigurationLoad, rule *config.Rule) error {
+	split := rule.Dest.Schema.Split
+	if job.Schema == nil {
+		return nil
 	}
 	if len(split.ClusterColumns) > 0 {
 		if split.TimeColumn == "" {
@@ -294,24 +304,62 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 			Type:  "DAY",
 		}
 
+		var clusterdColumn = make([]string, 0)
+		for i, name := range split.ClusterColumns {
+			if strings.Contains(split.ClusterColumns[i], ".") {
+				column := getColumn(job.Schema.Fields, split.ClusterColumns[i]);
+				if column == nil {
+					return errors.Errorf("failed to lookup cluster column: ", name)
+				}
+				job.Schema.Fields = append(job.Schema.Fields, column)
+				clusterdColumn = append(clusterdColumn, column.Name)
+				continue
+			}
+			clusterdColumn = append(clusterdColumn, split.ClusterColumns[i])
+		}
+
 		job.Clustering = &bigquery.Clustering{
-			Fields: split.ClusterColumns,
+			Fields: clusterdColumn,
 		}
 	}
+	return nil
 }
 
-func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJobID string, job *Job, route *config.Rule, result, onDone *task.Actions) error {
-	split := route.Dest.Schema.Split
+func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJobID string, job *Job, rule *config.Rule, result, onDone *task.Actions) error {
+	split := rule.Dest.Schema.Split
+
+	if len(split.ClusterColumns) > 0 {
+		setColumns := []string{}
+		for i, column := range split.ClusterColumns {
+			if index := strings.LastIndex(split.ClusterColumns[i], "."); index != -1 {
+				setColumns = append(setColumns, fmt.Sprintf("%v = %v ", string(column[index+1:]), column))
+			}
+		}
+		if len(setColumns) > 0 {
+			refTable := job.Load.DestinationTable
+			destTable := fmt.Sprintf("`%v.%v.%v`", refTable.ProjectId, refTable.DatasetId, refTable.TableId)
+			DML := fmt.Sprintf("UPDATE %v SET %v WHERE 1=1", destTable, strings.Join(setColumns, ","))
+
+			query := bq.NewQueryRequest(DML, nil, nil)
+			query.Append = rule.IsAppend()
+			queryAction, err := task.NewAction("query", query)
+			if err != nil {
+				return err
+			}
+			result.AddOnSuccess(queryAction)
+		}
+	}
+
 	for i := range split.Mapping {
-		var actions *task.Actions
-		if i ==  len(split.Mapping) -1 {
-			actions = onDone
+		next := task.NewActions(rule.Async, result.DeferTaskURL, result.JobID, nil, nil)
+		if i == len(split.Mapping)-1 {
+			next = onDone
 		}
 		mapping := split.Mapping[i]
-		destTable, _ := route.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
+		destTable, _ := rule.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
 		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
-		query := bq.NewQueryRequest(dest, destTable, actions)
-		query.Append = route.IsAppend()
+		query := bq.NewQueryRequest(dest, destTable, next)
+		query.Append = rule.IsAppend()
 		queryAction, err := task.NewAction("query", query)
 		if err != nil {
 			return err
@@ -321,21 +369,21 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 	return nil
 }
 
-func (s *service) tailIndividually(ctx context.Context, source store.Object, route *config.Rule, request *contract.Request, response *contract.Response) error {
+func (s *service) tailIndividually(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) error {
 	object, err := s.fs.Object(ctx, request.SourceURL)
 	if err != nil {
 		return errors.Wrapf(err, "event source not found:%v", request.SourceURL)
 	}
 	job := &Job{
-		Rule:          route,
+		Rule:          rule,
 		Status:        base.StatusOK,
 		EventID:       request.EventID,
 		SourceCreated: object.ModTime(),
 	}
-	if job.Load, err = route.Dest.NewJobConfigurationLoad(time.Now(), request.SourceURL); err != nil {
+	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), request.SourceURL); err != nil {
 		return err
 	}
-	return s.submitJob(ctx, job, route, response)
+	return s.submitJob(ctx, job, rule, response)
 }
 
 func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destination, tableReference *bigquery.TableReference, job *Job) error {
@@ -378,13 +426,13 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 	return nil
 }
 
-func (s *service) tailInBatch(ctx context.Context, source store.Object, route *config.Rule, request *contract.Request, response *contract.Response) error {
-	err := s.batch.Add(ctx, source.ModTime(), request, route)
+func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) error {
+	err := s.batch.Add(ctx, source.ModTime(), request, rule)
 	if err != nil {
 		return err
 	}
 	response.Batched = true
-	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, route)
+	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, rule)
 	if batchWindow == nil {
 		return err
 	}
@@ -396,14 +444,14 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	window := batchWindow.Window
 	response.Window = window
 	response.BatchRunner = true
-	if err = s.batch.MatchWindowData(ctx, time.Now(), window, route); err != nil {
+	if err = s.batch.MatchWindowData(ctx, time.Now(), window, rule); err != nil {
 		return err
 	}
 	if window.LostOwnership {
 		return nil
 	}
 	job := &Job{
-		Rule:          route,
+		Rule:          rule,
 		Status:        base.StatusOK,
 		EventID:       request.EventID,
 		SourceCreated: source.ModTime(),
@@ -413,11 +461,11 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, route *c
 	for i := range window.Datafiles {
 		URIs = append(URIs, window.Datafiles[i].SourceURL)
 	}
-	if job.Load, err = route.Dest.NewJobConfigurationLoad(time.Now(), URIs...); err != nil {
+	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), URIs...); err != nil {
 		return err
 	}
 
-	return s.submitJob(ctx, job, route, response)
+	return s.submitJob(ctx, job, rule, response)
 }
 
 //New creates a new service
