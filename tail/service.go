@@ -430,13 +430,12 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 	err := s.batch.Add(ctx, source.ModTime(), request, rule)
 	if err != nil {
 		if err = s.batch.Add(ctx, source.ModTime(), request, rule); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to add event trace file")
 		}
-		err = errors.Wrapf(err, "failed to add event trace file")
 	}
 	response.Batched = true
 	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, rule)
-	if batchWindow == nil {
+	if batchWindow == nil || err != nil {
 		if err != nil {
 			err = errors.Wrapf(err, "failed to acquire batch window")
 		}
@@ -464,7 +463,12 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 		Window:        window,
 	}
 	var URIs = make([]string, 0)
+	var unique = map[string]bool{}
 	for i := range window.Datafiles {
+		if unique[window.Datafiles[i].SourceURL] {
+			continue
+		}
+		unique[window.Datafiles[i].SourceURL] = true
 		URIs = append(URIs, window.Datafiles[i].SourceURL)
 	}
 	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), URIs...); err != nil {
