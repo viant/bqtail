@@ -432,23 +432,26 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 		if err = s.batch.Add(ctx, source.ModTime(), request, rule); err != nil {
 			return err
 		}
-		err = errors.Wrapf(err, "failed to event evnent trace file")
+		err = errors.Wrapf(err, "failed to add event trace file")
 	}
 	response.Batched = true
 	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, rule)
 	if batchWindow == nil {
+		if err != nil {
+			err = errors.Wrapf(err, "failed to acquire batch window")
+		}
 		return err
 	}
 
 	response.BatchingEventID = batchWindow.BatchingEventID
 	if batchWindow.Window == nil {
-		return err
+		return nil
 	}
 	window := batchWindow.Window
 	response.Window = window
 	response.BatchRunner = true
 	if err = s.batch.MatchWindowData(ctx, time.Now(), window, rule); err != nil {
-		return err
+		return errors.Wrapf(err, "failed to match window data")
 	}
 	if window.LostOwnership {
 		return nil

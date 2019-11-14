@@ -19,7 +19,7 @@ func BqDispatch(ctx context.Context, event interface{}) (err error) {
 	}
 	request := newRequest(meta)
 	_, err = handleDispatchEvent(ctx, request)
-	return nil	
+	return nil
 }
 
 func newRequest(meta *metadata.Metadata) *contract.Request {
