@@ -154,7 +154,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 	sortedTransfers := Objects(transfers)
 	sort.Sort(sortedTransfers)
-	window := NewWindow(baseURL, request, eventSchedule.ModTime(), rule, source.ModTime())
+	window := NewWindow(baseURL, request, eventSchedule.ModTime(), rule, source.ModTime(), eventSchedule.URL())
 	before := sortedTransfers.Before(eventSchedule)
 	if len(before) == 0 {
 		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
@@ -188,6 +188,16 @@ func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Dat
 	_, name := url.Split(object.URL(), file.Scheme)
 	name = string(name[:len(name)-4])
 	return &Datafile{SourceURL: string(data), EventID: name, Created: object.ModTime(), URL: object.URL()}, nil
+}
+
+func (s *service) loadDatafileWithURL(ctx context.Context, URL string) (*Datafile, error) {
+	reader, err := s.fs.DownloadWithURL(ctx, URL)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = reader.Close() }()
+	result := &Datafile{}
+	return result, json.NewDecoder(reader).Decode(result)
 }
 
 func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (bool, error) {
@@ -231,41 +241,72 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 	return false, err
 }
 
+
+func (s *service) isDuplicatedEvent(ctx context.Context, now time.Time, window *Window, rule *config.Rule) (bool, error) {
+	datafiles, err := s.getWindowDatafiles(ctx, now, window, rule)
+	if err != nil {
+		return false, err
+	}
+	var scheduleDatafiles = make([]*Datafile, 0)
+	for i, datafile := range datafiles {
+		if datafile.URL == window.ScheduleURL {
+			scheduleDatafiles = append(scheduleDatafiles, datafiles[i])
+		}
+	}
+	return scheduleDatafiles[0].EventID != window.EventID, nil
+}
+
+
 //MatchWindowData matches window data, it waits for window to ends if needed
-func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) error {
+func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) (err error) {
 	closingBatchWaitTime := time.Second
 	tillWindowEnd := window.End.Sub(now)
 	time.Sleep(closingBatchWaitTime)
 	closingBatchWaitTime -= closingBatchWaitTime
+
 	if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
 		window.LostOwnership = true
 		return err
 	}
+	duplicate, err := s.isDuplicatedEvent(ctx, now, window, rule)
+	if err != nil || duplicate {
+		window.LostOwnership = true
+		return err
+	}
+
 	if tillWindowEnd > 0 {
 		time.Sleep(tillWindowEnd)
 	}
-
 	//if a file is added as the window end make sure it is visible for this batch collection
 	time.Sleep(closingBatchWaitTime)
+	window.Datafiles = make([]*Datafile, 0)
+
+	window.Datafiles, err = s.getWindowDatafiles(ctx, now, window, rule)
+	return err
+}
+
+func (s *service) getWindowDatafiles(ctx context.Context, now time.Time, window *Window, rule *config.Rule) ([]*Datafile, error) {
+	var result = make([]*Datafile, 0)
 	eventMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
 	parentURL, _ := url.Split(window.URL, file.Scheme)
 	transferFiles, err := s.fs.List(ctx, parentURL, eventMatcher)
 	if err != nil {
-		return err
+		return result, err
 	}
-
-	window.Datafiles = make([]*Datafile, 0)
-	for i := range transferFiles {
+	sortedTransfers := Objects(transferFiles)
+	sort.Sort(sortedTransfers)
+	result = make([]*Datafile, 0)
+	for i := range sortedTransfers {
 		if transferFiles[i].ModTime().Before(window.Start) || transferFiles[i].ModTime().After(window.End) {
 			continue
 		}
 		datafile, err := s.loadDatafile(ctx, transferFiles[i])
 		if err != nil {
-			return err
+			return result, err
 		}
-		window.Datafiles = append(window.Datafiles, datafile)
+		result = append(result, datafile)
 	}
-	return nil
+	return result, err
 }
 
 func windowToTime(window storage.Object) (*time.Time, error) {

@@ -29,10 +29,16 @@ pipeline:
 
   trigger:
     action: storage:copy
-    sleepTimeMs: 10000
+    sleepTimeMs: 30000
     source:
       URL: ${parent.path}/data/trigger/dummy.json
     dest:
       URL: gs://${triggerBucket}/data/case013/dummy.json
       credentials: $gcpCredentials
 
+  validate:
+    check-db:
+      bqtail:
+        action: dsunit:expect
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/expect

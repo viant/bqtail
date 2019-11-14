@@ -234,7 +234,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 	actions.AddOnSuccess(dropAction)
 	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns, route.Dest.Transform)
 	if route.Dest.HasSplit() {
-		return result, s.addSplitActions(ctx, selectAll, parentJobID, job, route, result)
+		return result, s.addSplitActions(ctx, selectAll, parentJobID, job, route, result, actions)
 	}
 
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
@@ -300,9 +300,14 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 	}
 }
 
-func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJobID string, job *Job, route *config.Rule, actions *task.Actions) error {
+func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJobID string, job *Job, route *config.Rule, result, onDone *task.Actions) error {
 	split := route.Dest.Schema.Split
-	for _, mapping := range split.Mapping {
+	for i := range split.Mapping {
+		var actions *task.Actions
+		if i ==  len(split.Mapping) -1 {
+			actions = onDone
+		}
+		mapping := split.Mapping[i]
 		destTable, _ := route.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
 		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
 		query := bq.NewQueryRequest(dest, destTable, actions)
@@ -311,7 +316,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 		if err != nil {
 			return err
 		}
-		actions.AddOnSuccess(queryAction)
+		result.AddOnSuccess(queryAction)
 	}
 	return nil
 }

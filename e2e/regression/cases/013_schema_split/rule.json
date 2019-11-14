@@ -4,13 +4,15 @@
       "Prefix": "/data/case013",
       "Suffix": ".json"
     },
+    "Async": true,
     "Dest": {
       "Table": "bqtail.dummy",
       "TransientDataset": "temp",
       "Schema": {
+        "Template": "bqtail.dummy",
         "Split": {
           "ClusterColumns": [
-            "id"
+            "id", "info.key"
           ],
           "Mapping": [
             {
@@ -25,6 +27,11 @@
         }
       }
     },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ],
     "OnFailure": [
       {
         "Action": "notify",
