@@ -253,7 +253,10 @@ func (s *service) isDuplicatedEvent(ctx context.Context, now time.Time, window *
 			scheduleDatafiles = append(scheduleDatafiles, datafiles[i])
 		}
 	}
-	return scheduleDatafiles[0].EventID != window.EventID, nil
+	if len(scheduleDatafiles) == 1 {
+		return false, nil
+	}
+	return scheduleDatafiles[0].EventID == window.EventID, nil
 }
 
 
@@ -277,6 +280,12 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 	if tillWindowEnd > 0 {
 		time.Sleep(tillWindowEnd)
 	}
+	duplicate, err = s.isDuplicatedEvent(ctx, now, window, rule)
+	if err != nil || duplicate {
+		window.LostOwnership = true
+		return err
+	}
+
 	//if a file is added as the window end make sure it is visible for this batch collection
 	time.Sleep(closingBatchWaitTime)
 	window.Datafiles = make([]*Datafile, 0)
