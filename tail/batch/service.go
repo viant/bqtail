@@ -175,8 +175,8 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 
 	batchingEventID := before[0].Name()
 	if len(windows) == 0 {
-		//can not acquire batch when no active window, and has some earlier transfer
-		return &BatchedWindow{BatchingEventID: batchingEventID}, nil
+		//try acquire one
+		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 	}
 	batchingEventID, err = s.getBatchingWindowID(ctx, eventSchedule.ModTime(), windows)
 	if err != nil || batchingEventID != "" {
