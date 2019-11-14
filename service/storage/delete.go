@@ -18,10 +18,10 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 			continue
 		}
 		processed[request.URLs[i]] = true
-		if ok, _ := s.fs.Exists(ctx, request.URLs[i]); !ok {
-			continue
-		}
 		if e := s.fs.Delete(ctx, request.URLs[i]); e != nil {
+			if ok, _ := s.fs.Exists(ctx, request.URLs[i]); !ok {
+				continue
+			}
 			err = e
 		}
 	}
