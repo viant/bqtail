@@ -429,7 +429,10 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) error {
 	err := s.batch.Add(ctx, source.ModTime(), request, rule)
 	if err != nil {
-		return err
+		if err = s.batch.Add(ctx, source.ModTime(), request, rule); err != nil {
+			return err
+		}
+		err = errors.Wrapf(err, "failed to event evnent trace file")
 	}
 	response.Batched = true
 	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, rule)

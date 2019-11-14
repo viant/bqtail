@@ -23,7 +23,7 @@ func BqTail(ctx context.Context, event contract.GSEvent) (err error) {
 	}
 	_, err = handleTailEvent(ctx, request)
 	if err != nil {
-		return err
+		return nil
 	}
 	return nil
 }
