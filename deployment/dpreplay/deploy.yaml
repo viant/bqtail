@@ -48,17 +48,17 @@ pipeline:
       sleepTimeMs: 5000
 
 
-  schedule:
-    action: gcp/cloudscheduler:deploy
-    credentials: $gcpCredentials
-    init:
-      body: $Cat('request.json')
-    name: BqDispatchReplay
-    schedule: 0 * * * *
-    body: $body
-    timeZone: GMT
-    httpTarget:
-      headers:
-        User-Agent: Google-Cloud-Scheduler
-      httpMethod: POST
-      uri: https://us-central1-${gcp.ProjectID}.cloudfunctions.net/BqDispatchReplay
+#  schedule:
+#    action: gcp/cloudscheduler:deploy
+#    credentials: $gcpCredentials
+#    init:
+#      body: $Cat('request.json')
+#    name: BqDispatchReplay
+#    schedule: 0 * * * *
+#    body: $body
+#    timeZone: GMT
+#    httpTarget:
+#      headers:
+#        User-Agent: Google-Cloud-Scheduler
+#      httpMethod: POST
+#      uri: https://us-central1-${gcp.ProjectID}.cloudfunctions.net/BqDispatchReplay

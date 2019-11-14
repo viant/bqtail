@@ -15,7 +15,7 @@ type Response struct {
 
 func (r *Response) AddResponse(response *contract.Response) {
 	r.Jobs  = append(r.Jobs, response)
-	if response.Error != "" {
+	if response.Error != "" || response.JobError != "" {
 		r.Errored = append(r.Errored, response.EventID)
 		return
 	}
