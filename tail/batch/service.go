@@ -88,7 +88,6 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	return err
 }
 
-
 func (s *service) getSchedule(ctx context.Context, created time.Time, request *contract.Request, rule *config.Rule) (storage.Object, error) {
 	URL := request.ScheduleURL
 	var err error
@@ -100,7 +99,6 @@ func (s *service) getSchedule(ctx context.Context, created time.Time, request *c
 	}
 	return s.fs.Object(ctx, URL)
 }
-
 
 func (s *service) getWindow(ctx context.Context, URL string) (*Window, error) {
 	reader, err := s.fs.DownloadWithURL(ctx, URL)
@@ -248,8 +246,8 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 			return true, nil
 		}
 	}
-	err = s.fs.Delete(ctx, window.URL)
-	return false, err
+	_ = s.fs.Delete(ctx, window.URL)
+	return false, nil
 }
 
 func (s *service) isDuplicatedEvent(ctx context.Context, now time.Time, window *Window, rule *config.Rule) (bool, error) {

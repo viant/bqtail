@@ -12,7 +12,12 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 	if err != nil {
 		return err
 	}
+	processed := map[string]bool{}
 	for i := range request.URLs {
+		if processed[request.URLs[i]] {
+			continue
+		}
+		processed[request.URLs[i]] = true
 		if ok, _ := s.fs.Exists(ctx, request.URLs[i]); !ok {
 			continue
 		}
@@ -22,6 +27,7 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 	}
 	return err
 }
+
 
 //DeleteRequest delete request
 type DeleteRequest struct {
