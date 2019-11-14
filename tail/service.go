@@ -437,6 +437,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 	}
 	response.Batched = true
 	response.ScheduledURL = scheduled.URL()
+	request.ScheduleURL = scheduled.URL()
 	batchWindow, err := s.batch.TryAcquireWindow(ctx, request, rule)
 	if batchWindow == nil || err != nil {
 		if err != nil {

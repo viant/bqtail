@@ -1,7 +1,6 @@
 package batch
 
 import (
-	"bqtail/base"
 	"bqtail/tail/config"
 	"bqtail/tail/contract"
 	"bytes"
@@ -65,13 +64,10 @@ func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *con
 	if s.isDuplicate(ctx, URL, sourceCreated, rule.Batch.Window.Duration) {
 		return nil, nil
 	}
-	for i := 0; i < base.MaxRetries; i++ {
-		if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err == nil {
-			if object, _ := s.fs.Object(ctx, URL); object != nil {
-				return object, nil
-			}
+	if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err == nil {
+		if object, _ := s.fs.Object(ctx, URL); object != nil {
+			return object, nil
 		}
-		time.Sleep(time.Second * base.MaxRetries)
 	}
 	if err == nil {
 		err = errors.Errorf("failed to check URL: %v", URL)
@@ -94,9 +90,13 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 
 
 func (s *service) getSchedule(ctx context.Context, created time.Time, request *contract.Request, rule *config.Rule) (storage.Object, error) {
-	URL, err := s.scheduleURL(created, request, rule)
-	if err != nil {
-		return nil, err
+	URL := request.ScheduleURL
+	var err error
+	if URL == "" {
+		URL, err = s.scheduleURL(created, request, rule)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return s.fs.Object(ctx, URL)
 }
@@ -165,7 +165,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	}
 	sortedTransfers := Objects(transfers)
 	sort.Sort(sortedTransfers)
-	window := NewWindow(baseURL, request, eventSchedule.ModTime(), rule, source.ModTime(), eventSchedule.URL())
+	window := NewWindow(baseURL, request, eventSchedule.ModTime(), rule, eventSchedule.ModTime(), eventSchedule.URL())
 	before := sortedTransfers.Before(eventSchedule)
 	if len(before) == 0 {
 		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)

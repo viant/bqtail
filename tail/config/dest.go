@@ -73,7 +73,7 @@ func (d *Destination) ExpandTable(table string, created time.Time, source string
 func (d *Destination) Expand(dest string, created time.Time, source string) (string, error) {
 	var err error
 	if count := strings.Count(dest, ModExpr); count > 0 {
-		if dest, err = expandMod(dest, created, count); err != nil {
+		if dest, err = expandMod(dest, source, count); err != nil {
 			return dest, err
 		}
 	}
@@ -121,7 +121,11 @@ func (d *Destination) CustomTableReference(table string, created time.Time, sour
 	return reference, nil
 }
 
-func expandMod(table string, created time.Time, count int) (string, error) {
+
+
+
+
+func expandMod(table string, source string, count int) (string, error) {
 	for i := 0; i < count; i++ {
 		index := strings.Index(table, ModExpr)
 		expression := string(table[index:])
@@ -135,7 +139,7 @@ func expandMod(table string, created time.Time, count int) (string, error) {
 		if err != nil {
 			return table, errors.Wrapf(err, "invalid mod value: %v, in %v", modValue, expression)
 		}
-		value := created.Unix() % modValue
+		value := base.Hash(source) % int(modValue)
 		table = strings.Replace(table, expression, fmt.Sprintf("%v", value), 1)
 	}
 	return table, nil
