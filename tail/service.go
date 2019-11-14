@@ -22,6 +22,7 @@ import (
 	"github.com/viant/afs/url"
 	"google.golang.org/api/bigquery/v2"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -88,7 +89,6 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 		response.Status = base.StatusNoMatch
 		return nil
 	}
-
 	if exists, err := s.fs.Exists(ctx, request.SourceURL); !exists {
 		if err != nil {
 			response.NotFoundError = err.Error()
@@ -165,14 +165,14 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	}
 	actions := rule.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
 	actions.JobID = path.Join(job.Dest(), job.EventID, job.IDSuffix())
-
-
 	if err = appendBatchAction(job.Window, actions); err == nil {
 		actions, err = s.addTransientDatasetActions(ctx, load.JobID, job, rule, actions)
 	}
-
 	if err != nil {
 		return err
+	}
+	if rule.Dest.HasSplit() {
+		s.updateTempTableScheme(ctx, load.JobConfigurationLoad, rule)
 	}
 	load.Actions = *actions
 	defer func() {
@@ -232,9 +232,20 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		return nil, err
 	}
 	actions.AddOnSuccess(dropAction)
+	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns, route.Dest.Transform)
+	if route.Dest.HasSplit() {
+		return result, s.addSplitActions(ctx, selectAll, parentJobID, job, route, result)
+	}
+
+	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
 	destTable, _ := route.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
-	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, route.Dest.UniqueColumns)
+
+
+
+
 	partition := base.TablePartition(destTable.TableId)
+
+
 	if len(route.Dest.UniqueColumns) > 0 || partition != "" {
 		query := bq.NewQueryRequest(selectAll, destTable, actions)
 		query.Append = route.IsAppend()
@@ -255,6 +266,59 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		result.AddOnSuccess(copyAction)
 	}
 	return result, nil
+}
+
+func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.TableFieldSchema {
+	for i := range fields {
+		if column == strings.ToLower(fields[i].Name) {
+			return fields[i]
+		}
+	}
+	return nil
+}
+
+func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobConfigurationLoad, route *config.Rule) {
+	split := route.Dest.Schema.Split
+	if split.TimeColumn == "" || job.Schema == nil {
+		return
+	}
+	if len(split.ClusterColumns) > 0 {
+		if split.TimeColumn == "" {
+			split.TimeColumn = "ts"
+		}
+		field := getColumn(job.Schema.Fields, split.TimeColumn)
+		if field == nil {
+			job.Schema.Fields = append(job.Schema.Fields, &bigquery.TableFieldSchema{
+				Name:split.TimeColumn,
+				Type:"TIMESTAMP",
+			})
+		}
+		job.TimePartitioning = &bigquery.TimePartitioning{
+			Field: split.TimeColumn,
+			Type:  "DAY",
+		}
+
+		job.Clustering = &bigquery.Clustering{
+			Fields: split.ClusterColumns,
+		}
+	}
+}
+
+
+func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJobID string, job *Job, route *config.Rule, actions *task.Actions) error {
+	split := route.Dest.Schema.Split
+	for _, mapping := range split.Mapping {
+		destTable, _ := route.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
+		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When + " ", 1)
+		query := bq.NewQueryRequest(dest, destTable, actions)
+		query.Append = route.IsAppend()
+		queryAction, err := task.NewAction("query", query)
+		if err != nil {
+			return err
+		}
+		actions.AddOnSuccess(queryAction)
+	}
+	return nil
 }
 
 func (s *service) tailIndividually(ctx context.Context, source store.Object, route *config.Rule, request *contract.Request, response *contract.Response) error {
@@ -290,11 +354,10 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 			return errors.Wrapf(err, "failed to get tempalte table: %v", templateReference)
 		}
 	} else if dest.TransientDataset != "" {
-			if table, err = s.bq.Table(ctx, tableReference); err != nil {
-				return err
-			}
+		if table, err = s.bq.Table(ctx, tableReference); err != nil {
+			return err
+		}
 	}
-
 
 	if table != nil {
 		job.Load.Schema = table.Schema

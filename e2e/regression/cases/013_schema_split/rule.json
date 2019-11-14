@@ -1,0 +1,41 @@
+[
+  {
+    "When": {
+      "Prefix": "/data/case013",
+      "Suffix": ".json"
+    },
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "Schema": {
+        "Split": {
+          "ClusterColumns": [
+            "id"
+          ],
+          "Mapping": [
+            {
+              "When": "MOD(id, 2) = 0",
+              "Then": "bqtail.dummy_0"
+            },
+            {
+              "When": "MOD(id, 2) = 1",
+              "Then": "bqtail.dummy_1"
+            }
+          ]
+        }
+      }
+    },
+    "OnFailure": [
+      {
+        "Action": "notify",
+        "Request": {
+          "Channels": [
+            "#e2e"
+          ],
+          "Title": "bqtail.schema split",
+          "Message": "$Error"
+        }
+      }
+    ]
+  }
+]

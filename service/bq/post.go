@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var syncCheckTimeout = 3 * time.Second
+var syncCheckTimeout = 2 * time.Second
 
 func (s *service) setJobID(ctx context.Context, actions *task.Actions) (*bigquery.JobReference, error) {
 	var ID string

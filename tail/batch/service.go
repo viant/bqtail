@@ -38,7 +38,7 @@ type service struct {
 }
 
 func (s *service) scheduleURL(created time.Time, request *contract.Request, rule *config.Rule) (string, error) {
-	dest, err := rule.Dest.ExpandTable(created, request.SourceURL)
+	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, created, request.SourceURL)
 	if err != nil {
 		return "", err
 	}
@@ -132,7 +132,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Reques
 	if err != nil {
 		return nil, errors.Wrapf(err, "source event was missing: %v", request.SourceURL)
 	}
-	dest, err := rule.Dest.ExpandTable(source.ModTime(), request.SourceURL)
+	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, source.ModTime(), request.SourceURL)
 	if err != nil {
 		return nil, err
 	}

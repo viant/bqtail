@@ -28,10 +28,15 @@ type Destination struct {
 	bigquery.JobConfigurationLoad
 	Pattern          string `json:",omitempty"`
 	pattern          *regexp.Regexp
-	Schema           Schema   `json:",omitempty"`
-	TransientDataset string   `json:",omitempty"`
-	UniqueColumns    []string `json:",omitempty"`
+	Schema           Schema            `json:",omitempty"`
+	TransientDataset string            `json:",omitempty"`
+	UniqueColumns    []string          `json:",omitempty"`
+	Transform        map[string]string `json:",omitempty"`
 	Override         *bool
+}
+
+func (d Destination) HasSplit() bool {
+	return d.Schema.Split != nil
 }
 
 func (d Destination) Clone() *Destination {
@@ -50,12 +55,18 @@ func (d *Destination) Validate() error {
 	if d.Table == "" {
 		return fmt.Errorf("dest.Table was empty")
 	}
+	if d.Schema.Split != nil {
+		if d.TransientDataset == "" {
+			return fmt.Errorf("dest.Schema.Split requires dest.TransientDataset")
+		}
+		return d.Schema.Split.Validate()
+	}
 	return nil
 }
 
 //Expand returns sourced table
-func (d *Destination) ExpandTable(created time.Time, source string) (string, error) {
-	return d.Expand(d.Table, created, source)
+func (d *Destination) ExpandTable(table string, created time.Time, source string) (string, error) {
+	return d.Expand(table, created, source)
 }
 
 //Expand returns sourced table
@@ -83,7 +94,12 @@ func (d *Destination) Expand(dest string, created time.Time, source string) (str
 
 //TableReference returns table reference, source table syntax: project:dataset:table
 func (d *Destination) TableReference(created time.Time, source string) (*bigquery.TableReference, error) {
-	table, err := d.ExpandTable(created, source)
+	return d.CustomTableReference(d.Table, created, source)
+}
+
+//TableReference returns table reference, source table syntax: project:dataset:table
+func (d *Destination) CustomTableReference(table string, created time.Time, source string) (*bigquery.TableReference, error) {
+	table, err := d.ExpandTable(table, created, source)
 	if err != nil {
 		return nil, err
 	}

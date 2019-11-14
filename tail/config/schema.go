@@ -8,4 +8,6 @@ type Schema struct {
 	templateReference *bigquery.TableReference
 	Table             *bigquery.TableSchema
 	Autodetect        bool
+	PatchTemplate     string
+	Split *Split
 }

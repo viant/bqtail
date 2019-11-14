@@ -41,7 +41,7 @@ pipeline:
       timeout: 540s
       serviceAccountEmail: $serviceAccount
       environmentVariables:
-        LOGGING: 'true'
+        LOGGING: 'false'
         CONFIG: gs://${configBucket}/BqDispatch/config.json
       source:
         URL: ${appPath}/

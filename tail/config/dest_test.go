@@ -76,7 +76,7 @@ func TestDestination_ExpandTable(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		actual, err := useCase.dest.ExpandTable(useCase.created, useCase.sourceURI)
+		actual, err := useCase.dest.ExpandTable(useCase.dest.Table, useCase.created, useCase.sourceURI)
 		if useCase.hasError {
 			assert.NotNil(t, err, useCase.description)
 			continue

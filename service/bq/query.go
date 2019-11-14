@@ -56,6 +56,7 @@ type QueryRequest struct {
 	UseLegacy bool
 	Append    bool
 	Dest      string
+	Template  string
 	destTable *bigquery.TableReference
 	Request
 }
@@ -89,7 +90,7 @@ func (r *QueryRequest) Validate() error {
 }
 
 //NewQueryRequest creates a new query request
-func NewQueryRequest(SQL string, dest *bigquery.TableReference, finally *task.Actions) *QueryRequest {
+func NewQueryRequest(SQL string,  dest *bigquery.TableReference, finally *task.Actions) *QueryRequest {
 	result := &QueryRequest{
 		SQL:       SQL,
 		destTable: dest,

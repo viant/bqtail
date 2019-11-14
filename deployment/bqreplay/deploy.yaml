@@ -50,7 +50,7 @@ pipeline:
       timeout: 540s
       serviceAccountEmail: $serviceAccount
       environmentVariables:
-        LOGGING: 'true'
+        LOGGING: 'false'
       source:
         URL: ${appPath}/
       sleepTimeMs: 5000
