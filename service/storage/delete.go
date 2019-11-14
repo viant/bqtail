@@ -13,6 +13,9 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 		return err
 	}
 	for i := range request.URLs {
+		if ok, _ := s.fs.Exists(ctx, request.URLs[i]); !ok {
+			continue
+		}
 		if e := s.fs.Delete(ctx, request.URLs[i]); e != nil {
 			err = e
 		}
