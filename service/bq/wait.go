@@ -26,8 +26,6 @@ func (s *service) Wait(ctx context.Context, ref *bigquery.JobReference) (*bigque
 	return statusJob, err
 }
 
-
-
 //waitWithTimeout waits for job completion
 func (s *service) waitWithTimeout(ctx context.Context, ref *bigquery.JobReference, timeout time.Duration) (*bigquery.Job, error) {
 	var err error

@@ -9,5 +9,5 @@ type Schema struct {
 	Table             *bigquery.TableSchema
 	Autodetect        bool
 	PatchTemplate     string
-	Split *Split
+	Split             *Split
 }

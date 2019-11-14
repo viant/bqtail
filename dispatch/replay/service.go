@@ -28,15 +28,13 @@ type service struct {
 
 func (s *service) Replay(ctx context.Context) *Response {
 	response := NewResponse()
-	err:= s.replay(ctx, response)
+	err := s.replay(ctx, response)
 	if err != nil {
 		response.Error = err.Error()
 		response.Status = base.StatusError
 	}
 	return response
 }
-
-
 
 func (s *service) shallRun(ctx context.Context, jobID string) (*bigquery.Job, error) {
 	job, err := s.BQService().GetJob(ctx, s.Config().ProjectID, jobID)
@@ -90,9 +88,9 @@ func (s *service) replay(ctx context.Context, response *Response) error {
 }
 
 //New creates a new service
-func New(srv  dispatch.Service, fs afs.Service) Service {
+func New(srv dispatch.Service, fs afs.Service) Service {
 	return &service{
-		fs:fs,
-		Service:srv,
+		fs:      fs,
+		Service: srv,
 	}
 }

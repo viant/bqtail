@@ -38,12 +38,10 @@ func (s *service) Config() *Config {
 	return s.config
 }
 
-
 //BQService returns bq service
 func (s *service) BQService() bq.Service {
 	return s.bq
 }
-
 
 func (s *service) Init(ctx context.Context) error {
 	err := s.config.Init(ctx, s.fs)

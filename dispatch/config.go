@@ -17,8 +17,6 @@ import (
 type Config struct {
 	base.Config
 	config.Ruleset
-
-
 }
 
 //Init initialises config

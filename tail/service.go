@@ -240,11 +240,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
 	destTable, _ := route.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
 
-
-
-
 	partition := base.TablePartition(destTable.TableId)
-
 
 	if len(route.Dest.UniqueColumns) > 0 || partition != "" {
 		query := bq.NewQueryRequest(selectAll, destTable, actions)
@@ -289,8 +285,8 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 		field := getColumn(job.Schema.Fields, split.TimeColumn)
 		if field == nil {
 			job.Schema.Fields = append(job.Schema.Fields, &bigquery.TableFieldSchema{
-				Name:split.TimeColumn,
-				Type:"TIMESTAMP",
+				Name: split.TimeColumn,
+				Type: "TIMESTAMP",
 			})
 		}
 		job.TimePartitioning = &bigquery.TimePartitioning{
@@ -304,12 +300,11 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 	}
 }
 
-
 func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJobID string, job *Job, route *config.Rule, actions *task.Actions) error {
 	split := route.Dest.Schema.Split
 	for _, mapping := range split.Mapping {
 		destTable, _ := route.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
-		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When + " ", 1)
+		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
 		query := bq.NewQueryRequest(dest, destTable, actions)
 		query.Append = route.IsAppend()
 		queryAction, err := task.NewAction("query", query)

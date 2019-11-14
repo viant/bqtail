@@ -19,7 +19,7 @@ func BqTail(ctx context.Context, event contract.GSEvent) (err error) {
 	request := &contract.Request{
 		EventID:   meta.EventID,
 		SourceURL: event.URL(),
-		Started:meta.Timestamp,
+		Started:   meta.Timestamp,
 	}
 	_, err = handleTailEvent(ctx, request)
 	if err != nil {

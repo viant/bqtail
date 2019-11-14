@@ -7,7 +7,7 @@ import (
 //Split represents data split
 type Split struct {
 	TimeColumn     string
-	ClusterColumns [] string
+	ClusterColumns []string
 	Mapping        []*TableMapping
 }
 
@@ -23,7 +23,6 @@ func (s *Split) Validate() error {
 	}
 	return nil
 }
-
 
 //TableMapping represents table mapping
 type TableMapping struct {
@@ -41,4 +40,3 @@ func (m *TableMapping) Validate() error {
 	}
 	return nil
 }
-

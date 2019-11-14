@@ -12,13 +12,9 @@ func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.J
 		return nil, err
 	}
 
-
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
-
-
-
 
 	//
 	//job := &bigquery.Job{
@@ -38,12 +34,9 @@ func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.J
 	return nil, nil
 }
 
-
-
-
 //ExportRequest represents an export request
 type PatchRequest struct {
-	Template string
+	Template    string
 	Destination string
 	Request
 }
@@ -68,5 +61,3 @@ func (r *PatchRequest) Validate() error {
 	}
 	return nil
 }
-
-

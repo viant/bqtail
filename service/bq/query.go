@@ -90,7 +90,7 @@ func (r *QueryRequest) Validate() error {
 }
 
 //NewQueryRequest creates a new query request
-func NewQueryRequest(SQL string,  dest *bigquery.TableReference, finally *task.Actions) *QueryRequest {
+func NewQueryRequest(SQL string, dest *bigquery.TableReference, finally *task.Actions) *QueryRequest {
 	result := &QueryRequest{
 		SQL:       SQL,
 		destTable: dest,

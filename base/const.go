@@ -76,6 +76,4 @@ const (
 
 	//DoneStatus done status
 	DoneStatus = "DONE"
-
-
 )

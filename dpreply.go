@@ -10,7 +10,6 @@ import (
 	"net/http"
 )
 
-
 //BqDispatch BigQuery trigger background cloud function entry point
 func BqDispatchReplay(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
@@ -24,4 +23,3 @@ func BqDispatchReplay(w http.ResponseWriter, r *http.Request) {
 	toolbox.Dump(response)
 	_ = json.NewEncoder(w).Encode(response)
 }
-

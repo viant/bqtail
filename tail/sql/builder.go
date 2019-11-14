@@ -29,7 +29,6 @@ FROM (
 WHERE row_number = 1`, strings.Join(innerProjection, ", "), strings.Join(projection, ", "), strings.Join(uniqueColumns, ","), sourceTable)
 }
 
-
 func buildDedupeSQL(sourceTable string, schema Schema, unique map[string]bool, transform map[string]string) string {
 	var projection = make([]string, 0)
 	var groupBy = make([]string, 0)
@@ -54,8 +53,6 @@ GROUP BY %v`,
 		strings.Join(groupBy, ", "),
 	)
 }
-
-
 
 func buildSelectAll(sourceTable string, schema Schema, transform map[string]string) string {
 	var projection = make([]string, 0)

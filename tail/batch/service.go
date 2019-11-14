@@ -190,8 +190,6 @@ func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Dat
 	return &Datafile{SourceURL: string(data), EventID: name, Created: object.ModTime(), URL: object.URL()}, nil
 }
 
-
-
 func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (bool, error) {
 	halfDuration := window.End.Sub(window.Start) / 2
 	windowMatcher := windowedMatcher(window.Start.Add(-halfDuration), window.End, windowExtension)
@@ -224,7 +222,7 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 
 	//in case when more than one window is matched,
 	// double check that this event ID falls into current batch, not previous
-	if batchingEventID, err := s.getBatchingWindowID(ctx, window.Start, windows);err == nil {
+	if batchingEventID, err := s.getBatchingWindowID(ctx, window.Start, windows); err == nil {
 		if batchingEventID == window.EventID {
 			return true, nil
 		}
@@ -232,9 +230,6 @@ func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (boo
 	err = s.fs.Delete(ctx, window.URL)
 	return false, err
 }
-
-
-
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) error {
@@ -258,7 +253,6 @@ func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Wi
 	if err != nil {
 		return err
 	}
-
 
 	window.Datafiles = make([]*Datafile, 0)
 	for i := range transferFiles {
