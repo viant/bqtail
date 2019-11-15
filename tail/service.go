@@ -63,7 +63,13 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	response := contract.NewResponse(request.EventID)
 	response.TriggerURL = request.SourceURL
 	defer response.SetTimeTaken(response.Started)
-	err := s.tail(ctx, request, response)
+	var err error
+	if request.IsAction(s.config.ActionPrefix) {
+		err = s.run(ctx, request, response)
+	} else {
+
+		err = s.tail(ctx, request, response)
+	}
 	if err != nil {
 		response.SetIfError(err)
 	}
@@ -109,16 +115,19 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 	return s.tailIndividually(ctx, source, rule, request, response)
 }
 
+
 func (s *service) onDone(ctx context.Context, job *Job) error {
 	data, err := json.Marshal(job)
 	if err != nil {
 		return err
 	}
 	baseURL := s.config.OutputURL(job.Status == base.StatusError)
-	name := path.Join(job.SourceCreated.Format(dateLayout), path.Join(base.DecodePathSeparator(job.Dest()), job.EventID, base.TailJob+base.JobElement+base.JobExt))
+	name := path.Join(job.SourceCreated.Format(base.DateLayout), path.Join(base.DecodePathSeparator(job.Dest()), job.EventID, base.TailJob+base.JobElement+base.JobExt))
 	URL := url.Join(baseURL, name)
 	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
+
+
 
 func (s *service) buildLoadRequest(ctx context.Context, job *Job, rule *config.Rule) (*bq.LoadRequest, error) {
 	dest := rule.Dest
@@ -155,6 +164,7 @@ func getJobID(job *Job) string {
 	return path.Join(job.Dest(), job.EventID, job.IDSuffix())
 }
 
+
 func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, response *contract.Response) (err error) {
 	if len(job.Load.SourceUris) == 0 {
 		return fmt.Errorf("sourceUris was empty")
@@ -177,6 +187,8 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 		}
 	}
 	load.Actions = *actions
+	replayActionURL := s.config.BuildReplayActionURL(job.EventID)
+	traceURL := s.appendReplayActions(replayActionURL, load)
 	defer func() {
 		job.Actions = actions
 		response.SetIfError(err)
@@ -185,7 +197,9 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 			err = e
 		}
 	}()
-
+	if err = s.createTrace(ctx, traceURL, load); err != nil {
+		return errors.Wrapf(err, "failed to create trace: %v", traceURL)
+	}
 	var bqJob *bigquery.Job
 	bqJob, err = s.bq.Load(ctx, load)
 	if err == nil {
@@ -195,6 +209,30 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 		response.JobRef = bqJob.JobReference
 	}
 	return err
+}
+
+
+//appendReplayActions append track action
+func (s *service) appendReplayActions(actionURL string, load *bq.LoadRequest) string {
+	deleteReq := storage.DeleteRequest{URLs: []string{actionURL}}
+	deleteTrace, _ := task.NewAction("delete", deleteReq)
+	load.Actions.AddOnSuccess(deleteTrace)
+	return actionURL
+}
+
+func (s *service) createTrace(ctx context.Context, URL string, loadJob *bq.LoadRequest) error {
+	loadTrace, err := task.NewAction("load", loadJob)
+	if err != nil {
+		return err
+	}
+	actions := []*task.Action{
+		loadTrace,
+	}
+	JSON, err := json.Marshal(actions)
+	if err != nil {
+		return errors.Wrapf(err, "failed to marshal: %v", loadTrace)
+	}
+	return s.fs.Upload(ctx, URL, 0644, bytes.NewReader(JSON))
 }
 
 func appendBatchAction(window *batch.Window, actions *task.Actions) error {
@@ -238,7 +276,6 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 	if rule.Dest.HasSplit() {
 		return result, s.addSplitActions(ctx, selectAll, parentJobID, job, rule, result, actions)
 	}
-
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
 	destTable, _ := rule.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
 
@@ -328,6 +365,23 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 
 func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJobID string, job *Job, rule *config.Rule, result, onDone *task.Actions) error {
 	split := rule.Dest.Schema.Split
+	splitActions := task.NewActions(rule.Async, result.DeferTaskURL, result.JobID, nil, nil)
+	for i := range split.Mapping {
+		var final *task.Actions
+		if i == len(split.Mapping)-1 {
+			final = onDone
+		}
+		mapping := split.Mapping[i]
+		destTable, _ := rule.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
+		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
+		query := bq.NewQueryRequest(dest, destTable, final)
+		query.Append = rule.IsAppend()
+		queryAction, err := task.NewAction("query", query)
+		if err != nil {
+			return err
+		}
+		splitActions.AddOnSuccess(queryAction)
+	}
 
 	if len(split.ClusterColumns) > 0 {
 		setColumns := []string{}
@@ -341,7 +395,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 			destTable := fmt.Sprintf("`%v.%v.%v`", refTable.ProjectId, refTable.DatasetId, refTable.TableId)
 			DML := fmt.Sprintf("UPDATE %v SET %v WHERE 1=1", destTable, strings.Join(setColumns, ","))
 
-			query := bq.NewQueryRequest(DML, nil, nil)
+			query := bq.NewQueryRequest(DML, nil, splitActions)
 			query.Append = rule.IsAppend()
 			queryAction, err := task.NewAction("query", query)
 			if err != nil {
@@ -349,24 +403,12 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 			}
 			result.AddOnSuccess(queryAction)
 		}
+	} else {
+		result.AddOnSuccess(splitActions.OnSuccess...)
+		result.AddOnSuccess(splitActions.OnFailure...)
 	}
 
-	for i := range split.Mapping {
-		next := task.NewActions(rule.Async, result.DeferTaskURL, result.JobID, nil, nil)
-		if i == len(split.Mapping)-1 {
-			next = onDone
-		}
-		mapping := split.Mapping[i]
-		destTable, _ := rule.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
-		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
-		query := bq.NewQueryRequest(dest, destTable, next)
-		query.Append = rule.IsAppend()
-		queryAction, err := task.NewAction("query", query)
-		if err != nil {
-			return err
-		}
-		result.AddOnSuccess(queryAction)
-	}
+
 	return nil
 }
 
@@ -476,6 +518,31 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 
 	return s.submitJob(ctx, job, rule, response)
 }
+
+
+func (s *service) run(ctx context.Context, request *contract.Request, response *contract.Response) error {
+	actions:= []*task.Action{}
+	reader, err := s.fs.DownloadWithURL(ctx, request.SourceURL)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+	if err = json.NewDecoder(reader).Decode(&actions); err != nil {
+		return errors.Wrapf(err, "unable decode: %v", request.SourceURL)
+	}
+	response.Actions = actions
+	for _ , action :=  range actions {
+		if err = task.Run(ctx, s.Registry, action);err != nil {
+			return err
+		}
+	}
+	_, sourcePath:= url.Base(request.SourceURL, "")
+	journalURL := url.Join(s.config.JournalURL, sourcePath)
+	return s.fs.Move(ctx, request.SourceURL, journalURL)
+}
+
 
 //New creates a new service
 func New(ctx context.Context, config *Config) (Service, error) {

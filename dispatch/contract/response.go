@@ -2,19 +2,28 @@ package contract
 
 import (
 	"bqtail/base"
-	"bqtail/dispatch/config"
 )
 
 //Response represents response
 type Response struct {
 	base.Response
-	Rule     *config.Rule `json:",omitempty"`
-	JobError string       `json:",omitempty"`
+	Errors []string
+	Jobs interface{}
+}
+
+
+//AddError add an error
+func (r * Response) AddError(err error) {
+	if err == nil {
+		return
+	}
+	r.Errors = append(r.Errors, err.Error())
 }
 
 //NewResponse creates a new response
-func NewResponse(eventID string) *Response {
+func NewResponse() *Response {
 	return &Response{
-		Response: *base.NewResponse(eventID),
+		Errors: make([]string, 0),
+		Response: *base.NewResponse(""),
 	}
 }

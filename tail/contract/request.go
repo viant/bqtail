@@ -1,6 +1,10 @@
 package contract
 
-import "time"
+import (
+	"github.com/viant/afs/url"
+	"strings"
+	"time"
+)
 
 //Request represents data tail to BigQuery request
 type Request struct {
@@ -9,6 +13,13 @@ type Request struct {
 	ScheduleURL string
 	Started     time.Time
 	Attempt     int
+}
+
+
+//IsAction returns true if action URL
+func (r *Request) IsAction(actionPrefix string) bool {
+	 _, PathURL := url.Base(r.SourceURL, "")
+	 return strings.HasPrefix(PathURL, actionPrefix)
 }
 
 //NewRequest creates a request

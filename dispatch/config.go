@@ -3,6 +3,7 @@ package dispatch
 import (
 	"bqtail/base"
 	"bqtail/dispatch/config"
+	"time"
 
 	"context"
 	"encoding/json"
@@ -17,6 +18,15 @@ import (
 type Config struct {
 	base.Config
 	config.Ruleset
+	TimeToLiveInMin int
+}
+
+//TimeToLive returns time to live
+func (c *Config) TimeToLive() time.Duration {
+	if c.TimeToLiveInMin == 0 {
+		c.TimeToLiveInMin = 1
+	}
+	return time.Minute*time.Duration(c.TimeToLiveInMin) - (3 * time.Second)
 }
 
 //Init initialises config
@@ -24,6 +34,9 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	err := c.Config.Init(ctx)
 	if err != nil {
 		return err
+	}
+	if c.TimeToLiveInMin == 0 {
+		c.TimeToLiveInMin = 1
 	}
 	return c.Ruleset.Init(ctx, fs, c.ProjectID)
 }

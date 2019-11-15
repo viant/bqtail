@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+
 //Config represents a tail config
 type Config struct {
 	base.Config
@@ -31,6 +32,7 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	c.initLoadedRules()
 	return nil
 }
+
 
 func (c *Config) initLoadedRules() {
 	if len(c.Rules) == 0 {
@@ -90,6 +92,7 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 	return cfg, err
 }
 
+
 //NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	storageService := afs.New()
@@ -107,6 +110,7 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	}
 	return cfg, err
 }
+
 
 //NewConfig creates a new config from env (json or URL)
 func NewConfig(ctx context.Context, key string) (*Config, error) {

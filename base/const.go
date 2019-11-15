@@ -22,6 +22,8 @@ const (
 	JobPrefix = "bq"
 	//JobExt job extension
 	JobExt = ".json"
+	//ActionExt job extension
+	ActionExt = ".run"
 	//JobElement job path element
 	JobElement = "-job"
 	//PathElementSeparator path separator
@@ -82,4 +84,12 @@ const (
 
 	//DoneStatus done status
 	DoneStatus = "DONE"
+
+	//DateLayout represents a date layout
+	DateLayout = "2006-01-02_15"
+
+	//actionPrefix
+	actionPrefix = "/_dispatched_/"
+
+	replayPrefix = "/_Replay/"
 )

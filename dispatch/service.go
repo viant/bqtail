@@ -11,19 +11,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/afs"
-	"github.com/viant/afs/file"
+	"github.com/viant/afs/matcher"
+	"github.com/viant/afs/option"
 	"github.com/viant/afs/url"
 	"google.golang.org/api/bigquery/v2"
-	"path"
-	"strings"
+	"time"
 )
 
 //Service represents event service
 type Service interface {
-	Dispatch(ctx context.Context, request *contract.Request) *contract.Response
+	Dispatch(ctx context.Context) *contract.Response
 	Config() *Config
-	BQService() bq.Service
 }
 
 type service struct {
@@ -60,141 +61,127 @@ func (s *service) Init(ctx context.Context) error {
 	return err
 }
 
-func (s *service) Dispatch(ctx context.Context, request *contract.Request) *contract.Response {
-	response := contract.NewResponse(request.EventID)
+
+//Dispatch dispatched BigQuery event
+func (s *service) Dispatch(ctx context.Context) *contract.Response {
+	response := contract.NewResponse()
 	defer response.SetTimeTaken(response.Started)
-	err := s.dispatch(ctx, request, response)
-	if err != nil {
-		response.SetIfError(err)
+	timeToLive := s.config.TimeToLive()
+	startTime := time.Now()
+	for ;; {
+		err := s.dispatch(ctx, response)
+		if err != nil {
+			response.SetIfError(err)
+		}
+		if time.Now().Sub(startTime) > timeToLive {
+			break
+		}
+		time.Sleep(time.Second)
 	}
 	return response
 }
 
-func (s *service) initRequest(ctx context.Context, request *contract.Request) error {
-	if request.Job != nil {
-		return nil
-	}
-	job, err := s.bq.GetJob(ctx, request.ProjectID, request.JobID)
+
+
+func (s *service) getJobs(ctx context.Context, response *contract.Response) ([]*Job, error) {
+	var result = make([]*Job, 0)
+	jobMatcher, _ := matcher.NewBasic("", fmt.Sprintf("%v.json", base.DispatchJob), "", nil)
+	candidate, err := s.fs.List(ctx, s.Config().DeferTaskURL, option.NewRecursive(true), jobMatcher)
 	if err != nil {
-		return err
+		return nil, errors.Wrapf(err, "failed to list jobs %v", s.Config().DeferTaskURL)
 	}
-	contractJob := base.Job(*job)
-	request.Job = &contractJob
+	for i := range candidate {
+		if candidate[i].IsDir() {
+			continue
+		}
+		jobID := JobID(s.Config().DeferTaskURL, candidate[i].URL())
+		bqJob, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
+		if err != nil {
+			response.AddError(errors.Wrapf(err, "failed to get bqJob: %v\n",candidate[i].URL()))
+			continue
+
+		}
+		if bqJob.Status != nil && bqJob.Status.State == base.DoneStatus {
+			job, err := s.loadJob(ctx, candidate[i].URL(), bqJob)
+			if err != nil {
+				response.AddError(err)
+				continue
+			}
+			result = append(result, job)
+		}
+	}
+	//TODO add jobs that cam be matched by source or dest
+	return result, nil
+}
+
+
+
+func (s *service) loadJob(ctx context.Context, URL string,  job *bigquery.Job) (*Job, error) {
+	baseJob := base.Job(*job)
+	reader, err := s.fs.DownloadWithURL(ctx, URL)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to download job: %v\n", URL)
+
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+	actions := &task.Actions{}
+	if err = json.NewDecoder(reader).Decode(actions); err != nil {
+		return nil,  errors.Wrapf(err, "failed to decode job: %v\n", URL)
+	}
+	return  NewJob(URL, &baseJob, actions), nil
+}
+
+
+func (s *service) dispatch(ctx context.Context, response *contract.Response) (err error) {
+	jobs , err := s.getJobs(ctx, response)
+	if err != nil {
+		return
+	}
+	response.Jobs = jobs
+	for _, job := range jobs {
+		err = s.notify(ctx, job)
+		if err != nil {
+			response.AddError(err)
+		}
+	}
 	return nil
 }
 
-//move moves schedule file to output folder
-func (s *service) move(ctx context.Context, baseURL string, job *Job) error {
-	matchedURL := job.Response.MatchedURL
-	if matchedURL == "" {
+
+
+func (s *service) notify(ctx context.Context, job *Job) error {
+	if exists, _ := s.fs.Exists(ctx, job.URL) ; !exists {
 		return nil
 	}
-	parent, sourceName := url.Split(matchedURL, file.Scheme)
-	parentElements := strings.Split(parent, "/")
-	if len(parentElements) > 3 {
-		sourceName = path.Join(strings.Join(parentElements[len(parentElements)-3:], "/"), sourceName)
-	}
-	name := path.Join(job.Completed().Format(dateLayout), sourceName)
-	URL := url.Join(baseURL, name)
-	return s.fs.Move(ctx, matchedURL, URL)
-}
-
-func (s *service) onDone(ctx context.Context, job *Job) error {
-	baseURL := s.config.OutputURL(job.Response.Status == base.StatusError)
-	if err := s.move(ctx, baseURL, job); err != nil {
-		return err
-	}
-	data, err := json.Marshal(job)
-	if err != nil {
-		return err
-	}
-	jobFilename := path.Join(base.DecodePathSeparator(job.JobReference.JobId))
-	name := path.Join(job.Completed().Format(dateLayout), jobFilename+base.JobElement+base.JobExt)
-	URL := url.Join(baseURL, name)
-	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
-}
-
-func (s *service) getActions(ctx context.Context, request *contract.Request, response *contract.Response) (*task.Actions, error) {
-	jobID := base.DecodePathSeparator(request.JobID)
-
-	if strings.HasSuffix(jobID, base.DispatchJob) {
-		URL := url.Join(s.config.DeferTaskURL, jobID+base.JobExt)
-		response.MatchedURL = URL
-		response.Matched = true
-		reader, err := s.fs.DownloadWithURL(ctx, URL)
-		if err != nil {
-			response.NotFoundError = err.Error()
-			if exists, err := s.fs.Exists(ctx, URL); err == nil && !exists {
-				response.Status = base.StatusNotFound
-				return nil, nil
-			}
-			return nil, err
-		}
-		defer func() { _ = reader.Close() }()
-		actions := &task.Actions{}
-		err = json.NewDecoder(reader).Decode(actions)
-		return actions, err
-	}
-
-	return nil, nil
-}
-
-func (s *service) dispatch(ctx context.Context, request *contract.Request, response *contract.Response) (err error) {
-	err = s.initRequest(ctx, request)
-	if err != nil {
-		return err
-	}
-	job := NewJob(request.Job, response)
-	defer func() {
-		if !response.Matched {
-			response.Status = base.StatusNoMatch
-		}
-		if response.Matched || err != nil {
-			response.SetIfError(err)
-			if e := s.onDone(ctx, job); e != nil && err == nil {
-				e = err
-			}
-		}
-	}()
-	response.JobRef = request.Job.JobReference
-	if err := request.Job.Error(); err != nil {
-		response.JobError = err.Error()
-	}
-	if err = s.config.ReloadIfNeeded(ctx, s.fs); err != nil {
-		return err
-	}
-	rule := s.config.Match(request.Job)
-	if rule != nil {
-		response.Rule = rule
-		expandable := &base.Expandable{}
-		if rule.When.Dest != "" {
-			expandable.Source = request.Job.Dest()
-		} else if rule.When.Source != "" {
-			expandable.Source = request.Job.Source()
-		}
-		response.Matched = true
-		job.Actions = rule.Actions.Expand(expandable)
-		return s.run(ctx, job)
-	}
-
-	job.Actions, err = s.getActions(ctx, request, response)
-	if err != nil || job.Actions == nil || job.Actions.IsEmpty() {
-		return err
-	}
-	err = s.run(ctx, job)
-	return err
-}
-
-func (s *service) run(ctx context.Context, job *Job) error {
 	toRun := job.Actions.ToRun(job.Error(), job.Job, s.config.DeferTaskURL)
-	var err error
-	for i := range toRun {
-		if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {
+	if len(toRun) > 0 {
+		actionURL := s.config.BuildActionURL(job.Job.JobReference.JobId)
+		JSON, err := json.Marshal(toRun)
+		if err != nil {
+			return err
+		}
+		if err = s.fs.Upload(ctx, actionURL, 0644, bytes.NewReader(JSON));err != nil {
 			return err
 		}
 	}
-	return err
+	return s.moveJob(ctx, job)
 }
+
+
+func (s *service) moveJob(ctx context.Context, job *Job) error {
+	baseURL := s.config.OutputURL(job.Error() != nil)
+	sourceURL := job.URL
+	_, sourcePath := url.Base(sourceURL, "")
+	if len(s.config.DeferTaskURL) < len(sourceURL) {
+		sourcePath = string(sourceURL[len(s.config.DeferTaskURL): ])
+	}
+	destURL := url.Join(baseURL, sourcePath)
+	return s.fs.Move(ctx, sourceURL, destURL)
+}
+
+
 
 //New creates a dispatch service
 func New(ctx context.Context, config *Config) (Service, error) {

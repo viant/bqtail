@@ -2,13 +2,7 @@ defaults:
   credentials: $gcpCredentials
 
 pipeline:
-#  undeploy:
-#    tail:
-#      action: gcp/cloudfunctions:delete
-#      '@name': E2eDataBqTail
-#    dispatch:
-#      action: gcp/cloudfunctions:delete
-#      '@name': BqDispatch
+
 
 
   deploy:
@@ -28,7 +22,6 @@ pipeline:
 
     deploay:
 
-
       bqtail:
         action: gcp/cloudfunctions:deploy
         '@name': BqTail
@@ -47,7 +40,6 @@ pipeline:
         source:
           URL: ${appPath}/
 
-
       bqdisaptch:
         action: gcp/cloudfunctions:deploy
         '@name': BqDispatch
@@ -60,8 +52,17 @@ pipeline:
         environmentVariables:
           CONFIG: gs://${configBucket}/BqDispatch/config.json
           LOGGING: true
-        eventTrigger:
-          eventType: google.cloud.bigquery.job.complete
-          resource: projects/${projectID}/jobs/{jobId}
         source:
           URL: ${appPath}/
+
+      schedule:
+        action: gcp/cloudscheduler:deploy
+        credentials: $gcpCredentials
+        name: BqDispatch
+        schedule: '*/1 * * * *'
+        timeZone: GMT
+        httpTarget:
+          headers:
+            User-Agent: Google-Cloud-Scheduler
+          httpMethod: GET
+          uri: https://us-central1-${gcp.ProjectID}.cloudfunctions.net/BqDispatch

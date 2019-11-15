@@ -2,16 +2,16 @@ package dispatch
 
 import (
 	"bqtail/base"
-	"bqtail/dispatch/contract"
 	"bqtail/task"
+	"strings"
 	"time"
 )
 
 //Job represents a dispatch job
 type Job struct {
 	*base.Job
-	Actions  *task.Actions
-	Response *contract.Response
+	URL string
+	*task.Actions
 }
 
 //Completed return completion time
@@ -27,9 +27,25 @@ func (j Job) Completed() time.Time {
 }
 
 //NewJob creates a job
-func NewJob(job *base.Job, response *contract.Response) *Job {
+func NewJob(URL string, job *base.Job, actions *task.Actions) *Job {
 	return &Job{
-		Job:      job,
-		Response: response,
+		URL: URL,
+		Job: job,
+		Actions:actions,
 	}
 }
+
+
+
+//JobID returns job ID for supplied URL
+func JobID(baseURL string, URL string) string {
+	if len(baseURL) > len(URL) {
+		return ""
+	}
+	encoded := strings.Trim(string(URL[len(baseURL):]), "/")
+	encoded = strings.Replace(encoded, ".json", "", 1)
+	jobID := base.EncodePathSeparator(encoded)
+	return jobID
+}
+
+
