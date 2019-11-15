@@ -267,6 +267,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 }
 
 func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.TableFieldSchema {
+	column = strings.ToLower(column)
 	if index := strings.Index(column, "."); index != -1 {
 		parent := string(column[:index])
 		for i := range fields {

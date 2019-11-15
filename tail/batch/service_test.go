@@ -136,6 +136,11 @@ func TestService_TryAcquireWindow(t *testing.T) {
 					Table: "proj:dset:table1",
 				},
 			},
+			expect: &Window{
+				Start:   now.Add(-9 * time.Second),
+				End:     now.Add(21 * time.Second),
+				EventID: "event2",
+			},
 		},
 
 		{
