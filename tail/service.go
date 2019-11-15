@@ -310,7 +310,7 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 			if strings.Contains(split.ClusterColumns[i], ".") {
 				column := getColumn(job.Schema.Fields, split.ClusterColumns[i]);
 				if column == nil {
-					return errors.Errorf("failed to lookup cluster column: ", name)
+					return errors.Errorf("failed to lookup cluster column: %v", name)
 				}
 				job.Schema.Fields = append(job.Schema.Fields, column)
 				clusterdColumn = append(clusterdColumn, column.Name)
