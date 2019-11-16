@@ -16,6 +16,7 @@ import (
 	"github.com/viant/afs/url"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
+	"sync"
 	"time"
 )
 
@@ -111,6 +112,7 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 	if err != nil {
 		return err
 	}
+	waitGroup := &sync.WaitGroup{}
 	for i := range objects {
 		URL := objects[i].URL()
 		if url.Equals(URL, parentURL) {
@@ -142,7 +144,9 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 			continue
 		}
 		job.URL = URL
+		waitGroup.Add(1)
 		go func(jobID string, job *Job) {
+			defer waitGroup.Done()
 			if err = s.notify(ctx, job); err != nil {
 				response.AddError(err)
 			} else {
@@ -150,6 +154,7 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 			}
 		}(jobID, job)
 	}
+	waitGroup.Wait()
 	return err
 }
 
