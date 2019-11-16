@@ -12,13 +12,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
 	"google.golang.org/api/bigquery/v2"
-	"io"
-	"os"
-	"sync"
 	"time"
 )
 
@@ -86,7 +82,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 func (s *service) processJobs(ctx context.Context, response *contract.Response) error {
 	startTime := time.Now()
 	modifiedAfter := startTime.Add(- (time.Minute * time.Duration(s.config.MaxJobLoopbackInMin)))
-	jobs, err := s.bq.ListJob(ctx, s.config.ProjectID, modifiedAfter, "done")
+	jobs, err := s.bq.ListJob(ctx, s.config.ProjectID, modifiedAfter, "done", "pending", "running")
 	if err != nil {
 		return err
 	}
@@ -96,45 +92,76 @@ func (s *service) processJobs(ctx context.Context, response *contract.Response) 
 		jobsByID[jobs[i].JobReference.JobId] = jobs[i]
 	}
 	response.JobMatched = len(jobsByID)
-	waitGroup := &sync.WaitGroup{}
-	err =  s.fs.Walk(ctx, s.Config().DeferTaskURL, func(ctx context.Context, baseURL string, parent string, info os.FileInfo, reader io.Reader) (toContinue bool, err error) {
-		if info.IsDir() {
-			return true, nil
+	return s.processURL(ctx, s.config.DeferTaskURL, response, jobsByID)
+}
+
+func (s *service) loadActions(ctx context.Context, URL string) (*task.Actions, error) {
+	reader, err := s.fs.DownloadWithURL(ctx, URL)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	actions := &task.Actions{}
+	return actions, json.NewDecoder(reader).Decode(actions)
+}
+
+func (s *service) processURL(ctx context.Context, parentURL string, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs) error {
+	objects, err := s.fs.List(ctx, parentURL)
+	if err != nil {
+		return err
+	}
+	for i := range objects {
+		URL := objects[i].URL()
+		if url.Equals(URL, parentURL) {
+			continue
 		}
-		URL := url.Join(baseURL, parent, info.Name())
-		actions := &task.Actions{}
-		if err = json.NewDecoder(reader).Decode(actions); err != nil {
-			response.AddError(errors.Wrapf(err, "failed to decode job: %v\n", URL))
-			return true, nil
-		}
-		waitGroup.Add(1)
-		go func(URL string, action *task.Actions) {
-			defer waitGroup.Done()
-			jobID := JobID(s.Config().DeferTaskURL, URL)
-			bqJob, ok := jobsByID[jobID]
-			if ! ok {
-				return
+		if objects[i].IsDir() {
+			if err = s.processURL(ctx, objects[i].URL(), response, jobsByID); err != nil {
+				return err
 			}
-			job, err := s.loadJob(ctx, URL, bqJob, actions)
+		}
+		actions, err := s.loadActions(ctx, objects[i].URL())
+		if err != nil {
+			response.AddError(err)
+			continue
+		}
+		jobID := JobID(s.Config().DeferTaskURL, URL)
+		bqJob, ok := jobsByID[jobID]
+		var job *Job
+		if ! ok {
+			job, err = s.loadJob(ctx, s.config.ProjectID, jobID, actions)
+		} else {
+			job, err = s.loadJobFromList(ctx, URL, bqJob, actions)
+		}
+		if err != nil {
+			response.AddError(err)
+			continue
+		}
+		if job.Status.State != base.DoneStatus {
+			continue
+		}
+		job.URL = URL
+		go func(jobID string, job *Job) {
 			if err = s.notify(ctx, job); err != nil {
 				response.AddError(err)
 			} else {
 				response.AddProcessed(jobID)
 			}
-		}(URL, actions)
-		return true, nil
-	})
-	waitGroup.Wait()
+		}(jobID, job)
+	}
 	return err
 }
 
+func (s *service) loadJob(ctx context.Context, URL string, jobID string, actions *task.Actions) (*Job, error) {
+	bqJob, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
+	if err != nil {
+		return nil, err
+	}
+	baseJob := base.Job(*bqJob)
+	return NewJob(URL, &baseJob, actions), nil
+}
 
-func (s *service) loadJob(ctx context.Context, URL string, job *bigquery.JobListJobs, actions *task.Actions) (*Job, error) {
-	//bqJob, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if strings.HasSuffix(jobID, base.DispatchJob) {
+func (s *service) loadJobFromList(ctx context.Context, URL string, job *bigquery.JobListJobs, actions *task.Actions) (*Job, error) {
 	baseJob := base.Job{
 		Configuration: job.Configuration,
 		Status:        job.Status,
@@ -155,15 +182,13 @@ func (s *service) loadJob(ctx context.Context, URL string, job *bigquery.JobList
 	return NewJob(URL, &baseJob, actions), nil
 }
 
-
 func (s *service) dispatch(ctx context.Context, response *contract.Response) (err error) {
 	return s.processJobs(ctx, response)
 }
 
-
-
 func (s *service) notify(ctx context.Context, job *Job) error {
 	if exists, _ := s.fs.Exists(ctx, job.URL); !exists {
+		fmt.Printf("does not exists quite %v \n", job.URL)
 		return nil
 	}
 	jobID := job.Id
@@ -178,6 +203,7 @@ func (s *service) notify(ctx context.Context, job *Job) error {
 			return err
 		}
 
+		fmt.Printf("uploading %v\n", actionURL)
 		if err = s.fs.Upload(ctx, actionURL, 0644, bytes.NewReader(JSON)); err != nil {
 			return err
 		}
