@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
+	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
@@ -193,6 +194,10 @@ func (s *service) notify(ctx context.Context, job *Job) error {
 	jobID := job.Id
 	if job.Job.JobReference != nil {
 		jobID = job.Job.JobReference.JobId
+	}
+	if job.Error() != nil {
+		fmt.Printf("Error: %v\n", job.Error())
+		toolbox.Dump(job.Job)
 	}
 	toRun := job.Actions.ToRun(job.Error(), job.Job, s.config.DeferTaskURL)
 	if len(toRun) > 0 {
