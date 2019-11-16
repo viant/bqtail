@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 )
 
 //BqTail storage trigger background cloud function entry point
@@ -23,7 +24,8 @@ func BqTail(ctx context.Context, event contract.GSEvent) (err error) {
 	}
 	_, err = handleTailEvent(ctx, request)
 	if err != nil {
-		return err
+		log.Printf("err: %v\n", err)
+		//return err
 	}
 	return nil
 }

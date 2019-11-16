@@ -170,9 +170,8 @@ func JobError(job *bigquery.Job) error {
 //DecodePathSeparator decode job ID
 func DecodePathSeparator(jobID string) string {
 	if count := strings.Count(jobID, PathElementSeparator); count > 0 {
-		jobID = strings.Replace(jobID, PathElementSeparator, "/", count)
+		jobID = strings.Replace(jobID, PathElementSeparator, "/", 1)
 	}
-
 	return jobID
 }
 
