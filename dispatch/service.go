@@ -11,12 +11,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
 	"google.golang.org/api/bigquery/v2"
 	"io"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -72,6 +74,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		if err != nil {
 			response.SetIfError(err)
 		}
+		response.Cycles++
 		if time.Now().Sub(startTime) > timeToLive {
 			break
 		}
@@ -81,37 +84,52 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 }
 
 func (s *service) processJobs(ctx context.Context, response *contract.Response) error {
-	modifiedAfter := time.Now().Add(- (time.Minute * time.Duration(s.config.MaxJobLoopbackInMin)))
+	startTime := time.Now()
+	modifiedAfter := startTime.Add(- (time.Minute * time.Duration(s.config.MaxJobLoopbackInMin)))
 	jobs, err := s.bq.ListJob(ctx, s.config.ProjectID, modifiedAfter, "done")
 	if err != nil {
 		return err
 	}
+	response.ListTime = fmt.Sprintf("%s", time.Now().Sub(startTime))
 	var jobsByID = make(map[string]*bigquery.JobListJobs)
 	for i := range jobs {
 		jobsByID[jobs[i].JobReference.JobId] = jobs[i]
 	}
 	response.JobMatched = len(jobsByID)
-	return s.fs.Walk(ctx, s.Config().DeferTaskURL, func(ctx context.Context, baseURL string, parent string, info os.FileInfo, reader io.Reader) (toContinue bool, err error) {
+	waitGroup := &sync.WaitGroup{}
+	err =  s.fs.Walk(ctx, s.Config().DeferTaskURL, func(ctx context.Context, baseURL string, parent string, info os.FileInfo, reader io.Reader) (toContinue bool, err error) {
 		if info.IsDir() {
 			return true, nil
 		}
 		URL := url.Join(baseURL, parent, info.Name())
-		jobID := JobID(s.Config().DeferTaskURL, URL)
-		_, ok := jobsByID[jobID]
-		if ! ok {
-			return
+		actions := &task.Actions{}
+		if err = json.NewDecoder(reader).Decode(actions); err != nil {
+			response.AddError(errors.Wrapf(err, "failed to decode job: %v\n", URL))
+			return true, nil
 		}
-		job, err := s.loadJob(ctx, URL, jobID)
-		if err = s.notify(ctx, job); err != nil {
-			response.AddError(err)
-		} else {
-			response.AddProcessed(jobID)
-		}
+		waitGroup.Add(1)
+		go func(URL string, action *task.Actions) {
+			defer waitGroup.Done()
+			jobID := JobID(s.Config().DeferTaskURL, URL)
+			_, ok := jobsByID[jobID]
+			if ! ok {
+				return
+			}
+			job, err := s.loadJob(ctx, URL, jobID, actions)
+			if err = s.notify(ctx, job); err != nil {
+				response.AddError(err)
+			} else {
+				response.AddProcessed(jobID)
+			}
+		}(URL, actions)
 		return true, nil
 	})
+	waitGroup.Wait()
+	return err
 }
 
-func (s *service) loadJob(ctx context.Context, URL string, jobID string) (*Job, error) {
+
+func (s *service) loadJob(ctx context.Context, URL string, jobID string, actions *task.Actions) (*Job, error) {
 	bqJob, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
 	if err != nil {
 		return nil, err
@@ -129,21 +147,12 @@ func (s *service) loadJob(ctx context.Context, URL string, jobID string) (*Job, 
 	//if baseJob.Status.ErrorResult == nil {
 	//	baseJob.Status.ErrorResult = job.ErrorResult
 	//}
+
 	baseJob := base.Job(*bqJob)
 	if baseJob.Status == nil {
 		baseJob.Status = &bigquery.JobStatus{}
 	}
-	reader, err := s.fs.DownloadWithURL(ctx, URL)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to download job: %v\n", URL)
-	}
-	defer func() {
-		_ = reader.Close()
-	}()
-	actions := &task.Actions{}
-	if err = json.NewDecoder(reader).Decode(actions); err != nil {
-		return nil, errors.Wrapf(err, "failed to decode job: %v\n", URL)
-	}
+
 	return NewJob(URL, &baseJob, actions), nil
 }
 
@@ -157,13 +166,18 @@ func (s *service) notify(ctx context.Context, job *Job) error {
 	if exists, _ := s.fs.Exists(ctx, job.URL); !exists {
 		return nil
 	}
+	jobID := job.Id
+	if job.Job.JobReference != nil {
+		jobID = job.Job.JobReference.JobId
+	}
 	toRun := job.Actions.ToRun(job.Error(), job.Job, s.config.DeferTaskURL)
 	if len(toRun) > 0 {
-		actionURL := s.config.BuildActionURL(job.Job.JobReference.JobId)
+		actionURL := s.config.BuildActionURL(jobID)
 		JSON, err := json.Marshal(toRun)
 		if err != nil {
 			return err
 		}
+
 		if err = s.fs.Upload(ctx, actionURL, 0644, bytes.NewReader(JSON)); err != nil {
 			return err
 		}

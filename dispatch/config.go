@@ -45,6 +45,7 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	return c.Ruleset.Init(ctx, fs, c.ProjectID)
 }
 
+
 //ReloadIfNeeded reloads rules if needed
 func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {
 	_, err := c.Ruleset.ReloadIfNeeded(ctx, fs)
