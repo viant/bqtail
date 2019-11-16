@@ -40,7 +40,7 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 		c.TimeToLiveInMin = 1
 	}
 	if c.MaxJobLoopbackInMin == 0 {
-		c.MaxJobLoopbackInMin = 60 * 5
+		c.MaxJobLoopbackInMin = 60
 	}
 	return c.Ruleset.Init(ctx, fs, c.ProjectID)
 }
