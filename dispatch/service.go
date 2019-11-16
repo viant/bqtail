@@ -188,7 +188,6 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) (er
 
 func (s *service) notify(ctx context.Context, job *Job) error {
 	if exists, _ := s.fs.Exists(ctx, job.URL); !exists {
-		fmt.Printf("does not exists quite %v \n", job.URL)
 		return nil
 	}
 	jobID := job.Id
