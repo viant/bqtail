@@ -8,7 +8,8 @@ import (
 type Response struct {
 	base.Response
 	Errors []string
-	Jobs interface{}
+	Processes []string
+	JobMatched int
 }
 
 
@@ -20,10 +21,16 @@ func (r * Response) AddError(err error) {
 	r.Errors = append(r.Errors, err.Error())
 }
 
+//AddProcessed add processed job ID
+func (r * Response) AddProcessed(id string) {
+	r.Processes = append(r.Processes, id)
+}
+
 //NewResponse creates a new response
 func NewResponse() *Response {
 	return &Response{
 		Errors: make([]string, 0),
+		Processes: make([]string, 0),
 		Response: *base.NewResponse(""),
 	}
 }

@@ -17,6 +17,9 @@ func (e *Job) Type() string {
 
 //Source returns job source
 func (e *Job) Source() string {
+	if e.Configuration == nil {
+		return ""
+	}
 	switch e.Configuration.JobType {
 	case "QUERY":
 		return strings.Replace(e.Configuration.Query.Query, "\n", " ", strings.Count(e.Configuration.Query.Query, "\n"))
@@ -102,6 +105,9 @@ func (e *Job) EventID() string {
 
 //SourceTable returns dest table
 func (e *Job) SourceTable() string {
+	if e.Configuration == nil {
+		return ""
+	}
 	switch e.Configuration.JobType {
 	case "QUERY":
 		return ""
@@ -118,6 +124,9 @@ func (e *Job) SourceTable() string {
 
 //DestTable returns dest table
 func (e *Job) DestTable() string {
+	if e.Configuration == nil {
+		return ""
+	}
 	switch e.Configuration.JobType {
 	case "QUERY":
 		dest := e.Configuration.Query.DestinationTable

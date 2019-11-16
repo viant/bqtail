@@ -44,4 +44,4 @@ pipeline:
       headers:
         User-Agent: Google-Cloud-Scheduler
       httpMethod: POST
-      uri: https://${gcp.Region}-${gcp.ProjectID}.cloudfunctions.net/BqDispatch
+      uri: https://us-east4-${gcp.ProjectID}.cloudfunctions.net/BqDispatch

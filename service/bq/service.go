@@ -6,13 +6,17 @@ import (
 	"context"
 	"github.com/viant/afs"
 	"google.golang.org/api/bigquery/v2"
+	"time"
 )
 
 //Service represents big query service
 type Service interface {
 	task.Service
 
+
 	GetJob(ctx context.Context, projectID, jobID string) (*bigquery.Job, error)
+
+	ListJob(ctx context.Context, projectID string, minCreateTime time.Time, stateFilter ... string) ([]*bigquery.JobListJobs, error)
 
 	Table(ctx context.Context, reference *bigquery.TableReference) (*bigquery.Table, error)
 

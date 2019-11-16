@@ -522,6 +522,8 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 
 func (s *service) run(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	actions:= []*task.Action{}
+	response.MatchedURL = request.SourceURL
+	response.Matched = true
 	reader, err := s.fs.DownloadWithURL(ctx, request.SourceURL)
 	if err != nil {
 		return err
