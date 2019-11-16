@@ -25,7 +25,7 @@ pipeline:
     timeout: 540s
     public: true
     serviceAccountEmail: ${gcp.serviceAccount}
-    availableMemoryMb: 512
+    availableMemoryMb: 256
     entryPoint: BqDispatch
     runtime: go111
     environmentVariables:

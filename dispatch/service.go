@@ -202,8 +202,6 @@ func (s *service) notify(ctx context.Context, job *Job) error {
 		if err != nil {
 			return err
 		}
-
-		fmt.Printf("uploading %v\n", actionURL)
 		if err = s.fs.Upload(ctx, actionURL, 0644, bytes.NewReader(JSON)); err != nil {
 			return err
 		}
