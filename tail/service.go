@@ -534,7 +534,7 @@ func (s *service) run(ctx context.Context, request *contract.Request, response *
 	if err = json.NewDecoder(reader).Decode(&actions); err != nil {
 		return errors.Wrapf(err, "unable decode: %v", request.SourceURL)
 	}
-	response.Actions = actions
+	//response.Actions = actions
 	for _ , action :=  range actions {
 		if err = task.Run(ctx, s.Registry, action);err != nil {
 			return err

@@ -20,11 +20,12 @@ pipeline:
 
   bqdisaptch:
     action: gcp/cloudfunctions:deploy
+    credentials: $gcpCredentials
     '@name': BqDispatch
     timeout: 540s
     public: true
     serviceAccountEmail: ${gcp.serviceAccount}
-    availableMemoryMb: 128
+    availableMemoryMb: 512
     entryPoint: BqDispatch
     runtime: go111
     environmentVariables:
@@ -33,15 +34,16 @@ pipeline:
     source:
       URL: ${appPath}
 
-  schedule:
-    action: gcp/cloudscheduler:deploy
-    credentials: $gcpCredentials
-    name: BqDispatch
-    schedule: '*/1 * * * *'
-    body: {}
-    timeZone: GMT
-    httpTarget:
-      headers:
-        User-Agent: Google-Cloud-Scheduler
-      httpMethod: POST
-      uri: https://us-east4-${gcp.ProjectID}.cloudfunctions.net/BqDispatch
+#
+#  schedule:
+#    action: gcp/cloudscheduler:deploy
+#    credentials: $gcpCredentials
+#    name: BqDispatch
+#    schedule: '*/1 * * * *'
+#    body: {}
+#    timeZone: GMT
+#    httpTarget:
+#      headers:
+#        User-Agent: Google-Cloud-Scheduler
+#      httpMethod: POST
+#      uri: https://us-east4-${gcp.ProjectID}.cloudfunctions.net/BqDispatch

@@ -111,11 +111,11 @@ func (s *service) processJobs(ctx context.Context, response *contract.Response) 
 		go func(URL string, action *task.Actions) {
 			defer waitGroup.Done()
 			jobID := JobID(s.Config().DeferTaskURL, URL)
-			_, ok := jobsByID[jobID]
+			bqJob, ok := jobsByID[jobID]
 			if ! ok {
 				return
 			}
-			job, err := s.loadJob(ctx, URL, jobID, actions)
+			job, err := s.loadJob(ctx, URL, bqJob, actions)
 			if err = s.notify(ctx, job); err != nil {
 				response.AddError(err)
 			} else {
@@ -129,28 +129,27 @@ func (s *service) processJobs(ctx context.Context, response *contract.Response) 
 }
 
 
-func (s *service) loadJob(ctx context.Context, URL string, jobID string, actions *task.Actions) (*Job, error) {
-	bqJob, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
-	if err != nil {
-		return nil, err
+func (s *service) loadJob(ctx context.Context, URL string, job *bigquery.JobListJobs, actions *task.Actions) (*Job, error) {
+	//bqJob, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//if strings.HasSuffix(jobID, base.DispatchJob) {
+	baseJob := base.Job{
+		Configuration: job.Configuration,
+		Status:        job.Status,
+		JobReference:  job.JobReference,
+		Statistics:    job.Statistics,
+		UserEmail:     job.UserEmail,
 	}
-	//baseJob := &base.Job{
-	//	Configuration: job.Configuration,
-	//	Status:        job.Status,
-	//	JobReference:  job.JobReference,
-	//	Statistics:    job.Statistics,
-	//	UserEmail:     job.UserEmail,
-	//}
-	//if baseJob.Status.State == "" {
-	//	baseJob.Status.State = job.State
-	//}
-	//if baseJob.Status.ErrorResult == nil {
-	//	baseJob.Status.ErrorResult = job.ErrorResult
-	//}
-
-	baseJob := base.Job(*bqJob)
 	if baseJob.Status == nil {
 		baseJob.Status = &bigquery.JobStatus{}
+	}
+	if baseJob.Status.State == "" {
+		baseJob.Status.State = job.State
+	}
+	if baseJob.Status.ErrorResult == nil {
+		baseJob.Status.ErrorResult = job.ErrorResult
 	}
 
 	return NewJob(URL, &baseJob, actions), nil
@@ -160,6 +159,7 @@ func (s *service) loadJob(ctx context.Context, URL string, jobID string, actions
 func (s *service) dispatch(ctx context.Context, response *contract.Response) (err error) {
 	return s.processJobs(ctx, response)
 }
+
 
 
 func (s *service) notify(ctx context.Context, job *Job) error {
