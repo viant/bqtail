@@ -1,5 +1,8 @@
 package batch
 
+
+/*
+
 import (
 	"bqtail/tail/config"
 	"bqtail/tail/contract"
@@ -360,3 +363,4 @@ func TestService_TryAcquireWindow(t *testing.T) {
 	}
 
 }
+*/

@@ -29,7 +29,6 @@ const (
 	//PathElementSeparator path separator
 	PathElementSeparator = "--"
 
-
 	//SourceURLKey source key
 	SourceURLKey = "SourceURL"
 	//ResponseKey response key
@@ -84,14 +83,23 @@ const (
 	//RetrySleepInSec
 	RetrySleepInSec = 3
 
-	//DoneStatus done status
-	DoneStatus = "DONE"
+	//DoneState done status
+	DoneState = "DONE"
+
+	//DoneState done status
+	RunningState = "RUNNING"
+
+	//DoneState done status
+	PendigState = "PENDING"
 
 	//DateLayout represents a date layout
 	DateLayout = "2006-01-02_15"
 
 	//actionPrefix
 	actionPrefix = "/_dispatched_/"
+
+	//taskPrefix
+	TaskPrefix = "/_deferred_/"
 
 	replayPrefix = "/_Replay/"
 )

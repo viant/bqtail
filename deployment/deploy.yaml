@@ -1,38 +1,38 @@
 pipeline:
-  bqtail:
-    action: gcp/cloudfunctions:deploy
-    credentials: $gcpCredentials
-    '@name': BqTail
-    timeout: 540s
-    public: true
-    availableMemoryMb: 128
-    entryPoint: BqTail
-    runtime: go111
-    serviceAccountEmail: ${gcp.serviceAccount}
-    environmentVariables:
-      CONFIG: gs://${configBucket}/BqTail/config.json
-      LOGGING: false
-    eventTrigger:
-      eventType: google.storage.object.finalize
-      resource: projects/_/buckets/${triggerBucket}
-    source:
-      URL: ${appPath}
+#  bqtail:
+#    action: gcp/cloudfunctions:deploy
+#    credentials: $gcpCredentials
+#    '@name': BqTail
+#    timeout: 540s
+#    public: true
+#    availableMemoryMb: 128
+#    entryPoint: BqTail
+#    runtime: go111
+#    serviceAccountEmail: ${gcp.serviceAccount}
+#    environmentVariables:
+#      CONFIG: gs://${configBucket}/BqTail/config.json
+#      LOGGING: false
+#    eventTrigger:
+#      eventType: google.storage.object.finalize
+#      resource: projects/_/buckets/${triggerBucket}
+#    source:
+#      URL: ${appPath}
 
-  bqdisaptch:
-    action: gcp/cloudfunctions:deploy
-    credentials: $gcpCredentials
-    '@name': BqDispatch
-    timeout: 540s
-    public: true
-    serviceAccountEmail: ${gcp.serviceAccount}
-    availableMemoryMb: 256
-    entryPoint: BqDispatch
-    runtime: go111
-    environmentVariables:
-      CONFIG: gs://${configBucket}/BqDispatch/config.json
-      LOGGING: false
-    source:
-      URL: ${appPath}
+#  bqdisaptch:
+#    action: gcp/cloudfunctions:deploy
+#    credentials: $gcpCredentials
+#    '@name': BqDispatch2
+#    timeout: 540s
+#    public: true
+#    serviceAccountEmail: ${gcp.serviceAccount}
+#    availableMemoryMb: 256
+#    entryPoint: BqDispatch
+#    runtime: go111
+#    environmentVariables:
+#      CONFIG: gs://${configBucket}/BqDispatch/config.json
+#      LOGGING: false
+#    source:
+#      URL: ${appPath}
 
 #
 #  schedule:

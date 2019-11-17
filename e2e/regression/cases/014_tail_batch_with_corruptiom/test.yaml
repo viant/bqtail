@@ -26,29 +26,17 @@ pipeline:
       credentials: $gcpCredentials
       URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}.json
 
-
-
   trigger:
-    init:
-      self.i: 0
-
-    upload:
-      init:
-        _: $self.i++
-      action: storage:copy
-      source:
-        URL: ${parent.path}/data/trigger/dummy${self.i}.json
-      dest:
-        URL: gs://${triggerBucket}/data/case003/dummy${self.i}.json
-        credentials: $gcpCredentials
-    goto:
-      when: $self.i < 2
-      action: goto
-      task: upload
+    action: storage:copy
+    source:
+      URL: ${parent.path}/data/trigger/
+    dest:
+      URL: gs://${triggerBucket}/data/case014/
+      credentials: $gcpCredentials
 
   waitForServerless:
     action: nop
-    sleepTimeMs: 30000
+    sleepTimeMs: 45000
 
   validate:
     check-db:

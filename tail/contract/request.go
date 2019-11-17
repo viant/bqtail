@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ type Request struct {
 	ScheduleURL string
 	Started     time.Time
 	Attempt     int
+	source *storage.Object
 }
 
 
@@ -20,6 +22,12 @@ type Request struct {
 func (r *Request) IsAction(actionPrefix string) bool {
 	 _, PathURL := url.Base(r.SourceURL, "")
 	 return strings.HasPrefix(PathURL, actionPrefix)
+}
+
+//IsDeferredTask returns true if deferred task URL
+func (r *Request) IsDeferredTask(taskPrefix string) bool {
+	_, PathURL := url.Base(r.SourceURL, "")
+	return strings.HasPrefix(PathURL, taskPrefix)
 }
 
 //NewRequest creates a request

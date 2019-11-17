@@ -8,15 +8,14 @@ import (
 	"bqtail/service/slack"
 	"bqtail/service/storage"
 	"bqtail/task"
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
-	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -25,6 +24,7 @@ type Service interface {
 	Dispatch(ctx context.Context) *contract.Response
 	Config() *Config
 }
+
 
 type service struct {
 	task.Registry
@@ -61,6 +61,7 @@ func (s *service) Init(ctx context.Context) error {
 	return err
 }
 
+
 //Dispatch dispatched BigQuery event
 func (s *service) Dispatch(ctx context.Context) *contract.Response {
 	response := contract.NewResponse()
@@ -68,6 +69,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 	timeToLive := s.config.TimeToLive()
 	startTime := time.Now()
 	for ; ; {
+		response.Reset()
 		err := s.dispatch(ctx, response)
 		if err != nil {
 			response.SetIfError(err)
@@ -93,140 +95,93 @@ func (s *service) processJobs(ctx context.Context, response *contract.Response) 
 	for i := range jobs {
 		jobsByID[jobs[i].JobReference.JobId] = jobs[i]
 	}
-	response.JobMatched = len(jobsByID)
+	response.ListCount = len(jobsByID)
 	return s.processURL(ctx, s.config.DeferTaskURL, response, jobsByID)
 }
 
-func (s *service) loadActions(ctx context.Context, URL string) (*task.Actions, error) {
-	reader, err := s.fs.DownloadWithURL(ctx, URL)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-	actions := &task.Actions{}
-	return actions, json.NewDecoder(reader).Decode(actions)
-}
 
 func (s *service) processURL(ctx context.Context, parentURL string, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs) error {
 	objects, err := s.fs.List(ctx, parentURL)
 	if err != nil {
 		return err
 	}
+
 	waitGroup := &sync.WaitGroup{}
 	for i := range objects {
-		URL := objects[i].URL()
+		URL := url.Join(parentURL, objects[i].Name())
 		if url.Equals(URL, parentURL) {
 			continue
 		}
 		if objects[i].IsDir() {
-			if err = s.processURL(ctx, objects[i].URL(), response, jobsByID); err != nil {
+			if err = s.processURL(ctx, URL, response, jobsByID); err != nil {
 				return err
 			}
 		}
-		actions, err := s.loadActions(ctx, objects[i].URL())
-		if err != nil {
-			response.AddError(err)
+		if response.Jobs.Has(URL) {
 			continue
 		}
 		jobID := JobID(s.Config().DeferTaskURL, URL)
-		bqJob, ok := jobsByID[jobID]
-		var job *Job
-		if ! ok {
-			job, err = s.loadJob(ctx, s.config.ProjectID, jobID, actions)
+		var state string
+		listJob, ok := jobsByID[jobID]
+		if ok {
+			state = listJob.State
 		} else {
-			job, err = s.loadJobFromList(ctx, URL, bqJob, actions)
+			response.GetCount++
+			job, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
+			if err != nil || job == nil {
+				atomic.AddInt32(&response.MissingCount, 1)
+				continue
+			}
+			if job.Status != nil {
+				state = job.Status.State
+			}
 		}
-		if err != nil {
-			response.AddError(err)
+
+		switch strings.ToUpper(state){
+		case base.RunningState:
+			atomic.AddInt32(&response.RunningCount, 1)
+			continue
+		case base.PendigState:
+			atomic.AddInt32(&response.PendingCount, 1)
 			continue
 		}
-		if job.Status.State != base.DoneStatus {
-			continue
-		}
-		job.URL = URL
+		job := contract.NewJob(jobID, URL, state)
 		waitGroup.Add(1)
-		go func(jobID string, job *Job) {
+		go func(job *contract.Job) {
+			err = s.notify(ctx, job)
 			defer waitGroup.Done()
 			if err = s.notify(ctx, job); err != nil {
-				response.AddError(err)
-			} else {
-				response.AddProcessed(jobID)
+				response.Jobs.Add(job)
 			}
-		}(jobID, job)
+		}(job)
 	}
 	waitGroup.Wait()
 	return err
-}
-
-func (s *service) loadJob(ctx context.Context, URL string, jobID string, actions *task.Actions) (*Job, error) {
-	bqJob, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
-	if err != nil {
-		return nil, err
-	}
-	baseJob := base.Job(*bqJob)
-	return NewJob(URL, &baseJob, actions), nil
-}
-
-func (s *service) loadJobFromList(ctx context.Context, URL string, job *bigquery.JobListJobs, actions *task.Actions) (*Job, error) {
-	baseJob := base.Job{
-		Configuration: job.Configuration,
-		Status:        job.Status,
-		JobReference:  job.JobReference,
-		Statistics:    job.Statistics,
-		UserEmail:     job.UserEmail,
-	}
-	if baseJob.Status == nil {
-		baseJob.Status = &bigquery.JobStatus{}
-	}
-	if baseJob.Status.State == "" {
-		baseJob.Status.State = job.State
-	}
-	if baseJob.Status.ErrorResult == nil {
-		baseJob.Status.ErrorResult = job.ErrorResult
-	}
-
-	return NewJob(URL, &baseJob, actions), nil
 }
 
 func (s *service) dispatch(ctx context.Context, response *contract.Response) (err error) {
 	return s.processJobs(ctx, response)
 }
 
-func (s *service) notify(ctx context.Context, job *Job) error {
+//notify notify bqtail
+func (s *service) notify(ctx context.Context, job *contract.Job) error {
 	if exists, _ := s.fs.Exists(ctx, job.URL); !exists {
 		return nil
 	}
-	jobID := job.Id
-	if job.Job.JobReference != nil {
-		jobID = job.Job.JobReference.JobId
-	}
-	if job.Error() != nil {
-		fmt.Printf("Error: %v\n", job.Error())
-		toolbox.Dump(job.Job)
-	}
-	toRun := job.Actions.ToRun(job.Error(), job.Job, s.config.DeferTaskURL)
-	if len(toRun) > 0 {
-		actionURL := s.config.BuildActionURL(jobID)
-		JSON, err := json.Marshal(toRun)
-		if err != nil {
-			return err
-		}
-		if err = s.fs.Upload(ctx, actionURL, 0644, bytes.NewReader(JSON)); err != nil {
-			return err
-		}
-	}
-	return s.moveJob(ctx, job)
+	taskURL := s.config.BuildTaskURL(job.ID)
+	return  s.fs.Move(ctx, job.URL, taskURL)
 }
 
-func (s *service) moveJob(ctx context.Context, job *Job) error {
-	baseURL := s.config.OutputURL(job.Error() != nil)
-	sourceURL := job.URL
-	_, sourcePath := url.Base(sourceURL, "")
-	if len(s.config.DeferTaskURL) < len(sourceURL) {
-		sourcePath = string(sourceURL[len(s.config.DeferTaskURL):])
+
+//JobID returns job ID for supplied URL
+func JobID(baseURL string, URL string) string {
+	if len(baseURL) > len(URL) {
+		return ""
 	}
-	destURL := url.Join(baseURL, sourcePath)
-	return s.fs.Move(ctx, sourceURL, destURL)
+	encoded := strings.Trim(string(URL[len(baseURL):]), "/")
+	encoded = strings.Replace(encoded, ".json", "", 1)
+	jobID := base.EncodePathSeparator(encoded)
+	return jobID
 }
 
 //New creates a dispatch service

@@ -18,6 +18,7 @@ type Response struct {
 	ScheduledURL    string         `json:",omitempty"`
 	Window          interface{}    `json:",omitempty"`
 	Actions         []*task.Action `json:",omitempty"`
+	Corrupted       []string
 }
 
 //NewResponse creates a new response

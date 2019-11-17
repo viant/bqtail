@@ -21,7 +21,6 @@ var syncCheckTimeout = 2 * time.Second
 func (s *service) setJobID(ctx context.Context, actions *task.Actions) (*bigquery.JobReference, error) {
 	var ID string
 	var err error
-
 	if actions != nil {
 		if ID, err = actions.ID(base.JobPrefix); err != nil {
 			return nil, errors.Wrapf(err, "failed to generate job ID: %v", actions.JobID)
@@ -29,18 +28,20 @@ func (s *service) setJobID(ctx context.Context, actions *task.Actions) (*bigquer
 	}
 	return &bigquery.JobReference{
 		JobId: ID,
+		ProjectId:s.Config.ProjectID,
 	}, nil
 }
 
-func (s *service) schedulePostTask(ctx context.Context, jobReference *bigquery.JobReference, actions *task.Actions) error {
+func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actions *task.Actions) error {
 	if actions == nil || actions.IsEmpty() || actions.IsSyncMode() {
 		return nil
 	}
+	actions.Job = job
 	data, err := json.Marshal(actions)
 	if err != nil {
 		return errors.Wrapf(err, "failed to encode actions: %v", actions)
 	}
-	filename := base.DecodePathSeparator(jobReference.JobId)
+	filename := base.DecodePathSeparator(job.JobReference.JobId, 1)
 	if path.Ext(filename) == "" {
 		filename += base.JobExt
 	}
@@ -94,7 +95,7 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	if job.JobReference != nil {
 		job.JobReference.JobId = base.EncodePathSeparator(job.JobReference.JobId)
 	}
-	if err = s.schedulePostTask(ctx, job.JobReference, onDoneActions); err != nil {
+	if err = s.schedulePostTask(ctx, job, onDoneActions); err != nil {
 		return nil, err
 	}
 	if base.IsLoggingEnabled() {

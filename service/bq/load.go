@@ -28,14 +28,14 @@ func (s *service) Load(ctx context.Context, request *LoadRequest) (job *bigquery
 		},
 	}
 	job.JobReference = request.jobReference()
-	job.Configuration.Load.SourceUris = s.getValidURIs(ctx, job.Configuration.Load.SourceUris)
+	job.Configuration.Load.SourceUris = s.getUniqueURIs(ctx, job.Configuration.Load.SourceUris)
 	if len(job.Configuration.Load.SourceUris) <= maxJobLoadURIs {
 		return s.Post(ctx, request.DestinationTable.ProjectId, job, &request.Actions)
 	}
 	return s.loadInParts(ctx, job, request)
 }
 
-func (s *service) getValidURIs(ctx context.Context, candidates []string) []string {
+func (s *service) getUniqueURIs(ctx context.Context, candidates []string) []string {
 	var result = make([]string, 0)
 	var unique = map[string]bool{}
 	for i := range candidates {
@@ -43,9 +43,6 @@ func (s *service) getValidURIs(ctx context.Context, candidates []string) []strin
 			continue
 		}
 		unique[candidates[i]] = true
-		if exists, _ := s.fs.Exists(ctx, candidates[i]); !exists {
-			continue
-		}
 		result = append(result, candidates[i])
 	}
 	return result
@@ -83,14 +80,13 @@ func (r *LoadRequest) Init(projectID string) {
 
 	if table.ProjectId == "" {
 		table.ProjectId = projectID
-	} else {
+	} else if table.ProjectId != ""{
 		projectID = table.ProjectId
 	}
 
 	if r.ProjectID == "" {
 		r.ProjectID = projectID
 	}
-
 	if len(r.SourceUris) > 0 {
 		sourceURI := strings.ToLower(r.SourceUris[0])
 		if strings.Contains(sourceURI, ".csv") {

@@ -2,44 +2,43 @@ package contract
 
 import (
 	"bqtail/base"
-	"sync"
 )
 
 //Response represents response
 type Response struct {
 	base.Response
-	Errors []string
-	Processes []string
-	JobMatched int
-	mux *sync.Mutex
-	Cycles int
-	ListTime string
+	Jobs         *Jobs
+	Cycles       int
+	ListTime     string
+	ListCount    int
+	GetCount     int
+	Errors       []string
+	MissingCount int32
+	RunningCount int32
+	PendingCount int32
 }
 
+func (r *Response) Reset() {
+	r.PendingCount = 0
+	r.RunningCount = 0
+	r.MissingCount = 0
+}
 
-//AddError add an error
-func (r * Response) AddError(err error) {
+func (r *Response) AddError(err error) {
 	if err == nil {
 		return
 	}
-	r.mux.Lock()
-	defer r.mux.Unlock()
+	r.Jobs.mux.Lock()
+	defer r.Jobs.mux.Unlock()
 	r.Errors = append(r.Errors, err.Error())
-}
-
-//AddProcessed add processed job ID
-func (r * Response) AddProcessed(id string) {
-	r.mux.Lock()
-	defer r.mux.Unlock()
-	r.Processes = append(r.Processes, id)
+	r.SetIfError(err)
 }
 
 //NewResponse creates a new response
 func NewResponse() *Response {
 	return &Response{
-		mux : &sync.Mutex{},
-		Errors: make([]string, 0),
-		Processes: make([]string, 0),
+		Jobs:     NewJobs(),
+		Errors:   make([]string, 0),
 		Response: *base.NewResponse(""),
 	}
 }

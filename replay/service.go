@@ -3,6 +3,7 @@ package replay
 import (
 	"bqtail/base"
 	"context"
+	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/option"
@@ -45,6 +46,7 @@ func (s *service) replay(ctx context.Context, request *Request, response *Respon
 		return err
 	}
 	objects, err := s.list(ctx, request.TriggerURL, request.unprocessedModifiedBefore)
+	fmt.Printf("%v %v\n", request.TriggerURL, len(objects))
 	for i := range objects {
 		if objects[i].IsDir() {
 			continue
@@ -58,16 +60,24 @@ func (s *service) replay(ctx context.Context, request *Request, response *Respon
 			continue
 		}
 
+
+		go func(sourceURL, destURL string) {
+
 		if err := s.fs.Move(ctx, sourceURL, destURL); err != nil {
-			return err
+			fmt.Printf("failed to move %v\n", err)
+			return
 		}
 		if err := s.fs.Move(ctx, destURL, sourceURL); err != nil {
-			return err
+			fmt.Printf("failed to move %v\n", err)
+			return
 		}
+		fmt.Printf("replayed %v\n", sourceURL)
 		response.Replayed = append(response.Replayed, sourceURL)
 		if err := s.fs.Upload(ctx, replayedURL, 0644, strings.NewReader(sourceURL)); err != nil {
-			return err
+			return
 		}
+		}(sourceURL, destURL)
+
 	}
 	return nil
 }
@@ -76,6 +86,7 @@ func (s *service) list(ctx context.Context, URL string, modifiedBefore *time.Tim
 	timeMatcher := matcher.NewModification(modifiedBefore, nil)
 	recursive := option.NewRecursive(true)
 	exists, _ := s.fs.Exists(ctx, URL)
+	//fmt.Printf("%v  %v\n", exists, err)
 	if !exists {
 		return []storage.Object{}, nil
 	}

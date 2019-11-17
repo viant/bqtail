@@ -13,23 +13,21 @@ import (
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
-	"io/ioutil"
+	"github.com/viant/afsc/gs"
 	"path"
-	"sort"
-	"strconv"
 	"strings"
 	"time"
 )
 
 type Service interface {
 	//Add adds transfer events to batch stage
-	Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) (storage.Object, error)
+	Add(context.Context, storage.Object, *contract.Request, *config.Rule) (*Snapshot, error)
 
 	//Try to acquire batch window
-	TryAcquireWindow(ctx context.Context, request *contract.Request, rule *config.Rule) (*BatchedWindow, error)
+	TryAcquireWindow(ctx context.Context, snapshot *Snapshot, rule *config.Rule) (*BatchedWindow, error)
 
 	//MatchWindowData updates the window with the window span matched transfer datafiles
-	MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) error
+	MatchWindowData(ctx context.Context, window *Window, rule *config.Rule) error
 }
 
 type service struct {
@@ -37,8 +35,8 @@ type service struct {
 	fs  afs.Service
 }
 
-func (s *service) scheduleURL(created time.Time, request *contract.Request, rule *config.Rule) (string, error) {
-	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, created, request.SourceURL)
+func (s *service) scheduleURL(source storage.Object, request *contract.Request, rule *config.Rule) (string, error) {
+	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, source.ModTime(), source.URL())
 	if err != nil {
 		return "", err
 	}
@@ -46,34 +44,30 @@ func (s *service) scheduleURL(created time.Time, request *contract.Request, rule
 	return url.Join(baseURL, request.EventID+transferableExtension), nil
 }
 
-func (s *service) isEventDuplicated(ctx context.Context, URL string, sourceCreated time.Time, loopbackWindow time.Duration) bool {
-	object, err := s.fs.Object(ctx, URL)
-	if err != nil || object == nil {
-		return false
-	}
-	duplicateGap := sourceCreated.Sub(object.ModTime())
-	return duplicateGap < loopbackWindow
-}
-
-
 //Add adds matched transfer event to batch stage
-func (s *service) Add(ctx context.Context, sourceCreated time.Time, request *contract.Request, rule *config.Rule) (added storage.Object, err error) {
-	URL, err := s.scheduleURL(sourceCreated, request, rule)
+func (s *service) Add(ctx context.Context, source storage.Object, request *contract.Request, rule *config.Rule) (snapshot *Snapshot, err error) {
+	sourceCreated := source.ModTime()
+	rangeMin := sourceCreated.Add(-(rule.Batch.Window.Duration + 1))
+	rangeMax := sourceCreated.Add(rule.Batch.Window.Duration + 1)
+	URL, err := s.scheduleURL(source, request, rule)
 	if err != nil {
 		return nil, err
 	}
-	if s.isEventDuplicated(ctx, URL, sourceCreated, rule.Batch.Window.Duration) {
-		return nil, nil
+	parentURL, name := url.Split(URL, gs.Scheme)
+	modTimeMatcher := matcher.NewModification(&rangeMax, &rangeMin)
+	objects, err := s.fs.List(ctx, parentURL, modTimeMatcher)
+	if err != nil {
+		objects = []storage.Object{}
 	}
-	if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL)); err == nil {
-		if object, _ := s.fs.Object(ctx, URL); object != nil {
-			return object, nil
-		}
+	snapshot = NewSnapshot(source, request.EventID, name, objects)
+	if snapshot.IsDuplicate(sourceCreated, rule.Batch.Window.Duration) {
+		return snapshot, nil
 	}
-	if err == nil {
-		err = errors.Errorf("failed to check URL: %v", URL)
+	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL), &snapshot.Schedule)
+	if err != nil {
+		err = errors.Errorf("failed create batch trace file: %v", URL)
 	}
-	return nil, err
+	return snapshot, err
 }
 
 func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) error {
@@ -89,262 +83,61 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	return err
 }
 
-func (s *service) getSchedule(ctx context.Context, created time.Time, request *contract.Request, rule *config.Rule) (storage.Object, error) {
-	URL := request.ScheduleURL
-	var err error
-	if URL == "" {
-		URL, err = s.scheduleURL(created, request, rule)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return s.fs.Object(ctx, URL)
-}
-
-func (s *service) getWindow(ctx context.Context, URL string) (*Window, error) {
-	reader, err := s.fs.DownloadWithURL(ctx, URL)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-	data, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read window: %v", URL)
-	}
-	window := &Window{}
-	return window, json.Unmarshal(data, window)
-}
-
-func (s *service) getBatchingWindowID(ctx context.Context, sourceTime time.Time, windows []storage.Object) (string, error) {
-	for i := range windows {
-		windowEnd, err := windowToTime(windows[i])
-		if err != nil {
-			return "", err
-		}
-		if sourceTime.After(*windowEnd) {
-			continue
-		}
-		window, err := s.getWindow(ctx, windows[i].URL())
-		if err != nil {
-			return "", err
-		}
-		if sourceTime.Before(window.Start) || sourceTime.After(window.End) {
-			continue
-		}
-		return window.EventID, nil
-	}
-	return "", nil
-}
-
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
-func (s *service) TryAcquireWindow(ctx context.Context, request *contract.Request, rule *config.Rule) (*BatchedWindow, error) {
-	source, err := s.fs.Object(ctx, request.SourceURL)
-	if err != nil {
-		return nil, errors.Wrapf(err, "source event was missing: %v", request.SourceURL)
+func (s *service) TryAcquireWindow(ctx context.Context, snapshot *Snapshot, rule *config.Rule) (*BatchedWindow, error) {
+	batchEventID, _ := snapshot.GetWindowID(ctx, rule.Batch.Window.Duration, s.fs)
+	if batchEventID != "" {
+		return &BatchedWindow{BatchingEventID: batchEventID}, nil
 	}
-	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, source.ModTime(), request.SourceURL)
+
+	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, snapshot.source.ModTime(), snapshot.source.URL())
 	if err != nil {
 		return nil, err
-	}
-	eventSchedule, err := s.getSchedule(ctx, source.ModTime(), request, rule)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get schedule")
 	}
 	baseURL := url.Join(s.URL, path.Join(dest))
-	rangeMin := eventSchedule.ModTime().Add(-(rule.Batch.Window.Duration + 1))
-	rangeMax := eventSchedule.ModTime().Add(rule.Batch.Window.Duration + 1)
-
-	transferableMatcher := windowedMatcher(rangeMin, rangeMax, transferableExtension)
-	transfers, err := s.fs.List(ctx, baseURL, transferableMatcher)
-	if err != nil {
-		return nil, err
-	}
-	if len(transfers) == 0 {
-		return nil, fmt.Errorf("scheduled were empty, expected at least one")
-	}
-	sortedTransfers := Objects(transfers)
-	sort.Sort(sortedTransfers)
-	window := NewWindow(baseURL, request, eventSchedule.ModTime(), rule, eventSchedule.ModTime(), eventSchedule.URL())
-	before := sortedTransfers.Before(eventSchedule)
-	if len(before) == 0 {
-		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
-	}
-
-	windowMatcher := windowedMatcher(rangeMin.Add(-rule.Batch.Window.Duration), rangeMax, windowExtension)
-	windows, err := s.fs.List(ctx, baseURL, windowMatcher)
-
-	batchingEventID := before[0].Name()
-	if len(windows) == 0 {
-		//try acquire one
-		return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
-	}
-	batchingEventID, err = s.getBatchingWindowID(ctx, eventSchedule.ModTime(), windows)
-	if err != nil || batchingEventID != "" {
-		return &BatchedWindow{BatchingEventID: batchingEventID}, err
-	}
+	window := NewWindow(baseURL, snapshot, rule)
 	return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 }
 
-func (s *service) loadDatafile(ctx context.Context, object storage.Object) (*Datafile, error) {
-	reader, err := s.fs.Download(ctx, object)
+
+func (s *service) newWindowSnapshot(ctx context.Context, window *Window) *Snapshot {
+	windowDuration := window.End.Sub(window.Start)
+	rangeMin := window.Start.Add(-(windowDuration + 1))
+	rangeMax := window.End.Add(1)
+	_, name := url.Split(window.ScheduleURL, gs.Scheme)
+	modTimeMatcher := matcher.NewModification(&rangeMax, &rangeMin)
+	objects, err := s.fs.List(ctx, window.BaseURL, modTimeMatcher)
 	if err != nil {
-		return nil, err
+		objects = []storage.Object{}
 	}
-	defer func() { _ = reader.Close() }()
-	data, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-	_, name := url.Split(object.URL(), file.Scheme)
-	name = string(name[:len(name)-4])
-	return &Datafile{SourceURL: string(data), EventID: name, Created: object.ModTime(), URL: object.URL()}, nil
+	return NewSnapshot(nil, window.EventID, name, objects)
+
 }
-
-func (s *service) loadDatafileWithURL(ctx context.Context, URL string) (*Datafile, error) {
-	reader, err := s.fs.DownloadWithURL(ctx, URL)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = reader.Close() }()
-	result := &Datafile{}
-	return result, json.NewDecoder(reader).Decode(result)
-}
-
-func (s *service) verifyBatchOwnership(ctx context.Context, window *Window) (bool, error) {
-	halfDuration := window.End.Sub(window.Start) / 2
-	windowMatcher := windowedMatcher(window.Start.Add(-halfDuration), window.End, windowExtension)
-	windows, err := s.fs.List(ctx, window.BaseURL, windowMatcher)
-	if err != nil {
-		return false, err
-	}
-	if len(windows) <= 1 {
-		return true, nil
-	}
-	sortedwindows := Objects(windows)
-	sort.Sort(sortedwindows)
-	filtered := make([]storage.Object, 0)
-
-	for i := range sortedwindows {
-		windowEnd, err := windowToTime(sortedwindows[i])
-		if err != nil {
-			return false, err
-		}
-		if windowEnd.Equal(window.End) || windowEnd.After(window.Start) {
-			filtered = append(filtered, sortedwindows[i])
-		}
-	}
-	if len(filtered) == 1 {
-		return true, nil
-	}
-	if filtered[0].URL() == window.URL {
-		return true, nil
-	}
-
-	//in case when more than one window is matched,
-	// double check that this event ID falls into current batch, not previous
-	if batchingEventID, err := s.getBatchingWindowID(ctx, window.Start, windows); err == nil {
-		if batchingEventID == window.EventID {
-			return true, nil
-		}
-	}
-	_ = s.fs.Delete(ctx, window.URL)
-	return false, nil
-}
-
-func (s *service) isDuplicatedEvent(ctx context.Context, now time.Time, window *Window, rule *config.Rule) (bool, error) {
-	datafiles, err := s.getWindowDatafiles(ctx, now, window, rule)
-	if err != nil {
-		return false, err
-	}
-	var scheduleDatafiles = make([]*Datafile, 0)
-	for i, datafile := range datafiles {
-		if datafile.URL == window.ScheduleURL {
-			scheduleDatafiles = append(scheduleDatafiles, datafiles[i])
-		}
-	}
-	if len(scheduleDatafiles) == 0 {
-		return true, nil
-	}
-	if len(scheduleDatafiles) <= 1 {
-		return false, nil
-	}
-	return scheduleDatafiles[0].EventID == window.EventID, nil
-}
-
 
 //MatchWindowData matches window data, it waits for window to ends if needed
-func (s *service) MatchWindowData(ctx context.Context, now time.Time, window *Window, rule *config.Rule) (err error) {
-	closingBatchWaitTime := time.Second
-	tillWindowEnd := window.End.Sub(now)
+func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *config.Rule) (err error) {
+	closingBatchWaitTime := 5 * time.Second
 	time.Sleep(closingBatchWaitTime)
 	closingBatchWaitTime -= closingBatchWaitTime
-
-	if isLeader, err := s.verifyBatchOwnership(ctx, window); !isLeader {
+	snapshot := s.newWindowSnapshot(ctx, window)
+	if owner, _ := snapshot.IsOwner(ctx, window, s.fs); ! owner {
 		window.LostOwnership = true
-		return err
+		_ = s.fs.Delete(ctx, window.URL)
+		return nil
 	}
-	duplicate, err := s.isDuplicatedEvent(ctx, now, window, rule)
-	if err != nil || duplicate {
-		window.LostOwnership = true
-		return err
-	}
+	tillWindowEnd := window.End.Sub(time.Now()) + time.Second
 	if tillWindowEnd > 0 {
 		time.Sleep(tillWindowEnd)
 	}
-	duplicate, err = s.isDuplicatedEvent(ctx, now, window, rule)
-	if err != nil || duplicate {
-		window.LostOwnership = true
+	if err = window.loadDatafile(ctx, s.fs); err != nil {
 		return err
 	}
-
-	//if a file is added as the window end make sure it is visible for this batch collection
-	time.Sleep(closingBatchWaitTime)
-	window.Datafiles = make([]*Datafile, 0)
-
-	window.Datafiles, err = s.getWindowDatafiles(ctx, now, window, rule)
-	return err
-}
-
-func (s *service) getWindowDatafiles(ctx context.Context, now time.Time, window *Window, rule *config.Rule) ([]*Datafile, error) {
-	var result = make([]*Datafile, 0)
-	eventMatcher := windowedMatcher(window.Start.Add(-1), window.End.Add(1), transferableExtension)
-	parentURL, _ := url.Split(window.URL, file.Scheme)
-	transferFiles, err := s.fs.List(ctx, parentURL, eventMatcher)
-	if err != nil {
-		return result, err
+	if !window.IsOwner() {
+		window.LostOwnership = true
+		_ = s.fs.Delete(ctx, window.URL)
+		return nil
 	}
-	sortedTransfers := Objects(transferFiles)
-	sort.Sort(sortedTransfers)
-	result = make([]*Datafile, 0)
-	for i := range sortedTransfers {
-		if transferFiles[i].ModTime().Before(window.Start) || transferFiles[i].ModTime().After(window.End) {
-			continue
-		}
-		datafile, err := s.loadDatafile(ctx, transferFiles[i])
-		if err != nil {
-			return result, err
-		}
-		result = append(result, datafile)
-	}
-	return result, err
-}
-
-func windowToTime(window storage.Object) (*time.Time, error) {
-	result, err := windowNameToTime(window.Name())
-	if err != nil {
-		return nil, errors.Wrapf(err, "invalid nano time for URL: %v", window.URL())
-	}
-	return result, nil
-}
-
-func windowNameToTime(name string) (*time.Time, error) {
-	nanoTime := string(name[:len(name)-4])
-	unixNano, err := strconv.ParseInt(nanoTime, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	result := time.Unix(0, unixNano)
-	return &result, nil
+	return nil
 }
 
 func windowedMatcher(after, before time.Time, ext string) *matcher.Modification {

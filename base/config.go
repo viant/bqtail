@@ -27,6 +27,7 @@ type Config struct {
 	JournalURL       string
 	TriggerBucket    string
 	ActionPrefix     string
+	TaskPrefix       string
 	ErrorURL         string
 	SlackCredentials *Secret
 }
@@ -40,7 +41,14 @@ func (c *Config) BuildReplayActionURL(eventID string) string {
 //BuildActionURL returns an action url for supplied event ID
 func (c *Config) BuildActionURL(eventID string) string {
 	date := time.Now().Format(DateLayout)
-	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.ActionPrefix, date,DecodePathSeparator(eventID), ActionExt)
+	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.ActionPrefix, date, DecodePathSeparator(eventID, 2), ActionExt)
+}
+
+
+//BuildTaskURL returns an action url for supplied event ID
+func (c *Config) BuildTaskURL(eventID string) string {
+	date := time.Now().Format(DateLayout)
+	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.TaskPrefix, date, DecodePathSeparator(eventID, 2), ActionExt)
 }
 
 
@@ -84,6 +92,9 @@ func (c *Config) Init(ctx context.Context) error {
 
 	if c.ActionPrefix == "" {
 		c.ActionPrefix = actionPrefix
+	}
+	if c.TaskPrefix == "" {
+		c.TaskPrefix = TaskPrefix
 	}
 	return nil
 }

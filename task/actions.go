@@ -4,10 +4,12 @@ import (
 	"bqtail/base"
 	"encoding/json"
 	"fmt"
+	"google.golang.org/api/bigquery/v2"
 )
 
 //Actions represents actions
 type Actions struct {
+	Job *bigquery.Job
 	SourceURL    string
 	DeferTaskURL string    `json:",omitempty"`
 	Async        bool      `json:",omitempty"`
