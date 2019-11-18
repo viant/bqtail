@@ -39,11 +39,11 @@ pipeline:
       index: ${self.i}
       lineTemplate: '{"id": ${id}, "name": "dummy ${id}", "type_id": 1}'
       dest:
-        URL: gs://${triggerBucket}/data/case015/dummy_ao${self.cnt++}_$fileNo.json
+        URL: gs://${triggerBucket}/data/case015/dummy_bb${self.cnt++}_$fileNo.json
         credentials: $gcpCredentials
     inc:
       action: nop
-      sleepTimeMs: 500
+      sleepTimeMs: 700
       logging: false
       init:
         'self.i': ${self.i+20}

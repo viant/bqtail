@@ -130,10 +130,14 @@ func (c *Ruleset) loadAllResources(ctx context.Context, fs afs.Service) error {
 
 func (c *Ruleset) loadResources(ctx context.Context, storage afs.Service, object storage.Object) error {
 	reader, err := storage.Download(ctx, object)
+	if err != nil {
+		return errors.Wrapf(err, "failed to load resource: %v", object.URL())
+	}
 	defer func() {
 		_ = reader.Close()
 	}()
 	routes := make([]*Rule, 0)
+
 	err = json.NewDecoder(reader).Decode(&routes)
 	if err != nil {
 		return errors.Wrapf(err, "failed to decode: %v", object.URL())

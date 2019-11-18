@@ -11,9 +11,12 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/matcher"
+	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
+	"google.golang.org/api/googleapi"
+	"net/http"
 	"path"
 	"strings"
 	"time"
@@ -44,44 +47,68 @@ func (s *service) scheduleURL(source storage.Object, request *contract.Request, 
 	return url.Join(baseURL, request.EventID+transferableExtension), nil
 }
 
+
+
 //Add adds matched transfer event to batch stage
 func (s *service) Add(ctx context.Context, source storage.Object, request *contract.Request, rule *config.Rule) (snapshot *Snapshot, err error) {
 	sourceCreated := source.ModTime()
-	rangeMin := sourceCreated.Add(-(2*rule.Batch.Window.Duration + 1))
-	rangeMax := sourceCreated.Add(rule.Batch.Window.Duration + 1)
 	URL, err := s.scheduleURL(source, request, rule)
 	if err != nil {
 		return nil, err
 	}
+	snapshot = &Snapshot{}
+	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL), &snapshot.Schedule, option.NewGeneration(true, 0))
+	if err != nil {
+		if ! isPreConditionError(err) {
+			return nil, errors.Errorf("failed create batch trace file: %v", URL)
+		}
+		snapshot.Schedule, err = s.fs.Object(ctx, URL)
+		if err != nil {
+			return nil, errors.Errorf("failed to fetch trace file: %v", URL)
+		}
+		if snapshot.IsDuplicate(sourceCreated, rule.Batch.Window.Duration) {
+			return snapshot, nil
+		}
+		if err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL), &snapshot.Schedule); err != nil {
+			return nil, errors.Errorf("failed recreate batch trace file: %v", URL)
+		}
+	}
+	rangeMin := snapshot.Schedule.ModTime().Add(-(2*rule.Batch.Window.Duration + 1))
+	rangeMax := snapshot.Schedule.ModTime().Add(rule.Batch.Window.Duration + 1)
 	parentURL, name := url.Split(URL, gs.Scheme)
 	modTimeMatcher := matcher.NewModification(&rangeMax, &rangeMin)
 	objects, err := s.fs.List(ctx, parentURL, modTimeMatcher)
 	if err != nil {
 		objects = []storage.Object{}
 	}
-	snapshot = NewSnapshot(source, request.EventID, name, objects)
-	if snapshot.IsDuplicate(sourceCreated, rule.Batch.Window.Duration) {
-		return snapshot, nil
-	}
-	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL), &snapshot.Schedule)
-	if err != nil {
-		err = errors.Errorf("failed create batch trace file: %v", URL)
-	}
-	return snapshot, err
+	return NewSnapshot(source, request.EventID, name, objects, rule.Batch.Window.Duration), err
 }
 
-func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) error {
+
+func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) (string, error) {
 	URL := window.URL
+	ts := time.Now().Unix() * int64(time.Second)
 	if URL == "" {
-		URL = url.Join(baseURL, fmt.Sprintf("%v%v", window.End.UnixNano(), windowExtension))
+		URL = url.Join(baseURL, fmt.Sprintf("%v%v", ts, windowExtension))
 	}
 	data, err := json.Marshal(window)
 	if err != nil {
-		return err
+		return "", err
 	}
-	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
-	return err
+	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data), option.NewGeneration(true, 0))
+	if err != nil {
+		if isPreConditionError(err) {
+			window, err := getWindow(ctx, URL, s.fs)
+			if err != nil {
+				return "", errors.Wrapf(err,"failed to load window: %v", URL)
+			}
+			return window.EventID, nil
+		}
+	}
+	return "", err
 }
+
+
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, snapshot *Snapshot, rule *config.Rule) (*BatchedWindow, error) {
@@ -96,8 +123,15 @@ func (s *service) TryAcquireWindow(ctx context.Context, snapshot *Snapshot, rule
 	}
 	baseURL := url.Join(s.URL, path.Join(dest))
 	window := NewWindow(baseURL, snapshot, rule)
-	return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
+	if batchEventID, err = s.AcquireWindow(ctx, baseURL, window); err != nil {
+		return nil, err
+	}
+	if batchEventID != "" {
+		return &BatchedWindow{BatchingEventID: batchEventID}, nil
+	}
+	return &BatchedWindow{Window: window},nil
 }
+
 
 func (s *service) newWindowSnapshot(ctx context.Context, window *Window) *Snapshot {
 	windowDuration := window.End.Sub(window.Start)
@@ -109,23 +143,19 @@ func (s *service) newWindowSnapshot(ctx context.Context, window *Window) *Snapsh
 	if err != nil {
 		objects = []storage.Object{}
 	}
-	return NewSnapshot(nil, window.EventID, name, objects)
+	return NewSnapshot(nil, window.EventID, name, objects, windowDuration)
 
 }
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *config.Rule) (err error) {
-	//add some delay to see all chanes on google storage
-	closingBatchWaitTime := 3 * time.Second
-	time.Sleep(closingBatchWaitTime)
-	closingBatchWaitTime -= closingBatchWaitTime
 	snapshot := s.newWindowSnapshot(ctx, window)
 	if owner, _ := snapshot.IsOwner(ctx, window, s.fs); ! owner {
-		//fmt.Printf("%v LOST - snapshot is owner\n")
 		window.LostOwnership = true
 		_ = s.fs.Delete(ctx, window.URL)
 		return nil
 	}
+
 	tillWindowEnd := window.End.Sub(time.Now()) + time.Second
 	if tillWindowEnd > 0 {
 		time.Sleep(tillWindowEnd)
@@ -134,8 +164,6 @@ func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *con
 		return err
 	}
 	if !window.IsOwner() {
-		//fmt.Printf("%v LOST - window is owner\n")
-
 		window.LostOwnership = true
 		_ = s.fs.Delete(ctx, window.URL)
 		return nil
@@ -147,6 +175,15 @@ func windowedMatcher(after, before time.Time, ext string) *matcher.Modification 
 	extMatcher, _ := matcher.NewBasic("", ext, "", nil)
 	modTimeMatcher := matcher.NewModification(&before, &after, extMatcher.Match)
 	return modTimeMatcher
+}
+
+
+func isPreConditionError(err error)  bool {
+	origin := errors.Cause(err)
+	if googleError, ok := origin.(*googleapi.Error);ok && googleError.Code == http.StatusPreconditionFailed {
+		return true
+	}
+	return false
 }
 
 //New create stage service

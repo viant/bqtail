@@ -25,6 +25,7 @@ type Window struct {
 	URL           string      `json:",omitempty"`
 	Start         time.Time   `json:",omitempty"`
 	LostOwnership bool        `json:",omitempty"`
+
 	BaseURL       string      `json:",omitempty"`
 	End           time.Time   `json:",omitempty"`
 	SourceCreated time.Time   `json:",omitempty"`
