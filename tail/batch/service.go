@@ -87,9 +87,8 @@ func (s *service) Add(ctx context.Context, source storage.Object, request *contr
 
 func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) (string, error) {
 	URL := window.URL
-	ts := time.Now().Unix() * int64(time.Second)
 	if URL == "" {
-		URL = url.Join(baseURL, fmt.Sprintf("%v%v", ts, windowExtension))
+		URL = url.Join(baseURL, fmt.Sprintf("%v%v", window.End.Unix() * int64(time.Second),  windowExtension))
 	}
 	data, err := json.Marshal(window)
 	if err != nil {
