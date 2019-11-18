@@ -87,6 +87,7 @@ func (d *Destination) Expand(dest string, created time.Time, source string) (str
 				return "", err
 			}
 		}
+
 		dest = expandWithPattern(d.pattern, source, dest)
 	}
 	return dest, err
@@ -152,7 +153,6 @@ func expandDate(table string, created time.Time, count int) string {
 
 func expandWithPattern(expr *regexp.Regexp, sourceURL string, table string) string {
 	_, URLPath := url.Base(sourceURL, file.Scheme)
-	URLPath = strings.Trim(URLPath, "/")
 	matched := expr.FindStringSubmatch(URLPath)
 	for i := 1; i < len(matched); i++ {
 		key := fmt.Sprintf("$%v", i)

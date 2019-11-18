@@ -31,7 +31,7 @@ func (r Ruleset) Match(URL string) []*Rule {
 		return nil
 	}
 	var matched = make([]*Rule, 0)
-	for i := range r.Rules {
+	for i, _ := range r.Rules {
 		if r.Rules[i].HasMatch(URL) {
 			matched = append(matched, r.Rules[i])
 		}

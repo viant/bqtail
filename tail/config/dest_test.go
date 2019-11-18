@@ -25,7 +25,7 @@ func TestDestination_ExpandTable(t *testing.T) {
 			dest: &Destination{
 				Table: "proj:dataset:table_$Mod(4)",
 			},
-			expect: "proj:dataset:table_0",
+			expect: "proj:dataset:table_3",
 		},
 
 		{
@@ -50,7 +50,7 @@ func TestDestination_ExpandTable(t *testing.T) {
 			dest: &Destination{
 				Table: "proj:dataset:table_$Mod(7)_$Date",
 			},
-			expect: "proj:dataset:table_4_20190903",
+			expect: "proj:dataset:table_0_20190903",
 		},
 
 		{
@@ -59,7 +59,7 @@ func TestDestination_ExpandTable(t *testing.T) {
 			sourceURI:   "gs://bucket/data/2019/02/04/logs_xxx.avro",
 			dest: &Destination{
 				Table:   "proj:dataset:table_$1$2$3",
-				Pattern: "data/(\\d{4})/(\\d{2})/(\\d{2})/.+",
+				Pattern: "/data/(\\d{4})/(\\d{2})/(\\d{2})/.+",
 			},
 			expect: "proj:dataset:table_20190204",
 		},
@@ -69,7 +69,7 @@ func TestDestination_ExpandTable(t *testing.T) {
 			sourceURI:   "gs://bucket/data/2019/02/04/logs_xxx.avro",
 			dest: &Destination{
 				Table:   "proj:dataset:table_$1$2$3",
-				Pattern: "data/(\\d{4}/(\\d{2})/(\\d{2})/.+",
+				Pattern: "/data/(\\d{4}/(\\d{2})/(\\d{2})/.+",
 			},
 			hasError: true,
 		},

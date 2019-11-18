@@ -107,6 +107,19 @@ func TestRoute_HasMatch(t *testing.T) {
 			URL:    "gs://viant_dataflow_bqtail/gcs-logging/PROJECT_viant-adelphic_BUCKET_adelphic-keys_usage_2019_10_23_22_00_00_00a90fd57818ed9df3_v0",
 			expect: true,
 		},
+		{
+			description: "unison -  match",
+			Rule: Rule{
+				When: matcher.Basic{
+					Prefix: "/unison/",
+				},
+				Dest: &Destination{
+					Table: "project:dataset:table6",
+				},
+			},
+			URL:    "gs://viant_e2e_trigger/unison/clicks/us-west1/2019/11/12/32/unison_1-002core-clicks.2019-11-12-17-32.log",
+			expect: true,
+		},
 	}
 
 	for _, useCase := range useCases {

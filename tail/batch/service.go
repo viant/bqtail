@@ -121,6 +121,7 @@ func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *con
 	closingBatchWaitTime -= closingBatchWaitTime
 	snapshot := s.newWindowSnapshot(ctx, window)
 	if owner, _ := snapshot.IsOwner(ctx, window, s.fs); ! owner {
+		fmt.Printf("LOST - snapshot is owner\n")
 		window.LostOwnership = true
 		_ = s.fs.Delete(ctx, window.URL)
 		return nil
@@ -133,6 +134,8 @@ func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *con
 		return err
 	}
 	if !window.IsOwner() {
+		fmt.Printf("LOST - window is owner\n")
+
 		window.LostOwnership = true
 		_ = s.fs.Delete(ctx, window.URL)
 		return nil
