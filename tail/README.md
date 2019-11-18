@@ -285,6 +285,7 @@ For example the following pattern: "data/(\\d{4})/(\\d{2})/(\\d{2})/.+", extract
 With table defined as "proj:dataset:table_$1$2$3" and source URL "gs://bucket/data/2019/02/04/logs_xxx.avro" the specified table expands to: "proj:dataset:table_20190204"
 
 
+"/nobid/adlog.request/(\\d{4})/(\\d{2})/(\\d{2})/.+"
 
 ### Deployment
 

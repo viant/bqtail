@@ -521,31 +521,6 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 
 
 
-func (s *service) run(ctx context.Context, request *contract.Request, response *contract.Response) error {
-	actions := []*task.Action{}
-	response.MatchedURL = request.SourceURL
-	response.Matched = true
-	reader, err := s.fs.DownloadWithURL(ctx, request.SourceURL)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = reader.Close()
-	}()
-	if err = json.NewDecoder(reader).Decode(&actions); err != nil {
-		return errors.Wrapf(err, "unable decode: %v", request.SourceURL)
-	}
-	//response.Actions = actions
-	for _, action := range actions {
-		if err = task.Run(ctx, s.Registry, action); err != nil {
-			return err
-		}
-	}
-	_, sourcePath := url.Base(request.SourceURL, "")
-	journalURL := url.Join(s.config.JournalURL, sourcePath)
-	return s.fs.Move(ctx, request.SourceURL, journalURL)
-}
-
 func (s *service) RunTask(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	err := s.runTask(ctx, request, response)
 	_, sourcePath := url.Base(request.SourceURL, "")
@@ -582,20 +557,43 @@ func (s *service) runTask(ctx context.Context, request *contract.Request, respon
 			return nil
 		}
 	}
-
 	toRun := actions.ToRun(bqJobError, &job, s.config.DeferTaskURL)
 	if len(toRun) > 0 {
-		actionURL := s.config.BuildActionURL(job.JobReference.JobId)
-		JSON, err := json.Marshal(toRun)
-		if err != nil {
-			return err
-		}
-		if err = s.fs.Upload(ctx, actionURL, 0644, bytes.NewReader(JSON)); err != nil {
-			return err
+		for i := range toRun {
+			if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {
+				return err
+			}
 		}
 	}
 	return bqJobError
 }
+
+
+func (s *service) run(ctx context.Context, request *contract.Request, response *contract.Response) error {
+	actions := []*task.Action{}
+	response.MatchedURL = request.SourceURL
+	response.Matched = true
+	reader, err := s.fs.DownloadWithURL(ctx, request.SourceURL)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+	if err = json.NewDecoder(reader).Decode(&actions); err != nil {
+		return errors.Wrapf(err, "unable decode: %v", request.SourceURL)
+	}
+	//response.Actions = actions
+	for _, action := range actions {
+		if err = task.Run(ctx, s.Registry, action); err != nil {
+			return err
+		}
+	}
+	_, sourcePath := url.Base(request.SourceURL, "")
+	journalURL := url.Join(s.config.JournalURL, sourcePath)
+	return s.fs.Move(ctx, request.SourceURL, journalURL)
+}
+
 
 func (s *service) tryRecover(ctx context.Context, request *contract.Request, actions *task.Actions, job *bigquery.Job, response *contract.Response) error {
 	configuration := actions.Job.Configuration

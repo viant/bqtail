@@ -58,7 +58,7 @@ pipeline:
 
   waitForServerless:
     action: nop
-    sleepTimeMs: 45000
+    sleepTimeMs: 60000
 
   validate:
     check-db:

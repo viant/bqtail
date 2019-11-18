@@ -7,6 +7,8 @@ const (
 	StatusNoMatch = "noMatch"
 	//StatusNotFound status not found
 	StatusNotFound = "notFound"
+	//StatusDisabled status rule disabled
+	StatusDisabled = "disabled"
 
 	//StatusDuplicate status duplicate
 	StatusDuplicate = "duplicate"
@@ -31,7 +33,6 @@ const (
 
 	//SourceURLKey source key
 	SourceURLKey = "SourceURL"
-
 
 	//URLsKey urls key
 	URLsKey = "URLs"

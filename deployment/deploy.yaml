@@ -18,21 +18,21 @@ pipeline:
 #    source:
 #      URL: ${appPath}
 
-#  bqdisaptch:
-#    action: gcp/cloudfunctions:deploy
-#    credentials: $gcpCredentials
-#    '@name': BqDispatch2
-#    timeout: 540s
-#    public: true
-#    serviceAccountEmail: ${gcp.serviceAccount}
-#    availableMemoryMb: 256
-#    entryPoint: BqDispatch
-#    runtime: go111
-#    environmentVariables:
-#      CONFIG: gs://${configBucket}/BqDispatch/config.json
-#      LOGGING: false
-#    source:
-#      URL: ${appPath}
+  bqdisaptch:
+    action: gcp/cloudfunctions:deploy
+    credentials: $gcpCredentials
+    '@name': BqDispatch
+    timeout: 540s
+    public: true
+    serviceAccountEmail: ${gcp.serviceAccount}
+    availableMemoryMb: 128
+    entryPoint: BqDispatch
+    runtime: go111
+    environmentVariables:
+      CONFIG: gs://${configBucket}/BqDispatch/config.json
+      LOGGING: false
+    source:
+      URL: ${appPath}
 
 #
 #  schedule:

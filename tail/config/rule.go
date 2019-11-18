@@ -13,6 +13,7 @@ import (
 
 //Rule represent matching resource route
 type Rule struct {
+	Disabled     bool          `json:",omitempty"`
 	Dest         *Destination  `json:",omitempty"`
 	When         matcher.Basic `json:",omitempty"`
 	Batch        *Batch        `json:",omitempty"`

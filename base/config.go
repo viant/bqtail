@@ -38,11 +38,6 @@ func (c *Config) BuildReplayActionURL(eventID string) string {
 	return url.Join(c.JournalURL, path.Join(replayPrefix, date, eventID+ActionExt))
 }
 
-//BuildActionURL returns an action url for supplied event ID
-func (c *Config) BuildActionURL(eventID string) string {
-	date := time.Now().Format(DateLayout)
-	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.ActionPrefix, date, DecodePathSeparator(eventID, 2), ActionExt)
-}
 
 
 //BuildTaskURL returns an action url for supplied event ID
