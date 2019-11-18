@@ -31,6 +31,11 @@ const (
 
 	//SourceURLKey source key
 	SourceURLKey = "SourceURL"
+
+
+	//URLsKey urls key
+	URLsKey = "URLs"
+
 	//ResponseKey response key
 	ResponseKey = "Response"
 

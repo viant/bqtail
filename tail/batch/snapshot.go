@@ -2,7 +2,6 @@ package batch
 
 import (
 	"context"
-	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/storage"
 	"sort"
@@ -50,11 +49,9 @@ func (s *Snapshot) getMatchingWindows(windowDuration time.Duration) ([]storage.O
 	if len(result) > 0 {
 		err = nil
 	}
-	for i := range result {
-		fmt.Printf("matching window: %v %v\n", result[i].URL(), result[i].ModTime())
-	}
 	return result, err
 }
+
 
 func (s *Snapshot) IsOwner(ctx context.Context, window *Window, fs afs.Service) (bool, error) {
 	duration := window.End.Sub(window.Start)
@@ -65,15 +62,52 @@ func (s *Snapshot) IsOwner(ctx context.Context, window *Window, fs afs.Service) 
 	return windowID == window.EventID, nil
 }
 
+func (s *Snapshot) filterLeader(windowDuration time.Duration, overlapping, candidates []storage.Object) []storage.Object {
+	if len(overlapping) == len(candidates) || len(candidates) == 0 {
+		return candidates
+	}
+	overlappingEnds := make([]*time.Time, 0)
+	for i := range overlapping {
+		if overlapping[i].URL() == candidates[i].URL() {
+			break
+		}
+		windowEnd, _ := windowToTime(overlapping[i])
+		overlappingEnds = append(overlappingEnds, windowEnd)
+	}
+
+	var result = make([]storage.Object, 0)
+	//for i := range overlappingEnds {
+	//	fmt.Printf("overlaped end: %v %v\n", overlapping[i], overlappingEnds[i])
+	//}
+	outer: for i := range candidates {
+		candidateEnd, _ := windowToTime(candidates[i])
+		startTime :=  candidateEnd.Add(-windowDuration)
+		for j := range overlappingEnds {
+			if startTime.Before(*overlappingEnds[j]) {
+			//	fmt.Printf("overlaped %v %v %v %v\n", s.EventID, candidates[i], candidateEnd, overlappingEnds[j])
+				goto outer
+			}
+		}
+		result = append(result, candidates[i])
+	}
+	return result
+}
+
 
 func (s *Snapshot) GetWindowID(ctx context.Context, windowDuration time.Duration, fs afs.Service) (string, error) {
+	overlappingWindows, err := s.getMatchingWindows(2 * windowDuration)
+	if err != nil {
+		return "", err
+	}
 	windows, err := s.getMatchingWindows(windowDuration)
 	if err != nil {
 		return "", err
 	}
+	windows = s.filterLeader(windowDuration, overlappingWindows, windows)
 	if len(windows) == 0 {
 		return "", nil
 	}
+
 	window, err := getWindow(ctx, windows[0].URL(), fs)
 	if err != nil {
 		return "", err
@@ -101,14 +135,18 @@ func NewSnapshot(source storage.Object, eventID, name string, files [] storage.O
 		dataFiles = append(dataFiles, files[i])
 
 	}
-	sortedwindows := Objects(windows)
-	sort.Sort(sortedwindows)
-	sortedDatafile := Objects(dataFiles)
+
+	sortedWindows := NewObjects(windows, byName)
+	sort.Sort(sortedWindows)
+
+	sortedDatafile :=  NewObjects(dataFiles, byModTime)
+	sort.Sort(sortedDatafile)
+
 	return &Snapshot{
 		EventID:   eventID,
 		source:    source,
 		Schedule:  schedule,
-		windows:   sortedwindows,
-		dataFiles: sortedDatafile,
+		windows:   sortedWindows.Elements,
+		dataFiles: sortedDatafile.Elements,
 	}
 }

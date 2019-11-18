@@ -9,7 +9,7 @@ import (
 
 //Actions represents actions
 type Actions struct {
-	Job *bigquery.Job
+	Job          *bigquery.Job
 	SourceURL    string
 	DeferTaskURL string    `json:",omitempty"`
 	Async        bool      `json:",omitempty"`
@@ -183,6 +183,14 @@ func appendSourceURLExpandableActions(source []*Action, dest *[]*Action, expanda
 	if len(source) == 0 {
 		return
 	}
+
+	if len(source) == 1 && source[0].Action == "delete" {
+		*dest = append(*dest, source[0].New(map[string]interface{}{
+			base.URLsKey: expandable.SourceURLs,
+		}))
+		return
+	}
+
 	if len(expandable.SourceURLs) > 0 {
 		for i := range expandable.SourceURLs {
 			for _, action := range source {

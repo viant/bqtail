@@ -1,0 +1,66 @@
+init:
+  self.i: 1
+  self.cnt: 0
+
+pipeline:
+  prepare:
+    init-db:
+      action: dsunit:init
+      datastore: bqtail
+      config:
+        driverName: bigquery
+        credentials: $gcpCredentials
+        parameters:
+          datasetId: bqtail
+      scripts:
+        - URL: ${parent.path}/bqtail/schema.sql
+    populate:
+      bqtail:
+        action: dsunit:prepare
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/prepare
+
+  setupRule:
+    action: storage:copy
+    expand: true
+    source:
+      URL: ${parent.path}/rule.json
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}.json
+
+  trigger:
+    generate:
+      action: storage:generate
+      fileCount: 20
+      inBackground: true
+      indexVariable: id
+      lines: 1
+      index: ${self.i}
+      lineTemplate: '{"id": ${id}, "name": "dummy ${id}", "type_id": 1}'
+      dest:
+        URL: gs://${triggerBucket}/data/case015/dummy_ao${self.cnt++}_$fileNo.json
+        credentials: $gcpCredentials
+    inc:
+      action: nop
+      sleepTimeMs: 500
+      logging: false
+      init:
+        'self.i': ${self.i+20}
+
+    goto:
+      when: ${self.i} < 2000
+      action: goto
+      task: trigger
+
+
+  waitForServerless:
+    action: nop
+    sleepTimeMs: 120000
+
+  validate:
+    check-db:
+      bqtail:
+        action: dsunit:expect
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/expect

@@ -56,10 +56,11 @@ func (w *Window) loadDatafile(ctx context.Context, fs afs.Service) error {
 	if err != nil {
 		return err
 	}
-	sortedTransfers := Objects(traceFiles)
+	sortedTransfers := NewObjects(traceFiles, byModTime)
 	sort.Sort(sortedTransfers)
+	traceFiles = sortedTransfers.Elements
 	result = make([]*Datafile, 0)
-	for i := range sortedTransfers {
+	for i := range traceFiles {
 		if traceFiles[i].ModTime().Before(w.Start) || traceFiles[i].ModTime().After(w.End) {
 			continue
 		}

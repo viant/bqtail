@@ -47,7 +47,7 @@ func (s *service) scheduleURL(source storage.Object, request *contract.Request, 
 //Add adds matched transfer event to batch stage
 func (s *service) Add(ctx context.Context, source storage.Object, request *contract.Request, rule *config.Rule) (snapshot *Snapshot, err error) {
 	sourceCreated := source.ModTime()
-	rangeMin := sourceCreated.Add(-(rule.Batch.Window.Duration + 1))
+	rangeMin := sourceCreated.Add(-(2*rule.Batch.Window.Duration + 1))
 	rangeMax := sourceCreated.Add(rule.Batch.Window.Duration + 1)
 	URL, err := s.scheduleURL(source, request, rule)
 	if err != nil {
@@ -99,10 +99,9 @@ func (s *service) TryAcquireWindow(ctx context.Context, snapshot *Snapshot, rule
 	return &BatchedWindow{Window: window}, s.AcquireWindow(ctx, baseURL, window)
 }
 
-
 func (s *service) newWindowSnapshot(ctx context.Context, window *Window) *Snapshot {
 	windowDuration := window.End.Sub(window.Start)
-	rangeMin := window.Start.Add(-(windowDuration + 1))
+	rangeMin := window.Start.Add(-(2 * windowDuration + 1))
 	rangeMax := window.End.Add(1)
 	_, name := url.Split(window.ScheduleURL, gs.Scheme)
 	modTimeMatcher := matcher.NewModification(&rangeMax, &rangeMin)
@@ -116,7 +115,8 @@ func (s *service) newWindowSnapshot(ctx context.Context, window *Window) *Snapsh
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *config.Rule) (err error) {
-	closingBatchWaitTime := 5 * time.Second
+	//add some delay to see all chanes on google storage
+	closingBatchWaitTime := 200 * time.Millisecond
 	time.Sleep(closingBatchWaitTime)
 	closingBatchWaitTime -= closingBatchWaitTime
 	snapshot := s.newWindowSnapshot(ctx, window)

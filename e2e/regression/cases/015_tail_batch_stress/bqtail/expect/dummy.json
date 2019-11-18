@@ -1,0 +1,8 @@
+[
+  {
+    "@fromQuery@": "SELECT COUNT(1) AS cnt  FROM bqtail.dummy"
+  },
+  {
+    "cnt": 2000
+  }
+]

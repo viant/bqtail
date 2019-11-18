@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"sync"
 )
 
 //Delete deletes supplied URLs
@@ -12,19 +13,26 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 	if err != nil {
 		return err
 	}
+	waitGroup := &sync.WaitGroup{}
+
 	processed := map[string]bool{}
 	for i := range request.URLs {
 		if processed[request.URLs[i]] {
 			continue
 		}
 		processed[request.URLs[i]] = true
-		if e := s.fs.Delete(ctx, request.URLs[i]); e != nil {
-			if ok, _ := s.fs.Exists(ctx, request.URLs[i]); !ok {
-				continue
+		waitGroup.Add(1)
+		go func (URL string) {
+			defer waitGroup.Done()
+			if e := s.fs.Delete(ctx, URL); e != nil {
+				if ok, _ := s.fs.Exists(ctx, URL); !ok {
+					return
+				}
+				err = e
 			}
-			err = e
-		}
+		}(request.URLs[i])
 	}
+	waitGroup.Wait()
 	return err
 }
 
