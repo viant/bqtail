@@ -1,6 +1,7 @@
 package batch
 
 import (
+	"bqtail/base"
 	"bqtail/tail/config"
 	"bqtail/tail/contract"
 	"bytes"
@@ -94,6 +95,9 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	if err != nil {
 		return "", err
 	}
+	if base.IsLoggingEnabled() {
+		fmt.Printf("Acquired batch: %v %v\n", window.EventID, URL)
+	}
 	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data), option.NewGeneration(true, 0))
 	if err != nil {
 		if isPreConditionError(err) {
@@ -148,6 +152,7 @@ func (s *service) newWindowSnapshot(ctx context.Context, window *Window) *Snapsh
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *config.Rule) (err error) {
+	time.Sleep(5 * time.Second)
 	snapshot := s.newWindowSnapshot(ctx, window)
 	if owner, _ := snapshot.IsOwner(ctx, window, s.fs); ! owner {
 		window.LostOwnership = true
