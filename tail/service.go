@@ -270,7 +270,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		onFailureAction = actions.CloneOnFailure()
 		result.AddOnFailure(actions.OnFailure...)
 	}
-	tableID := base.TableID(job.Load.DestinationTable.TableId)
+	tableID :=job.Load.DestinationTable.DatasetId+"."+job.Load.DestinationTable.TableId
 	dropAction, err := task.NewAction("drop", bq.NewDropRequest(tableID, onFailureAction))
 	if err != nil {
 		return nil, err
