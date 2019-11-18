@@ -116,7 +116,7 @@ func (s *service) newWindowSnapshot(ctx context.Context, window *Window) *Snapsh
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *config.Rule) (err error) {
 	//add some delay to see all chanes on google storage
-	closingBatchWaitTime := 200 * time.Millisecond
+	closingBatchWaitTime := 3 * time.Second
 	time.Sleep(closingBatchWaitTime)
 	closingBatchWaitTime -= closingBatchWaitTime
 	snapshot := s.newWindowSnapshot(ctx, window)
