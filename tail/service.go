@@ -96,10 +96,13 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 		response.Status = base.StatusNoMatch
 		return nil
 	}
-
 	response.Rule = rule
 	response.Matched = true
 	response.MatchedURL = request.SourceURL
+	if rule.Disabled {
+		response.Status = base.StatusDisabled
+		return nil
+	}
 	source, err := s.fs.Object(ctx, request.SourceURL)
 	if err != nil {
 		response.NotFoundError = err.Error()
