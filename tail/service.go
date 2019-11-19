@@ -576,7 +576,7 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 		return base.JobError(job)
 	}
 	var valid []string
-	response.Corrupted, valid = removeCorruptedURIs(job)
+	response.Corrupted, valid = removeCorruptedURIs(ctx, job, s.fs)
 	if len(response.Corrupted)  == 0 || len(valid) == 0 {
 		return base.JobError(job)
 	}

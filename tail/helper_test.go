@@ -219,7 +219,7 @@ func Test_removeCorruptedURIs(t *testing.T) {
 			}
 
 			assert.Nil(t, err, useCase.description)
-			corrupted, valid := removeCorruptedURIs(job)
+			corrupted, valid := removeCorruptedURIs(nil, job, nil)
 			assert.EqualValues(t, useCase.expectCorrupted, corrupted, useCase.description)
 			assert.EqualValues(t, useCase.expectedValid, valid, useCase.description)
 
