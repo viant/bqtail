@@ -1,0 +1,46 @@
+
+pipeline:
+  prepare:
+    init-db:
+      action: dsunit:init
+      datastore: bqtail
+      config:
+        driverName: bigquery
+        credentials: $gcpCredentials
+        parameters:
+          datasetId: bqtail
+      scripts:
+        - URL: ${parent.path}/bqtail/schema.sql
+    populate:
+      bqtail:
+        action: dsunit:prepare
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/prepare
+
+  setupRule:
+    action: storage:copy
+    expand: true
+    source:
+      URL: ${parent.path}/rule.json
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}.json
+
+  trigger:
+    action: storage:copy
+    source:
+      URL: ${parent.path}/data/trigger/
+    dest:
+      URL: gs://${triggerBucket}/data/case003/
+      credentials: $gcpCredentials
+
+  waitForServerless:
+    action: nop
+    sleepTimeMs: 35000
+
+  validate:
+    check-db:
+      bqtail:
+        action: dsunit:expect
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/expect
