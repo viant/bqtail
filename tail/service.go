@@ -268,7 +268,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		onFailureAction = actions.CloneOnFailure()
 		result.AddOnFailure(actions.OnFailure...)
 	}
-	tableID :=job.Load.DestinationTable.DatasetId+"."+job.Load.DestinationTable.TableId
+	tableID := job.Load.DestinationTable.DatasetId + "." + job.Load.DestinationTable.TableId
 	dropAction, err := task.NewAction("drop", bq.NewDropRequest(tableID, onFailureAction))
 	if err != nil {
 		return nil, err
@@ -367,23 +367,31 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 
 func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJobID string, job *Job, rule *config.Rule, result, onDone *task.Actions) error {
 	split := rule.Dest.Schema.Split
-	splitActions := task.NewActions(rule.Async, result.DeferTaskURL, result.JobID, nil, nil)
+
+
+
+	next := onDone
+	if next == nil {
+		next = task.NewActions(rule.Async, result.DeferTaskURL, result.JobID, nil, nil)
+	}
+
+
 	for i := range split.Mapping {
-		var final *task.Actions
-		if i == len(split.Mapping)-1 {
-			final = onDone
-		}
+
 		mapping := split.Mapping[i]
 		destTable, _ := rule.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
 		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
-		query := bq.NewQueryRequest(dest, destTable, final)
+		query := bq.NewQueryRequest(dest, destTable,  next)
 		query.Append = rule.IsAppend()
 		queryAction, err := task.NewAction("query", query)
 		if err != nil {
 			return err
 		}
-		splitActions.AddOnSuccess(queryAction)
+		group := task.NewActions(rule.Async, result.DeferTaskURL, result.JobID, nil, nil)
+		group.AddOnSuccess(queryAction)
+		next = group
 	}
+
 
 	if len(split.ClusterColumns) > 0 {
 		setColumns := []string{}
@@ -397,7 +405,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 			destTable := fmt.Sprintf("`%v.%v.%v`", refTable.ProjectId, refTable.DatasetId, refTable.TableId)
 			DML := fmt.Sprintf("UPDATE %v SET %v WHERE 1=1", destTable, strings.Join(setColumns, ","))
 
-			query := bq.NewQueryRequest(DML, nil, splitActions)
+			query := bq.NewQueryRequest(DML, nil, next)
 			query.Append = rule.IsAppend()
 			queryAction, err := task.NewAction("query", query)
 			if err != nil {
@@ -406,8 +414,8 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 			result.AddOnSuccess(queryAction)
 		}
 	} else {
-		result.AddOnSuccess(splitActions.OnSuccess...)
-		result.AddOnSuccess(splitActions.OnFailure...)
+		result.AddOnSuccess(next.OnSuccess...)
+		result.AddOnSuccess(next.OnFailure...)
 	}
 
 	return nil
@@ -483,7 +491,6 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 	response.ScheduledURL = snapshot.Schedule.URL()
 	request.ScheduleURL = snapshot.Schedule.URL()
 
-
 	batchWindow, err := s.batch.TryAcquireWindow(ctx, snapshot, rule)
 	if batchWindow == nil || err != nil {
 		if err != nil {
@@ -519,8 +526,6 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 	}
 	return s.submitJob(ctx, job, rule, response)
 }
-
-
 
 func (s *service) RunTask(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	err := s.runTask(ctx, request, response)
@@ -568,8 +573,6 @@ func (s *service) runTask(ctx context.Context, request *contract.Request, respon
 	}
 	return bqJobError
 }
-
-
 
 func (s *service) tryRecover(ctx context.Context, request *contract.Request, actions *task.Actions, job *bigquery.Job, response *contract.Response) error {
 	configuration := actions.Job.Configuration
