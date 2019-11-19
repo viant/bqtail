@@ -627,11 +627,10 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 }
 
 func (s *service) moveToCorruptedDataFiles(ctx context.Context, corrupted []string) error {
-	baseDestURL := url.Join(s.config.JournalURL, "corrupted")
 	var err error
 	for _, URL := range corrupted {
-		_, URLPath := url.Base(URL, "")
-		destURL := url.Join(baseDestURL, URLPath)
+		_, URLPath := url.Base(s.config.CorruptedFileURL, "")
+		destURL := url.Join(s.config.CorruptedFileURL, URLPath)
 		if exists, _ := s.fs.Exists(ctx, URL); ! exists {
 			continue
 		}
