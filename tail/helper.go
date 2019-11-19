@@ -3,10 +3,14 @@ package tail
 import (
 	"fmt"
 	"github.com/viant/toolbox"
+	"google.golang.org/api/bigquery/v2"
 	"strings"
 )
 
-const recoverJobPrefix = "recover"
+const (
+	recoverJobPrefix = "recover"
+	notFoundReason = "notFound"
+)
 
 //wrapRecoverJobID wrap recover with recover prefix and attempts
 func wrapRecoverJobID(jobID string) string {
@@ -20,4 +24,36 @@ func wrapRecoverJobID(jobID string) string {
 		jobID = string(jobID[offset +5:])
 	}
 	return fmt.Sprintf(recoverJobPrefix + "%04d_%v", attempt, jobID)
+}
+
+
+
+
+func removeCorruptedURIs(job *bigquery.Job) []string {
+	var URIs = make(map[string]bool)
+	for _, URI := range job.Configuration.Load.SourceUris {
+		URIs[URI] = true
+	}
+	corrupted := make([]string, 0)
+	for _, element := range job.Status.Errors {
+		element.Message = strings.Replace(element.Message, "/bigstore", "gs:/", 1)
+		if element.Reason == notFoundReason {
+			if index := strings.Index(element.Message, "gs://");index !=-1 {
+				element.Location = string(element.Message[index:])
+			}
+		}
+		if element.Location == "" {
+			continue
+		}
+		if _, ok := URIs[element.Location]; ! ok {
+			continue
+		}
+		corrupted = append(corrupted, element.Location)
+		delete(URIs, element.Location)
+	}
+	job.Configuration.Load.SourceUris = []string{}
+	for URI := range URIs {
+		job.Configuration.Load.SourceUris = append(job.Configuration.Load.SourceUris, URI)
+	}
+	return corrupted
 }

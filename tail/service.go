@@ -575,37 +575,15 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	if configuration.Load == nil || len(configuration.Load.SourceUris) <= 1 {
 		return base.JobError(job)
 	}
-	URIs := make(map[string]bool)
-	for _, URI := range configuration.Load.SourceUris {
-		URIs[URI] = true
-	}
-	corrupted := make([]string, 0)
-	for _, element := range job.Status.Errors {
-		if strings.HasPrefix(element.Message, notFoundURLFragment) && element.Location == "" {
-			element.Location = strings.Replace(element.Location, notFoundURLFragment, "", 1)
-		}
-		if element.Location == "" {
-			continue
-		}
-		if _, ok := URIs[element.Location]; ! ok {
-			continue
-		}
-		corrupted = append(corrupted, element.Location)
-		delete(URIs, element.Location)
-	}
-	response.Corrupted = corrupted
-	adjusted := len(configuration.Load.SourceUris) != len(URIs)
-	if ! adjusted || len(configuration.Load.SourceUris) == 0 {
+
+	response.Corrupted = removeCorruptedURIs(job)
+	if len(response.Corrupted)  == 0  {
 		return base.JobError(job)
 	}
 	response.Status = base.StatusOK
 	response.Error = ""
-	if err := s.moveToCorruptedDataFiles(ctx, corrupted); err != nil {
-		return errors.Wrapf(err, "failed to move corrupted filed: %v", corrupted)
-	}
-	configuration.Load.SourceUris = []string{}
-	for URI := range URIs {
-		configuration.Load.SourceUris = append(configuration.Load.SourceUris, URI)
+	if err := s.moveToCorruptedDataFiles(ctx, response.Corrupted); err != nil {
+		return errors.Wrapf(err, "failed to move corrupted filed: %v", response.Corrupted)
 	}
 	load := &bq.LoadRequest{
 		JobConfigurationLoad: configuration.Load,
@@ -624,6 +602,8 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	}
 	return err
 }
+
+
 
 func (s *service) moveToCorruptedDataFiles(ctx context.Context, corrupted []string) error {
 	var err error

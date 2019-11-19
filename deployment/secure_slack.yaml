@@ -7,6 +7,7 @@ init:
   prefix: $Replace($gcpProject,'-','_')
   configBucket: ${prefix}_config
   secrets: ${secrets.$awsCredentials}
+  slackOAuthSecret: $Cat($slackOAuth)
 
 
 pipeline:
@@ -25,13 +26,13 @@ pipeline:
 
   info:
     action: print
-    message: $AsString($slackOAuth)
+    message: $AsString($slackOAuthSecret)
 
   encryptSlackOAuthToken:
     action: gcp/kms:encrypt
     ring: ${prefix}_ring
     key: ${prefix}_key
-    plainData: $AsString($slackOAuth)
+    plainData: $AsString($slackOAuthSecret)
     dest:
       URL: gs://${configBucket}/Secrets/slack.json.enc
       credentials: ${gcpCredentials}
