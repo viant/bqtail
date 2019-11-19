@@ -112,11 +112,18 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 		if url.Equals(URL, parentURL) {
 			continue
 		}
+
 		if objects[i].IsDir() {
 			if err = s.processURL(ctx, URL, response, jobsByID); err != nil {
 				return err
 			}
 		}
+
+		//if just create skip to next
+		if time.Now().Sub(objects[i].ModTime()) < 2 * time.Second {
+			continue
+		}
+
 		if response.Jobs.Has(URL) {
 			continue
 		}
