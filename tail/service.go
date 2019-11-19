@@ -368,20 +368,17 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJobID string, job *Job, rule *config.Rule, result, onDone *task.Actions) error {
 	split := rule.Dest.Schema.Split
 
-
-
 	next := onDone
 	if next == nil {
 		next = task.NewActions(rule.Async, result.DeferTaskURL, result.JobID, nil, nil)
 	}
-
 
 	for i := range split.Mapping {
 
 		mapping := split.Mapping[i]
 		destTable, _ := rule.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
 		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
-		query := bq.NewQueryRequest(dest, destTable,  next)
+		query := bq.NewQueryRequest(dest, destTable, next)
 		query.Append = rule.IsAppend()
 		queryAction, err := task.NewAction("query", query)
 		if err != nil {
@@ -391,7 +388,6 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 		group.AddOnSuccess(queryAction)
 		next = group
 	}
-
 
 	if len(split.ClusterColumns) > 0 {
 		setColumns := []string{}
@@ -585,6 +581,9 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	}
 	corrupted := make([]string, 0)
 	for _, element := range job.Status.Errors {
+		if strings.HasPrefix(element.Message, notFoundURLFragment) && element.Location == "" {
+			element.Location = strings.Replace(element.Location, notFoundURLFragment, "", 1)
+		}
 		if element.Location == "" {
 			continue
 		}
