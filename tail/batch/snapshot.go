@@ -24,6 +24,73 @@ type Snapshot struct {
 }
 
 
+func (s *Snapshot) IsDuplicate(sourceCreated time.Time, loopbackWindow time.Duration) bool {
+	if s.Schedule == nil {
+		return false
+	}
+	duplicateGap := sourceCreated.Sub(s.Schedule.ModTime())
+	s.Duplicated = duplicateGap < loopbackWindow
+	return s.Duplicated
+}
+
+
+
+
+
+
+func getMatchingWindows(windows []storage.Object ,windowDuration time.Duration, at time.Time) ([]storage.Object, error) {
+	var result = make([]storage.Object, 0)
+	var err error
+	for i := range windows {
+		windowEnd, e := windowToTime(windows[i])
+		if e != nil {
+			err = e
+			continue
+		}
+		if at.After(*windowEnd) {
+			continue
+		}
+		windowStart := windowEnd.Add(-windowDuration)
+		if at.Before(windowStart) {
+			continue
+		}
+		result = append(result, windows[i])
+	}
+	if len(result) > 0 {
+		err = nil
+	}
+	return result, err
+}
+
+
+
+
+
+func (s *Snapshot) IsOwner(ctx context.Context, window *Window, fs afs.Service) (bool, error) {
+	duration := window.End.Sub(window.Start)
+	windowID, err := s.GetWindowID(ctx, duration, fs)
+	if err != nil {
+		return false, err
+	}
+	return windowID == window.EventID, nil
+}
+
+
+func (s *Snapshot) GetWindowID(ctx context.Context, windowDuration time.Duration, fs afs.Service) (string, error) {
+	openWindows, err := getMatchingWindows(s.windows,  windowDuration, s.Schedule.ModTime())
+	if err != nil {
+		return "", err
+	}
+	if len(openWindows) == 0 {
+		return "", nil
+	}
+	window, err := getWindow(ctx, openWindows[0].URL(), fs)
+	if err != nil {
+		return "", err
+	}
+	return window.EventID, nil
+}
+
 func asObjectMap(o storage.Object) map[string]interface{} {
 	if o == nil {
 		return map[string]interface{}{}
@@ -33,6 +100,9 @@ func asObjectMap(o storage.Object) map[string]interface{} {
 		"ModTime":o.ModTime(),
 	}
 }
+
+
+
 
 func  (s *Snapshot) asWindowObjectMap(o storage.Object) map[string]interface{} {
 	result := asObjectMap(o)
@@ -47,7 +117,7 @@ func  (s *Snapshot) asWindowObjectMap(o storage.Object) map[string]interface{} {
 
 func (s *Snapshot) String() string {
 	var windows = make([]map[string]interface{}, 0)
-		for i:= range s.windows {
+	for i:= range s.windows {
 		windows = append(windows, s.asWindowObjectMap(s.windows[i]))
 	}
 	var details = map[string]interface{}{
@@ -59,101 +129,6 @@ func (s *Snapshot) String() string {
 	return string(data)
 }
 
-
-
-func (s *Snapshot) IsDuplicate(sourceCreated time.Time, loopbackWindow time.Duration) bool {
-	if s.Schedule == nil {
-		return false
-	}
-	duplicateGap := sourceCreated.Sub(s.Schedule.ModTime())
-	s.Duplicated = duplicateGap < loopbackWindow
-	return s.Duplicated
-}
-
-func (s *Snapshot) getMatchingWindows(windowDuration time.Duration) ([]storage.Object, error) {
-	var result = make([]storage.Object, 0)
-	var err error
-	for i := range s.windows {
-		windowEnd, e := windowToTime(s.windows[i])
-		if e != nil {
-			err = e
-			continue
-		}
-		if s.Schedule.ModTime().After(*windowEnd) {
-			continue
-		}
-		windowStart := windowEnd.Add(-windowDuration)
-		if s.Schedule.ModTime().Before(windowStart) {
-			continue
-		}
-		result = append(result, s.windows[i])
-	}
-	if len(result) > 0 {
-		err = nil
-	}
-	return result, err
-}
-
-
-func (s *Snapshot) IsOwner(ctx context.Context, window *Window, fs afs.Service) (bool, error) {
-	duration := window.End.Sub(window.Start)
-	windowID, err := s.GetWindowID(ctx, duration, fs)
-	if err != nil {
-		return false, err
-	}
-	return windowID == window.EventID, nil
-}
-
-func (s *Snapshot) filterLeader(windowDuration time.Duration, overlapping, candidates []storage.Object) []storage.Object {
-	if len(overlapping) == len(candidates) || len(candidates) == 0 {
-		return candidates
-	}
-	overlappingEnds := make([]*time.Time, 0)
-	for i := range overlapping {
-		if overlapping[i].URL() == candidates[i].URL() {
-			break
-		}
-		windowEnd, _ := windowToTime(overlapping[i])
-		overlappingEnds = append(overlappingEnds, windowEnd)
-	}
-
-	var result = make([]storage.Object, 0)
-
-	outer: for i := range candidates {
-		candidateEnd, _ := windowToTime(candidates[i])
-		startTime :=  candidateEnd.Add(-windowDuration)
-		for j := range overlappingEnds {
-			if startTime.Before(*overlappingEnds[j]) {
-				fmt.Printf("overlaped %v %v %v %v\n", s.EventID, candidates[i], candidateEnd, overlappingEnds[j])
-				goto outer
-			}
-		}
-		result = append(result, candidates[i])
-	}
-	return result
-}
-
-
-func (s *Snapshot) GetWindowID(ctx context.Context, windowDuration time.Duration, fs afs.Service) (string, error) {
-	overlappingWindows, err := s.getMatchingWindows(2 * windowDuration)
-	if err != nil {
-		return "", err
-	}
-	windows, err := s.getMatchingWindows(windowDuration)
-	if err != nil {
-		return "", err
-	}
-	windows = s.filterLeader(windowDuration, overlappingWindows, windows)
-	if len(windows) == 0 {
-		return "", nil
-	}
-
-	window, err := getWindow(ctx, windows[0].URL(), fs)
-	if err != nil {
-		return "", err
-	}
-	return window.EventID, nil
-}
 
 
 

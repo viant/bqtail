@@ -51,7 +51,6 @@ func (m *Meta) HasChanged(ctx context.Context, fs afs.Service) (bool, error) {
 	if !m.isCheckDue(time.Now()) {
 		return false, nil
 	}
-
 	basicMatcher, err := matcher.NewBasic("", ".json", "", nil)
 	if err != nil {
 		return false, err

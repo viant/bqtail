@@ -48,8 +48,6 @@ func (s *service) scheduleURL(source storage.Object, request *contract.Request, 
 	return url.Join(baseURL, request.EventID+transferableExtension), nil
 }
 
-
-
 //Add adds matched transfer event to batch stage
 func (s *service) Add(ctx context.Context, source storage.Object, request *contract.Request, rule *config.Rule) (snapshot *Snapshot, err error) {
 	sourceCreated := source.ModTime()
@@ -85,12 +83,8 @@ func (s *service) Add(ctx context.Context, source storage.Object, request *contr
 	return NewSnapshot(source, request.EventID, name, objects, rule.Batch.Window.Duration), err
 }
 
-
 func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Window) (string, error) {
 	URL := window.URL
-	if URL == "" {
-		URL = url.Join(baseURL, fmt.Sprintf("%v%v", window.End.Unix() * int64(time.Second),  windowExtension))
-	}
 	data, err := json.Marshal(window)
 	if err != nil {
 		return "", err
@@ -98,19 +92,26 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	if base.IsLoggingEnabled() {
 		fmt.Printf("Acquired batch: %v %v\n", window.EventID, URL)
 	}
+
+	for i := 0; i < base.BatchVicinityCount; i++ {
+		attemptURL := url.Join(baseURL, fmt.Sprintf("%v%v", window.End.Add(-1 * time.Duration(i) * time.Second).UnixNano(), windowExtension))
+		window, err := getWindow(ctx, attemptURL, s.fs)
+		if err == nil {
+			return window.EventID, nil
+		}
+	}
 	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data), option.NewGeneration(true, 0))
 	if err != nil {
-		if isPreConditionError(err) {
+		if isPreConditionError(err) || isRateError(err) {
 			window, err := getWindow(ctx, URL, s.fs)
 			if err != nil {
-				return "", errors.Wrapf(err,"failed to load window: %v", URL)
+				return "", errors.Wrapf(err, "failed to load window: %v", URL)
 			}
 			return window.EventID, nil
 		}
 	}
 	return "", err
 }
-
 
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
@@ -132,13 +133,12 @@ func (s *service) TryAcquireWindow(ctx context.Context, snapshot *Snapshot, rule
 	if batchEventID != "" {
 		return &BatchedWindow{BatchingEventID: batchEventID}, nil
 	}
-	return &BatchedWindow{Window: window},nil
+	return &BatchedWindow{Window: window}, nil
 }
-
 
 func (s *service) newWindowSnapshot(ctx context.Context, window *Window) *Snapshot {
 	windowDuration := window.End.Sub(window.Start)
-	rangeMin := window.Start.Add(-(2 * windowDuration + 1))
+	rangeMin := window.Start.Add(-(2*windowDuration + 1))
 	rangeMax := window.End.Add(1)
 	_, name := url.Split(window.ScheduleURL, gs.Scheme)
 	modTimeMatcher := matcher.NewModification(&rangeMax, &rangeMin)
@@ -152,7 +152,6 @@ func (s *service) newWindowSnapshot(ctx context.Context, window *Window) *Snapsh
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *config.Rule) (err error) {
-	time.Sleep(5 * time.Second)
 	snapshot := s.newWindowSnapshot(ctx, window)
 	if owner, _ := snapshot.IsOwner(ctx, window, s.fs); ! owner {
 		window.LostOwnership = true
@@ -181,10 +180,17 @@ func windowedMatcher(after, before time.Time, ext string) *matcher.Modification 
 	return modTimeMatcher
 }
 
-
-func isPreConditionError(err error)  bool {
+func isPreConditionError(err error) bool {
 	origin := errors.Cause(err)
-	if googleError, ok := origin.(*googleapi.Error);ok && googleError.Code == http.StatusPreconditionFailed {
+	if googleError, ok := origin.(*googleapi.Error); ok && googleError.Code == http.StatusPreconditionFailed {
+		return true
+	}
+	return false
+}
+
+func isRateError(err error) bool {
+	origin := errors.Cause(err)
+	if googleError, ok := origin.(*googleapi.Error); ok && googleError.Code == http.StatusTooManyRequests {
 		return true
 	}
 	return false

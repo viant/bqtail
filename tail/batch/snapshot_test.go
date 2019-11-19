@@ -23,6 +23,7 @@ func TestSnapshot_GetWindowID(t *testing.T) {
 
 
 
+
 		var useCases  = []struct {
 			description string
 			eventID string
@@ -54,7 +55,6 @@ func TestSnapshot_GetWindowID(t *testing.T) {
 			}
 			assert.Equal(t, useCase.expect, ownerID, useCase.description)
 		}
-
 
 }
 

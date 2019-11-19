@@ -5,7 +5,7 @@
   "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
   "TriggerBucket": "${triggerBucket}",
-  "CheckInMs": 150000,
+  "CheckInMs": 600000,
   "SlackCredentials": {
     "URL": "gs://${configBucket}/Secrets/slack.json.enc",
     "Key": "${prefix}_ring/${prefix}_key"

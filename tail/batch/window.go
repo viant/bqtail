@@ -23,9 +23,9 @@ type BatchedWindow struct {
 //Window represent batching window
 type Window struct {
 	URL           string      `json:",omitempty"`
+	TriedURL      []string    `json:",omitempty"`
 	Start         time.Time   `json:",omitempty"`
 	LostOwnership bool        `json:",omitempty"`
-
 	BaseURL       string      `json:",omitempty"`
 	End           time.Time   `json:",omitempty"`
 	SourceCreated time.Time   `json:",omitempty"`
@@ -78,13 +78,14 @@ func (w *Window) loadDatafile(ctx context.Context, fs afs.Service) error {
 
 //NewWindow create a stage batch window
 func NewWindow(baseURL string, snapshot *Snapshot, route *config.Rule) *Window {
-	end := snapshot.Schedule.ModTime().Add(route.Batch.Window.Duration)
+	startTime := time.Unix(snapshot.Schedule.ModTime().Unix(), 0)
+	end := startTime.Add(route.Batch.Window.Duration)
 	return &Window{
 		BaseURL:       baseURL,
 		SourceCreated: snapshot.source.ModTime(),
 		URL:           url.Join(baseURL, fmt.Sprintf("%v%v", end.UnixNano(), windowExtension)),
 		EventID:       snapshot.EventID,
-		Start:         snapshot.Schedule.ModTime(),
+		Start:         startTime,
 		ScheduleURL:   snapshot.Schedule.URL(),
 		End:           end,
 	}

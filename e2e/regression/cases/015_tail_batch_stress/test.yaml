@@ -1,6 +1,7 @@
 init:
   self.i: 1
   self.cnt: 0
+  unique: $rand
 
 pipeline:
   prepare:
@@ -39,7 +40,7 @@ pipeline:
       index: ${self.i}
       lineTemplate: '{"id": ${id}, "name": "dummy ${id}", "type_id": 1}'
       dest:
-        URL: gs://${triggerBucket}/data/case015/dummy_bc${self.cnt++}_$fileNo.json
+        URL: gs://${triggerBucket}/data/case015/dummy_${unique}_${self.cnt++}_$fileNo.json
         credentials: $gcpCredentials
     inc:
       action: nop
