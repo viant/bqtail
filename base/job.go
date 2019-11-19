@@ -162,10 +162,11 @@ func JobError(job *bigquery.Job) error {
 	}
 	if job.Status != nil && job.Status.ErrorResult != nil {
 		JSON, _ := json.Marshal(job.Status.Errors)
-		return fmt.Errorf("failed to run job: %s, %s", job.Status.ErrorResult.Message, JSON)
+		return fmt.Errorf("failed to run job [%v]: %s, %s", job.Id, job.Status.ErrorResult.Message, JSON)
 	}
 	return nil
 }
+
 
 //DecodePathSeparator decode job ID
 func DecodePathSeparator(jobID string, count int) string {
