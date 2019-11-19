@@ -113,7 +113,7 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 		}
 		if base.IsRetryError(err) {
 			//do extra sleep before retrying
-			time.Sleep(3 * time.Second)
+			time.Sleep(base.RetrySleepInSec * time.Second)
 			continue
 		}
 		if i > 0 && base.IsDuplicateJobError(err) {

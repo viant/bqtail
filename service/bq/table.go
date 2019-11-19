@@ -24,7 +24,7 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 		}
 		if base.IsRetryError(err) {
 			//do extra sleep before retrying
-			time.Sleep(3 * time.Second)
+			time.Sleep(base.RetrySleepInSec * time.Second)
 			continue
 		}
 		break
