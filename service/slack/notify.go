@@ -29,7 +29,8 @@ type NotifyRequest struct {
 func (s *service) Notify(ctx context.Context, request *NotifyRequest) error {
 	err := s.notify(ctx, request)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to notify on slack: %v", request.Channels)
+		JSON, _ := json.Marshal(request)
+		err = errors.Wrapf(err, "failed to notify on slack: %v", JSON)
 	}
 	return err
 }

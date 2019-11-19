@@ -1,8 +1,8 @@
 init:
   '!gcpCredentials': $params.authWith
+  '!slackOAuth': $params.slackSecrets
   gcp: ${secrets.$gcpCredentials}
   gcpProject: $gcp.ProjectID
-  slackOAuth: $Cat('$env.HOME/.secret/slack-e2e.json')
   serviceAccount: $gcp.ClientEmail
   prefix: $Replace($gcpProject,'-','_')
   configBucket: ${prefix}_config
