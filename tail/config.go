@@ -66,6 +66,9 @@ func (c *Config) Validate() error {
 	if err != nil {
 		return err
 	}
+	if c.CorruptedFileURL == "" {
+		return fmt.Errorf("corruptedFileURL were empty")
+	}
 	if c.Ruleset.UsesBatch() && c.BatchURL == "" {
 		return fmt.Errorf("batchURL were empty")
 	}

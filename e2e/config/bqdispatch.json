@@ -4,6 +4,7 @@
   "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
   "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
   "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
+  "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
   "CheckInMs": 60000,
   "TriggerBucket": "${triggerBucket}",

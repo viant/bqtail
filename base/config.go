@@ -29,6 +29,7 @@ type Config struct {
 	ActionPrefix     string
 	TaskPrefix       string
 	ErrorURL         string
+	CorruptedFileURL string
 	SlackCredentials *Secret
 }
 
@@ -38,14 +39,11 @@ func (c *Config) BuildReplayActionURL(eventID string) string {
 	return url.Join(c.JournalURL, path.Join(replayPrefix, date, eventID+ActionExt))
 }
 
-
-
 //BuildTaskURL returns an action url for supplied event ID
 func (c *Config) BuildTaskURL(eventID string) string {
 	date := time.Now().Format(DateLayout)
 	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.TaskPrefix, date, DecodePathSeparator(eventID, 2), ActionExt)
 }
-
 
 //OutputURL returns an output URL
 func (c *Config) OutputURL(hasError bool) string {

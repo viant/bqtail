@@ -4,6 +4,7 @@
   "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
   "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
+  "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "TriggerBucket": "${triggerBucket}",
   "CheckInMs": 600000,
   "SlackCredentials": {
