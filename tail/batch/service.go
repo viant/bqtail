@@ -59,7 +59,7 @@ func (s *service) Add(ctx context.Context, source storage.Object, request *contr
 	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(request.SourceURL), &snapshot.Schedule, option.NewGeneration(true, 0))
 	if err != nil {
 		if ! isPreConditionError(err) {
-			return nil, errors.Errorf("failed create batch trace file: %v", URL)
+			return nil, errors.Wrapf(err, "failed create batch trace file: %v", URL)
 		}
 		snapshot.Schedule, err = s.fs.Object(ctx, URL)
 		if err != nil {
