@@ -575,9 +575,9 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	if configuration.Load == nil || len(configuration.Load.SourceUris) <= 1 {
 		return base.JobError(job)
 	}
-
-	response.Corrupted = removeCorruptedURIs(job)
-	if len(response.Corrupted)  == 0  {
+	var valid []string
+	response.Corrupted, valid = removeCorruptedURIs(job)
+	if len(response.Corrupted)  == 0 || len(valid) == 0 {
 		return base.JobError(job)
 	}
 	response.Status = base.StatusOK
@@ -588,6 +588,7 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	load := &bq.LoadRequest{
 		JobConfigurationLoad: configuration.Load,
 	}
+	load.SourceUris = valid
 	if actions != nil {
 		load.Actions = *actions
 	}
