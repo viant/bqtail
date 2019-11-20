@@ -28,8 +28,7 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 		}
 		processed[request.URLs[i]] = true
 		waitGroup.Add(1)
-
-		if i%5 == 0 { //extra sleep to not exceed 15 req/sec
+		if i% 10 == 0 { //extra sleep
 			time.Sleep(deleteSleepTime * time.Millisecond)
 		}
 		go func(URL string) {
