@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-const deleteRoutines = 4
+const deleteRoutines = 3
 
 
 //Delete deletes supplied URLs
