@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 )
 
 //Delete deletes supplied URLs
@@ -22,8 +23,13 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 		}
 		processed[request.URLs[i]] = true
 		waitGroup.Add(1)
+
+		if i % 5 == 0 {//extra sleep to not exceed 20 req/sec
+			time.Sleep(500 * time.Millisecond)
+		}
 		go func (URL string) {
 			defer waitGroup.Done()
+
 			if e := s.fs.Delete(ctx, URL); e != nil {
 				if ok, _ := s.fs.Exists(ctx, URL); !ok {
 					return
