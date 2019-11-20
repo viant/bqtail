@@ -35,16 +35,18 @@ func (d *deleter) Schedule(URL string) {
 	d.URLs <- URL
 }
 
-func (d *deleter) Wait() error {
+func (d *deleter) Wait() (err error) {
 	d.WaitGroup.Wait()
 	atomic.StoreInt32(&d.closed, 1)
 	for i := 0; i < d.routines; i++ {
 		d.URLs <- ""
 	}
 	if atomic.LoadInt32(&d.hasError) == 1 {
-		return <- d.errChannel
+		err = <- d.errChannel
 	}
-	return nil
+	defer close(d.errChannel)
+	defer close(d.URLs)
+	return err
 }
 
 

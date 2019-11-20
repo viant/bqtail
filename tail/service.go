@@ -240,6 +240,8 @@ func (s *service) createReplayable(ctx context.Context, URL string, loadJob *bq.
 	return s.fs.Upload(ctx, URL, 0644, bytes.NewReader(JSON))
 }
 
+
+
 func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 	if window == nil {
 		return nil
