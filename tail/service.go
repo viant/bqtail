@@ -64,7 +64,9 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	response.TriggerURL = request.SourceURL
 	defer response.SetTimeTaken(response.Started)
 	var err error
-	if request.IsDeferredTask(s.config.TaskPrefix) {
+	if request.IsAction(s.config.ActionPrefix) {
+		err = s.runAction(ctx, request, response)
+	} else  if request.IsDeferredTask(s.config.TaskPrefix) {
 		err = s.RunTask(ctx, request, response)
 	} else {
 		err = s.tail(ctx, request, response)
@@ -416,6 +418,34 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 
 	return nil
 }
+
+
+
+func (s *service) runAction(ctx context.Context, request *contract.Request, response *contract.Response) error {
+	actions := []*task.Action{}
+	response.MatchedURL = request.SourceURL
+	response.Matched = true
+	reader, err := s.fs.DownloadWithURL(ctx, request.SourceURL)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+	if err = json.NewDecoder(reader).Decode(&actions); err != nil {
+		return errors.Wrapf(err, "unable decode: %v", request.SourceURL)
+	}
+	//response.Actions = actions
+	for _, action := range actions {
+		if err = task.Run(ctx, s.Registry, action); err != nil {
+			return err
+		}
+	}
+	_, sourcePath := url.Base(request.SourceURL, "")
+	journalURL := url.Join(s.config.JournalURL, sourcePath)
+	return s.fs.Move(ctx, request.SourceURL, journalURL)
+}
+
 
 func (s *service) tailIndividually(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*Job, error) {
 	object, err := s.fs.Object(ctx, request.SourceURL)

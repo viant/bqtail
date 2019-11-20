@@ -105,7 +105,7 @@ const (
 	DateLayout = "2006-01-02_15"
 
 	//actionPrefix
-	actionPrefix = "/_dispatched_/"
+	actionPrefix = "/_action_/"
 
 	//taskPrefix
 	TaskPrefix = "/_deferred_/"
