@@ -11,8 +11,6 @@ import (
 	"github.com/viant/afs/object"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
-	"github.com/viant/toolbox"
-
 	"testing"
 	"time"
 )
@@ -45,6 +43,28 @@ func TestSnapshot_GetWindowID(t *testing.T) {
 				},
 				expect:"1574102291100000000.win",
 			},
+
+
+			{
+				description: "window ended with 1ms",
+				eventID:"844224067128842",
+				windowDuration:time.Second * 20,
+				files:[]storage.Object{
+					newWinowObject("1574281708000000000.win"),
+					newObject("844224067128842.tnf", parseTime("2019-11-20T20:28:28.001Z",)),
+				},
+				expect:"",
+			},
+			{
+				description: "window exactly ended",
+				eventID:"844224067128842",
+				windowDuration:time.Second * 20,
+				files:[]storage.Object{
+					newWinowObject("1574281708000000000.win"),
+					newObject("844224067128842.tnf", parseTime("2019-11-20T20:28:28.009Z",)),
+				},
+				expect:"",
+			},
 		}
 
 		for _, useCase := range useCases {
@@ -59,8 +79,11 @@ func TestSnapshot_GetWindowID(t *testing.T) {
 }
 
 func parseTime(literal string) time.Time {
-	t, _ := toolbox.ToTime(literal, time.RFC3339)
-	return *t
+	t, e := time.Parse(time.RFC3339Nano, literal)
+	if e != nil {
+		panic(e)
+	}
+	return t
 }
 
 func newWinowObject(name string) storage.Object {

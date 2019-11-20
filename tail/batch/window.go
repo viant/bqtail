@@ -62,7 +62,7 @@ func (w *Window) loadDatafile(ctx context.Context, fs afs.Service) error {
 	traceFiles = sortedTransfers.Elements
 	result = make([]*Datafile, 0)
 	for i := range traceFiles {
-		if traceFiles[i].ModTime().Before(w.Start) || traceFiles[i].ModTime().After(w.End) {
+		if traceFiles[i].ModTime().Before(w.Start) || traceFiles[i].ModTime().After(w.End) || traceFiles[i].ModTime().Equal(w.End){
 			continue
 		}
 		datafile, e := loadDatafile(ctx, traceFiles[i], fs)

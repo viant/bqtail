@@ -47,7 +47,7 @@ func getMatchingWindows(windows []storage.Object ,windowDuration time.Duration, 
 			err = e
 			continue
 		}
-		if at.After(*windowEnd) {
+		if at.After(*windowEnd) || at.Equal(*windowEnd) {
 			continue
 		}
 		windowStart := windowEnd.Add(-windowDuration)
