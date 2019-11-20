@@ -576,8 +576,11 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 		return base.JobError(job)
 	}
 	var valid []string
-	response.Corrupted, valid = removeCorruptedURIs(ctx, job, s.fs)
-	if len(response.Corrupted)  == 0 || len(valid) == 0 {
+	response.Corrupted, response.Missing, valid = removeCorruptedURIs(ctx, job, s.fs)
+	if (len(response.Corrupted) == 0 && len(response.Missing) == 0) || len(valid) == 0 {
+		if len(response.Missing) > 0 && len(response.Corrupted) == 0 {
+			return nil
+		}
 		return base.JobError(job)
 	}
 	response.Status = base.StatusOK
@@ -604,10 +607,11 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	return err
 }
 
-
-
 func (s *service) moveToCorruptedDataFiles(ctx context.Context, corrupted []string) error {
 	var err error
+	if len(corrupted) == 0 {
+		return nil
+	}
 	for _, URL := range corrupted {
 		_, URLPath := url.Base(URL, "")
 		destURL := url.Join(s.config.CorruptedFileURL, URLPath)

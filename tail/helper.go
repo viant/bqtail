@@ -31,17 +31,20 @@ func wrapRecoverJobID(jobID string) string {
 
 
 
-func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service) (corrupted []string, valid []string) {
+func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service) (corrupted, missing []string, valid []string) {
 	var URIs = make(map[string]bool)
 	for _, URI := range job.Configuration.Load.SourceUris {
 		URIs[URI] = true
 	}
 	corrupted = make([]string, 0)
+	missing = make([]string, 0)
 	for _, element := range job.Status.Errors {
+		isMissing := false
 		if element.Reason == notFoundReason && element.Location == "" {
 			element.Message = strings.Replace(element.Message, "/bigstore", "gs:/", 1)
 			if index := strings.Index(element.Message, "gs://");index !=-1 {
 				element.Location = string(element.Message[index:])
+				isMissing = true
 			}
 		}
 		if element.Location == "" {
@@ -50,8 +53,12 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 		if _, ok := URIs[element.Location]; ! ok {
 			continue
 		}
-		corrupted = append(corrupted, element.Location)
 		delete(URIs, element.Location)
+		if isMissing {
+			missing = append(missing, element.Location)
+			continue
+		}
+		corrupted = append(corrupted, element.Location)
 	}
 	valid = make([]string, 0)
 	for URI := range URIs {
@@ -63,5 +70,5 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 
 		valid = append(valid, URI)
 	}
-	return corrupted, valid
+	return corrupted, missing, valid
 }
