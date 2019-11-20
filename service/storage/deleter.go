@@ -31,6 +31,7 @@ func (d *deleter) delete(ctx context.Context, URL string) {
 }
 
 func (d *deleter) Schedule(URL string) {
+	d.WaitGroup.Add(1)
 	d.URLs <- URL
 }
 
@@ -50,8 +51,8 @@ func (d *deleter) Wait() error {
 func (d *deleter) Run(ctx context.Context, routines int) {
 	d.routines = routines
 	d.URLs = make(chan string, routines)
+	d.WaitGroup.Add(1)
 	for i := 0; i < routines; i++ {
-		d.WaitGroup.Add(1)
 		go func() {
 			d.WaitGroup.Done()
 			for atomic.LoadInt32(&d.closed) == 0 {
@@ -59,7 +60,6 @@ func (d *deleter) Run(ctx context.Context, routines int) {
 				if URL == "" {
 					return
 				}
-				d.WaitGroup.Add(1)
 				d.delete(ctx, URL)
 			}
 		}()
