@@ -3,12 +3,10 @@ package storage
 import (
 	"context"
 	"fmt"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 const deleteSleepTime = 300
+
 
 //Delete deletes supplied URLs
 func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
@@ -17,38 +15,19 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 	if err != nil {
 		return err
 	}
-	waitGroup := &sync.WaitGroup{}
-	var errorChannel = make(chan error, 1)
-	var hasError int32 = 0
-	processed := map[string]bool{}
 
+	deleter  := newDeleter(s.fs)
+	deleter.Run(ctx, 5)
+
+	processed := map[string]bool{}
 	for i := range request.URLs {
 		if processed[request.URLs[i]] {
 			continue
 		}
 		processed[request.URLs[i]] = true
-		waitGroup.Add(1)
-		if i% 10 == 0 { //extra sleep
-			time.Sleep(deleteSleepTime * time.Millisecond)
-		}
-		go func(URL string) {
-			defer waitGroup.Done()
-			if e := s.fs.Delete(ctx, URL); e != nil {
-				if ok, err := s.fs.Exists(ctx, URL); !ok && err == nil {
-					return
-				}
-				if atomic.CompareAndSwapInt32(&hasError, 0, 1) {
-					errorChannel <- e
-				}
-			}
-		}(request.URLs[i])
+		deleter.Schedule(request.URLs[i])
 	}
-	waitGroup.Wait()
-
-	if atomic.LoadInt32(&hasError) == 1 {
-		err = <-errorChannel
-	}
-	return err
+	return deleter.Wait()
 }
 
 //DeleteRequest delete request
