@@ -1,14 +1,13 @@
 package bq
 
 import (
+	"bqtail/base"
 	"context"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
 
-const (
-	doneStatus = "DONE"
-)
+
 
 //Wait waits for job completion
 func (s *service) Wait(ctx context.Context, ref *bigquery.JobReference) (*bigquery.Job, error) {
@@ -18,7 +17,7 @@ func (s *service) Wait(ctx context.Context, ref *bigquery.JobReference) (*bigque
 		if statusJob, err = s.GetJob(ctx, ref.ProjectId, ref.JobId); err != nil {
 			return nil, err
 		}
-		if statusJob.Status.State == doneStatus {
+		if statusJob.Status.State == base.DoneState {
 			break
 		}
 		time.Sleep(time.Second)
@@ -35,7 +34,7 @@ func (s *service) waitWithTimeout(ctx context.Context, ref *bigquery.JobReferenc
 		if statusJob, err = s.GetJob(ctx, ref.ProjectId, ref.JobId); err != nil {
 			return nil, err
 		}
-		if statusJob.Status.State == doneStatus {
+		if statusJob.Status.State ==  base.DoneState {
 			break
 		}
 		if time.Now().Sub(started) > timeout {

@@ -90,7 +90,7 @@ const (
 	RetrySleepInSec = 3
 
 	//BatchVicinityCount
-	BatchVicinityCount = 6
+	BatchVicinityCount = 4
 
 	//DoneState done status
 	DoneState = "DONE"
