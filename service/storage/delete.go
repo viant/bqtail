@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-const deleteSleepTime = 300
+const deleteRoutines = 4
 
 
 //Delete deletes supplied URLs
@@ -17,7 +17,7 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 	}
 
 	deleter  := newDeleter(s.fs)
-	deleter.Run(ctx, 5)
+	deleter.Run(ctx, deleteRoutines)
 
 	processed := map[string]bool{}
 	for i := range request.URLs {
