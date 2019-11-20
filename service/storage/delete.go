@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 )
+
+const deleteSleepTime = 300
 
 //Delete deletes supplied URLs
 func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
@@ -15,8 +18,10 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 		return err
 	}
 	waitGroup := &sync.WaitGroup{}
-
+	var errorChannel = make(chan error, 1)
+	var hasError int32 = 0
 	processed := map[string]bool{}
+
 	for i := range request.URLs {
 		if processed[request.URLs[i]] {
 			continue
@@ -24,24 +29,28 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 		processed[request.URLs[i]] = true
 		waitGroup.Add(1)
 
-		if i % 5 == 0 {//extra sleep to not exceed 20 req/sec
-			time.Sleep(500 * time.Millisecond)
+		if i%5 == 0 { //extra sleep to not exceed 15 req/sec
+			time.Sleep(deleteSleepTime * time.Millisecond)
 		}
-		go func (URL string) {
+		go func(URL string) {
 			defer waitGroup.Done()
-
 			if e := s.fs.Delete(ctx, URL); e != nil {
-				if ok, _ := s.fs.Exists(ctx, URL); !ok {
+				if ok, err := s.fs.Exists(ctx, URL); !ok && err == nil {
 					return
 				}
-				err = e
+				if atomic.CompareAndSwapInt32(&hasError, 0, 1) {
+					errorChannel <- e
+				}
 			}
 		}(request.URLs[i])
 	}
 	waitGroup.Wait()
+
+	if atomic.LoadInt32(&hasError) == 1 {
+		err = <-errorChannel
+	}
 	return err
 }
-
 
 //DeleteRequest delete request
 type DeleteRequest struct {
