@@ -56,7 +56,7 @@ func (r *Ruleset) Init(ctx context.Context, fs afs.Service, projectID string) er
 	if err := r.initRules(); err != nil {
 		return err
 	}
-	fmt.Printf("init ruleset !!!\n")
+
 	r.meta = base.NewMeta(r.RulesURL, time.Duration(r.CheckInMs)*time.Millisecond)
 	return r.load(ctx, fs)
 }

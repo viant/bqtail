@@ -20,6 +20,7 @@ import (
 	"github.com/viant/afs/file"
 	store "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"path"
 	"strings"
@@ -64,9 +65,9 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	response.TriggerURL = request.SourceURL
 	defer response.SetTimeTaken(response.Started)
 	var err error
-	if request.IsAction(s.config.ActionPrefix) {
-		err = s.runAction(ctx, request, response)
-	} else  if request.IsDeferredTask(s.config.TaskPrefix) {
+	if request.IsWorkflowURL(s.config.WorkflowPrefix) {
+		err = s.runWorkflow(ctx, request, response)
+	} else  if request.IsDeferredTask(s.config.BqJobPrefix) {
 		err = s.RunTask(ctx, request, response)
 	} else {
 		err = s.tail(ctx, request, response)
@@ -192,8 +193,9 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 		}
 	}
 	load.Actions = *actions
-	replayActionURL := s.config.BuildReplayActionURL(job.EventID)
-	traceURL := s.appendReplayActions(replayActionURL, load)
+	activeURL := s.config.BuildActiveWorkflowURL(job.Dest(), job.EventID)
+	doneURL := s.config.BuildDonwWorkflowURL(job.Dest(), job.EventID)
+	s.appendWorkflowURL(activeURL, doneURL, load)
 	defer func() {
 		job.Actions = actions
 		response.SetIfError(err)
@@ -203,8 +205,8 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 		}
 	}()
 
-	if err = s.createReplayable(ctx, traceURL, load); err != nil {
-		return nil, errors.Wrapf(err, "failed to create trace: %v", traceURL)
+	if err = s.createWorkflowActions(ctx, activeURL, load); err != nil {
+		return nil, errors.Wrapf(err, "failed to create workflow actions: %v", activeURL)
 	}
 	bqJob, err := s.bq.Load(ctx, load)
 	if bqJob != nil {
@@ -217,15 +219,15 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	return job, err
 }
 
-//appendReplayActions append track action
-func (s *service) appendReplayActions(actionURL string, load *bq.LoadRequest) string {
-	deleteReq := storage.DeleteRequest{URLs: []string{actionURL}}
-	deleteTrace, _ := task.NewAction("delete", deleteReq)
-	load.Actions.AddOnSuccess(deleteTrace)
-	return actionURL
+//appendWorkflowURL append track action
+func (s *service) appendWorkflowURL(activeURL, doneURL string, load *bq.LoadRequest)  {
+	moveRequest := storage.MoveRequest{SourceURL: activeURL, DestURL:doneURL, IsDestAbsoluteURL:true}
+	moveAction, _ := task.NewAction("move", moveRequest)
+	load.Actions.AddOnSuccess(moveAction)
 }
 
-func (s *service) createReplayable(ctx context.Context, URL string, loadJob *bq.LoadRequest) error {
+
+func (s *service) createWorkflowActions(ctx context.Context, URL string, loadJob *bq.LoadRequest) error {
 	loadTrace, err := task.NewAction("load", loadJob)
 	if err != nil {
 		return err
@@ -239,6 +241,7 @@ func (s *service) createReplayable(ctx context.Context, URL string, loadJob *bq.
 	}
 	return s.fs.Upload(ctx, URL, 0644, bytes.NewReader(JSON))
 }
+
 
 
 
@@ -423,7 +426,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 
 
 
-func (s *service) runAction(ctx context.Context, request *contract.Request, response *contract.Response) error {
+func (s *service) runWorkflow(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	actions := []*task.Action{}
 	response.MatchedURL = request.SourceURL
 	response.Matched = true
@@ -437,16 +440,22 @@ func (s *service) runAction(ctx context.Context, request *contract.Request, resp
 	if err = json.NewDecoder(reader).Decode(&actions); err != nil {
 		return errors.Wrapf(err, "unable decode: %v", request.SourceURL)
 	}
-	//response.Actions = actions
+	replacement := buildJobIDReplacementMap(request.EventID, actions)
 	for _, action := range actions {
+		action.Request = toolbox.ReplaceMapKeys(action.Request, replacement, true)
 		if err = task.Run(ctx, s.Registry, action); err != nil {
 			return err
 		}
 	}
 	_, sourcePath := url.Base(request.SourceURL, "")
 	journalURL := url.Join(s.config.JournalURL, sourcePath)
-	return s.fs.Move(ctx, request.SourceURL, journalURL)
+	if e := s.fs.Move(ctx, request.SourceURL, journalURL);e != nil {
+		response.NotFoundError = e.Error()
+	}
+	return err
 }
+
+
 
 
 func (s *service) tailIndividually(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*Job, error) {
@@ -560,7 +569,7 @@ func (s *service) RunTask(ctx context.Context, request *contract.Request, respon
 	_, sourcePath := url.Base(request.SourceURL, "")
 	journalURL := url.Join(s.config.OutputURL(err != nil), sourcePath)
 	if e := s.fs.Move(ctx, request.SourceURL, journalURL); e != nil {
-		err = errors.Wrapf(err, "failed to journal: %v", e)
+		response.NotFoundError = errors.Wrapf(err, "failed to journal: %v", e).Error()
 	}
 	return err
 }

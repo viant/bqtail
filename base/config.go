@@ -19,30 +19,36 @@ var cloudFunctionRegionEnvKeys = []string{"FUNCTION_REGION", "GOOGLE_CLOUD_REGIO
 
 //Config represents base config
 type Config struct {
-	RunOnce          bool
-	ProjectID        string
-	Region           string
-	DeferTaskURL     string
-	BatchURL         string
-	JournalURL       string
-	TriggerBucket    string
-	ActionPrefix     string
-	TaskPrefix       string
-	ErrorURL         string
-	CorruptedFileURL string
-	SlackCredentials *Secret
+	RunOnce           bool
+	ProjectID         string
+	Region            string
+	DeferTaskURL      string
+	ActiveWorkflowURL string
+	DoneWorkflowURL   string
+	BatchURL          string
+	JournalURL        string
+	TriggerBucket     string
+	WorkflowPrefix    string
+	BqJobPrefix       string
+	ErrorURL          string
+	CorruptedFileURL  string
+	SlackCredentials  *Secret
 }
 
-//BuildReplayActionURL returns replay action URL for supplied event id
-func (c *Config) BuildReplayActionURL(eventID string) string {
-	date := time.Now().Format(DateLayout)
-	return url.Join(c.JournalURL, path.Join(replayPrefix, date, eventID+ActionExt))
+//BuildActiveWorkflowURL returns active action URL for supplied event id
+func (c *Config) BuildActiveWorkflowURL(dest, eventID string) string {
+	return url.Join(c.ActiveWorkflowURL, path.Join(dest, eventID+ActionExt))
+}
+
+//BuildDonwWorkflowURL returns done action URL for supplied event id
+func (c *Config) BuildDonwWorkflowURL(dest, eventID string) string {
+	return url.Join(c.DoneWorkflowURL, path.Join(dest, eventID+ActionExt))
 }
 
 //BuildTaskURL returns an action url for supplied event ID
 func (c *Config) BuildTaskURL(eventID string) string {
 	date := time.Now().Format(DateLayout)
-	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.TaskPrefix, date, DecodePathSeparator(eventID, 2), ActionExt)
+	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.BqJobPrefix, date, DecodePathSeparator(eventID, 2), ActionExt)
 }
 
 //OutputURL returns an output URL
@@ -83,12 +89,19 @@ func (c *Config) Init(ctx context.Context) error {
 		c.Region = defaultRegion
 	}
 
-	if c.ActionPrefix == "" {
-		c.ActionPrefix = actionPrefix
+	if c.WorkflowPrefix == "" {
+		c.WorkflowPrefix = WorkflowPrefix
 	}
-	if c.TaskPrefix == "" {
-		c.TaskPrefix = TaskPrefix
+	if c.BqJobPrefix == "" {
+		c.BqJobPrefix = BqJobPrefix
 	}
+	if c.ActiveWorkflowURL == "" {
+		c.ActiveWorkflowURL = url.Join(c.JournalURL, "Active")
+	}
+	if c.DoneWorkflowURL == "" {
+		c.DoneWorkflowURL = url.Join(c.JournalURL, "Done")
+	}
+
 	return nil
 }
 

@@ -1,0 +1,154 @@
+[
+  {
+    "Action": "load",
+    "Request": {
+      "AllowJaggedRows": false,
+      "AllowQuotedNewlines": false,
+      "Append": true,
+      "Async": true,
+      "Autodetect": false,
+      "Clustering": {},
+      "CreateDisposition": "",
+      "DeferTaskURL": "gs://viant_e2e_bqdispatch/BqDispatch/Tasks/",
+      "DestinationEncryptionConfiguration": {},
+      "DestinationTable": {
+        "DatasetId": "temp",
+        "ForceSendFields": null,
+        "NullFields": null,
+        "ProjectId": "viant-e2e",
+        "TableId": "dummy_850558231030311"
+      },
+      "DestinationTableProperties": {},
+      "Encoding": "",
+      "FieldDelimiter": "",
+      "ForceSendFields": null,
+      "HivePartitioningMode": "",
+      "HivePartitioningOptions": {},
+      "IgnoreUnknownValues": false,
+      "Job": {},
+      "JobID": "temp--dummy_850558231030311/850558231030311/dispatch",
+      "MaxBadRecords": 0,
+      "NullFields": null,
+      "NullMarker": "",
+      "OnFailure": null,
+      "OnSuccess": [
+        {
+          "Action": "query",
+          "Request": {
+            "Append": true,
+            "Async": true,
+            "DatasetID": "",
+            "DeferTaskURL": "gs://viant_e2e_bqdispatch/BqDispatch/Tasks/",
+            "Dest": "bqtail.dummy",
+            "Job": {},
+            "JobID": "temp--dummy_850558231030311/850558231030311/dispatch",
+            "OnFailure": null,
+            "OnSuccess": [
+              {
+                "Action": "delete",
+                "Request": {
+                  "URLs": [
+                    "gs://viant_e2e_bqtail/data/case006/dummy1.json",
+                    "gs://viant_e2e_bqtail/data/case006/dummy2.json"
+                  ]
+                }
+              },
+              {
+                "Action": "delete",
+                "Request": {
+                  "SourceURL": "",
+                  "URLs": [
+                    "gs://viant_e2e_operation/BqTail/Batch/bqtail.dummy/1574350073000000000.win",
+                    "gs://viant_e2e_operation/BqTail/Batch/bqtail.dummy/850558231030311.tnf",
+                    "gs://viant_e2e_operation/BqTail/Batch/bqtail.dummy/850560215701684.tnf"
+                  ]
+                }
+              },
+              {
+                "Action": "drop",
+                "Request": {
+                  "Async": true,
+                  "DeferTaskURL": "gs://viant_e2e_bqdispatch/BqDispatch/Tasks/",
+                  "Job": {},
+                  "JobID": "temp--dummy_850558231030311/850558231030311/dispatch",
+                  "OnFailure": null,
+                  "OnSuccess": null,
+                  "ProjectID": "",
+                  "SourceURL": "gs://viant_e2e_bqtail/data/case006/dummy1.json",
+                  "Table": "temp.dummy_850558231030311"
+                }
+              }
+            ],
+            "ProjectID": "",
+            "SQL": "SELECT id, MAX(type_id) AS type_id, MAX(name) AS name \nFROM temp.dummy_850558231030311 \n\nGROUP BY 1",
+            "SourceURL": "gs://viant_e2e_bqtail/data/case006/dummy1.json",
+            "Template": "",
+            "UseLegacy": false
+          }
+        },
+        {
+          "Action": "delete",
+          "Request": {
+            "SourceURL": "",
+            "URLs": [
+              "gs://viant_e2e_operation/BqTail/Journal/_Replay/2019-11-21_15/850558231030311.run"
+            ]
+          }
+        }
+      ],
+      "ProjectID": "",
+      "ProjectionFields": null,
+      "Quote": null,
+      "RangePartitioning": {},
+      "Schema": {
+        "Fields": [
+          {
+            "Categories": {},
+            "Description": "",
+            "Fields": null,
+            "ForceSendFields": null,
+            "Mode": "REQUIRED",
+            "Name": "id",
+            "NullFields": null,
+            "Type": "INTEGER"
+          },
+          {
+            "Categories": {},
+            "Description": "",
+            "Fields": null,
+            "ForceSendFields": null,
+            "Mode": "REQUIRED",
+            "Name": "type_id",
+            "NullFields": null,
+            "Type": "INTEGER"
+          },
+          {
+            "Categories": {},
+            "Description": "",
+            "Fields": null,
+            "ForceSendFields": null,
+            "Mode": "",
+            "Name": "name",
+            "NullFields": null,
+            "Type": "STRING"
+          }
+        ],
+        "ForceSendFields": null,
+        "NullFields": null
+      },
+      "SchemaInline": "",
+      "SchemaInlineFormat": "",
+      "SchemaUpdateOptions": null,
+      "SkipLeadingRows": 0,
+      "SourceFormat": "",
+      "SourceURL": "gs://viant_e2e_bqtail/data/case006/dummy1.json",
+      "SourceUris": [
+        "gs://viant_e2e_bqtail/data/case016/dummy1.json",
+        "gs://viant_e2e_bqtail/data/case016/dummy2.json"
+      ],
+      "TimePartitioning": {},
+      "UseAvroLogicalTypes": false,
+      "WriteDisposition": "WRITE_TRUNCATE"
+    }
+  }
+]

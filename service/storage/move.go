@@ -12,18 +12,27 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 	if err != nil {
 		return err
 	}
+
 	_, sourceLocation := url.Base(request.SourceURL, "file")
 	destURL := url.Join(request.DestURL, sourceLocation)
-	if exists, _ := s.fs.Exists(ctx, request.SourceURL); !exists {
-		return nil
+
+	if request.IsDestAbsoluteURL {
+		destURL =  request.DestURL
 	}
-	return s.fs.Move(ctx, request.SourceURL, destURL)
+	err = s.fs.Move(ctx, request.SourceURL, destURL)
+	if err != nil {
+		if exists, _ := s.fs.Exists(ctx, request.SourceURL); !exists {
+			return nil
+		}
+	}
+	return err
 }
 
 //MoveRequest represnets a move resource request
 type MoveRequest struct {
-	SourceURL string
-	DestURL   string
+	SourceURL         string
+	IsDestAbsoluteURL bool
+	DestURL           string
 }
 
 //Validate checks if request is valid

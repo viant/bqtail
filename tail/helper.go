@@ -1,6 +1,8 @@
 package tail
 
 import (
+	"bqtail/base"
+	"bqtail/task"
 	"context"
 	"fmt"
 	"github.com/viant/afs"
@@ -71,4 +73,26 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 		valid = append(valid, URI)
 	}
 	return corrupted, missing, valid
+}
+
+
+func updateJobID(eventID, jobID string) string {
+	elements := strings.Split(jobID, "/")
+	if len(elements) > 2 {
+		previousEventID := elements[len(elements)-2]
+		return strings.Replace(jobID, previousEventID, eventID, len(jobID))
+	}
+	return eventID + jobID
+}
+
+func buildJobIDReplacementMap(eventID string, actions []*task.Action) map[string]interface{} {
+	var result = make(map[string]interface{})
+	for _, action := range actions {
+		jobID, ok := action.Request[base.JobIDKey]
+		if ok {
+			result[base.JobIDKey] = updateJobID(eventID, toolbox.AsString(jobID))
+			break
+		}
+	}
+	return result
 }

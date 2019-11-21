@@ -13,7 +13,7 @@ require (
 	github.com/viant/afs v0.9.0
 	github.com/viant/afsc v0.9.3
 	github.com/viant/assertly v0.5.1 // indirect
-	github.com/viant/toolbox v0.29.0
+	github.com/viant/toolbox v0.29.1
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	google.golang.org/api v0.9.0
 )

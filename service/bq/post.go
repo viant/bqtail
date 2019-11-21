@@ -60,6 +60,10 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 	} else {
 		callerJob.Id = job.Id
 	}
+
+
+
+
 	if onDoneActions != nil && (onDoneActions.IsSyncMode() || err != nil) {
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
@@ -106,10 +110,9 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)
 	var callJob *bigquery.Job
-
 	for i := 0; i < base.MaxRetries; i++ {
 		if callJob, err = call.Do(); err == nil {
-			return callJob, err
+			break
 		}
 		if base.IsRetryError(err) {
 			//do extra sleep before retrying
@@ -120,5 +123,8 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 			err = nil
 		}
 	}
-	return job, err
+	if err != nil || (callJob != nil && base.JobError(callJob) != nil) {
+		return callJob, err
+	}
+	return s.GetJob(ctx, projectID, job.JobReference.JobId)
 }

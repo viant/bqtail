@@ -30,6 +30,12 @@ func (a Actions) CloneOnFailure() *Actions {
 	return result
 }
 
+
+var actionMapping = map[string]string{
+	"copy":"cp",
+	"query":"sql",
+}
+
 //ToRun returns actions to run
 func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 	var toRun []*Action
@@ -56,7 +62,11 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 		}
 
 		if bqJobs[toRun[i].Action] {
-			toRun[i].Request[base.JobIDKey] = job.ChildJobID(fmt.Sprintf("%03d_%v", i, toRun[i].Action)) + jobSuffix
+			actionName := toRun[i].Action
+			if val, ok := actionMapping[actionName];ok {
+				actionName = val
+			}
+			toRun[i].Request[base.JobIDKey] = job.ChildJobID(fmt.Sprintf("%02d_%v", i, actionName) + jobSuffix)
 		}
 
 		if bodyAppendable[toRun[i].Action] {

@@ -15,12 +15,12 @@ func TestWrapRecoverJob(t *testing.T) {
 			expect string
 		}{
 			{
-				description:"regular job",
+				description:"regular jobID",
 				jobID:"myjob",
 				expect:"recover0001_myjob",
 			},
 			{
-				description:"recver job",
+				description:"recver jobID",
 				jobID:"recover0004_myjob",
 				expect:"recover0005_myjob",
 			},
@@ -76,7 +76,7 @@ func Test_removeCorruptedURIs(t *testing.T) {
     "location": "US",
     "projectId": "myproject"
   },
-  "kind": "bigquery#job",
+  "kind": "bigquery#jobID",
   "selfLink": "https://www.googleapis.com/bigquery/v2/projects/myproject/jobs/temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch?location=US",
   "statistics": {
     "creationTime": "1574193994917",
@@ -132,7 +132,7 @@ func Test_removeCorruptedURIs(t *testing.T) {
     "location": "US",
     "projectId": "myproject"
   },
-  "kind": "bigquery#job",
+  "kind": "bigquery#jobID",
   "selfLink": "https://www.googleapis.com/bigquery/v2/projects/myproject/jobs/temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch?location=US",
   "statistics": {
     "creationTime": "1574193994917",
@@ -188,7 +188,7 @@ func Test_removeCorruptedURIs(t *testing.T) {
     "location": "US",
     "projectId": "myproject"
   },
-  "kind": "bigquery#job",
+  "kind": "bigquery#jobID",
   "selfLink": "https://www.googleapis.com/bigquery/v2/projects/myproject/jobs/temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch?location=US",
   "statistics": {
     "creationTime": "1574193994917",
@@ -228,7 +228,37 @@ func Test_removeCorruptedURIs(t *testing.T) {
 			assert.EqualValues(t, useCase.expectMissing, missing, useCase.description)
 			assert.EqualValues(t, useCase.expectCorrupted, corrupted, useCase.description)
 			assert.EqualValues(t, useCase.expectedValid, valid, useCase.description)
+		}
 
+}
+
+func TestUpdateJobId(t *testing.T) {
+
+		var useCases  = []struct {
+			description string
+			jobID       string
+			eventID     string
+			expect      string
+		}{
+			{
+				description:"event id replcement",
+				jobID: "temp--dummy_850558231030311/850558231030311/dispatch",
+				eventID:"333333",
+				expect:"temp--dummy_333333/333333/dispatch",
+			},
+			{
+				description:"event id replcement",
+				jobID: "temp--dummy_850558231030311_850558231030311/dispatch",
+				eventID:"333333",
+				expect:"333333temp--dummy_850558231030311_850558231030311/dispatch",
+			},
+
+		}
+
+
+		for _, useCase := range useCases {
+			updated := updateJobID(useCase.eventID, useCase.jobID)
+			assert.EqualValues(t, useCase.expect, updated, useCase.description)
 		}
 
 }

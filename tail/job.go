@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-//Job represents a tail job
+//Job represents a tail jobID
 type Job struct {
 	EventID       string                         `json:"eventID,ommittempty"`
 	SourceCreated time.Time                      `json:"created,ommittempty"`
@@ -23,7 +23,7 @@ type Job struct {
 	Rule   *config.Rule
 }
 
-//IDSuffix returns job suffix
+//IDSuffix returns jobID suffix
 func (j Job) IDSuffix() string {
 	suffix := base.DispatchJob
 	if j.IsSyncMode() {

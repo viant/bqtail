@@ -1,17 +1,8 @@
 
+
 pipeline:
   prepare:
-    init-temp:
-      action: dsunit:init
-      datastore: temp
-      config:
-        driverName: bigquery
-        credentials: $gcpCredentials
-        parameters:
-          datasetId: temp
-      recreate: true
-
-    init-dbtail:
+    init-db:
       action: dsunit:init
       datastore: bqtail
       config:
@@ -21,34 +12,36 @@ pipeline:
           datasetId: bqtail
       scripts:
         - URL: ${parent.path}/bqtail/schema.sql
-
     populate:
-      action: dsunit:prepare
-      datastore: bqtail
-      URL:  ${parent.path}/bqtail/prepare
+      bqtail:
+        action: dsunit:prepare
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/prepare
 
 
-  setupRule:
-    action: storage:copy
-    expand: true
-    source:
-      URL: ${parent.path}/rule.json
-    dest:
-      credentials: $gcpCredentials
-      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}.json
-
-
-  trigger:
+  upload:
     action: storage:copy
     source:
       URL: ${parent.path}/data/trigger/
     dest:
-      URL: gs://${triggerBucket}/data/case006/
+      URL: gs://${triggerBucket}/data/case016/
       credentials: $gcpCredentials
+
+
+  trigger:
+    action: storage:copy
+    expand: true
+    source:
+      URL: ${parent.path}/replay.json
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${triggerBucket}/_workflow_/case_${parent.index}.json
+
 
   waitForServerless:
     action: nop
     sleepTimeMs: 65000
+
 
   validate:
     check-db:

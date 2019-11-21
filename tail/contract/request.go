@@ -18,10 +18,10 @@ type Request struct {
 }
 
 
-//IsAction returns true if action URL
-func (r *Request) IsAction(actionPrefix string) bool {
+//IsWorkflowURL returns true if action URL
+func (r *Request) IsWorkflowURL(workflowPrefix string) bool {
 	 _, PathURL := url.Base(r.SourceURL, "")
-	 return strings.HasPrefix(PathURL, actionPrefix)
+	 return strings.HasPrefix(PathURL, workflowPrefix)
 }
 
 //IsDeferredTask returns true if deferred task URL

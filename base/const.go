@@ -104,11 +104,11 @@ const (
 	//DateLayout represents a date layout
 	DateLayout = "2006-01-02_15"
 
-	//actionPrefix
-	actionPrefix = "/_action_/"
+	//WorkflowPrefix
+	WorkflowPrefix = "/_workflow_/"
 
-	//taskPrefix
-	TaskPrefix = "/_deferred_/"
+	//BqJobPrefix
+	BqJobPrefix = "/_deferred_/"
 
-	replayPrefix = "/_Replay/"
+
 )
