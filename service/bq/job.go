@@ -1,17 +1,28 @@
 package bq
 
 import (
+	"bqtail/base"
 	"context"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
 
 //GetJob returns a job ID
-func (s *service) GetJob(ctx context.Context, projectID, jobID string) (*bigquery.Job, error) {
+func (s *service) GetJob(ctx context.Context, projectID, jobID string) (job *bigquery.Job, err error) {
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Get(projectID, jobID)
 	call.Context(ctx)
-	return call.Do()
+	for i := 0; i < base.MaxRetries; i++ {
+		if job, err = call.Do(); err == nil {
+			break
+		}
+		if base.IsRetryError(err) {
+			//do extra sleep before retrying
+			time.Sleep(base.RetrySleepInSec * time.Second)
+			continue
+		}
+	}
+	return job, err
 }
 
 
