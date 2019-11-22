@@ -40,6 +40,9 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 	}
 	corrupted = make([]string, 0)
 	missing = make([]string, 0)
+	if job.Status == nil || len(job.Status.Errors) == 0 {
+		return corrupted, missing, job.Configuration.Load.SourceUris
+	}
 	for _, element := range job.Status.Errors {
 		isMissing := false
 		if element.Reason == notFoundReason && element.Location == "" {
