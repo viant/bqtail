@@ -1,15 +1,16 @@
 [
   {
     "When": {
-      "Prefix": "/data/case014",
+      "Prefix": "/data/case017",
       "Suffix": ".json"
     },
+    "Async": true,
     "Dest": {
       "Table": "bqtail.dummy"
     },
     "Batch": {
       "Window": {
-        "DurationInSec": 22
+        "DurationInSec": 15
       }
     },
     "OnSuccess": [

@@ -18,14 +18,14 @@ type Request struct {
 }
 
 
-//IsWorkflowURL returns true if action URL
-func (r *Request) IsWorkflowURL(workflowPrefix string) bool {
+//IsLoadAction returns true if action URL
+func (r *Request) IsLoadAction(loadActionPrefix string) bool {
 	 _, PathURL := url.Base(r.SourceURL, "")
-	 return strings.HasPrefix(PathURL, workflowPrefix)
+	 return strings.HasPrefix(PathURL, loadActionPrefix)
 }
 
-//IsDeferredTask returns true if deferred task URL
-func (r *Request) IsDeferredTask(taskPrefix string) bool {
+//IsPostLoadAction returns true if deferred task URL
+func (r *Request) IsPostLoadAction(taskPrefix string) bool {
 	_, PathURL := url.Base(r.SourceURL, "")
 	return strings.HasPrefix(PathURL, taskPrefix)
 }

@@ -31,12 +31,12 @@ pipeline:
     source:
       URL: ${parent.path}/data/trigger/
     dest:
-      URL: gs://${triggerBucket}/data/case014/
+      URL: gs://${triggerBucket}/data/case${parent.index}/
       credentials: $gcpCredentials
 
   waitForServerless:
     action: nop
-    sleepTimeMs: 45000
+    sleepTimeMs: 55000
 
   validate:
     check-db:

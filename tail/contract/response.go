@@ -11,6 +11,8 @@ type Response struct {
 	base.Response
 	Rule            *config.Rule `json:",omitempty"`
 	RuleCount       int
+	Destination     string `json:",omitempty"`
+	JobID           string `json:",omitempty"`
 	Batched         bool   `json:",omitempty"`
 	BatchRunner     bool   `json:",omitempty"`
 	BatchingEventID string `json:",omitempty"`
@@ -20,6 +22,7 @@ type Response struct {
 	Actions         []*task.Action `json:",omitempty"`
 	Corrupted       []string       `json:",omitempty"`
 	Missing         []string       `json:",omitempty"`
+	ListOpCount     int            `json:",omitempty"`
 }
 
 //NewResponse creates a new response

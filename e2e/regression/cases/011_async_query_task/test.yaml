@@ -29,22 +29,13 @@ pipeline:
 
 
   trigger:
-    init:
-      self.i: 0
+    action: storage:copy
+    source:
+      URL: ${parent.path}/data/trigger/
+    dest:
+      URL: gs://${triggerBucket}/data/case${parent.index}/
+      credentials: $gcpCredentials
 
-    upload:
-      init:
-        _: $self.i++
-      action: storage:copy
-      source:
-        URL: ${parent.path}/data/trigger/dummy${self.i}.json
-      dest:
-        URL: gs://${triggerBucket}/data/case011/dummy${self.i}.json
-        credentials: $gcpCredentials
-    goto:
-      when: $self.i < 2
-      action: goto
-      task: upload
 
   waitForServerless:
     action: nop

@@ -31,8 +31,8 @@ pipeline:
     action: storage:copy
     sleepTimeMs: 10000
     source:
-      URL: ${parent.path}/data/trigger/dummy.json
+      URL: ${parent.path}/data/trigger/
     dest:
-      URL: gs://${triggerBucket}/data/case012/dummy.json
+      URL: gs://${triggerBucket}/data/case0${parent.index}/
       credentials: $gcpCredentials
 

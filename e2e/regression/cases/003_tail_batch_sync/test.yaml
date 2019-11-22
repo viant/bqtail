@@ -31,7 +31,7 @@ pipeline:
     source:
       URL: ${parent.path}/data/trigger/
     dest:
-      URL: gs://${triggerBucket}/data/case003/
+      URL: gs://${triggerBucket}/data/case${parent.index}/
       credentials: $gcpCredentials
 
   waitForServerless:

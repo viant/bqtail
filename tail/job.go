@@ -53,3 +53,6 @@ func (j *Job) SetIfError(err error) {
 	j.Status = base.StatusError
 	j.Error = err.Error()
 }
+
+
+

@@ -52,19 +52,17 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 //Post post big query job
 func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 	job, err := s.post(ctx, projectID, callerJob, onDoneActions)
-	if err == nil {
-		err = base.JobError(job)
-	}
 	if job == nil {
 		job = callerJob
 	} else {
 		callerJob.Id = job.Id
 	}
-
-
-
-
-	if onDoneActions != nil && (onDoneActions.IsSyncMode() || err != nil) {
+	if base.IsLoggingEnabled() {
+		fmt.Printf("Job status: %v %v\n", callerJob.Id, err)
+		toolbox.Dump(job)
+	}
+	if  onDoneActions.IsSyncMode() && onDoneActions != nil {
+		err = base.JobError(job)
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
 			if err == nil {
@@ -81,15 +79,10 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 				err = errors.Wrapf(err, "failed to run post action: %v", e)
 			}
 		}
-	} else {
-		job, err = s.waitWithTimeout(ctx, job.JobReference, syncCheckTimeout)
-		if base.IsLoggingEnabled() {
-			fmt.Printf("Job status: %v %v\n", callerJob.Id, err)
-			toolbox.Dump(job)
-		}
 	}
 	return job, err
 }
+
 
 func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 	var err error

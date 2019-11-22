@@ -1,0 +1,1 @@
+gs://${config.Bucket}/data/case003/dummy2.json

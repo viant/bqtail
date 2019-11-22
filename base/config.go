@@ -35,13 +35,13 @@ type Config struct {
 	SlackCredentials  *Secret
 }
 
-//BuildActiveWorkflowURL returns active action URL for supplied event id
-func (c *Config) BuildActiveWorkflowURL(dest, eventID string) string {
+//BuildActiveLoadURL returns active action URL for supplied event id
+func (c *Config) BuildActiveLoadURL(dest, eventID string) string {
 	return url.Join(c.ActiveWorkflowURL, path.Join(dest, eventID+ActionExt))
 }
 
-//BuildDonwWorkflowURL returns done action URL for supplied event id
-func (c *Config) BuildDonwWorkflowURL(dest, eventID string) string {
+//BuildDoneLoadURL returns done action URL for supplied event id
+func (c *Config) BuildDoneLoadURL(dest, eventID string) string {
 	return url.Join(c.DoneWorkflowURL, path.Join(dest, eventID+ActionExt))
 }
 
