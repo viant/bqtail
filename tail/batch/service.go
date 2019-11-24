@@ -94,8 +94,11 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	}
 
 	for i := 0; i < base.BatchVicinityCount; i++ {
-		attemptURL := url.Join(baseURL, fmt.Sprintf("%v%v", window.End.Add(-1 * time.Duration(i) * time.Second).UnixNano(), windowExtension))
-		window, err := getWindow(ctx, attemptURL, s.fs)
+		windowURL := url.Join(baseURL, fmt.Sprintf("%v%v", window.End.Add(-1 * time.Duration(i) * time.Second).UnixNano(), windowExtension))
+		if object, _ := s.fs.Object(ctx, windowURL, option.NewObjectKind(true)); object != nil {
+			continue
+		}
+		window, err := getWindow(ctx, windowURL, s.fs)
 		if err == nil {
 			return window.EventID, nil
 		}
@@ -112,6 +115,7 @@ func (s *service) AcquireWindow(ctx context.Context, baseURL string, window *Win
 	}
 	return "", err
 }
+
 
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
@@ -155,7 +159,7 @@ func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *con
 	snapshot := s.newWindowSnapshot(ctx, window)
 	if owner, _ := snapshot.IsOwner(ctx, window, s.fs); ! owner {
 		window.LostOwnership = true
-		_ = s.fs.Delete(ctx, window.URL)
+		_ = s.fs.Delete(ctx, window.URL, option.NewObjectKind(true))
 		return nil
 	}
 
@@ -168,7 +172,7 @@ func (s *service) MatchWindowData(ctx context.Context, window *Window, rule *con
 	}
 	if !window.IsOwner() {
 		window.LostOwnership = true
-		_ = s.fs.Delete(ctx, window.URL)
+		_ = s.fs.Delete(ctx, window.URL, option.NewObjectKind(true))
 		return nil
 	}
 	return nil

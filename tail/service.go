@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	"github.com/viant/afs/option"
 	store "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
@@ -108,7 +109,7 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 		response.Status = base.StatusDisabled
 		return nil
 	}
-	source, err := s.fs.Object(ctx, request.SourceURL)
+	source, err := s.fs.Object(ctx, request.SourceURL, option.NewObjectKind(true))
 	if err != nil {
 		response.NotFoundError = err.Error()
 		response.Status = base.StatusNotFound
@@ -430,14 +431,14 @@ func (s *service) runLoadAction(ctx context.Context, request *contract.Request, 
 	}
 	_, sourcePath := url.Base(request.SourceURL, "")
 	journalURL := url.Join(s.config.JournalURL, sourcePath)
-	if e := s.fs.Move(ctx, request.SourceURL, journalURL); e != nil {
+	if e := s.fs.Move(ctx, request.SourceURL, journalURL, option.NewObjectKind(true)); e != nil {
 		response.NotFoundError = e.Error()
 	}
 	return err
 }
 
 func (s *service) tailIndividually(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*Job, error) {
-	object, err := s.fs.Object(ctx, request.SourceURL)
+	object, err := s.fs.Object(ctx, request.SourceURL, option.NewObjectKind(true))
 	if err != nil {
 		return nil, errors.Wrapf(err, "event source not found:%v", request.SourceURL)
 	}
@@ -544,7 +545,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 
 func (s *service) runPostLoadActions(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	err := s.runActions(ctx, request, response)
-	if e := s.fs.Delete(ctx, request.SourceURL); e != nil {
+	if e := s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true)); e != nil {
 		response.NotFoundError = fmt.Sprintf("failed to journal: %v", e)
 	}
 	return err
@@ -635,10 +636,10 @@ func (s *service) moveToCorruptedDataFiles(ctx context.Context, corrupted []stri
 	for _, URL := range corrupted {
 		_, URLPath := url.Base(URL, "")
 		destURL := url.Join(s.config.CorruptedFileURL, URLPath)
-		if exists, _ := s.fs.Exists(ctx, URL); ! exists {
-			continue
-		}
 		if e := s.fs.Move(ctx, URL, destURL); e != nil {
+			if exists, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true)); ! exists {
+				continue
+			}
 			err = e
 		}
 	}

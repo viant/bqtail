@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/viant/afs"
+	"github.com/viant/afs/option"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -13,7 +14,7 @@ import (
 
 const (
 	recoverJobPrefix = "recover"
-	notFoundReason = "notFound"
+	notFoundReason   = "notFound"
 )
 
 //wrapRecoverJobID wrap recover with recover prefix and attempts
@@ -21,17 +22,14 @@ func wrapRecoverJobID(jobID string) string {
 	attempt := 1
 	if strings.HasPrefix(jobID, recoverJobPrefix) {
 		offset := len(recoverJobPrefix)
-		if offset + 4 < len(jobID) {
-			attemptCounter := string(jobID[offset : offset +4])
-			attempt = toolbox.AsInt(attemptCounter) +1
+		if offset+4 < len(jobID) {
+			attemptCounter := string(jobID[offset : offset+4])
+			attempt = toolbox.AsInt(attemptCounter) + 1
 		}
-		jobID = string(jobID[offset +5:])
+		jobID = string(jobID[offset+5:])
 	}
-	return fmt.Sprintf(recoverJobPrefix + "%04d_%v", attempt, jobID)
+	return fmt.Sprintf(recoverJobPrefix+"%04d_%v", attempt, jobID)
 }
-
-
-
 
 func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service) (corrupted, missing []string, valid []string) {
 	var URIs = make(map[string]bool)
@@ -47,7 +45,7 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 		isMissing := false
 		if element.Reason == notFoundReason && element.Location == "" {
 			element.Message = strings.Replace(element.Message, "/bigstore", "gs:/", 1)
-			if index := strings.Index(element.Message, "gs://");index !=-1 {
+			if index := strings.Index(element.Message, "gs://"); index != -1 {
 				element.Location = string(element.Message[index:])
 				isMissing = true
 			}
@@ -68,7 +66,7 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 	valid = make([]string, 0)
 	for URI := range URIs {
 		if fs != nil {
-			if ok, _ := fs.Exists(ctx,URI); !ok {
+			if ok, _ := fs.Exists(ctx, URI, option.NewObjectKind(true)); !ok {
 				continue
 			}
 		}
@@ -77,7 +75,6 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 	}
 	return corrupted, missing, valid
 }
-
 
 func updateJobID(eventID, jobID string) string {
 	elements := strings.Split(jobID, "/")
