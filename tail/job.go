@@ -37,7 +37,7 @@ func (j Job) IsSyncMode() bool {
 	return !j.Rule.Async
 }
 
-//Dest returns dataset and table destination
+//Table returns dataset and table destination
 func (j Job) Dest() string {
 	if j.Load == nil {
 		return ""

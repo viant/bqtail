@@ -15,7 +15,6 @@ import (
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
-	"github.com/viant/toolbox"
 	"google.golang.org/api/googleapi"
 	"net/http"
 )
@@ -25,7 +24,7 @@ type Service interface {
 	TryAcquireWindow(ctx context.Context, eventId string, source storage.Object, rule *config.Rule) (*BatchedWindow, error)
 
 	//MatchWindowDataURLs returns matching data URLs
-	MatchWindowDataURLs(ctx context.Context, window *Window) error
+	MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) error
 }
 
 type service struct {
@@ -60,14 +59,8 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventId string, source s
 		}
 	}
 
-	window = NewWindow(eventId, startTime, endTime, source.URL(), windowURL, rule)
-
-	//to workaround standard JSON encoder can not reliably encode window object
-	dataMap := map[string]interface{}{}
-	_ = toolbox.DefaultConverter.AssignConverted(&dataMap, window)
-	dataMap = toolbox.DeleteEmptyKeys(dataMap)
-
-	windowData, _ := json.Marshal(dataMap)
+	window = NewWindow(eventId, dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
+	windowData, _ := json.Marshal(window)
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
 	if err != nil {
 		if isPreConditionError(err) || isRateError(err) {
@@ -82,7 +75,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventId string, source s
 }
 
 //MatchWindowData matches window data, it waits for window to ends if needed
-func (s *service) MatchWindowDataURLs(ctx context.Context, window *Window) error {
+func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) error {
 	baseURL, _ := url.Split(window.SourceURL, gs.Scheme)
 	before := window.End           //inclusive
 	afeter := window.Start.Add(-1) //exclusive
@@ -91,12 +84,19 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, window *Window) error
 	if err != nil {
 		return errors.Wrapf(err, "failed to list batch %v(%) data files", window.EventID, window.URL)
 	}
-	rule := window.Rule
 	var result = make([]string, 0)
 	for _, object := range objects {
 		if rule.HasMatch(object.URL()) {
+			table, err := rule.Dest.ExpandTable(rule.Dest.Table, window.SourceTime, window.SourceURL)
+			if err != nil {
+				return err
+			}
+			if table != window.Table {
+				continue
+			}
 			result = append(result, object.URL())
 		}
+
 	}
 	window.URIs = result
 	return nil

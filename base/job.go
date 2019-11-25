@@ -49,7 +49,7 @@ func (e *Job) JobID() string {
 	return string(e.Id[index:])
 }
 
-//Dest returns job destination
+//Table returns job destination
 func (e *Job) Dest() string {
 	switch e.Configuration.JobType {
 	case "QUERY":

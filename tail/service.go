@@ -523,20 +523,24 @@ func (s *service) runInBatch(ctx context.Context, window *batch.Window, response
 	if remainingDuration > 0 {
 		time.Sleep(remainingDuration)
 	}
-	err := s.batch.MatchWindowDataURLs(ctx, window)
+	rule := s.config.Get(ctx, window.RuleURL, window.Filter)
+	if rule == nil {
+		return nil, fmt.Errorf("failed locaet rule for :%v, %v", window.RuleURL, window.Filter)
+	}
+	err := s.batch.MatchWindowDataURLs(ctx, rule, window)
 	if err != nil || len(window.URIs) == 0 {
 		return nil, err
 	}
 	job := &Job{
-		Rule:    window.Rule,
+		Rule:    rule,
 		Status:  base.StatusOK,
 		EventID: window.EventID,
 		Window:  window,
 	}
-	if job.Load, err = window.Rule.Dest.NewJobConfigurationLoad(time.Now(), window.URIs...); err != nil {
+	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), window.URIs...); err != nil {
 		return nil, err
 	}
-	return s.submitJob(ctx, job, window.Rule, response)
+	return s.submitJob(ctx, job, rule, response)
 }
 
 func (s *service) runPostLoadActions(ctx context.Context, request *contract.Request, response *contract.Response) error {
@@ -590,6 +594,7 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	if configuration.Load == nil || len(configuration.Load.SourceUris) <= 1 {
 		return base.JobError(job)
 	}
+
 	var valid []string
 	response.Corrupted, response.Missing, valid = removeCorruptedURIs(ctx, job, s.fs)
 	if (len(response.Corrupted) == 0 && len(response.Missing) == 0) || len(valid) == 0 {
@@ -646,9 +651,9 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true))
-	}()
+	//defer func() {
+	//	_ = s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true))
+	//}()
 	job, err := s.runInBatch(ctx, window, response)
 	if err == nil || job == nil {
 		return err

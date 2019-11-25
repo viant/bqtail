@@ -15,6 +15,7 @@ import (
 const (
 	recoverJobPrefix = "recover"
 	notFoundReason   = "notFound"
+	invalidReason="invalid"
 )
 
 //wrapRecoverJobID wrap recover with recover prefix and attempts
@@ -50,12 +51,18 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 				isMissing = true
 			}
 		}
+
+
+
 		if element.Location == "" {
 			continue
 		}
+
 		if _, ok := URIs[element.Location]; !ok {
 			continue
 		}
+
+
 		delete(URIs, element.Location)
 		if isMissing {
 			missing = append(missing, element.Location)

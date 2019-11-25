@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/url"
 	"log"
 	"strings"
@@ -48,6 +49,20 @@ func (r *Ruleset) remove(ctx context.Context, fs afs.Service, URL string) {
 	}
 	r.Rules = temp
 }
+
+//Get returns  a rule for URL
+func (r *Ruleset) Get(ctx context.Context, URL string, filter *matcher.Basic) *Rule {
+	rules := r.Rules
+	for i, rule := range rules {
+		if rule.Info.URL == URL && rule.When.Prefix == filter.Prefix &&
+			rule.When.Suffix == filter.Suffix &&
+			rule.When.Filter == filter.Filter {
+			return rules[i]
+		}
+	}
+	return nil
+}
+
 
 //HasMatch returns the first match route
 func (r Ruleset) Match(URL string) []*Rule {
