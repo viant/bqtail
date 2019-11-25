@@ -14,20 +14,13 @@ type Request struct {
 	ScheduleURL string
 	Started     time.Time
 	Attempt     int
-	source *storage.Object
+	source      *storage.Object
 }
-
 
 //IsLoadAction returns true if action URL
-func (r *Request) IsLoadAction(loadActionPrefix string) bool {
-	 _, PathURL := url.Base(r.SourceURL, "")
-	 return strings.HasPrefix(PathURL, loadActionPrefix)
-}
-
-//IsPostLoadAction returns true if deferred task URL
-func (r *Request) IsPostLoadAction(taskPrefix string) bool {
+func (r *Request) HasURLPrefix(prefix string) bool {
 	_, PathURL := url.Base(r.SourceURL, "")
-	return strings.HasPrefix(PathURL, taskPrefix)
+	return strings.HasPrefix(PathURL, prefix)
 }
 
 //NewRequest creates a request

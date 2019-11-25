@@ -17,6 +17,7 @@
       }
     ],
     "Batch": {
+      "RollOver": true,
       "Window": {
         "DurationInSec": 15
       }

@@ -5,13 +5,12 @@ import (
 	"bqtail/tail/config"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"os"
 	"strings"
 )
-
 
 //Config represents a tail config
 type Config struct {
@@ -32,17 +31,20 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	return nil
 }
 
-
 func (c *Config) initLoadedRules() {
 	if len(c.Rules) == 0 {
 		return
 	}
 	for _, route := range c.Rules {
 		if route.Actions.Async && route.Actions.DeferTaskURL == "" {
-			route.Actions.DeferTaskURL = c.DeferTaskURL
+			route.Actions.DeferTaskURL = c.AsyncTaskURL
 		}
 		if route.Batch != nil {
-			route.Batch.Init(c.BatchURL)
+			baseURL := c.BatchURL
+			if route.Async {
+				baseURL = c.AsyncBatchURL
+			}
+			route.Batch.Init(baseURL)
 		}
 	}
 }
@@ -85,15 +87,16 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 	}
 	cfg := &Config{}
 	err := json.NewDecoder(strings.NewReader(data)).Decode(cfg)
-	if err == nil {
-		if err = cfg.Init(ctx, afs.New()); err != nil {
-			return nil, err
-		}
-		err = cfg.Validate()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to decode config :%s", data)
 	}
+
+	if err = cfg.Init(ctx, afs.New()); err != nil {
+		return nil, err
+	}
+	err = cfg.Validate()
 	return cfg, err
 }
-
 
 //NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
@@ -104,15 +107,16 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	}
 	cfg := &Config{}
 	err = json.NewDecoder(reader).Decode(cfg)
-	if err == nil {
-		if err = cfg.Init(ctx, afs.New()); err != nil {
-			return cfg, err
-		}
-		err = cfg.Validate()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to decode config :%s", URL)
 	}
+	if err = cfg.Init(ctx, afs.New()); err != nil {
+		return cfg, err
+	}
+	err = cfg.Validate()
+
 	return cfg, err
 }
-
 
 //NewConfig creates a new config from env (json or URL)
 func NewConfig(ctx context.Context, key string) (*Config, error) {

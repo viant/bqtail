@@ -4,7 +4,7 @@ import "hash/fnv"
 
 //Hash returns fnv hash value
 func Hash(key string) int {
-	h :=fnv.New64()
+	h := fnv.New64()
 	_, _ = h.Write([]byte(key))
 	data := h.Sum(nil)
 	keyNumeric := int64(0)
@@ -23,4 +23,3 @@ func Hash(key string) int {
 	}
 	return int(keyNumeric)
 }
-

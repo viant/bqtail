@@ -9,48 +9,45 @@ import (
 
 func TestWrapRecoverJob(t *testing.T) {
 
-		var useCases  = []struct {
-			description string
-			jobID string
-			expect string
-		}{
-			{
-				description:"regular jobID",
-				jobID:"myjob",
-				expect:"recover0001_myjob",
-			},
-			{
-				description:"recver jobID",
-				jobID:"recover0004_myjob",
-				expect:"recover0005_myjob",
-			},
+	var useCases = []struct {
+		description string
+		jobID       string
+		expect      string
+	}{
+		{
+			description: "regular jobID",
+			jobID:       "myjob",
+			expect:      "recover0001_myjob",
+		},
+		{
+			description: "recver jobID",
+			jobID:       "recover0004_myjob",
+			expect:      "recover0005_myjob",
+		},
+	}
 
-		}
-
-
-		for _, useCase := range useCases {
-			actual := wrapRecoverJobID(useCase.jobID)
-			assert.EqualValues(t, useCase.expect, actual, useCase.description)
-		}
+	for _, useCase := range useCases {
+		actual := wrapRecoverJobID(useCase.jobID)
+		assert.EqualValues(t, useCase.expect, actual, useCase.description)
+	}
 
 }
 
-
 func Test_removeCorruptedURIs(t *testing.T) {
 
-		var useCases  = []struct {
-			description   string
-			job           string
-			expectMissing []string
-			expectCorrupted []string
-			expectedValid []string
-		}{
-			{
-				description:   "missing file in gs",
-				expectCorrupted:[]string{},
-				expectMissing: []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
-				expectedValid: []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
-				job:`{
+	var useCases = []struct {
+		description     string
+		job             string
+		expectMissing   []string
+		expectCorrupted []string
+		expectedValid   []string
+	}{
+		{
+			description:     "missing file in gs",
+			expectCorrupted: []string{},
+			expectMissing:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
+			expectedValid:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
+			job: `{
   "configuration": {
     "jobType": "LOAD",
     "load": {
@@ -98,15 +95,14 @@ func Test_removeCorruptedURIs(t *testing.T) {
   },
   "user_email": "myproject-cloud-function@myproject.iam.gserviceaccount.com"
 }`,
-			},
+		},
 
-
-			{
-				description:   "missing file in bigstore",
-				expectCorrupted:[]string{},
-				expectMissing: []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
-				expectedValid: []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
-				job:`{
+		{
+			description:     "missing file in bigstore",
+			expectCorrupted: []string{},
+			expectMissing:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
+			expectedValid:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
+			job: `{
   "configuration": {
     "jobType": "LOAD",
     "load": {
@@ -154,15 +150,14 @@ func Test_removeCorruptedURIs(t *testing.T) {
   },
   "user_email": "myproject-cloud-function@myproject.iam.gserviceaccount.com"
 }`,
-			},
+		},
 
-
-			{
-				description:   "corrupted file",
-				expectMissing:[]string{},
-				expectCorrupted: []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
-				expectedValid: []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
-				job:`{
+		{
+			description:     "corrupted file",
+			expectMissing:   []string{},
+			expectCorrupted: []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
+			expectedValid:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
+			job: `{
   "configuration": {
     "jobType": "LOAD",
     "load": {
@@ -211,54 +206,49 @@ func Test_removeCorruptedURIs(t *testing.T) {
   },
   "user_email": "myproject-cloud-function@myproject.iam.gserviceaccount.com"
 }`,
-			},
-
-
-
+		},
+	}
+	for _, useCase := range useCases {
+		job := &bigquery.Job{}
+		err := json.Unmarshal([]byte(useCase.job), &job)
+		if !assert.Nil(t, err, useCase.description) {
+			continue
 		}
-		for _, useCase := range useCases {
-			job := &bigquery.Job{}
-			err := json.Unmarshal([]byte(useCase.job), &job)
-			if ! assert.Nil(t, err, useCase.description) {
-				continue
-			}
 
-			assert.Nil(t, err, useCase.description)
-			corrupted, missing, valid := removeCorruptedURIs(nil, job, nil)
-			assert.EqualValues(t, useCase.expectMissing, missing, useCase.description)
-			assert.EqualValues(t, useCase.expectCorrupted, corrupted, useCase.description)
-			assert.EqualValues(t, useCase.expectedValid, valid, useCase.description)
-		}
+		assert.Nil(t, err, useCase.description)
+		corrupted, missing, valid := removeCorruptedURIs(nil, job, nil)
+		assert.EqualValues(t, useCase.expectMissing, missing, useCase.description)
+		assert.EqualValues(t, useCase.expectCorrupted, corrupted, useCase.description)
+		assert.EqualValues(t, useCase.expectedValid, valid, useCase.description)
+	}
 
 }
 
 func TestUpdateJobId(t *testing.T) {
 
-		var useCases  = []struct {
-			description string
-			jobID       string
-			eventID     string
-			expect      string
-		}{
-			{
-				description:"event id replcement",
-				jobID: "temp--dummy_850558231030311/850558231030311/dispatch",
-				eventID:"333333",
-				expect:"temp--dummy_333333/333333/dispatch",
-			},
-			{
-				description:"event id replcement",
-				jobID: "temp--dummy_850558231030311_850558231030311/dispatch",
-				eventID:"333333",
-				expect:"333333temp--dummy_850558231030311_850558231030311/dispatch",
-			},
+	var useCases = []struct {
+		description string
+		jobID       string
+		eventID     string
+		expect      string
+	}{
+		{
+			description: "event id replcement",
+			jobID:       "temp--dummy_850558231030311/850558231030311/dispatch",
+			eventID:     "333333",
+			expect:      "temp--dummy_333333/333333/dispatch",
+		},
+		{
+			description: "event id replcement",
+			jobID:       "temp--dummy_850558231030311_850558231030311/dispatch",
+			eventID:     "333333",
+			expect:      "333333temp--dummy_850558231030311_850558231030311/dispatch",
+		},
+	}
 
-		}
-
-
-		for _, useCase := range useCases {
-			updated := updateJobID(useCase.eventID, useCase.jobID)
-			assert.EqualValues(t, useCase.expect, updated, useCase.description)
-		}
+	for _, useCase := range useCases {
+		updated := updateJobID(useCase.eventID, useCase.jobID)
+		assert.EqualValues(t, useCase.expect, updated, useCase.description)
+	}
 
 }

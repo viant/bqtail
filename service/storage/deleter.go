@@ -3,24 +3,24 @@ package storage
 import (
 	"context"
 	"github.com/viant/afs"
+	"github.com/viant/afs/option"
 	"sync"
 	"sync/atomic"
 )
 
 type deleter struct {
 	*sync.WaitGroup
-	routines int
-	hasError int32
+	routines   int
+	hasError   int32
 	errChannel chan error
-	closed   int32
-	fs       afs.Service
-	URLs     chan string
+	closed     int32
+	fs         afs.Service
+	URLs       chan string
 }
-
 
 func (d *deleter) delete(ctx context.Context, URL string) {
 	defer d.Done()
-	if e := d.fs.Delete(ctx, URL); e != nil {
+	if e := d.fs.Delete(ctx, URL, option.NewObjectKind(true)); e != nil {
 		if ok, err := d.fs.Exists(ctx, URL); !ok && err == nil {
 			return
 		}
@@ -42,13 +42,12 @@ func (d *deleter) Wait() (err error) {
 		d.URLs <- ""
 	}
 	if atomic.LoadInt32(&d.hasError) == 1 {
-		err = <- d.errChannel
+		err = <-d.errChannel
 	}
 	defer close(d.errChannel)
 	defer close(d.URLs)
 	return err
 }
-
 
 func (d *deleter) Run(ctx context.Context, routines int) {
 	d.routines = routines
@@ -70,8 +69,8 @@ func (d *deleter) Run(ctx context.Context, routines int) {
 
 func newDeleter(fs afs.Service) *deleter {
 	return &deleter{
-		WaitGroup:&sync.WaitGroup{},
+		WaitGroup:  &sync.WaitGroup{},
 		errChannel: make(chan error, 1),
-		fs:fs,
+		fs:         fs,
 	}
 }

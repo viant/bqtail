@@ -69,17 +69,18 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	response.TriggerURL = request.SourceURL
 	defer response.SetTimeTaken(response.Started)
 	var err error
-	if request.IsLoadAction(s.config.WorkflowPrefix) {
+	if request.HasURLPrefix(s.config.WorkflowPrefix) {
 		err = s.runLoadAction(ctx, request, response)
-	} else if request.IsPostLoadAction(s.config.BqJobPrefix) {
+	} else if request.HasURLPrefix(s.config.BqJobPrefix) {
 		err = s.runPostLoadActions(ctx, request, response)
+	} else if request.HasURLPrefix(s.config.BatchPrefix) {
+		err = s.runBatch(ctx, request, response)
 	} else {
 		err = s.tail(ctx, request, response)
 	}
 	if err != nil {
 		response.SetIfError(err)
 	}
-
 	return response
 }
 
@@ -156,7 +157,6 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, rule *config.R
 	result.DestinationTable = tableReference
 	result.JobID = getJobID(job)
 	return result, nil
-
 }
 
 func getJobID(job *Job) string {
@@ -235,8 +235,8 @@ func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 	}
 	URLsToDelete := make([]string, 0)
 	URLsToDelete = append(URLsToDelete, window.URL)
-	for _, datafile := range window.Datafiles {
-		URLsToDelete = append(URLsToDelete, datafile.URL)
+	for _, URI := range window.URIs {
+		URLsToDelete = append(URLsToDelete, URI)
 	}
 	deleteReq := storage.DeleteRequest{URLs: URLsToDelete}
 	deleteAction, err := task.NewAction("delete", deleteReq)
@@ -244,6 +244,7 @@ func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 		return err
 	}
 	actions.AddOnSuccess(deleteAction)
+
 	return nil
 }
 
@@ -338,7 +339,7 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 		var clusterdColumn = make([]string, 0)
 		for i, name := range split.ClusterColumns {
 			if strings.Contains(split.ClusterColumns[i], ".") {
-				column := getColumn(job.Schema.Fields, split.ClusterColumns[i]);
+				column := getColumn(job.Schema.Fields, split.ClusterColumns[i])
 				if column == nil {
 					return errors.Errorf("failed to lookup cluster column: %v", name)
 				}
@@ -495,52 +496,47 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 }
 
 func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*Job, error) {
-	snapshot, err := s.batch.Add(ctx, source, request, rule)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to add event trace file")
-	}
-	if snapshot.Duplicated {
-		response.Status = base.StatusDuplicate
-		return nil, nil
-	}
-	response.Batched = true
-	response.ScheduledURL = snapshot.Schedule.URL()
-	request.ScheduleURL = snapshot.Schedule.URL()
-
-	batchWindow, err := s.batch.TryAcquireWindow(ctx, snapshot, rule)
+	batchWindow, err := s.batch.TryAcquireWindow(ctx, request.EventID, source, rule)
 	if batchWindow == nil || err != nil {
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to acquire batch window")
 		}
 	}
-	response.BatchingEventID = batchWindow.BatchingEventID
+	if batchWindow.OwnerEventID != "" {
+		response.BatchingEventID = batchWindow.OwnerEventID
+	}
 	if batchWindow.Window == nil {
 		return nil, nil
 	}
-	window := batchWindow.Window
-	response.Window = window
-	response.BatchRunner = true
-	if err = s.batch.MatchWindowData(ctx, window, rule); err != nil {
-		return nil, errors.Wrapf(err, "failed to match window data")
-	}
-	if window.LostOwnership {
+
+	response.Window = batchWindow.Window
+	if rule.Async {
 		return nil, nil
 	}
-	job := &Job{
-		Rule:          rule,
-		Status:        base.StatusOK,
-		EventID:       request.EventID,
-		SourceCreated: source.ModTime(),
-		Window:        window,
+	return s.runInBatch(ctx, batchWindow.Window, response)
+}
+
+func (s *service) runInBatch(ctx context.Context, window *batch.Window, response *contract.Response) (*Job, error) {
+	response.Window = window
+	response.BatchRunner = true
+	remainingDuration := window.End.Sub(time.Now()) + (base.StorageListUpdateDelay * time.Second)
+	if remainingDuration > 0 {
+		time.Sleep(remainingDuration)
 	}
-	var URIs = make([]string, 0)
-	for i := range window.Datafiles {
-		URIs = append(URIs, window.Datafiles[i].SourceURL)
-	}
-	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), URIs...); err != nil {
+	err := s.batch.MatchWindowDataURLs(ctx, window)
+	if err != nil || len(window.URIs) == 0 {
 		return nil, err
 	}
-	return s.submitJob(ctx, job, rule, response)
+	job := &Job{
+		Rule:    window.Rule,
+		Status:  base.StatusOK,
+		EventID: window.EventID,
+		Window:  window,
+	}
+	if job.Load, err = window.Rule.Dest.NewJobConfigurationLoad(time.Now(), window.URIs...); err != nil {
+		return nil, err
+	}
+	return s.submitJob(ctx, job, window.Rule, response)
 }
 
 func (s *service) runPostLoadActions(ctx context.Context, request *contract.Request, response *contract.Response) error {
@@ -578,7 +574,7 @@ func (s *service) runActions(ctx context.Context, request *contract.Request, res
 			return nil
 		}
 	}
-	toRun := actions.ToRun(bqJobError, &job, s.config.DeferTaskURL)
+	toRun := actions.ToRun(bqJobError, &job, s.config.AsyncTaskURL)
 	if len(toRun) > 0 {
 		for i := range toRun {
 			if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {
@@ -636,13 +632,28 @@ func (s *service) moveToCorruptedDataFiles(ctx context.Context, corrupted []stri
 		_, URLPath := url.Base(URL, "")
 		destURL := url.Join(s.config.CorruptedFileURL, URLPath)
 		if e := s.fs.Move(ctx, URL, destURL); e != nil {
-			if exists, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true)); ! exists {
+			if exists, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true)); !exists {
 				continue
 			}
 			err = e
 		}
 	}
 	return err
+}
+
+func (s *service) runBatch(ctx context.Context, request *contract.Request, response *contract.Response) error {
+	window, err := batch.GetWindow(ctx, request.SourceURL, s.fs)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true))
+	}()
+	job, err := s.runInBatch(ctx, window, response)
+	if err == nil || job == nil {
+		return err
+	}
+	return s.tryRecover(ctx, request, job.Actions, job.Job, response)
 }
 
 //New creates a new service

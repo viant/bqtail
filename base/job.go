@@ -167,7 +167,6 @@ func JobError(job *bigquery.Job) error {
 	return nil
 }
 
-
 //DecodePathSeparator decode job ID
 func DecodePathSeparator(jobID string, count int) string {
 	if c := strings.Count(jobID, PathElementSeparator); c > 0 {

@@ -22,7 +22,8 @@ type Config struct {
 	RunOnce           bool
 	ProjectID         string
 	Region            string
-	DeferTaskURL      string
+	AsyncTaskURL      string
+	AsyncBatchURL     string
 	ActiveWorkflowURL string
 	DoneWorkflowURL   string
 	BatchURL          string
@@ -30,6 +31,7 @@ type Config struct {
 	TriggerBucket     string
 	WorkflowPrefix    string
 	BqJobPrefix       string
+	BatchPrefix       string
 	ErrorURL          string
 	CorruptedFileURL  string
 	SlackCredentials  *Secret
@@ -90,18 +92,20 @@ func (c *Config) Init(ctx context.Context) error {
 	}
 
 	if c.WorkflowPrefix == "" {
-		c.WorkflowPrefix = WorkflowPrefix
+		c.WorkflowPrefix = LoadPrefix
 	}
 	if c.BqJobPrefix == "" {
 		c.BqJobPrefix = BqJobPrefix
 	}
+	if c.BatchPrefix == "" {
+		c.BatchPrefix = BatchPrefix
+	}
 	if c.ActiveWorkflowURL == "" {
-		c.ActiveWorkflowURL = url.Join(c.JournalURL, "Active")
+		c.ActiveWorkflowURL = url.Join(c.JournalURL, ActiveLoadSuffix)
 	}
 	if c.DoneWorkflowURL == "" {
-		c.DoneWorkflowURL = url.Join(c.JournalURL, "Done")
+		c.DoneWorkflowURL = url.Join(c.JournalURL, DoneLoadSuffix)
 	}
-
 	return nil
 }
 
@@ -113,8 +117,11 @@ func (c *Config) Validate() error {
 	if c.ErrorURL == "" {
 		return fmt.Errorf("errorURL was empty")
 	}
-	if c.DeferTaskURL == "" {
-		return fmt.Errorf("deferTaskURL were empty")
+	if c.AsyncTaskURL == "" {
+		return fmt.Errorf("asyncTaskURL were empty")
+	}
+	if c.AsyncBatchURL == "" {
+		return fmt.Errorf("asyncBatchURL were empty")
 	}
 	if c.TriggerBucket == "" {
 		return fmt.Errorf("triggerBucket were empty")

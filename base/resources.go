@@ -33,7 +33,7 @@ func (r *Resources) Get(URL string) *time.Time {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	modified, ok := r.elements[URL]
-	if ! ok {
+	if !ok {
 		return nil
 	}
 	return &modified
@@ -52,7 +52,6 @@ func (r *Resources) GetMissing(snapshot map[string]time.Time) []string {
 	}
 	return missing
 }
-
 
 func NewResources() *Resources {
 	return &Resources{

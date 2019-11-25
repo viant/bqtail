@@ -4,90 +4,39 @@ import (
 	"bqtail/tail/config"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/storage"
-	"github.com/viant/afs/url"
 	"io/ioutil"
-	"sort"
 	"strconv"
 	"time"
 )
 
 type BatchedWindow struct {
 	*Window
-	BatchingEventID string
+	OwnerEventID string
 }
 
 //Window represent batching window
 type Window struct {
-	URL           string      `json:",omitempty"`
-	TriedURL      []string    `json:",omitempty"`
-	Start         time.Time   `json:",omitempty"`
-	LostOwnership bool        `json:",omitempty"`
-	BaseURL       string      `json:",omitempty"`
-	End           time.Time   `json:",omitempty"`
-	SourceCreated time.Time   `json:",omitempty"`
-	EventID       string      `json:",omitempty"`
-	ScheduleURL   string      `json:",omitempty"`
-	Datafiles     []*Datafile `json:",omitempty"`
-}
-
-func (w *Window) IsOwner() bool {
-	if len(w.Datafiles) == 0 {
-		return false
-	}
-	var scheduleDatafiles = make([]*Datafile, 0)
-	for i, datafile := range w.Datafiles {
-		if datafile.URL == w.ScheduleURL {
-			scheduleDatafiles = append(scheduleDatafiles, w.Datafiles[i])
-		}
-	}
-	if len(scheduleDatafiles) == 0 {
-		return false
-	}
-	return scheduleDatafiles[0].EventID == w.EventID
-}
-
-func (w *Window) loadDatafile(ctx context.Context, fs afs.Service) error {
-	var result = make([]*Datafile, 0)
-	eventMatcher := windowedMatcher(w.Start.Add(-1), w.End.Add(1), transferableExtension)
-	traceFiles, err := fs.List(ctx, w.BaseURL, eventMatcher)
-	if err != nil {
-		return err
-	}
-	sortedTransfers := NewObjects(traceFiles, byModTime)
-	sort.Sort(sortedTransfers)
-	traceFiles = sortedTransfers.Elements
-	result = make([]*Datafile, 0)
-	for i := range traceFiles {
-		if traceFiles[i].ModTime().Before(w.Start) || traceFiles[i].ModTime().After(w.End) || traceFiles[i].ModTime().Equal(w.End){
-			continue
-		}
-		datafile, e := loadDatafile(ctx, traceFiles[i], fs)
-		if e != nil {
-			err = e
-			continue
-		}
-		result = append(result, datafile)
-	}
-	w.Datafiles = result
-	return err
+	EventID string `json:",omitempty"`
+	URL     string `json:",omitempty"`
+	*config.Rule
+	SourceURL string    `json:",omitempty"`
+	Start     time.Time `json:",omitempty"`
+	End       time.Time `json:",omitempty"`
+	URIs      []string  `json:",omitempty"`
 }
 
 //NewWindow create a stage batch window
-func NewWindow(baseURL string, snapshot *Snapshot, route *config.Rule) *Window {
-	startTime := time.Unix(snapshot.Schedule.ModTime().Unix(), 0)
-	end := startTime.Add(route.Batch.Window.Duration)
+func NewWindow(eventID string, startTime, endTime time.Time, sourceURL, windowURL string, rule *config.Rule) *Window {
 	return &Window{
-		BaseURL:       baseURL,
-		SourceCreated: snapshot.source.ModTime(),
-		URL:           url.Join(baseURL, fmt.Sprintf("%v%v", end.UnixNano(), windowExtension)),
-		EventID:       snapshot.EventID,
-		Start:         startTime,
-		ScheduleURL:   snapshot.Schedule.URL(),
-		End:           end,
+		URL:       windowURL,
+		SourceURL: sourceURL,
+		Rule:      rule,
+		EventID:   eventID,
+		Start:     startTime,
+		End:       endTime,
 	}
 }
 
@@ -100,16 +49,16 @@ func windowToTime(window storage.Object) (*time.Time, error) {
 }
 
 func windowNameToTime(name string) (*time.Time, error) {
-	nanoTime := string(name[:len(name)-4])
-	unixNano, err := strconv.ParseInt(nanoTime, 10, 64)
+	unixTimestampLiteral := string(name[:len(name)-4])
+	unixTimestamp, err := strconv.ParseInt(unixTimestampLiteral, 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	result := time.Unix(0, unixNano)
+	result := time.Unix(unixTimestamp, 0)
 	return &result, nil
 }
 
-func getWindow(ctx context.Context, URL string, fs afs.Service) (*Window, error) {
+func GetWindow(ctx context.Context, URL string, fs afs.Service) (*Window, error) {
 	reader, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, err
@@ -120,5 +69,9 @@ func getWindow(ctx context.Context, URL string, fs afs.Service) (*Window, error)
 		return nil, errors.Wrapf(err, "failed to read window: %v", URL)
 	}
 	window := &Window{}
-	return window, json.Unmarshal(data, window)
+	err = json.Unmarshal(data, window)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal window: %v", URL)
+	}
+	return window, nil
 }

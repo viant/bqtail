@@ -12,7 +12,6 @@ import (
 //Notify represent notify function
 type Notify func(ctx context.Context, fs afs.Service, URL string)
 
-
 //Notifier represents URL changes notifier
 type Notifier struct {
 	fs             afs.Service
@@ -42,7 +41,7 @@ func (m *Notifier) notify(ctx context.Context, currentSnapshot []storage.Object)
 			m.rules.Add(URL, lastModified)
 			continue
 		}
-		if ! modTime.Equal(lastModified) {
+		if !modTime.Equal(lastModified) {
 			notified = true
 			m.onChange(ctx, m.fs, URL)
 		}
@@ -84,8 +83,6 @@ func NewNotifier(baeURL string, checkFrequency time.Duration, fs afs.Service, on
 		rules:          NewResources(),
 	}
 }
-
-
 
 func indexRules(rules []storage.Object) map[string]time.Time {
 	var indexed = make(map[string]time.Time)

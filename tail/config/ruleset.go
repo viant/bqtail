@@ -55,7 +55,7 @@ func (r Ruleset) Match(URL string) []*Rule {
 		return nil
 	}
 	var matched = make([]*Rule, 0)
-	for i, _ := range r.Rules {
+	for i := range r.Rules {
 		if r.Rules[i].HasMatch(URL) {
 			matched = append(matched, r.Rules[i])
 		}
@@ -148,7 +148,6 @@ func (c *Ruleset) loadRule(ctx context.Context, storage afs.Service, URL string)
 	}
 	return rules, nil
 }
-
 
 func (r *Ruleset) initRules() error {
 	if len(r.Rules) > 0 {

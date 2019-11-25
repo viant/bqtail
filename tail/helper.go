@@ -53,7 +53,7 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 		if element.Location == "" {
 			continue
 		}
-		if _, ok := URIs[element.Location]; ! ok {
+		if _, ok := URIs[element.Location]; !ok {
 			continue
 		}
 		delete(URIs, element.Location)

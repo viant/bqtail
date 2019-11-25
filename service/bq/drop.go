@@ -9,7 +9,7 @@ import (
 )
 
 //Copy copy source to dest table
-func (s *service) Drop(ctx context.Context, request *DropRequest) (error) {
+func (s *service) Drop(ctx context.Context, request *DropRequest) error {
 	if err := request.Init(s.projectID); err != nil {
 		return err
 	}
