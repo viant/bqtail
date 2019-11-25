@@ -80,7 +80,7 @@ func (r *LoadRequest) Init(projectID string) {
 
 	if table.ProjectId == "" {
 		table.ProjectId = projectID
-	} else if table.ProjectId != ""{
+	} else if table.ProjectId != "" {
 		projectID = table.ProjectId
 	}
 

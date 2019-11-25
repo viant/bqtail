@@ -7,7 +7,6 @@ import (
 
 const deleteRoutines = 3
 
-
 //Delete deletes supplied URLs
 func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 	request.Init()
@@ -16,7 +15,7 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 		return err
 	}
 
-	deleter  := newDeleter(s.fs)
+	deleter := newDeleter(s.fs)
 	deleter.Run(ctx, deleteRoutines)
 
 	processed := map[string]bool{}

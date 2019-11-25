@@ -8,6 +8,7 @@
       "Table": "bqtail.dummy"
     },
     "Batch": {
+      "RollOver": true,
       "Window": {
         "DurationInSec": 22
       }

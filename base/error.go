@@ -8,6 +8,7 @@ import (
 
 const backendError = "backendError"
 const internalError = "internal error"
+
 //IsRetryError returns true if backend error
 func IsRetryError(err error) bool {
 	if err == nil {

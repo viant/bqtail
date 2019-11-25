@@ -27,8 +27,8 @@ func (s *service) setJobID(ctx context.Context, actions *task.Actions) (*bigquer
 		}
 	}
 	return &bigquery.JobReference{
-		JobId: ID,
-		ProjectId:s.Config.ProjectID,
+		JobId:     ID,
+		ProjectId: s.Config.ProjectID,
 	}, nil
 }
 
@@ -61,7 +61,7 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 		fmt.Printf("Job status: %v %v\n", callerJob.Id, err)
 		toolbox.Dump(job)
 	}
-	if  onDoneActions.IsSyncMode() && onDoneActions != nil {
+	if onDoneActions.IsSyncMode() && onDoneActions != nil {
 		err = base.JobError(job)
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
@@ -82,7 +82,6 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 	}
 	return job, err
 }
-
 
 func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 	var err error

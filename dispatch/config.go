@@ -14,11 +14,11 @@ import (
 	"strings"
 )
 
-//Config represents dispatch config
+//Config represents dispatchBqEvents config
 type Config struct {
 	base.Config
 	config.Ruleset
-	TimeToLiveInMin int
+	TimeToLiveInMin     int
 	MaxJobLoopbackInMin int
 }
 
@@ -27,7 +27,7 @@ func (c *Config) TimeToLive() time.Duration {
 	if c.TimeToLiveInMin == 0 {
 		c.TimeToLiveInMin = 1
 	}
-	return time.Minute*time.Duration(c.TimeToLiveInMin) - (	5 * time.Second)
+	return time.Minute*time.Duration(c.TimeToLiveInMin) - (5 * time.Second)
 }
 
 //Init initialises config
@@ -44,7 +44,6 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	}
 	return c.Ruleset.Init(ctx, fs, c.ProjectID)
 }
-
 
 //ReloadIfNeeded reloads rules if needed
 func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {
@@ -63,12 +62,13 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 	}
 	cfg := &Config{}
 	err := json.NewDecoder(strings.NewReader(data)).Decode(cfg)
-	if err == nil {
-		if err = cfg.Init(ctx, afs.New()); err != nil {
-			return nil, err
-		}
-		err = cfg.Config.Validate()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to decode config: %s", data)
 	}
+	if err = cfg.Init(ctx, afs.New()); err != nil {
+		return nil, err
+	}
+	err = cfg.Config.Validate()
 	return cfg, err
 }
 
@@ -81,12 +81,13 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	}
 	cfg := &Config{}
 	err = json.NewDecoder(reader).Decode(cfg)
-	if err == nil {
-		if err = cfg.Init(ctx, afs.New()); err != nil {
-			return cfg, err
-		}
-		err = cfg.Config.Validate()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to decode config: %s", URL)
 	}
+	if err = cfg.Init(ctx, afs.New()); err != nil {
+		return cfg, err
+	}
+	err = cfg.Config.Validate()
 	return cfg, err
 }
 

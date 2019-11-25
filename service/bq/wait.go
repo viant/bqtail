@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-
-
 //Wait waits for job completion
 func (s *service) Wait(ctx context.Context, ref *bigquery.JobReference) (*bigquery.Job, error) {
 	var err error
@@ -34,7 +32,7 @@ func (s *service) waitWithTimeout(ctx context.Context, ref *bigquery.JobReferenc
 		if statusJob, err = s.GetJob(ctx, ref.ProjectId, ref.JobId); err != nil {
 			return nil, err
 		}
-		if statusJob.Status.State ==  base.DoneState {
+		if statusJob.Status.State == base.DoneState {
 			break
 		}
 		if time.Now().Sub(started) > timeout {

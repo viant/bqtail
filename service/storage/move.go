@@ -17,7 +17,7 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 	destURL := url.Join(request.DestURL, sourceLocation)
 
 	if request.IsDestAbsoluteURL {
-		destURL =  request.DestURL
+		destURL = request.DestURL
 	}
 	err = s.fs.Move(ctx, request.SourceURL, destURL)
 	if err != nil {

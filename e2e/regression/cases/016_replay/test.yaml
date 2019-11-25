@@ -35,7 +35,7 @@ pipeline:
       URL: ${parent.path}/replay.json
     dest:
       credentials: $gcpCredentials
-      URL: gs://${triggerBucket}/_workflow_/case_${parent.index}.json
+      URL: gs://${triggerBucket}/_load_/case_${parent.index}.json
 
 
   waitForServerless:

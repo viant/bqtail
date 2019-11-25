@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-
-
 //Table returns bif query table
 func (s *service) Table(ctx context.Context, reference *bigquery.TableReference) (table *bigquery.Table, err error) {
 	if reference.ProjectId == "" {
@@ -19,7 +17,7 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 
 	for i := 0; i < base.MaxRetries; i++ {
 		call.Context(ctx)
-		if table, err = call.Do();err == nil {
+		if table, err = call.Do(); err == nil {
 			return table, err
 		}
 		if base.IsRetryError(err) {

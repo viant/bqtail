@@ -10,7 +10,7 @@ type Jobs struct {
 func (j *Jobs) Add(job *Job) {
 	j.mux.Lock()
 	defer j.mux.Unlock()
-	j.Jobs[job.URL]=job
+	j.Jobs[job.URL] = job
 }
 
 //Has returns true if has job URL

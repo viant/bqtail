@@ -17,12 +17,6 @@ pipeline:
       dest:
         URL: gs://${triggerBucket}
         credentials: $gcpCredentials
-    bqDispatch:
-      action: storage:create
-      isDir: true
-      dest:
-        URL: gs://${dispatchBucket}
-        credentials: $gcpCredentials
     operation:
       action: storage:create
       isDir: true
@@ -83,6 +77,4 @@ pipeline:
       - URL: gs://${opsBucket}/BqTail/
         credentials: $gcpCredentials
       - URL: gs://${opsBucket}/BqDispatch/
-        credentials: $gcpCredentials
-      - URL: gs://${dispatchBucket}/BqDispatch/
         credentials: $gcpCredentials

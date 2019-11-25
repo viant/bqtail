@@ -83,9 +83,9 @@ func (s *service) checkDeferTasks(ctx context.Context, request *Request, respons
 		return errors.Wrapf(err, "failed to load cfg: %v", request.ConfigURL)
 	}
 	response.DeferTasks = make([]*File, 0)
-	objects, err := s.list(ctx, cfg.DeferTaskURL, request.unprocessedModifiedBefore, nil)
+	objects, err := s.list(ctx, cfg.AsyncTaskURL, request.unprocessedModifiedBefore, nil)
 	if err != nil {
-		return errors.Wrapf(err, "failed to check errors: %v", cfg.DeferTaskURL)
+		return errors.Wrapf(err, "failed to check errors: %v", cfg.AsyncTaskURL)
 	}
 	now := time.Now()
 	for _, object := range objects {
@@ -149,7 +149,7 @@ func (s *service) checkErrors(ctx context.Context, request *Request, response *R
 	return nil
 }
 
-func (s *service) loadRoutes(ctx context.Context, URL string) (*config.Ruleset, error) {
+func (s *service) loadRuleset(ctx context.Context, URL string) (*config.Ruleset, error) {
 	reader, err := s.fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, err
@@ -159,11 +159,14 @@ func (s *service) loadRoutes(ctx context.Context, URL string) (*config.Ruleset, 
 	}()
 	result := &config.Ruleset{}
 	err = json.NewDecoder(reader).Decode(&result)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to decode ruleset: %v", URL)
+	}
 	return result, err
 }
 
 func (s *service) checkProcessed(ctx context.Context, request *Request, response *Response) error {
-	rulesets, err := s.loadRoutes(ctx, request.ConfigURL)
+	rulesets, err := s.loadRuleset(ctx, request.ConfigURL)
 	if err != nil {
 		return errors.Wrapf(err, "failed to load rulesets: configf from URL :%v", request.ConfigURL)
 	}
@@ -189,7 +192,7 @@ func (s *service) checkProcessed(ctx context.Context, request *Request, response
 }
 
 func (s *service) checkUnprocessed(ctx context.Context, request *Request, response *Response) error {
-	routes, err := s.loadRoutes(ctx, request.ConfigURL)
+	routes, err := s.loadRuleset(ctx, request.ConfigURL)
 	if err != nil {
 		return errors.Wrapf(err, "failed to load routes: %v", request.ConfigURL)
 	}

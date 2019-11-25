@@ -49,7 +49,7 @@ func (s *service) notify(ctx context.Context, request *NotifyRequest) error {
 	if request.OAuthToken.Token == "" {
 		err = s.Secret.Decode(ctx, s.Storage, request.Credentials, &request.OAuthToken)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to decode token: from %v %v", request.Credentials.Key, request.Credentials.URL)
 		}
 	}
 	client := slack.New(request.Token)

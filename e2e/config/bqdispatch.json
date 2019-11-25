@@ -1,9 +1,9 @@
 
 {
-  "BatchURL": "gs://${opsBucket}/BqDispatch/Batch/",
   "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
   "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
-  "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
+  "AsyncTaskURL": "gs://${opsBucket}/BqDispatch/Tasks/",
+  "AsyncBatchURL": "gs://${opsBucket}/BqDispatch/Batch/",
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
   "CheckInMs": 5000,

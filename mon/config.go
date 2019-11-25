@@ -4,6 +4,7 @@ import (
 	"bqtail/base"
 	"context"
 	"encoding/json"
+	"github.com/pkg/errors"
 	"github.com/viant/afs"
 )
 
@@ -19,5 +20,8 @@ func NewConfig(ctx context.Context, URL string, fs afs.Service) (*Config, error)
 		return nil, err
 	}
 	config := &Config{}
-	return config, json.NewDecoder(reader).Decode(config)
+	if err = json.NewDecoder(reader).Decode(config); err != nil {
+		return nil, errors.Wrapf(err, "failed to decode config: %v", URL)
+	}
+	return config, nil
 }

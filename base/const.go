@@ -26,8 +26,13 @@ const (
 	JobExt = ".json"
 	//ActionExt job extension
 	ActionExt = ".run"
+
+	//WindowExt batch window extension file
+	WindowExt = ".win"
+
 	//JobElement job path element
 	JobElement = "-job"
+
 	//PathElementSeparator path separator
 	PathElementSeparator = "--"
 
@@ -67,8 +72,8 @@ const (
 	//ErrorSuffix error suffix
 	ErrorSuffix = "-error"
 
-	//DeferTaskURL deferred URL
-	DeferTaskURL = "DeferTaskURL"
+	//AsyncTaskURL deferred URL
+	DeferTaskURL = "AsyncTaskURL"
 
 	//SourceKey source URI
 	SourceKey = "Source"
@@ -89,8 +94,8 @@ const (
 	//RetrySleepInSec
 	RetrySleepInSec = 3
 
-	//BatchVicinityCount
-	BatchVicinityCount = 4
+	//StorageListUpdateDelay deplay for list update operation
+	StorageListUpdateDelay = 3
 
 	//DoneState done status
 	DoneState = "DONE"
@@ -104,11 +109,18 @@ const (
 	//DateLayout represents a date layout
 	DateLayout = "2006-01-02_15"
 
-	//WorkflowPrefix
-	WorkflowPrefix = "/_workflow_/"
+	//LoadPrefix
+	LoadPrefix = "/_load_/"
 
 	//BqJobPrefix
 	BqJobPrefix = "/_deferred_/"
 
+	//BatchPrefix
+	BatchPrefix = "/_batch_/"
 
+	//DoneLoadSuffix load done suffix
+	DoneLoadSuffix = "Done"
+
+	//ActiveLoadSuffix active done suffix
+	ActiveLoadSuffix = "Active"
 )

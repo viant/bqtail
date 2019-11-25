@@ -23,7 +23,6 @@ type Ruleset struct {
 	inited       int32
 }
 
-
 //Match returns matched route or nil
 func (r Ruleset) Match(job *base.Job) *Rule {
 	if len(r.Rules) == 0 {
@@ -37,7 +36,6 @@ func (r Ruleset) Match(job *base.Job) *Rule {
 	}
 	return nil
 }
-
 
 //Validate checks if routes are valid
 func (r *Ruleset) Validate() error {
@@ -69,7 +67,6 @@ func (r *Ruleset) modify(ctx context.Context, fs afs.Service, URL string) {
 	r.Rules = temp
 }
 
-
 func (r *Ruleset) remove(ctx context.Context, fs afs.Service, URL string) {
 	var temp = make([]*Rule, 0)
 	rules := r.Rules
@@ -92,8 +89,6 @@ func (r *Ruleset) Init(ctx context.Context, fs afs.Service, projectID string) er
 	_, err := r.notifier.Notify(ctx, fs)
 	return err
 }
-
-
 
 func (r *Ruleset) ReloadIfNeeded(ctx context.Context, fs afs.Service) (bool, error) {
 	return r.notifier.Notify(ctx, fs)

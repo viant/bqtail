@@ -122,10 +122,6 @@ func (d *Destination) CustomTableReference(table string, created time.Time, sour
 	return reference, nil
 }
 
-
-
-
-
 func expandMod(table string, source string, count int) (string, error) {
 	for i := 0; i < count; i++ {
 		index := strings.Index(table, ModExpr)
