@@ -25,7 +25,7 @@ pipeline:
       URL: ${parent.path}/rule.json
     dest:
       credentials: $gcpCredentials
-      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}.json
+      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}/rule.json
 
 
 

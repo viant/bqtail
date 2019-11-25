@@ -6,4 +6,5 @@ type Info struct {
 	Description  string `json:",omitempty"`
 	ProjectURL   string `json:",omitempty"`
 	LeadEngineer string `json:",omitempty"`
+	URL          string `json:",omitempty"`
 }

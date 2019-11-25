@@ -6,7 +6,7 @@
   "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
-  "CheckInMs": 600000,
+  "CheckInMs": 5000,
   "TimeToLiveInMin": 1,
   "TriggerBucket": "${triggerBucket}",
   "SlackCredentials": {

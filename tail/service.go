@@ -602,7 +602,6 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 		}
 		return base.JobError(job)
 	}
-
 	response.Status = base.StatusOK
 	response.Error = ""
 	if err := s.moveToCorruptedDataFiles(ctx, response.Corrupted); err != nil {

@@ -10,6 +10,8 @@ import (
 	"fmt"
 )
 
+const maxStackDriver = 265 * 1024
+
 //BqTail storage trigger background cloud function entry point
 func BqTail(ctx context.Context, event contract.GSEvent) (err error) {
 	meta, err := metadata.FromContext(ctx)
@@ -35,6 +37,9 @@ func handleTailEvent(ctx context.Context, request *contract.Request) (*contract.
 	}
 	response := service.Tail(ctx, request)
 	if data, err := json.Marshal(response); err == nil {
+		if len(data)+1 > maxStackDriver { //max stack driver
+			data = data[:maxStackDriver-2]
+		}
 		fmt.Printf("%v\n", string(data))
 	}
 	if response.Error != "" {

@@ -25,7 +25,6 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	if err != nil {
 		return err
 	}
-
 	if err = c.Ruleset.Init(ctx, fs, c.ProjectID); err != nil {
 		return err
 	}

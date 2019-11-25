@@ -4,25 +4,49 @@ import (
 	"bqtail/base"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
-	"github.com/viant/afs/matcher"
-	"github.com/viant/afs/option"
-	"github.com/viant/afs/storage"
+	"github.com/viant/afs/url"
+	"log"
 	"strings"
-	"sync/atomic"
 	"time"
 )
 
 //Ruleset represents route slice
 type Ruleset struct {
-	RulesURL     string
-	CheckInMs    int
-	Rules        []*Rule
-	meta         *base.Meta
-	initialRules []*Rule
-	inited       int32
+	RulesURL  string
+	CheckInMs int
+	Rules     []*Rule
+	*base.Notifier
+}
+
+func (r *Ruleset) modify(ctx context.Context, fs afs.Service, URL string) {
+	loaded, err := r.loadRule(ctx, fs, URL)
+	if err != nil {
+		log.Printf("failed to load rule: %v: %v", URL, err)
+	}
+	var temp = make([]*Rule, 0)
+	rules := r.Rules
+	for i, rule := range rules {
+		if rule.Info.URL == URL {
+			continue
+		}
+		temp = append(temp, rules[i])
+	}
+	temp = append(temp, loaded...)
+	r.Rules = temp
+}
+
+func (r *Ruleset) remove(ctx context.Context, fs afs.Service, URL string) {
+	var temp = make([]*Rule, 0)
+	rules := r.Rules
+	for i, rule := range rules {
+		if rule.Info.URL == URL {
+			continue
+		}
+		temp = append(temp, rules[i])
+	}
+	r.Rules = temp
 }
 
 //HasMatch returns the first match route
@@ -83,100 +107,53 @@ func (r *Ruleset) Init(ctx context.Context, fs afs.Service, projectID string) er
 	if err := r.initRules(); err != nil {
 		return err
 	}
-	r.meta = base.NewMeta(r.RulesURL, time.Duration(r.CheckInMs)*time.Millisecond)
-	return r.load(ctx, fs)
-}
-
-func (r *Ruleset) load(ctx context.Context, fs afs.Service) (err error) {
-	if err = r.loadAllResources(ctx, fs); err != nil {
-		return err
-	}
-	return nil
+	checkFrequency := time.Duration(r.CheckInMs) * time.Millisecond
+	r.Notifier = base.NewNotifier(r.RulesURL, checkFrequency, fs, r.modify, r.remove)
+	_, err := r.Notifier.Notify(ctx, fs)
+	return err
 }
 
 func (r *Ruleset) ReloadIfNeeded(ctx context.Context, fs afs.Service) (bool, error) {
-	changed, err := r.meta.HasChanged(ctx, fs)
-	if err != nil || !changed {
-		return changed, err
-	}
-	return true, r.load(ctx, fs)
+	return r.Notifier.Notify(ctx, fs)
 }
 
-func (c *Ruleset) loadAllResources(ctx context.Context, fs afs.Service) error {
-	if c.RulesURL == "" {
-		return nil
-	}
-	c.Rules = c.initialRules
-	exists, err := fs.Exists(ctx, c.RulesURL)
-	if err != nil || !exists {
-		return err
-	}
-	suffixMatcher, _ := matcher.NewBasic("", ".json", "", nil)
-	routesObject, err := fs.List(ctx, c.RulesURL, suffixMatcher, option.NewRecursive(true))
+func (c *Ruleset) loadRule(ctx context.Context, storage afs.Service, URL string) ([]*Rule, error) {
+	reader, err := storage.DownloadWithURL(ctx, URL)
 	if err != nil {
-		return err
-	}
-	for _, object := range routesObject {
-		if object.IsDir() {
-			continue
-		}
-		if err = c.loadResources(ctx, fs, object); err != nil {
-			//Report error, let the other rules work fine
-			fmt.Println(err)
-		}
-	}
-	return nil
-}
-
-func (c *Ruleset) loadResources(ctx context.Context, storage afs.Service, object storage.Object) error {
-	reader, err := storage.Download(ctx, object)
-	if err != nil {
-		return errors.Wrapf(err, "failed to load resource: %v", object.URL())
+		return nil, errors.Wrapf(err, "failed to load resource: %v", URL)
 	}
 	defer func() {
 		_ = reader.Close()
 	}()
-	routes := make([]*Rule, 0)
+	rules := make([]*Rule, 0)
 
-	err = json.NewDecoder(reader).Decode(&routes)
+	err = json.NewDecoder(reader).Decode(&rules)
 	if err != nil {
-		return errors.Wrapf(err, "failed to decode: %v", object.URL())
+		return nil, errors.Wrapf(err, "failed to decode: %v", URL)
 	}
-	transientRoutes := Ruleset{Rules: routes}
+	transientRoutes := Ruleset{Rules: rules}
 	if err := transientRoutes.Validate(); err != nil {
-		return errors.Wrapf(err, "invalid rule: %v", object.URL())
+		return nil, errors.Wrapf(err, "invalid rule: %v", URL)
+	}
+	_, name := url.Split(URL, "")
+	if strings.HasSuffix(name, ".json") {
+		name = string(name[:len(name)-5])
 	}
 
-	for i := range routes {
-
-		if routes[i].Info.Workflow == "" {
-			name := object.Name()
-			if strings.HasSuffix(name, ".json") {
-				name = string(name[:len(name)-5])
-			}
-			routes[i].Info.Workflow = name
+	for i := range rules {
+		rules[i].Info.URL = URL
+		if rules[i].Info.Workflow == "" {
+			rules[i].Info.Workflow = name
 		}
-		c.Rules = append(c.Rules, routes[i])
-
 	}
-
-	return nil
+	return rules, nil
 }
 
+
 func (r *Ruleset) initRules() error {
-	if atomic.CompareAndSwapInt32(&r.inited, 0, 1) {
-		if len(r.Rules) > 0 {
-			if err := r.Validate(); err != nil {
-				return err
-			}
-			r.initialRules = r.Rules
-		} else {
-			r.initialRules = make([]*Rule, 0)
-		}
-	}
-	if len(r.initialRules) > 0 {
-		if base.IsLoggingEnabled() {
-			fmt.Printf("initialy loaded rules: %v\n", len(r.initialRules))
+	if len(r.Rules) > 0 {
+		if err := r.Validate(); err != nil {
+			return err
 		}
 	}
 	return nil
