@@ -123,5 +123,5 @@ const (
 	DoneLoadSuffix = "Done"
 
 	//ActiveLoadSuffix active done suffix
-	ActiveLoadSuffix = "Active"
+	ActiveLoadSuffix = "Running"
 )
