@@ -23,6 +23,7 @@ import (
 	"github.com/viant/afsc/gs"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
+	"math/rand"
 	"path"
 	"strings"
 	"time"
@@ -519,13 +520,14 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 func (s *service) runInBatch(ctx context.Context, window *batch.Window, response *contract.Response) (*Job, error) {
 	response.Window = window
 	response.BatchRunner = true
-	remainingDuration := window.End.Sub(time.Now()) + (base.StorageListUpdateDelay * time.Second)
-	if remainingDuration > 0 {
-		time.Sleep(remainingDuration)
-	}
 	rule := s.config.Get(ctx, window.RuleURL, window.Filter)
 	if rule == nil {
 		return nil, fmt.Errorf("failed locaet rule for :%v, %v", window.RuleURL, window.Filter)
+	}
+	batchingDistributionDelay := time.Duration(getRandom(base.StorageListVisibiityDelay, rule.Batch.MaxDelayMs(base.StorageListVisibiityDelay))) * time.Millisecond
+	remainingDuration := window.End.Sub(time.Now()) + batchingDistributionDelay
+	if remainingDuration > 0 {
+		time.Sleep(remainingDuration)
 	}
 	err := s.batch.MatchWindowDataURLs(ctx, rule, window)
 	if err != nil || len(window.URIs) == 0 {
@@ -549,6 +551,12 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		response.NotFoundError = fmt.Sprintf("failed to journal: %v", e)
 	}
 	return err
+}
+
+
+func getRandom(min, max int) int {
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return min + int(rnd.Int63()) % (max - min)
 }
 
 func (s *service) runActions(ctx context.Context, request *contract.Request, response *contract.Response) error {

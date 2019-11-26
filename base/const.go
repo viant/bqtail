@@ -94,8 +94,9 @@ const (
 	//RetrySleepInSec
 	RetrySleepInSec = 3
 
-	//StorageListUpdateDelay deplay for list update operation
-	StorageListUpdateDelay = 3
+	//StorageListVisibiityDelay
+	StorageListVisibiityDelay = 2000
+
 
 	//DoneState done status
 	DoneState = "DONE"

@@ -15,7 +15,11 @@ type Batch struct {
 	RollOver bool
 	//Batch base URL
 	BaseURL string
+
+	MaxDelayInSec int
 }
+
+
 
 //Init initialises batch mode
 func (b *Batch) Init(baseURL string) {
@@ -27,6 +31,18 @@ func (b *Batch) Init(baseURL string) {
 		b.BaseURL = baseURL
 	}
 }
+
+
+//MaxDelayMs max delay in ms
+func (b *Batch) MaxDelayMs(minInMs int) int {
+	maxDelayMs := b.MaxDelayInSec * 1000
+	if maxDelayMs < minInMs {
+		return minInMs +  1000
+	}
+	return maxDelayMs
+}
+
+
 
 //Validate checks if batch configuration is valid
 func (b *Batch) Validate() error {
