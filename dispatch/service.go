@@ -76,15 +76,17 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		defer cancelFunc()
 	}
 	startTime := time.Now()
+
 	for {
-
 		response.Reset()
-
 		waitGroup := &sync.WaitGroup{}
 		waitGroup.Add(2)
 		go func() {
 			defer waitGroup.Done()
 			err := s.dispatchBatchEvents(ctx, response)
+			if IsContextError(err) {
+				return
+			}
 			if err != nil {
 				response.SetIfError(err)
 			}
@@ -92,6 +94,9 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		go func() {
 			defer waitGroup.Done()
 			err := s.dispatchBqEvents(ctx, response)
+			if IsContextError(err) {
+				return
+			}
 			if err != nil {
 				response.SetIfError(err)
 			}
@@ -102,6 +107,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 			break
 		}
 		time.Sleep(time.Second)
+
 	}
 	return response
 }
@@ -191,14 +197,8 @@ func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Respo
 
 //notify notify bqtail
 func (s *service) notify(ctx context.Context, job *contract.Job) error {
-	if exists, _ := s.fs.Exists(ctx, job.URL, option.NewObjectKind(true)); !exists {
-		return nil
-	}
 	taskURL := s.config.BuildTaskURL(job.ID)
-	if exists, _ := s.fs.Exists(ctx, taskURL, option.NewObjectKind(true));exists {
-		return s.fs.Delete(ctx, job.URL, option.NewObjectKind(true))
-	}
-	return s.fs.Move(ctx, job.URL, taskURL)
+	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
 }
 
 func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Response) (err error) {
@@ -223,11 +223,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 			response.AddBatch(object.URL(), *dueTime)
 			baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
 			destURL := url.Join(baseURL, object.Name())
-			if ok, _ := s.fs.Exists(ctx, destURL);ok {
-				_ = s.fs.Delete(ctx, object.URL(), option.NewObjectKind(true))
-				continue
-			}
-			if e := s.fs.Move(ctx, object.URL(), destURL); e != nil {
+			if e := s.fs.Move(ctx, object.URL(), destURL, option.NewObjectKind(true)); e != nil {
 				err = e
 			}
 		}
