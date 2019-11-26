@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/viant/afs"
+	"github.com/viant/afs/option"
 	"github.com/viant/afs/url"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
@@ -76,16 +77,28 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 	}
 	startTime := time.Now()
 	for {
+
 		response.Reset()
-		err := s.dispatchBatchEvents(ctx, response)
-		if err != nil {
-			response.SetIfError(err)
-		}
-		err = s.dispatchBqEvents(ctx, response)
-		if err != nil {
-			response.SetIfError(err)
-		}
+
+		waitGroup := &sync.WaitGroup{}
+		waitGroup.Add(2)
+		go func() {
+			defer waitGroup.Done()
+			err := s.dispatchBatchEvents(ctx, response)
+			if err != nil {
+				response.SetIfError(err)
+			}
+		}()
+		go func() {
+			defer waitGroup.Done()
+			err := s.dispatchBqEvents(ctx, response)
+			if err != nil {
+				response.SetIfError(err)
+			}
+		}()
+
 		response.Cycles++
+		waitGroup.Wait()
 		if time.Now().Sub(startTime) > timeToLive {
 			break
 		}
@@ -207,6 +220,10 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 		if time.Now().After(*dueTime) {
 			baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
 			destURL := url.Join(baseURL, object.Name())
+			if ok, _ := s.fs.Exists(ctx, destURL);ok {
+				_ = s.fs.Delete(ctx, object.URL(), option.NewObjectKind(true))
+				continue
+			}
 			if e := s.fs.Move(ctx, object.URL(), destURL); e != nil {
 				err = e
 			}
@@ -215,6 +232,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 	}
 	return err
 }
+
 
 //JobID returns job ID for supplied URL
 func JobID(baseURL string, URL string) string {

@@ -50,7 +50,9 @@ func GetWindow(ctx context.Context, URL string, fs afs.Service) (*Window, error)
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer  func() {
+		_ = reader.Close()
+	}()
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read window: %v", URL)
