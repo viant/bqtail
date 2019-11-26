@@ -94,9 +94,14 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 			if table != window.Table {
 				continue
 			}
+			if object.ModTime().After(window.End) || object.ModTime().Equal(window.End) {
+				continue
+			}
+			if object.ModTime().Before(window.Start)  {
+				continue
+			}
 			result = append(result, object.URL())
 		}
-
 	}
 	window.URIs = result
 	return nil
