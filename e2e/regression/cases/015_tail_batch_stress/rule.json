@@ -6,7 +6,7 @@
     },
     "Async": true,
     "Dest": {
-      "Table": "bqtail.dummy"
+      "Table": "bqtail.dummy_$Mod(2)"
     },
     "Batch": {
       "RollOver": true,

@@ -6,7 +6,7 @@
   "AsyncBatchURL": "gs://${opsBucket}/BqDispatch/Batch/",
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
-  "CheckInMs": 5000,
+  "CheckInMs": 100,
   "TimeToLiveInMin": 1,
   "TriggerBucket": "${triggerBucket}",
   "SlackCredentials": {

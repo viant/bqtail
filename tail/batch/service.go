@@ -87,7 +87,7 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 	var result = make([]string, 0)
 	for _, object := range objects {
 		if rule.HasMatch(object.URL()) {
-			table, err := rule.Dest.ExpandTable(rule.Dest.Table, window.SourceTime, window.SourceURL)
+			table, err := rule.Dest.ExpandTable(rule.Dest.Table, object.ModTime(), object.URL())
 			if err != nil {
 				return err
 			}
