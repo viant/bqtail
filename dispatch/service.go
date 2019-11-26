@@ -80,7 +80,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 	waitGroup.Add(1)
 
 	go func() {
-		defer waitGroup.Done()
+		waitGroup.Done()
 		err := s.dispatchBatchEvents(ctx, response)
 		if err != nil {
 			response.SetIfError(err)
