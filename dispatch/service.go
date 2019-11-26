@@ -106,8 +106,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		if time.Now().Sub(startTime) > timeToLive {
 			break
 		}
-		time.Sleep(time.Second)
-
+		time.Sleep(base.StorageListVisibiityDelay * time.Millisecond)
 	}
 	return response
 }
