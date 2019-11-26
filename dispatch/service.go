@@ -75,27 +75,27 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		ctx, cancelFunc = context.WithTimeout(ctx, time.Duration(timeInSec-2)*time.Second)
 		defer cancelFunc()
 	}
-
-	waitGroup := &sync.WaitGroup{}
-	waitGroup.Add(1)
-
-	go func() {
-		waitGroup.Done()
-		err := s.dispatchBatchEvents(ctx, response)
-		if err != nil {
-			response.SetIfError(err)
-		}
-	}()
 	startTime := time.Now()
 	for {
 
 		response.Reset()
 
+		waitGroup := &sync.WaitGroup{}
+		waitGroup.Add(2)
+		go func() {
+			defer waitGroup.Done()
+			err := s.dispatchBatchEvents(ctx, response)
+			if err != nil {
+				response.SetIfError(err)
+			}
+		}()
+		go func() {
+			defer waitGroup.Done()
 			err := s.dispatchBqEvents(ctx, response)
 			if err != nil {
 				response.SetIfError(err)
 			}
-
+		}()
 		response.Cycles++
 		waitGroup.Wait()
 		if time.Now().Sub(startTime) > timeToLive {
@@ -103,7 +103,6 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		}
 		time.Sleep(time.Second)
 	}
-	waitGroup.Wait()
 	return response
 }
 
