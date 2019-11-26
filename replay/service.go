@@ -47,6 +47,10 @@ func (s *service) replay(ctx context.Context, request *Request, response *Respon
 	}
 	objects, err := s.list(ctx, request.TriggerURL, request.unprocessedModifiedBefore)
 	fmt.Printf("%v %v\n", request.TriggerURL, len(objects))
+
+	mover := newMover(s.fs)
+	mover.Run(ctx, 5)
+
 	for i := range objects {
 		if objects[i].IsDir() {
 			continue
@@ -60,25 +64,13 @@ func (s *service) replay(ctx context.Context, request *Request, response *Respon
 			continue
 		}
 
-		go func(sourceURL, destURL string) {
-
-			if err := s.fs.Move(ctx, sourceURL, destURL); err != nil {
-				fmt.Printf("failed to move %v\n", err)
-				return
-			}
-			if err := s.fs.Move(ctx, destURL, sourceURL); err != nil {
-				fmt.Printf("failed to move %v\n", err)
-				return
-			}
-			fmt.Printf("replayed %v\n", sourceURL)
-			response.Replayed = append(response.Replayed, sourceURL)
-			if err := s.fs.Upload(ctx, replayedURL, 0644, strings.NewReader(sourceURL)); err != nil {
-				return
-			}
-		}(sourceURL, destURL)
+		mover.Schedule(&replay{
+			src:  sourceURL,
+			dest: destURL,
+		})
 
 	}
-	return nil
+	return mover.Wait()
 }
 
 func (s *service) list(ctx context.Context, URL string, modifiedBefore *time.Time) ([]storage.Object, error) {
