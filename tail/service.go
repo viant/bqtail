@@ -651,6 +651,7 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 	if err != nil {
 		return err
 	}
+	request.EventID = window.EventID
 	defer func() {
 		_ = s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true))
 	}()
