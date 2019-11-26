@@ -84,7 +84,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		go func() {
 			defer waitGroup.Done()
 			err := s.dispatchBatchEvents(ctx, response)
-			if IsContextError(err) {
+			if IsContextError(err) || IsNotFound(err) {
 				return
 			}
 			if err != nil {
@@ -94,7 +94,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		go func() {
 			defer waitGroup.Done()
 			err := s.dispatchBqEvents(ctx, response)
-			if IsContextError(err) {
+			if IsContextError(err) || IsNotFound(err)  {
 				return
 			}
 			if err != nil {
