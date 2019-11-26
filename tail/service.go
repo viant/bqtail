@@ -651,9 +651,9 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 	if err != nil {
 		return err
 	}
-	//defer func() {
-	//	_ = s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true))
-	//}()
+	defer func() {
+		_ = s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true))
+	}()
 	job, err := s.runInBatch(ctx, window, response)
 	if err == nil || job == nil {
 		return err

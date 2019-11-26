@@ -6,7 +6,7 @@
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "TriggerBucket": "${triggerBucket}",
-  "CheckInMs": 600000,
+  "CheckInMs": 60000,
   "SlackCredentials": {
     "URL": "gs://${configBucket}/Secrets/slack.json.enc",
     "Key": "${prefix}_ring/${prefix}_key"
