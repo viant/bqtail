@@ -75,27 +75,26 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		ctx, cancelFunc = context.WithTimeout(ctx, time.Duration(timeInSec-2)*time.Second)
 		defer cancelFunc()
 	}
+
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(1)
+
+	go func() {
+		defer waitGroup.Done()
+		err := s.dispatchBatchEvents(ctx, response)
+		if err != nil {
+			response.SetIfError(err)
+		}
+	}()
 	startTime := time.Now()
 	for {
 
 		response.Reset()
 
-		waitGroup := &sync.WaitGroup{}
-		waitGroup.Add(2)
-		go func() {
-			defer waitGroup.Done()
-			err := s.dispatchBatchEvents(ctx, response)
-			if err != nil {
-				response.SetIfError(err)
-			}
-		}()
-		go func() {
-			defer waitGroup.Done()
 			err := s.dispatchBqEvents(ctx, response)
 			if err != nil {
 				response.SetIfError(err)
 			}
-		}()
 
 		response.Cycles++
 		waitGroup.Wait()
@@ -104,6 +103,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		}
 		time.Sleep(time.Second)
 	}
+	waitGroup.Wait()
 	return response
 }
 
@@ -218,6 +218,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 			continue
 		}
 		if time.Now().After(*dueTime) {
+			response.AddBatch(object.URL(), *dueTime)
 			baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
 			destURL := url.Join(baseURL, object.Name())
 			if ok, _ := s.fs.Exists(ctx, destURL);ok {
@@ -227,7 +228,6 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 			if e := s.fs.Move(ctx, object.URL(), destURL); e != nil {
 				err = e
 			}
-			response.AddBatch(object.URL(), *dueTime)
 		}
 	}
 	return err
