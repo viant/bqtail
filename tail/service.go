@@ -191,8 +191,9 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	doneURL := s.config.BuildDoneLoadURL(job.Dest(), job.EventID)
 	s.appendLoadJobFinalActions(activeURL, doneURL, load)
 
-	if err = s.createLoadAction(ctx, activeURL, load); err != nil {
-		return nil, errors.Wrapf(err, "failed to create workflow actions: %v", activeURL)
+	if e := s.createLoadAction(ctx, activeURL, load); e != nil {
+		fmt.Printf("failed to create workflow actions: %v: %v", activeURL, e)
+		//return nil, errors.Wrapf(err, "failed to create workflow actions: %v", activeURL)
 	}
 	bqJob, err := s.bq.Load(ctx, load)
 	if bqJob != nil {
