@@ -191,10 +191,13 @@ func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Respo
 
 //notify notify bqtail
 func (s *service) notify(ctx context.Context, job *contract.Job) error {
-	if exists, _ := s.fs.Exists(ctx, job.URL); !exists {
+	if exists, _ := s.fs.Exists(ctx, job.URL, option.NewObjectKind(true)); !exists {
 		return nil
 	}
 	taskURL := s.config.BuildTaskURL(job.ID)
+	if exists, _ := s.fs.Exists(ctx, taskURL, option.NewObjectKind(true));exists {
+		return s.fs.Delete(ctx, job.URL, option.NewObjectKind(true))
+	}
 	return s.fs.Move(ctx, job.URL, taskURL)
 }
 
