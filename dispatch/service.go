@@ -103,10 +103,11 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		}()
 		response.Cycles++
 		waitGroup.Wait()
-		if time.Now().Sub(startTime) > timeToLive {
+		sleepTime := base.StorageListVisibiityDelay * time.Millisecond
+		if time.Now().Sub(startTime) > (timeToLive - sleepTime) {
 			break
 		}
-		time.Sleep(base.StorageListVisibiityDelay * time.Millisecond)
+		time.Sleep(sleepTime)
 	}
 	return response
 }
