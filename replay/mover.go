@@ -6,6 +6,7 @@ import (
 	"github.com/viant/afs"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 type replay struct {
@@ -25,7 +26,7 @@ type mover struct {
 
 func (d *mover) move(ctx context.Context, sourceURL, destURL string) {
 	defer d.Done()
-	e := d.fs.Move(ctx, sourceURL, destURL);
+	e := d.fs.Move(ctx, sourceURL, destURL)
 	if e != nil {
 		if atomic.CompareAndSwapInt32(&d.hasError, 0, 1) {
 			d.errChannel <- e
@@ -49,6 +50,7 @@ func (d *mover) Schedule(reply *replay) {
 }
 
 func (d *mover) Wait() (err error) {
+	time.Sleep(30 * time.Second)
 	d.WaitGroup.Wait()
 	atomic.StoreInt32(&d.closed, 1)
 	for i := 0; i < d.routines; i++ {

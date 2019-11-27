@@ -10,9 +10,6 @@ const (
 	//StatusDisabled status rule disabled
 	StatusDisabled = "disabled"
 
-	//StatusDuplicate status duplicate
-	StatusDuplicate = "duplicate"
-
 	//StatusError response status
 	StatusError = "error"
 
@@ -30,8 +27,8 @@ const (
 	//WindowExt batch window extension file
 	WindowExt = ".win"
 
-	//JobElement job path element
-	JobElement = "-job"
+	//LocationExt location extension
+	LocationExt = ".loc"
 
 	//PathElementSeparator path separator
 	PathElementSeparator = "--"
@@ -96,7 +93,6 @@ const (
 
 	//StorageListVisibiityDelay
 	StorageListVisibiityDelay = 3000
-
 
 	//DoneState done status
 	DoneState = "DONE"

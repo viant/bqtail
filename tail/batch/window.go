@@ -28,6 +28,7 @@ type Window struct {
 	Start      time.Time `json:",omitempty"`
 	End        time.Time `json:",omitempty"`
 	URIs       []string  `json:",omitempty"`
+	Locations  []string
 }
 
 //NewWindow create a stage batch window
@@ -50,7 +51,7 @@ func GetWindow(ctx context.Context, URL string, fs afs.Service) (*Window, error)
 	if err != nil {
 		return nil, err
 	}
-	defer  func() {
+	defer func() {
 		_ = reader.Close()
 	}()
 	data, err := ioutil.ReadAll(reader)

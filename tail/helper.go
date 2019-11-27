@@ -15,10 +15,8 @@ import (
 const (
 	recoverJobPrefix = "recover"
 	notFoundReason   = "notFound"
-	invalidReason="invalid"
+	invalidReason    = "invalid"
 )
-
-
 
 //wrapRecoverJobID wrap recover with recover prefix and attempts
 func wrapRecoverJobID(jobID string) string {
@@ -54,8 +52,6 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 			}
 		}
 
-
-
 		if element.Location == "" {
 			continue
 		}
@@ -63,7 +59,6 @@ func removeCorruptedURIs(ctx context.Context, job *bigquery.Job, fs afs.Service)
 		if _, ok := URIs[element.Location]; !ok {
 			continue
 		}
-
 
 		delete(URIs, element.Location)
 		if isMissing {
@@ -105,5 +100,3 @@ func buildJobIDReplacementMap(eventID string, actions []*task.Action) map[string
 	}
 	return result
 }
-
-

@@ -16,10 +16,13 @@ type Batch struct {
 	//Batch base URL
 	BaseURL string
 
+	//MultiPath is one batch can collect files from various folder
+	MultiPath bool
+
+	//MaxDelayInSec delay before collecting batch file. to randomly distribute workload,
+	// when a table has 40 shards, 40 batches would start exactly at the same time unless this parameter is specified
 	MaxDelayInSec int
 }
-
-
 
 //Init initialises batch mode
 func (b *Batch) Init(baseURL string) {
@@ -32,17 +35,14 @@ func (b *Batch) Init(baseURL string) {
 	}
 }
 
-
 //MaxDelayMs max delay in ms
 func (b *Batch) MaxDelayMs(minInMs int) int {
 	maxDelayMs := b.MaxDelayInSec * 1000
 	if maxDelayMs < minInMs {
-		return minInMs +  1000
+		return minInMs + 1000
 	}
 	return maxDelayMs
 }
-
-
 
 //Validate checks if batch configuration is valid
 func (b *Batch) Validate() error {

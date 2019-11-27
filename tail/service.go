@@ -190,10 +190,8 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	activeURL := s.config.BuildActiveLoadURL(job.Dest(), job.EventID)
 	doneURL := s.config.BuildDoneLoadURL(job.Dest(), job.EventID)
 	s.appendLoadJobFinalActions(activeURL, doneURL, load)
-
 	if e := s.createLoadAction(ctx, activeURL, load); e != nil {
-		fmt.Printf("failed to create workflow actions: %v: %v", activeURL, e)
-		//return nil, errors.Wrapf(err, "failed to create workflow actions: %v", activeURL)
+		return nil, errors.Wrapf(err, "failed to create load job actions: %v", activeURL)
 	}
 	bqJob, err := s.bq.Load(ctx, load)
 	if bqJob != nil {
@@ -543,7 +541,13 @@ func (s *service) runInBatch(ctx context.Context, window *batch.Window, response
 	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), window.URIs...); err != nil {
 		return nil, err
 	}
-	return s.submitJob(ctx, job, rule, response)
+	job, err = s.submitJob(ctx, job, rule, response)
+	if err == nil && len(window.Locations) > 0 {
+		for _, URL := range window.Locations {
+			_ = s.fs.Delete(ctx, URL, option.NewObjectKind(true))
+		}
+	}
+	return job, err
 }
 
 func (s *service) runPostLoadActions(ctx context.Context, request *contract.Request, response *contract.Response) error {
@@ -554,10 +558,9 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	return err
 }
 
-
 func getRandom(min, max int) int {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return min + int(rnd.Int63()) % (max - min)
+	return min + int(rnd.Int63())%(max-min)
 }
 
 func (s *service) runActions(ctx context.Context, request *contract.Request, response *contract.Response) error {

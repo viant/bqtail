@@ -5,3 +5,6 @@ go.sum
 logs
 1.json
 local_test.go
+local1_test.go
+local2_test.go
+local3_test.go

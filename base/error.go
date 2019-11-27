@@ -23,7 +23,6 @@ func IsRetryError(err error) bool {
 	return strings.Contains(message, backendError) || strings.Contains(message, internalError)
 }
 
-
 //IsRetryError returns true if backend error
 func IsNotFoundError(err error) bool {
 	if err == nil {
@@ -36,7 +35,6 @@ func IsNotFoundError(err error) bool {
 	}
 	return false
 }
-
 
 //IsDuplicateJobError returns true if duplicate job error
 func IsDuplicateJobError(err error) bool {

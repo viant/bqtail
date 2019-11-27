@@ -19,13 +19,12 @@ func (s *service) Drop(ctx context.Context, request *DropRequest) error {
 	table := request.dropTable
 	call := bigquery.NewTablesService(s.Service).Delete(table.ProjectId, table.DatasetId, table.TableId)
 	call.Context(ctx)
-	err :=  call.Do()
+	err := call.Do()
 	if base.IsNotFoundError(err) {
 		err = nil
 	}
 	return err
 }
-
 
 //CopyRequest represents a copy request
 type DropRequest struct {

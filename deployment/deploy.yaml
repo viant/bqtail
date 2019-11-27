@@ -32,7 +32,7 @@ pipeline:
     environmentVariables:
       CONFIG: gs://${configBucket}/BqDispatch/config.json
       LOGGING: false
-      GS_MAX_RETRIES: 10
+      GS_MAX_RETRIES: 20
     source:
       URL: ${appPath}
 

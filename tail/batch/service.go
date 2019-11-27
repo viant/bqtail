@@ -16,7 +16,10 @@ import (
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
 	"google.golang.org/api/googleapi"
+	"io/ioutil"
 	"net/http"
+	"path"
+	"strings"
 )
 
 type Service interface {
@@ -32,23 +35,36 @@ type service struct {
 	fs  afs.Service
 }
 
+func (s *service) addLocationFile(ctx context.Context, window *Window, location string) error {
+	locationFile := fmt.Sprintf("%v%v", base.Hash(location), base.LocationExt)
+	URL := strings.Replace(window.URL, base.WindowExt, "/"+locationFile, 1)
+	if ok, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true)); ok {
+		return nil
+	}
+	return s.fs.Upload(ctx, URL, file.DefaultDirOsMode, strings.NewReader(location))
+}
+
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, eventId string, source storage.Object, rule *config.Rule) (*BatchedWindow, error) {
 	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, source.ModTime(), source.URL())
 	if err != nil {
 		return nil, err
 	}
-	sourceParent, _ := url.Split(source.URL(), gs.Scheme)
-	//add source parent URL hash in case versiou path match the same dest table
-	windowDest := fmt.Sprintf("%v_%v", dest, base.Hash(sourceParent))
-
+	parentURL, _ := url.Split(source.URL(), gs.Scheme)
+	windowDest := dest
+	if !rule.Batch.MultiPath {
+		//one batch per folder location
+		windowDest = fmt.Sprintf("%v_%v", dest, base.Hash(parentURL))
+	}
 	batch := rule.Batch
 	windowURL := batch.WindowURL(windowDest, source.ModTime())
 	window, _ := GetWindow(ctx, windowURL, s.fs)
 	if window != nil {
-		return &BatchedWindow{OwnerEventID: window.EventID}, nil
+		if rule.Batch.MultiPath {
+			err = s.addLocationFile(ctx, window, parentURL)
+		}
+		return &BatchedWindow{OwnerEventID: window.EventID}, err
 	}
-
 	endTime := batch.WindowEndTime(source.ModTime())
 	startTime := endTime.Add(-batch.Window.Duration)
 
@@ -58,7 +74,6 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventId string, source s
 			startTime = startTime.Add(-batch.Window.Duration)
 		}
 	}
-
 	window = NewWindow(eventId, dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
 	windowData, _ := json.Marshal(window)
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
@@ -68,23 +83,87 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventId string, source s
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to load window: %v", windowURL)
 			}
-			return &BatchedWindow{OwnerEventID: window.EventID}, nil
+			if rule.Batch.MultiPath {
+				err = s.addLocationFile(ctx, window, parentURL)
+			}
+			return &BatchedWindow{OwnerEventID: window.EventID}, err
 		}
 	}
-	return &BatchedWindow{Window: window}, nil
+	if rule.Batch.MultiPath {
+		err = s.addLocationFile(ctx, window, parentURL)
+	}
+	return &BatchedWindow{Window: window}, err
+}
+
+func (s *service) readLocation(ctx context.Context, URL string) (string, error) {
+	reader, err := s.fs.DownloadWithURL(ctx, URL)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+func (s *service) getBaseURLS(ctx context.Context, rule *config.Rule, window *Window) ([]string, error) {
+	var baseURLs = make(map[string]bool)
+	baseURL, _ := url.Split(window.SourceURL, gs.Scheme)
+	baseURLs[baseURL] = true
+	if rule.Batch.MultiPath {
+		window.Locations = make([]string, 0)
+		URL := strings.Replace(window.URL, base.WindowExt, "/", 1)
+		objects, err := s.fs.List(ctx, URL)
+		if err != nil {
+			return nil, err
+		}
+		for _, object := range objects {
+			if object.IsDir() || path.Ext(object.Name()) != base.LocationExt {
+				continue
+			}
+			location, err := s.readLocation(ctx, object.URL())
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to load location: %v", object.URL())
+			}
+			window.Locations = append(window.Locations, object.URL())
+			baseURLs[location] = true
+		}
+	}
+	var result = make([]string, 0)
+	for k := range baseURLs {
+		result = append(result, k)
+	}
+	return result, nil
 }
 
 //MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) error {
-	baseURL, _ := url.Split(window.SourceURL, gs.Scheme)
 	before := window.End           //inclusive
 	afeter := window.Start.Add(-1) //exclusive
 	modFilter := matcher.NewModification(&before, &afeter)
-	objects, err := s.fs.List(ctx, baseURL, modFilter)
+	baseURLS, err := s.getBaseURLS(ctx, rule, window)
 	if err != nil {
-		return errors.Wrapf(err, "failed to list batch %v(%) data files", window.EventID, window.URL)
+		return errors.Wrapf(err, "failed get batch location: %v", window.URL)
 	}
 	var result = make([]string, 0)
+	for _, baseURL := range baseURLS {
+		if err := s.matchcData(ctx, window, rule, baseURL, modFilter, &result); err != nil {
+			return err
+		}
+	}
+	window.URIs = result
+	return nil
+}
+
+func (s *service) matchcData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, matcher option.Matcher, result *[]string) error {
+	objects, err := s.fs.List(ctx, baseURL, matcher)
+	if err != nil {
+		return errors.Wrapf(err, "failed to list batch %v(%) data files", baseURL)
+	}
 	for _, object := range objects {
 		if rule.HasMatch(object.URL()) {
 			table, err := rule.Dest.ExpandTable(rule.Dest.Table, object.ModTime(), object.URL())
@@ -97,13 +176,12 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 			if object.ModTime().After(window.End) || object.ModTime().Equal(window.End) {
 				continue
 			}
-			if object.ModTime().Before(window.Start)  {
+			if object.ModTime().Before(window.Start) {
 				continue
 			}
-			result = append(result, object.URL())
+			*result = append(*result, object.URL())
 		}
 	}
-	window.URIs = result
 	return nil
 }
 

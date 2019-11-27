@@ -9,8 +9,9 @@
     },
     "Batch": {
       "RollOver": true,
+      "MultiPath": true,
       "Window": {
-        "DurationInSec": 22
+        "DurationInSec": 15
       }
     },
     "Async": true,

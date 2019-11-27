@@ -63,7 +63,6 @@ func (r *Ruleset) Get(ctx context.Context, URL string, filter *matcher.Basic) *R
 	return nil
 }
 
-
 //HasMatch returns the first match route
 func (r Ruleset) Match(URL string) []*Rule {
 	if len(r.Rules) == 0 {

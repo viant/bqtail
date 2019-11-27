@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-
 const notFoundFragment = "not found"
 
 //IsContextError returns true if err is context releated
@@ -16,9 +15,6 @@ func IsContextError(err error) bool {
 	}
 	return strings.Contains(err.Error(), "context")
 }
-
-
-
 
 //IsNotFound returns true if not found
 func IsNotFound(err error) bool {

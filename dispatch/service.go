@@ -94,7 +94,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		go func() {
 			defer waitGroup.Done()
 			err := s.dispatchBqEvents(ctx, response)
-			if IsContextError(err) || IsNotFound(err)  {
+			if IsContextError(err) || IsNotFound(err) {
 				return
 			}
 			if err != nil {
@@ -230,7 +230,6 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 	}
 	return err
 }
-
 
 //JobID returns job ID for supplied URL
 func JobID(baseURL string, URL string) string {
