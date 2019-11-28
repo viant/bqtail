@@ -219,7 +219,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 			err = e
 			continue
 		}
-		if time.Now().After(*dueTime) {
+		if time.Now().After(dueTime.Add(base.StorageListVisibiityDelay * time.Millisecond)) {
 			response.AddBatch(object.URL(), *dueTime)
 			baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
 			destURL := url.Join(baseURL, object.Name())
