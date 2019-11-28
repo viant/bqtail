@@ -50,7 +50,7 @@ func (c *Config) BuildDoneLoadURL(dest, eventID string) string {
 //BuildTaskURL returns an action url for supplied event ID
 func (c *Config) BuildTaskURL(eventID string) string {
 	date := time.Now().Format(DateLayout)
-	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.BqJobPrefix, date, DecodePathSeparator(eventID, 2), ActionExt)
+	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.BqJobPrefix, date, DecodePathSeparator(eventID, 0), ActionExt)
 }
 
 //OutputURL returns an output URL

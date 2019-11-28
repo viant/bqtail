@@ -53,11 +53,13 @@ func (s *service) loadInParts(ctx context.Context, job *bigquery.Job, request *L
 	parts := len(URIs) / maxJobLoadURIs
 	offset := 0
 	jobID := job.JobReference.JobId
+	job.Configuration.Load.WriteDisposition = "WRITE_APPEND"
 	for i := 0; i < parts; i++ {
 		limit := offset + maxJobLoadURIs
 		if limit >= len(URIs) {
 			limit = len(URIs) - 1
 		}
+
 		job.Configuration.Load.SourceUris = URIs[offset:limit]
 		job.JobReference.JobId = fmt.Sprintf("j%03d_%v", i, jobID)
 		if postJob, err = s.Post(ctx, request.DestinationTable.ProjectId, job, &request.Actions); err != nil {
