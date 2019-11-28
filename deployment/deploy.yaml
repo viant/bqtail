@@ -12,7 +12,7 @@ pipeline:
     environmentVariables:
       CONFIG: gs://${configBucket}/BqTail/config.json
       LOGGING: false
-      GS_MAX_RETRIES: 10
+      GS_MAX_RETRIES: 5
     eventTrigger:
       eventType: google.storage.object.finalize
       resource: projects/_/buckets/${triggerBucket}

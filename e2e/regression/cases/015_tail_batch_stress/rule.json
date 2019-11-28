@@ -9,7 +9,6 @@
       "Table": "bqtail.dummy_$Mod(2)"
     },
     "Batch": {
-      "RollOver": true,
       "Window": {
         "DurationInSec": 15
       }

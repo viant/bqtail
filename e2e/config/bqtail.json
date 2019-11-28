@@ -4,7 +4,6 @@
   "JournalURL": "gs://${opsBucket}/BqTail/Journal/",
   "AsyncTaskURL": "gs://${opsBucket}/BqDispatch/Tasks/",
   "AsyncBatchURL": "gs://${opsBucket}/BqDispatch/Batch/",
-
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqTail/Rules/",
   "TriggerBucket": "${triggerBucket}",

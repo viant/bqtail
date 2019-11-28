@@ -16,6 +16,7 @@ init:
   dispatchBucket: ${prefix}_bqdispatch
   opsBucket: ${prefix}_operation
   exportBucket: ${prefix}_export
+  mirrorBucket: ${prefix}_trigger
 
 pipeline:
 
