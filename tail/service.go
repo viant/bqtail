@@ -237,9 +237,6 @@ func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 	}
 	URLsToDelete := make([]string, 0)
 	URLsToDelete = append(URLsToDelete, window.URL)
-	for _, URI := range window.URIs {
-		URLsToDelete = append(URLsToDelete, URI)
-	}
 	deleteReq := storage.DeleteRequest{URLs: URLsToDelete}
 	deleteAction, err := task.NewAction("delete", deleteReq)
 	if err != nil {

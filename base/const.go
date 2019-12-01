@@ -92,7 +92,7 @@ const (
 	RetrySleepInSec = 3
 
 	//StorageListVisibilityDelay
-	StorageListVisibilityDelay = 5000
+	StorageListVisibilityDelay = 4000
 
 	//DoneState done status
 	DoneState = "DONE"
