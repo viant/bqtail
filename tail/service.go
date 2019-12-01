@@ -2,6 +2,7 @@ package tail
 
 import (
 	"bqtail/base"
+	"bqtail/cache/cfs"
 	"bqtail/service/bq"
 	"bqtail/service/secret"
 	"bqtail/service/slack"
@@ -40,11 +41,12 @@ type service struct {
 	bq     bq.Service
 	batch  batch.Service
 	fs     afs.Service
+	cfs    afs.Service
 	config *Config
 }
 
 func (s *service) Init(ctx context.Context) error {
-	err := s.config.Init(ctx, s.fs)
+	err := s.config.Init(ctx, s.cfs)
 	if err != nil {
 		return err
 	}
@@ -72,7 +74,7 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	var err error
 	if request.HasURLPrefix(s.config.WorkflowPrefix) {
 		err = s.runLoadAction(ctx, request, response)
-	} else if request.HasURLPrefix(s.config.BqJobPrefix) {
+	} else if request.HasURLPrefix(s.config.BqJobPrefix) || request.HasURLPrefix(base.DeferredPrefix) {
 		err = s.runPostLoadActions(ctx, request, response)
 	} else if request.HasURLPrefix(s.config.BatchPrefix) {
 		err = s.runBatch(ctx, request, response)
@@ -86,7 +88,7 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 }
 
 func (s *service) tail(ctx context.Context, request *contract.Request, response *contract.Response) error {
-	if err := s.config.ReloadIfNeeded(ctx, s.fs); err != nil {
+	if err := s.config.ReloadIfNeeded(ctx, s.cfs); err != nil {
 		return err
 	}
 	response.RuleCount = len(s.config.Rules)
@@ -523,7 +525,7 @@ func (s *service) runInBatch(ctx context.Context, window *batch.Window, response
 	if rule == nil {
 		return nil, fmt.Errorf("failed locaet rule for :%v, %v", window.RuleURL, window.Filter)
 	}
-	batchingDistributionDelay := time.Duration(getRandom(base.StorageListVisibiityDelay, rule.Batch.MaxDelayMs(base.StorageListVisibiityDelay))) * time.Millisecond
+	batchingDistributionDelay := time.Duration(getRandom(base.StorageListVisibilityDelay, rule.Batch.MaxDelayMs(base.StorageListVisibilityDelay))) * time.Millisecond
 	remainingDuration := window.End.Sub(time.Now()) + batchingDistributionDelay
 	if remainingDuration > 0 {
 		time.Sleep(remainingDuration)
@@ -679,6 +681,7 @@ func New(ctx context.Context, config *Config) (Service, error) {
 	srv := &service{
 		config:   config,
 		fs:       afs.New(),
+		cfs:      cfs.Singleton(config.URL),
 		Registry: task.NewRegistry(),
 	}
 	return srv, srv.Init(ctx)

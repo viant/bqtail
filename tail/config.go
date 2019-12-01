@@ -2,6 +2,7 @@ package tail
 
 import (
 	"bqtail/base"
+	"bqtail/cache/cfs"
 	"bqtail/tail/config"
 	"context"
 	"encoding/json"
@@ -100,7 +101,7 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 
 //NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
-	storageService := afs.New()
+	storageService := cfs.Singleton(URL)
 	reader, err := storageService.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, err
@@ -110,7 +111,9 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode config :%s", URL)
 	}
-	if err = cfg.Init(ctx, afs.New()); err != nil {
+	fs := cfs.Singleton(URL)
+	cfg.URL = URL
+	if err = cfg.Init(ctx, fs); err != nil {
 		return cfg, err
 	}
 	err = cfg.Validate()

@@ -18,7 +18,7 @@ type Ruleset struct {
 	RulesURL     string
 	CheckInMs    int
 	Rules        []*Rule
-	notifier     *base.Notifier
+	notifier     *base.Loader
 	initialRules []*Rule
 	inited       int32
 }

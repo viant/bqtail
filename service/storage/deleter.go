@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/option"
 	"sync"
@@ -21,7 +22,8 @@ type deleter struct {
 func (d *deleter) delete(ctx context.Context, URL string) {
 	defer d.Done()
 	if e := d.fs.Delete(ctx, URL, option.NewObjectKind(true)); e != nil {
-		if ok, err := d.fs.Exists(ctx, URL); !ok && err == nil {
+		if ok, err := d.fs.Exists(ctx, URL, option.NewObjectKind(true)); !ok && err == nil {
+			fmt.Printf("ALREADY DELETED %v\n", URL)
 			return
 		}
 		if atomic.CompareAndSwapInt32(&d.hasError, 0, 1) {

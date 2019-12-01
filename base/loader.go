@@ -12,8 +12,8 @@ import (
 //Notify represent notify function
 type Notify func(ctx context.Context, fs afs.Service, URL string)
 
-//Notifier represents URL changes notifier
-type Notifier struct {
+//Loader represents URL changes notifier
+type Loader struct {
 	fs             afs.Service
 	baseURL        string
 	rules          *Resources
@@ -23,7 +23,7 @@ type Notifier struct {
 	onRemove       Notify
 }
 
-func (m *Notifier) isCheckDue(now time.Time) bool {
+func (m *Loader) isCheckDue(now time.Time) bool {
 	if m.nextCheck.IsZero() || now.After(m.nextCheck) {
 		m.nextCheck = now.Add(m.checkFrequency)
 		return true
@@ -31,7 +31,7 @@ func (m *Notifier) isCheckDue(now time.Time) bool {
 	return false
 }
 
-func (m *Notifier) notify(ctx context.Context, currentSnapshot []storage.Object) (notified bool) {
+func (m *Loader) notify(ctx context.Context, currentSnapshot []storage.Object) (notified bool) {
 	snapshot := indexRules(currentSnapshot)
 	for URL, lastModified := range snapshot {
 		modTime := m.rules.Get(URL)
@@ -56,7 +56,7 @@ func (m *Notifier) notify(ctx context.Context, currentSnapshot []storage.Object)
 }
 
 //Notify notifies any rule changes
-func (m *Notifier) Notify(ctx context.Context, fs afs.Service) (bool, error) {
+func (m *Loader) Notify(ctx context.Context, fs afs.Service) (bool, error) {
 	if m.baseURL == "" {
 		return false, nil
 	}
@@ -70,11 +70,11 @@ func (m *Notifier) Notify(ctx context.Context, fs afs.Service) (bool, error) {
 	return m.notify(ctx, rules), nil
 }
 
-func NewNotifier(baeURL string, checkFrequency time.Duration, fs afs.Service, onChanged, onRemoved Notify) *Notifier {
+func NewNotifier(baeURL string, checkFrequency time.Duration, fs afs.Service, onChanged, onRemoved Notify) *Loader {
 	if checkFrequency == 0 {
 		checkFrequency = time.Minute
 	}
-	return &Notifier{
+	return &Loader{
 		fs:             fs,
 		onChange:       onChanged,
 		onRemove:       onRemoved,

@@ -103,7 +103,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 		}()
 		response.Cycles++
 		waitGroup.Wait()
-		sleepTime := base.StorageListVisibiityDelay * time.Millisecond
+		sleepTime := base.StorageListVisibilityDelay * time.Millisecond
 		if time.Now().Sub(startTime) > (timeToLive - sleepTime) {
 			break
 		}
@@ -219,7 +219,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 			err = e
 			continue
 		}
-		if time.Now().After(dueTime.Add(base.StorageListVisibiityDelay * time.Millisecond)) {
+		if time.Now().After(dueTime.Add(base.StorageListVisibilityDelay * time.Millisecond)) {
 			response.AddBatch(object.URL(), *dueTime)
 			baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
 			destURL := url.Join(baseURL, object.Name())

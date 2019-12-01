@@ -18,7 +18,7 @@ type Ruleset struct {
 	RulesURL  string
 	CheckInMs int
 	Rules     []*Rule
-	*base.Notifier
+	*base.Loader
 }
 
 func (r *Ruleset) modify(ctx context.Context, fs afs.Service, URL string) {
@@ -122,13 +122,13 @@ func (r *Ruleset) Init(ctx context.Context, fs afs.Service, projectID string) er
 		return err
 	}
 	checkFrequency := time.Duration(r.CheckInMs) * time.Millisecond
-	r.Notifier = base.NewNotifier(r.RulesURL, checkFrequency, fs, r.modify, r.remove)
-	_, err := r.Notifier.Notify(ctx, fs)
+	r.Loader = base.NewNotifier(r.RulesURL, checkFrequency, fs, r.modify, r.remove)
+	_, err := r.Loader.Notify(ctx, fs)
 	return err
 }
 
 func (r *Ruleset) ReloadIfNeeded(ctx context.Context, fs afs.Service) (bool, error) {
-	return r.Notifier.Notify(ctx, fs)
+	return r.Loader.Notify(ctx, fs)
 }
 
 func (c *Ruleset) loadRule(ctx context.Context, storage afs.Service, URL string) ([]*Rule, error) {

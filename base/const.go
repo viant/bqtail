@@ -91,8 +91,8 @@ const (
 	//RetrySleepInSec
 	RetrySleepInSec = 3
 
-	//StorageListVisibiityDelay
-	StorageListVisibiityDelay = 3000
+	//StorageListVisibilityDelay
+	StorageListVisibilityDelay = 5000
 
 	//DoneState done status
 	DoneState = "DONE"
@@ -110,7 +110,10 @@ const (
 	LoadPrefix = "/_load_/"
 
 	//BqJobPrefix
-	BqJobPrefix = "/_deferred_/"
+	DeferredPrefix = "/_deferred_/"
+
+	//BqJobPrefix
+	BqJobPrefix = "/_bqjob_/"
 
 	//BatchPrefix
 	BatchPrefix = "/_batch_/"
