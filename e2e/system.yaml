@@ -76,5 +76,9 @@ pipeline:
     assets:
       - URL: gs://${opsBucket}/BqTail/
         credentials: $gcpCredentials
-      - URL: gs://${opsBucket}/BqDispatch/
+      - URL: 'gs://${opsBucket}/BqDispatch/'
+        credentials: $gcpCredentials
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
+        credentials: $gcpCredentials
+      - URL: 'gs://${configBucket}/BqTail/Rules'
         credentials: $gcpCredentials

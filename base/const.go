@@ -110,9 +110,6 @@ const (
 	LoadPrefix = "/_load_/"
 
 	//BqJobPrefix
-	DeferredPrefix = "/_deferred_/"
-
-	//BqJobPrefix
 	BqJobPrefix = "/_bqjob_/"
 
 	//BatchPrefix

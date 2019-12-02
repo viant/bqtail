@@ -2,7 +2,6 @@ package tail
 
 import (
 	"bqtail/base"
-	"bqtail/cache/cfs"
 	"bqtail/service/bq"
 	"bqtail/service/secret"
 	"bqtail/service/slack"
@@ -18,6 +17,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	"github.com/viant/afs/cache"
 	"github.com/viant/afs/option"
 	store "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
@@ -72,9 +72,9 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	response.TriggerURL = request.SourceURL
 	defer response.SetTimeTaken(response.Started)
 	var err error
-	if request.HasURLPrefix(s.config.WorkflowPrefix) {
+	if request.HasURLPrefix(s.config.LoadJobPrefix) {
 		err = s.runLoadAction(ctx, request, response)
-	} else if request.HasURLPrefix(s.config.BqJobPrefix) || request.HasURLPrefix(base.DeferredPrefix) {
+	} else if request.HasURLPrefix(s.config.BqJobPrefix)  {
 		err = s.runPostLoadActions(ctx, request, response)
 	} else if request.HasURLPrefix(s.config.BatchPrefix) {
 		err = s.runBatch(ctx, request, response)
@@ -134,7 +134,8 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 
 func (s *service) buildLoadRequest(ctx context.Context, job *Job, rule *config.Rule) (*bq.LoadRequest, error) {
 	dest := rule.Dest
-	tableReference, err := dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
+	sourceURL := job.Load.SourceUris[0]
+	tableReference, err := dest.TableReference(job.SourceCreated, sourceURL)
 	if err != nil {
 		return nil, err
 	}
@@ -158,13 +159,28 @@ func (s *service) buildLoadRequest(ctx context.Context, job *Job, rule *config.R
 		}
 	}
 	result.DestinationTable = tableReference
-	result.JobID = getJobID(job)
+	modTime := time.Now()
+	if obj, _ := s.fs.Object(ctx, sourceURL);obj != nil {
+		modTime = obj.ModTime()
+	}
+	result.JobID = getJobID(job, rule, sourceURL, modTime)
 	return result, nil
 }
 
-func getJobID(job *Job) string {
-	return path.Join(job.Dest(), job.EventID, job.IDSuffix())
+
+func getJobID(job *Job, rule *config.Rule,  URL string, modTime time.Time) string {
+	table, _ := rule.Dest.ExpandTable(rule.Dest.Table, modTime, URL)
+	if table == "" {
+		table = rule.Dest.Table
+	}
+	dest := table
+	if ref, err := base.NewTableReference(table);err == nil {
+		dest = ref.DatasetId +"-" + ref.TableId
+	}
+	return path.Join(dest, job.EventID, job.IDSuffix())
 }
+
+
 
 func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, response *contract.Response) (*Job, error) {
 	if len(job.Load.SourceUris) == 0 {
@@ -174,6 +190,9 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	if err != nil {
 		return nil, err
 	}
+
+
+
 	actions := rule.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
 	actions.JobID = path.Join(job.Dest(), job.EventID, job.IDSuffix())
 	if err = appendBatchAction(job.Window, actions); err == nil {
@@ -252,7 +271,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parentJobID st
 		return actions, nil
 	}
 	job.Load.WriteDisposition = "WRITE_TRUNCATE"
-	var result = task.NewActions(actions.Async, actions.DeferTaskURL, parentJobID, nil, nil)
+	var result = task.NewActions(actions.Async, parentJobID, nil, nil)
 	var onFailureAction *task.Actions
 	if actions != nil {
 		result.SourceURL = actions.SourceURL
@@ -361,7 +380,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 
 	next := onDone
 	if next == nil {
-		next = task.NewActions(rule.Async, result.DeferTaskURL, result.JobID, nil, nil)
+		next = task.NewActions(rule.Async,  result.JobID, nil, nil)
 	}
 
 	for i := range split.Mapping {
@@ -375,7 +394,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parentJ
 		if err != nil {
 			return err
 		}
-		group := task.NewActions(rule.Async, result.DeferTaskURL, result.JobID, nil, nil)
+		group := task.NewActions(rule.Async,  result.JobID, nil, nil)
 		group.AddOnSuccess(queryAction)
 		next = group
 	}
@@ -424,7 +443,9 @@ func (s *service) runLoadAction(ctx context.Context, request *contract.Request, 
 	}
 	replacement := buildJobIDReplacementMap(request.EventID, actions)
 	for _, action := range actions {
+
 		action.Request = toolbox.ReplaceMapKeys(action.Request, replacement, true)
+
 		if err = task.Run(ctx, s.Registry, action); err != nil {
 			return err
 		}
@@ -549,13 +570,18 @@ func (s *service) runInBatch(ctx context.Context, window *batch.Window, response
 	return job, err
 }
 
+
 func (s *service) runPostLoadActions(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	err := s.runActions(ctx, request, response)
-	if e := s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true)); e != nil {
-		response.NotFoundError = fmt.Sprintf("failed to journal: %v", e)
+	if err == nil {
+		if e := s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true)); e != nil {
+			response.NotFoundError = fmt.Sprintf("failed to delete: %v, %v", request.SourceURL, e)
+		}
 	}
 	return err
 }
+
+
 
 func getRandom(min, max int) int {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -678,7 +704,7 @@ func New(ctx context.Context, config *Config) (Service, error) {
 	srv := &service{
 		config:   config,
 		fs:       afs.New(),
-		cfs:      cfs.Singleton(config.URL),
+		cfs:      cache.Singleton(config.URL),
 		Registry: task.NewRegistry(),
 	}
 	return srv, srv.Init(ctx)

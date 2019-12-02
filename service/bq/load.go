@@ -10,8 +10,8 @@ import (
 //LoadRequest represents a load job
 type LoadRequest struct {
 	*bigquery.JobConfigurationLoad
-	Request
 	Append bool
+	Request
 }
 
 const maxJobLoadURIs = 10000
@@ -30,7 +30,7 @@ func (s *service) Load(ctx context.Context, request *LoadRequest) (job *bigquery
 	job.JobReference = request.jobReference()
 	job.Configuration.Load.SourceUris = s.getUniqueURIs(ctx, job.Configuration.Load.SourceUris)
 	if len(job.Configuration.Load.SourceUris) <= maxJobLoadURIs {
-		return s.Post(ctx, request.DestinationTable.ProjectId, job, &request.Actions)
+		return s.Post(ctx, request.DestinationTable.ProjectId, job, request.PostActions())
 	}
 	return s.loadInParts(ctx, job, request)
 }

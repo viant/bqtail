@@ -17,6 +17,7 @@ func Run(ctx context.Context, registry Registry, action *Action) error {
 	if err != nil {
 		return err
 	}
+
 	return RunWithService(ctx, registry, serviceAction.Service, request)
 }
 

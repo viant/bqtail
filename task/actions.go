@@ -11,7 +11,6 @@ import (
 type Actions struct {
 	Job          *bigquery.Job
 	SourceURL    string
-	DeferTaskURL string    `json:",omitempty"`
 	Async        bool      `json:",omitempty"`
 	JobID        string    `json:",omitempty"`
 	OnSuccess    []*Action `json:",omitempty"`
@@ -22,7 +21,6 @@ type Actions struct {
 func (a Actions) CloneOnFailure() *Actions {
 	result := &Actions{
 		SourceURL:    a.SourceURL,
-		DeferTaskURL: a.DeferTaskURL,
 		Async:        a.Async,
 		JobID:        a.JobID,
 		OnFailure:    a.OnFailure,
@@ -123,7 +121,6 @@ func (a *Actions) Expand(expandable *base.Expandable) *Actions {
 	}
 	result := &Actions{
 		Async:        a.Async,
-		DeferTaskURL: a.DeferTaskURL,
 		JobID:        a.JobID,
 		OnSuccess:    make([]*Action, 0),
 		OnFailure:    make([]*Action, 0),
@@ -172,7 +169,7 @@ func (a *Actions) AddOnFailure(actions ...*Action) {
 }
 
 //NewActions creates an actions
-func NewActions(async bool, baseURL, jobID string, onSuccess, onFailure []*Action) *Actions {
+func NewActions(async bool,  jobID string, onSuccess, onFailure []*Action) *Actions {
 	if len(onSuccess) == 0 {
 		onSuccess = make([]*Action, 0)
 	}
@@ -181,7 +178,6 @@ func NewActions(async bool, baseURL, jobID string, onSuccess, onFailure []*Actio
 	}
 	return &Actions{
 		Async:        async,
-		DeferTaskURL: baseURL,
 		JobID:        jobID,
 		OnSuccess:    onSuccess,
 		OnFailure:    onFailure,

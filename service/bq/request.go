@@ -17,3 +17,7 @@ func (r Request) jobReference() *bigquery.JobReference {
 		ProjectId: r.ProjectID,
 	}
 }
+
+func (r Request) PostActions() *task.Actions {
+	return &r.Actions
+}

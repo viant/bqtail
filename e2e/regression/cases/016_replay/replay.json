@@ -9,7 +9,6 @@
       "Autodetect": false,
       "Clustering": {},
       "CreateDisposition": "",
-      "DeferTaskURL": "gs://viant_e2e_bqdispatch/BqDispatch/Tasks/",
       "DestinationEncryptionConfiguration": {},
       "DestinationTable": {
         "DatasetId": "temp",
@@ -38,7 +37,6 @@
             "Append": true,
             "Async": true,
             "DatasetID": "",
-            "DeferTaskURL": "gs://viant_e2e_bqdispatch/BqDispatch/Tasks/",
             "Dest": "bqtail.dummy",
             "Job": {},
             "JobID": "temp--dummy_850558231030311/850558231030311/dispatch",
@@ -68,7 +66,6 @@
                 "Action": "drop",
                 "Request": {
                   "Async": true,
-                  "DeferTaskURL": "gs://viant_e2e_bqdispatch/BqDispatch/Tasks/",
                   "Job": {},
                   "JobID": "temp--dummy_850558231030311/850558231030311/dispatch",
                   "OnFailure": null,

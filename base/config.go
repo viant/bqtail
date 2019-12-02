@@ -30,7 +30,7 @@ type Config struct {
 	BatchURL          string
 	JournalURL        string
 	TriggerBucket     string
-	WorkflowPrefix    string
+	LoadJobPrefix     string
 	BqJobPrefix       string
 	BatchPrefix       string
 	ErrorURL          string
@@ -92,8 +92,8 @@ func (c *Config) Init(ctx context.Context) error {
 		c.Region = defaultRegion
 	}
 
-	if c.WorkflowPrefix == "" {
-		c.WorkflowPrefix = LoadPrefix
+	if c.LoadJobPrefix == "" {
+		c.LoadJobPrefix = LoadPrefix
 	}
 	if c.BqJobPrefix == "" {
 		c.BqJobPrefix = BqJobPrefix

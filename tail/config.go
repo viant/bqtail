@@ -2,13 +2,13 @@ package tail
 
 import (
 	"bqtail/base"
-	"bqtail/cache/cfs"
 	"bqtail/tail/config"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	"github.com/viant/afs/cache"
 	"os"
 	"strings"
 )
@@ -37,9 +37,6 @@ func (c *Config) initLoadedRules() {
 		return
 	}
 	for _, route := range c.Rules {
-		if route.Actions.Async && route.Actions.DeferTaskURL == "" {
-			route.Actions.DeferTaskURL = c.AsyncTaskURL
-		}
 		if route.Batch != nil {
 			baseURL := c.BatchURL
 			if route.Async {
@@ -101,7 +98,7 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 
 //NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
-	storageService := cfs.Singleton(URL)
+	storageService := cache.Singleton(URL)
 	reader, err := storageService.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, err
@@ -111,13 +108,11 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode config :%s", URL)
 	}
-	fs := cfs.Singleton(URL)
 	cfg.URL = URL
-	if err = cfg.Init(ctx, fs); err != nil {
+	if err = cfg.Init(ctx, storageService); err != nil {
 		return cfg, err
 	}
 	err = cfg.Validate()
-
 	return cfg, err
 }
 

@@ -17,6 +17,18 @@ pipeline:
         datastore: bqtail
         URL:  ${parent.path}/bqtail/prepare
 
+
+
+  cleanUp:
+    action: storage:remove
+    sleepTimeMs: 1000
+    assets:
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
+        credentials: $gcpCredentials
+      - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/rule.json'
+        credentials: $gcpCredentials
+
+
   setupRule:
     action: storage:copy
     expand: true
@@ -28,22 +40,12 @@ pipeline:
 
 
   trigger:
-    init:
-      self.i: 0
-
-    upload:
-      init:
-        _: $self.i++
-      action: storage:copy
-      source:
-        URL: ${parent.path}/data/trigger/dummy${self.i}.json
-      dest:
-        URL: gs://${triggerBucket}/data/case010/dummy${self.i}.json
-        credentials: $gcpCredentials
-    goto:
-      when: $self.i < 2
-      action: goto
-      task: upload
+    action: storage:copy
+    source:
+      URL: ${parent.path}/data/trigger/
+    dest:
+      URL: gs://${triggerBucket}/data/case010/
+      credentials: $gcpCredentials
 
   waitForServerless:
     action: nop

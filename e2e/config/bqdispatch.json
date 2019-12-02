@@ -2,11 +2,11 @@
 {
   "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
   "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
-  "AsyncTaskURL": "gs://${opsBucket}/BqDispatch/Tasks/",
-  "AsyncBatchURL": "gs://${opsBucket}/BqDispatch/Batch/",
+  "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
+  "AsyncBatchURL": "gs://${dispatchBucket}/BqDispatch/Batch/",
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
-  "CheckInMs": 100,
+  "CheckInMs": 10,
   "TimeToLiveInMin": 1,
   "TriggerBucket": "${triggerBucket}",
   "SlackCredentials": {

@@ -41,11 +41,12 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 	if err != nil {
 		return errors.Wrapf(err, "failed to encode actions: %v", actions)
 	}
+
 	filename := base.DecodePathSeparator(job.JobReference.JobId, 1)
 	if path.Ext(filename) == "" {
 		filename += base.JobExt
 	}
-	URL := url.Join(actions.DeferTaskURL, filename)
+	URL := url.Join(s.Config.AsyncTaskURL, filename)
 	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
@@ -91,13 +92,17 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	if job.JobReference != nil {
 		job.JobReference.JobId = base.EncodePathSeparator(job.JobReference.JobId)
 	}
-	if err = s.schedulePostTask(ctx, job, onDoneActions); err != nil {
-		return nil, err
+
+	err = s.schedulePostTask(ctx, job, onDoneActions);
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to schedule bqJob %v", job.JobReference.JobId)
 	}
 	if base.IsLoggingEnabled() {
 		toolbox.Dump(job)
+		fmt.Printf("OnDone: ")
 		toolbox.Dump(onDoneActions)
 	}
+
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)
