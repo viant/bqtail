@@ -113,32 +113,34 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 }
 
 func (s *service) processURL(ctx context.Context, parentURL string, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs) error {
+	fmt.Printf("processing: %v\n", parentURL)
 	objects, err := s.fs.List(ctx, parentURL)
 	if err != nil {
 		return err
 	}
 
 	waitGroup := &sync.WaitGroup{}
-	for i := range objects {
+	for i  := range objects {
 		URL := url.Join(parentURL, objects[i].Name())
 		if url.Equals(URL, parentURL) {
 			continue
 		}
-
+		age := time.Now().Sub(objects[i].ModTime())
 		if objects[i].IsDir() {
-			if err = s.processURL(ctx, URL, response, jobsByID); err != nil {
-				return err
+			if err := s.processURL(ctx, URL, response, jobsByID); err != nil {
+				response.AddError(err)
 			}
 		}
 
 		//if just create skip to next
-		if time.Now().Sub(objects[i].ModTime()) < 2*time.Second {
+		if age <  2 * time.Second {
 			continue
 		}
 
 		if response.Jobs.Has(URL) {
 			continue
 		}
+
 		jobID := JobID(s.Config().AsyncTaskURL, URL)
 		var state string
 		listJob, ok := jobsByID[jobID]
@@ -167,7 +169,6 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 		job := contract.NewJob(jobID, URL, state)
 		waitGroup.Add(1)
 		go func(job *contract.Job) {
-			err = s.notify(ctx, job)
 			defer waitGroup.Done()
 			if err = s.notify(ctx, job); err != nil {
 				response.Jobs.Add(job)
@@ -177,6 +178,8 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 	waitGroup.Wait()
 	return err
 }
+
+
 
 func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Response) (err error) {
 	startTime := time.Now()

@@ -71,7 +71,7 @@
                   "OnFailure": null,
                   "OnSuccess": null,
                   "ProjectID": "",
-                  "SourceURL": "gs://viant_e2e_bqtail/data/case006/dummy1.json",
+                  "SourceURL": "gs://viant_e2e_bqtail/data/case016/dummy1.json",
                   "Table": "temp.dummy_850558231030311"
                 }
               }
