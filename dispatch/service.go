@@ -113,7 +113,6 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 }
 
 func (s *service) processURL(ctx context.Context, parentURL string, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs) error {
-	fmt.Printf("processing: %v\n", parentURL)
 	objects, err := s.fs.List(ctx, parentURL)
 	if err != nil {
 		return err
