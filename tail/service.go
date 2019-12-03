@@ -68,6 +68,7 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	response := contract.NewResponse(request.EventID)
 	defer func() {
 		response.ListOpCount = gs.GetListCounter(true)
+		response.StorageRetries = gs.GetRetryCodes(true)
 	}()
 	response.TriggerURL = request.SourceURL
 	defer response.SetTimeTaken(response.Started)

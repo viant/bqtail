@@ -23,6 +23,7 @@ type Response struct {
 	Corrupted       []string       `json:",omitempty"`
 	Missing         []string       `json:",omitempty"`
 	ListOpCount     int            `json:",omitempty"`
+	StorageRetries  map[int]int    `json:",omitempty"`
 }
 
 //NewResponse creates a new response
