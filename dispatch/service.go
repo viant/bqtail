@@ -119,7 +119,7 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 	}
 
 	waitGroup := &sync.WaitGroup{}
-	for i  := range objects {
+	for i := range objects {
 		URL := url.Join(parentURL, objects[i].Name())
 		if url.Equals(URL, parentURL) {
 			continue
@@ -127,12 +127,14 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 		age := time.Now().Sub(objects[i].ModTime())
 		if objects[i].IsDir() {
 			if err := s.processURL(ctx, URL, response, jobsByID); err != nil {
-				response.AddError(err)
+				if ! IsContextError(err) {
+					response.AddError(err)
+				}
 			}
 		}
 
 		//if just create skip to next
-		if age <  2 * time.Second {
+		if age < 2*time.Second {
 			continue
 		}
 
@@ -177,8 +179,6 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 	waitGroup.Wait()
 	return err
 }
-
-
 
 func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Response) (err error) {
 	startTime := time.Now()
