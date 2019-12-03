@@ -7,8 +7,7 @@ import (
 
 const (
 	MinWindowDuration        = 10 * time.Second
-	MaxWindowDuration        = 8 * time.Minute
-	DefaultWindowDurationSec = 90
+	DefaultWindowDurationSec = 95
 )
 
 //Window represents batching window
@@ -32,9 +31,6 @@ func (w *Window) Init() {
 func (w *Window) Validate() error {
 	if w.Duration < MinWindowDuration {
 		return fmt.Errorf("invalid window duration: had: %v, but min allowed: %v", w.DurationInSec, time.Duration(MinWindowDuration))
-	}
-	if w.Duration < MaxWindowDuration {
-		return fmt.Errorf("invalid window duration: had: %v, but max allowed: %v", w.DurationInSec, time.Duration(MaxWindowDuration))
 	}
 	return nil
 }
