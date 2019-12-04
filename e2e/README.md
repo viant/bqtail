@@ -43,70 +43,70 @@ To run individual use cases run first init task to upload configs, and deploy cl
 endly -t=init
 ```
 
-- [Synchronous data files ingestionn](regression/cases/001_tail_nop/README.md)
+- [Synchronous data files ingestionn](regression/cases/001_individual_sync)
 
 ```bash
-    endly -t=test -i=tail_nop
+    endly -t=test -i=individual_sync
 ```
 
 
-- [Asynchronous data ingestion](regression/cases/002_tail_async/README.md)
+- [Asynchronous data ingestion](regression/cases/002_individual_async)
 
 ```bash
-    endly -t=test -i=tail_async
+    endly -t=test -i=individual_async
 ```
 
-- [Synchronous in batch data ingestion](regression/cases/003_tail_batch_sync/README.md)
+- [Synchronous in batch data ingestion](regression/cases/003_batch_sync/README.md)
 
 ```bash
-    endly -t=test -i=tail_batch_sync
+    endly -t=test -i=batch_sync
 ```
 
-- [Asynchronous in batch data ingestion](regression/cases/004_tail_batch_async/README.md)
+- [Asynchronous in batch data ingestion](regression/cases/004_batch_async/README.md)
 
 ```bash
-    endly -t=test -i=tail_batch_async
+    endly -t=test -i=batch_async
 ```
 
-- [Ingestion with transient dataset](regression/cases/005_tail_transient)
+- [Ingestion with transient dataset](regression/cases/005_transient/README.md)
 
 ```bash
-    endly -t=test -i=bqtail_transient
+    endly -t=test -i=transient
 ```
 
-- [Ingestion with data deduplication](regression/cases/006_tail_batch_dedupe)
+- [Ingestion with data deduplication](regression/cases/006_batch_dedupe/README.md)
 
 ```bash
-    endly -t=test -i=tail_batch_dedupe
+    endly -t=test -i=batch_dedupe
 ```
 
-- [Ingestion with nested data deduplication](regression/cases/007_tail_dedupe_nested)
+- [Ingestion with nested data deduplication](regression/cases/007_dedupe_nested/README.md)
 
 ```bash
-    endly -t=test -i=tail_dedupe_nested
-```
-
-
-- [Export data on taret table modification](regression/cases/008_dispatch_export)
-
-```bash
-    endly -t=test -i=dispatch_export
+    endly -t=test -i=dedupe_nested
 ```
 
 
-- [Copy data on target table modification](regression/cases/009_dispatch_copy)
+- [Ingestion with transformation](regression/cases/008_transform)
 
 ```bash
-    endly -t=test -i=dispatch_copy
+    endly -t=test -i=transform
 ```
 
-- [Deduplication with summary task in sync mode](regression/cases/010_query_task)
+
+- [Ingestion with side input transformation](regression/cases/009_side_input)
+
+```bash
+    endly -t=test -i=side_input
+```
+
+- [Batch summary SQL task](regression/cases/010_query_task)
 
 ```bash
     endly -t=test -i=query_task
 ```
 
-- [Deduplication with summary task in async mode](regression/cases/011_async_query_task)
+- [Batch summary SQL task in async mode](regression/cases/011_async_query_task)
 
 ```bash
     endly -t=test -i=async_query_task
@@ -119,4 +119,47 @@ endly -t=init
     endly -t=test -i=slack_notification
 ```
 
+
+- [Dyanmic dest table name base on source data](regression/cases/013_schema_split)
+
+```bash
+    endly -t=test -i=schema_split
+```
+
+- [Corrupted batch recovery](regression/cases/014_batch_with_corruption)
+
+```bash
+    endly -t=test -i=batch_with_corruption
+```
+
+- [Batch allocation 2k stress test](regression/cases/015_batch_stress)
+
+```bash
+    endly -t=test -i=batch_stress
+```
+
+
+- [Ingestion replay](regression/cases/016_replay)
+
+```bash
+    endly -t=test -i=replay
+```
+
+- [Corrupted batch recovery in sync mode](regression/cases/017_sync_corruption)
+
+```bash
+    endly -t=test -i=sync_corruption
+```
+
+- [Invalid schema batch recovery](regression/cases/018_invalid_schema)
+
+```bash
+    endly -t=test -i=invalid_schema
+```
+
+- [Avro Schema patch](regression/cases/019_avro_schema_patch)
+
+```bash
+    endly -t=test -i=avro_schema_patch
+```
 

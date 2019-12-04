@@ -315,9 +315,11 @@ To dynamically route data based on source data values you can use the following 
  ```
 
 
-
-
 ### Partition override
+
+### Data transformation
+
+### Data enrichement with side inputs
 
 
 #### Destination
