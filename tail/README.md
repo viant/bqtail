@@ -61,7 +61,7 @@ All these limitations are addressed by asynchronous and batch mode.
 - DoneIngestionURL: completed data ingestion jobs URL
 - TriggerBucket: trigger bucket
 - CorruptedFileURL: url for currpupted files
-- InvalidSchemaURLL url for incompatibile schema files
+- InvalidSchemaURLL: url for incompatible schema files
 - SlackCredentials
 
 To reduce Storage Class A operation: cache file has been introduced, delete cache file alongside adding a new rule.
