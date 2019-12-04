@@ -1,23 +1,24 @@
-### Synchronous in batch data ingestion
+### Corrupted data file in batch
 
 ### Scenario:
 
-This scenario tests generate 2000k files to ingest for batch allocation stress testing.
-
+This scenario tests batch ingestion with corrupted files, the corrupted file are moved to $CorruptedURL
+All valid data in batch is reprocess. 
 
 [@rule.json](rule.json)
 ```json
 [
   {
     "When": {
-      "Prefix": "/data/case015",
+      "Prefix": "/data/case014",
       "Suffix": ".json"
     },
     "Async": true,
     "Dest": {
-      "Table": "bqtail.dummy_$Mod(2)"
+      "Table": "bqtail.dummy"
     },
     "Batch": {
+      "RollOver": true,
       "Window": {
         "DurationInSec": 15
       }
@@ -30,3 +31,5 @@ This scenario tests generate 2000k files to ingest for batch allocation stress t
   }
 ]
 ```
+
+

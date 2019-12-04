@@ -6,7 +6,7 @@ This scenario tests on failure action execution.
 
 Table wrong_dummy does not exists thus data load fails.
 
-BqTail function is notified once data is uploaded to gs://${config.Bucket}/data/case012/dummy.json
+BqTail function is notified once data is uploaded to gs://${triggerBucket}/data/case012/dummy.json
 It matches the the following rule to submit load Job to BiqQuery that fails.
 On failure actions run with slack notification.
 
@@ -47,13 +47,13 @@ On failure actions run with slack notification.
     - eventType: google.storage.object.finalize
     - resource: projects/_/buckets/${config.Bucket}
 * **Configuration:** [gs://e2e-data/config/bqtail.json](../../../config/bqtail.json)
-* **Data**: [gs://${config.Bucket}/data/case001/dummy.json](data/trigger/dummy.json)
+* **Data**: [gs://${triggerBucket}/data/case001/dummy.json](data/trigger/dummy.json)
 
 #### Output
  
 * **Logs:** 
 
-- [gs://${config.Bucket}/journal/dummy/${date}/${storageEventId}/tail-job.json](data/expect/journal/tail-job.json)
+- [${JournalURL}/dummy/${date}/${storageEventId}/tail-job.json](data/expect/journal/tail-job.json)
 
 * **Data:**
   message on the #e2e slack channel

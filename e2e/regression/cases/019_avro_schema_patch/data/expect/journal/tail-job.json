@@ -8,7 +8,7 @@
     },
     "sourceFormat": "NEWLINE_DELIMITED_JSON",
     "sourceUris": [
-      "gs://${config.Bucket}/data/case010/dummy.json"
+      "gs://${triggerBucket}/data/case010/dummy.json"
     ],
     "writeDisposition": "WRITE_APPEND"
   },

@@ -4,11 +4,10 @@
 
 This scenario tests individual asynchronous data ingestion, with delete post actions.
 
-
-
-BqTail function is notified once data is uploaded to gs://${config.Bucket}/data/case002/dummy[1..2].json
+BqTail function is notified once data is uploaded to gs://${triggerBucket}/data/case002/dummy[1..2].json
 It matches the the following rule data ingestion rule. 
 
+Later it is also notified by BqDispatcher (/${BqJobPrefix}/) once BigQuery job is completed with post actions.
 
 [@rule.json](rule.json)
 ```json
@@ -44,12 +43,14 @@ BigQuery load time does not affect post action execution, since it is delegated 
     - resource: projects/_/buckets/${config.Bucket}
 * **Configuration:** [gs://e2e-data/config/bqtail.json](../../../config/bqtail.json)
 * **Data**:
-    - [gs://${config.Bucket}/data/case002/dummy1.json](data/trigger/dummy1.json)
-    - [gs://${config.Bucket}/data/case002/dummy2.json](data/trigger/dummy2.json)
+    - [gs://${triggerBucket}/data/case002/dummy1.json](data/trigger/dummy1.json)
+    - [gs://${triggerBucket}/data/case002/dummy2.json](data/trigger/dummy2.json)
+
+* **Post load tasks transient file**    
+    - gs://${triggerBucket}/_bqtail_/${JobID}.json
+
 
 #### Output
-
-
 
 * **Data:**
 Big Query destination table:
@@ -58,51 +59,30 @@ Big Query destination table:
 SELECT * FROM bqtail.dummy
 ```
 
-
 * **Defer task**:
-  - [gs://${config.Bucket}/tasks/${jobID}.json](data/expect/tasks/dispatch.json)
+  - [${AsyncTaskURL}/${JobID}.json]
 
-Where jobID is created using the following:
-
-$jobID: ${table}/${storageEventID}/dispatch
-
-
- 
-* **Logs:** 
-
-- gs://${config.Bucket}/Journal/Done/bqtail.dummy/$Date/$eventID.run
-
-
+Where $JobID uses [info.go](../../../../stage/info.go) to encode dest table, original data trigger EventID, step, and actions
 
 
 ### BqDispatch
 
-BqDispatch function loads matched BigQuery JobID defer actions file from: [gs://${config.Bucket}/tasks/${jobID}.json](data/expect/tasks/dispatch.json)
-to execute defer actions.
+### Input
 
-#### Input:
+* **Big Query job status**
 
-* **Trigger**:
-    - eventType: google.storage.object.finalize
-    - resource: projects/_/buckets/${config.Bucket}
+* **Post load tasks transient file**
+  - [${AsyncTaskURL}/${JobID}.json]
+  
+  
 
-* **Configuration:** 
-    - [gs://e2e-data/config/bqtail.json](../../../config/bqdispatch.json)
+### Output
 
-* **Defer task**:
-   - [gs://${config.Bucket}/tasks/${jobID}.json](data/expect/tasks/dispatch.json)
-
-
-#### Output:
-
-* **Data:**
-Big Query destination table:
-
-```sql
-SELECT * FROM bqtail.dummy
-```
-
+* **Post load tasks transient file**    
+    - gs://${triggerBucket}/_bqtail_/${JobID}.json
 
 * **Logs:** 
-
-- gs://${config.Bucket}/Journal/Done/bqtail.dummy/$Date/$eventID.run
+  - ${JournalURL}/Running/bqtail.dummy/$Date/${eventID}.run
+    
+* **Stack driver**
+  - Response status

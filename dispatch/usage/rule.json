@@ -1,5 +1,5 @@
 {
-  "JournalURL": "gs://${config.Bucket}/journal/",
+  "JournalURL": "${JournalURL}/",
   "ErrorURL": "gs://${config.Bucket}/errors/",
   "DeferTaskURL": "gs://${config.Bucket}/tasks/",
   "Routes": [

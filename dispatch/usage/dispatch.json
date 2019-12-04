@@ -6,7 +6,7 @@
     {
       "Action": "delete",
       "Request": {
-        "SourceURL": "gs://${config.Bucket}/data/dataset/table.json"
+        "SourceURL": "gs://${triggerBucket}/data/dataset/table.json"
       }
     }
   ],
@@ -14,7 +14,7 @@
     {
       "Action": "move",
       "Request": {
-        "SourceURL": "gs://${config.Bucket}/data/dataset/table.json",
+        "SourceURL": "gs://${triggerBucket}/data/dataset/table.json",
         "DestURL": "gs://${config.Bucket}/errors"
       }
     }

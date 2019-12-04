@@ -5,7 +5,7 @@
 This scenario tests data ingestion with summary query in sync mode.
 
 
-BqTail function is notified once data is uploaded to gs://${config.Bucket}/data/case010/dummy[1..2].json
+BqTail function is notified once data is uploaded to gs://${triggerBucket}/data/case010/dummy[1..2].json
 It matches the the following rule to submit load Job to BiqQuery. 
 
 [@rule.json](rule.json)

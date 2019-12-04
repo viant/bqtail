@@ -1,59 +1,59 @@
-### Synchronous data files ingestion
+### Dynamic destination mapping
 
 ### Scenario:
 
-This scenario tests on failure action execution.
+This scenario tests destination table mapping based on source data values.
 
-Table wrong_dummy does not exists thus data load fails.
-
-BqTail function is notified once data is uploaded to gs://${config.Bucket}/data/case012/dummy.json
-It matches the the following rule to submit load Job to BiqQuery that fails.
-On failure actions run with slack notification.
-
+For cost purpose temp table is partitioned and clustered on the column used in split criteria.
 
 [@rule.json](rule.json)
 ```json
-[{
-  "When": {
-    "Prefix": "/data/case012",
-    "Suffix": ".json"
-  },
-  "Dest": {
-    "Table": "bqtail.wrong_dummy"
-  },
-  "OnFailure": [
-    {
-      "Action": "notify",
-      "Request": {
-        "Channels": [
-          "#e2e"
-        ],
-        "From": "BqTail",
-        "Title": "bqtail.wrong_dummy ingestion",
-        "Message": "$Error",
-        "Secret": {
-          "URL": "gs://${config.Bucket}/config/slack.json.enc",
-          "Key": "BqTailRing/BqTailKey"
+[
+  {
+    "When": {
+      "Prefix": "/data/case013",
+      "Suffix": ".json"
+    },
+    "Async": true,
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "Schema": {
+        "Template": "bqtail.dummy",
+        "Split": {
+          "ClusterColumns": [
+            "id", "info.key"
+          ],
+          "Mapping": [
+            {
+              "When": "MOD(id, 2) = 0",
+              "Then": "bqtail.dummy_0"
+            },
+            {
+              "When": "MOD(id, 2) = 1",
+              "Then": "bqtail.dummy_1"
+            }
+          ]
         }
       }
-    }
-  ]
-}]
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ],
+    "OnFailure": [
+      {
+        "Action": "notify",
+        "Request": {
+          "Channels": [
+            "#e2e"
+          ],
+          "Title": "bqtail.schema split",
+          "Message": "$Error"
+        }
+      }
+    ]
+  }
+]
 ```
-
-#### Input:
-
-* **Trigger**:
-    - eventType: google.storage.object.finalize
-    - resource: projects/_/buckets/${config.Bucket}
-* **Configuration:** [gs://e2e-data/config/bqtail.json](../../../config/bqtail.json)
-* **Data**: [gs://${config.Bucket}/data/case001/dummy.json](data/trigger/dummy.json)
-
-#### Output
- 
-* **Logs:** 
-
-- [gs://${config.Bucket}/journal/dummy/${date}/${storageEventId}/tail-job.json](data/expect/journal/tail-job.json)
-
-* **Data:**
-  message on the #e2e slack channel

@@ -1,4 +1,0 @@
-{
-  "URL": "~/gs://${config.Bucket}/batch/bqtail.dummy/\\d+.win/",
-  "EventID": "~/\\d+/"
-}

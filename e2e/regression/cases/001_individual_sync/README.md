@@ -4,7 +4,7 @@
 
 This scenario tests individual synchronous data ingestion, without post actions.
 
-BqTail function is notified once data is uploaded to gs://${config.Bucket}/data/case001/dummy.json
+BqTail function is notified once data is uploaded to gs://${triggerBucket}/data/case001/dummy.json
 It matches the the following rule data ingestion rule.
 
 
@@ -34,7 +34,7 @@ In case BigQuery load time takes more than max cloud function execution time, th
     - eventType: google.storage.object.finalize
     - resource: projects/_/buckets/${config.Bucket}
 * **Configuration:** [gs://e2e-data/config/bqtail.json](../../../config/bqtail.json)
-* **Data**: [gs://${config.Bucket}/data/case001/dummy.json](data/trigger/dummy.json)
+* **Data**: [gs://${triggerBucket}/data/case001/dummy.json](data/trigger/dummy.json)
 
 
 #### Output
@@ -47,5 +47,7 @@ SELECT * FROM bqtail.dummy
 ```
  
 * **Logs:** 
-
-- gs://${config.Bucket}/Journal/Done/bqtail.dummy/$Date/$eventID.run
+  - ${JournalURL}/Running/bqtail.dummy/$Date/${eventID}.run
+    
+* **Stack driver**
+  - Response status
