@@ -2,7 +2,7 @@
 
 BqDispatch service is responsible for
  - triggering completed Big Query jobs that have post actions
- - triggering scheduled batch load jobs that are due 
+ - triggering scheduled batch load jobs that are due to run
 
 
 Dispatch service is a HTTP cloud function that is scheduled to run every minutes.
