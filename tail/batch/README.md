@@ -17,13 +17,13 @@ The batch service defines the following operation:
 type Service interface {
 
 	//Add adds transfer events to batch stage
-	Add(ctx context.Context, request *contract.Request, route *config.Route) error
+	Add(ctx context.Context, request *contract.Request, rule *config.rule) error
 
 	//Try to acquire batch window
-	TryAcquireWindow(ctx context.Context, request *contract.Request, route *config.Route) (*Window, error)
+	TryAcquireWindow(ctx context.Context, request *contract.Request, rule *config.rule) (*Window, error)
 
 	//MatchWindowData updates the window with the window span matched transfer datafiles
-	MatchWindowData(ctx context.Context, now time.Time,  window *Window, route *config.Route) error
+	MatchWindowData(ctx context.Context, now time.Time,  window *Window, rule *config.rule) error
 
 } 
 ```

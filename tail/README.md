@@ -17,7 +17,7 @@ Tail service ingests data to Big Query with Load API.
 
 Configuration is defined as [config.go](config.go)
 
-The following example defines single route to ingested any JSON file matching /data/folder prefix to mydataset.mytable.
+The following example defines single rule to ingested any JSON file matching /data/folder prefix to mydataset.mytable.
 
 In this configuration scenario each data file is ingested  to Big Query by dedicated cloud function instance.
 After initiating a load Job, the function waits for job completion to finally run on success tasks. 
@@ -56,7 +56,7 @@ All these limitations are addressed by asynchronous and batch mode.
 - AsyncTaskURL: transient storage location for managing BigQuery job post tasks (both BqTail and BqDispatch have to use the same URL) 
 - AsyncBatchURL: transient storage location for managing schedule batch load job in async mode.
 - BatchURL: transient storage location for managing batch load job in sync mode.
-- RulesURL: base URL where each rule is JSON file with routes arrays
+- RulesURL: base URL where each rule is JSON file with rules arrays
 - ActiveIngestionURL: currently running data ingestion job URL 
 - DoneIngestionURL: completed data ingestion jobs URL
 - TriggerBucket: trigger bucket
@@ -275,7 +275,7 @@ In case destination table does not exists you can specify schema source table wi
 #### Dynamic table destination based on source data.
 
 
-To dynamically route data based on source data values you can use the following rule.
+To dynamically rule data based on source data values you can use the following rule.
 
 [@config/dynamic_dest.json](usage/dynamic_dest.json)
 
