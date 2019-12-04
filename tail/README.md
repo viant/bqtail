@@ -64,7 +64,7 @@ All these limitations are addressed by asynchronous and batch mode.
 - InvalidSchemaURLL: url for incompatible schema files
 - SlackCredentials
 
-To reduce Storage Class A operation: cache file has been introduced, delete cache file alongside adding a new rule.
+To reduce Storage Class A operations: cache file is used for config files:  delete cache file alongside adding a new rule.
 
 **Individual rule** can has the following attributes:
 
