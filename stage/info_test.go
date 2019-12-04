@@ -1,0 +1,56 @@
+package stage
+
+import (
+	"github.com/viant/assertly"
+	"github.com/viant/toolbox"
+	"testing"
+)
+
+func TestParse(t *testing.T) {
+
+		var useCases  = []struct {
+			description string
+			encoded string
+			expect interface{}
+		}{
+			{
+				description:"legacy",
+				encoded:"bqtail--dummy--869694905034386--dispatch",
+				expect:`{"DestTable":"bqtail--dummy","EventID":"869694905034386","Action":"nop","Suffix":"dispatch","Step":0}`,
+			},
+			{
+				description:"info style",
+				encoded:"bqtail_dummy--869694905034386_0004_load--dispatch",
+				expect:`{"DestTable":"bqtail_dummy","EventID":"869694905034386","Action":"load","Suffix":"dispatch","Step":4}`,
+			},
+			{
+				description:"info style location",
+				encoded:"bqtail:dummy/869694905034386_0004_load/dispatch",
+				expect:`{"DestTable":"bqtail:dummy","EventID":"869694905034386","Action":"load","Suffix":"dispatch","Step":4}`,
+			},
+			{
+				description:"invalid",
+				encoded:"bqtail869694905034386--tail",
+				expect:`{"DestTable":"bqtail869694905034386", "Action":"nop","Suffix":"tail","Step":0}`,
+			},
+			{
+				description:"legacy mixed",
+				encoded:"temp--dummy_850558231030311/850558231030311/dispatch",
+				expect:`{"DestTable":"temp--dummy_850558231030311","EventID":"850558231030311","Action":"nop","Suffix":"dispatch","Async":true}`,
+			},
+
+
+		}
+		for _, useCase := range useCases {
+			actual := Parse(useCase.encoded)
+			if ! assertly.AssertValues(t, useCase.expect, actual, useCase.description) {
+				toolbox.Dump(actual)
+			}
+			actual = Parse(actual.ID())
+			assertly.AssertValues(t, useCase.expect, actual, useCase.description)
+
+			//actual = Parse(actual.GetJobID())
+			//assertly.AssertValues(t, useCase.expect, actual, useCase.description)
+		}
+
+}

@@ -46,19 +46,8 @@
                 "Action": "delete",
                 "Request": {
                   "URLs": [
-                    "gs://viant_e2e_bqtail/data/case006/dummy1.json",
-                    "gs://viant_e2e_bqtail/data/case006/dummy2.json"
-                  ]
-                }
-              },
-              {
-                "Action": "delete",
-                "Request": {
-                  "SourceURL": "",
-                  "URLs": [
-                    "gs://viant_e2e_operation/BqTail/Batch/bqtail.dummy/1574350073000000000.win",
-                    "gs://viant_e2e_operation/BqTail/Batch/bqtail.dummy/850558231030311.tnf",
-                    "gs://viant_e2e_operation/BqTail/Batch/bqtail.dummy/850560215701684.tnf"
+                    "gs://viant_e2e_bqtail/data/case016/dummy1.json",
+                    "gs://viant_e2e_bqtail/data/case016/dummy2.json"
                   ]
                 }
               },

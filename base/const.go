@@ -13,12 +13,6 @@ const (
 	//StatusError response status
 	StatusError = "error"
 
-	//DispatchJob dispatch job name
-	DispatchJob = "dispatch"
-	//TailJob tail job name
-	TailJob = "tail"
-	//JobPrefix default job refix
-	JobPrefix = "bq"
 	//JobExt job extension
 	JobExt = ".json"
 	//ActionExt job extension
@@ -30,8 +24,6 @@ const (
 	//LocationExt location extension
 	LocationExt = ".loc"
 
-	//PathElementSeparator path separator
-	PathElementSeparator = "--"
 
 	//SourceURLKey source key
 	SourceURLKey = "SourceURL"
@@ -53,8 +45,11 @@ const (
 	ErrorExpr = "$Error"
 	//JobIDKey job id key
 	JobIDKey = "JobID"
+
+	//Info key
+	InfoKey = "Info"
 	//JobIDExpr job id expression
-	JobIDExpr = "$JobID"
+	JobIDExpr = "$GetJobID"
 	//EventIDKey event key
 	EventIDKey = "eventID"
 	//EventIDExpr event id expression
@@ -114,6 +109,9 @@ const (
 
 	//BatchPrefix
 	BatchPrefix = "/_batch_/"
+
+	//InvalidSchemaLocation invalid schema
+	InvalidSchemaLocation = "invalid_schema"
 
 	//DoneLoadSuffix load done suffix
 	DoneLoadSuffix = "Done"

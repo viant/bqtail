@@ -1,0 +1,3 @@
+{"id": 1, "name": "dummy 1", "type_id": 1}
+{"id": 2, "name":3, "type_id": 1}
+{"id": 3, "name": "dummy 3", "type_id": "abc"}

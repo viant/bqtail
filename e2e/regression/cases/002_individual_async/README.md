@@ -2,11 +2,12 @@
 
 ### Scenario:
 
-This scenario tests data async data ingestion.
+This scenario tests individual asynchronous data ingestion, with delete post actions.
 
 
-BqTail function is notified once data is upload to gs://${config.Bucket}/data/case002/dummy[1..2].json
-It matches the the following rule to submit load Job to BiqQuery. 
+
+BqTail function is notified once data is uploaded to gs://${config.Bucket}/data/case002/dummy[1..2].json
+It matches the the following rule data ingestion rule. 
 
 
 [@rule.json](rule.json)
@@ -28,11 +29,7 @@ It matches the the following rule to submit load Job to BiqQuery.
 }]
 ```
 
-BqTail function does not wait for job completion, but instead if generate post action JSON file with job ID
-to ${config.DeferTaskURL}  i.e gs://${config.Bucket}/tasks/${JobID} and post action instruction.
-
-
-Once BigQuery job completes, Dispatch Service is notified completed BigQuery job ID, to pick post action execution. 
+BqTail function does not wait for job completion, but instead if generate post action file with handled by BqDispatch once Big Query job completes.
 
 **Note:**
 
@@ -52,12 +49,15 @@ BigQuery load time does not affect post action execution, since it is delegated 
 
 #### Output
 
+
+
 * **Data:**
 Big Query destination table:
 
 ```sql
 SELECT * FROM bqtail.dummy
 ```
+
 
 * **Defer task**:
   - [gs://${config.Bucket}/tasks/${jobID}.json](data/expect/tasks/dispatch.json)
@@ -67,9 +67,11 @@ Where jobID is created using the following:
 $jobID: ${table}/${storageEventID}/dispatch
 
 
-
+ 
 * **Logs:** 
- - [gs://${config.Bucket}/journal/dummy/${date}/${jobID}/tail-job.json](data/expect/journal/tail-job.json)
+
+- gs://${config.Bucket}/Journal/Done/bqtail.dummy/$Date/$eventID.run
+
 
 
 
@@ -93,8 +95,14 @@ to execute defer actions.
 
 #### Output:
 
-* **Logs:**
- 
-  - gs://${config.Bucket}/journal/dummy/${date}/${jobID}/dispatch.json
-  - gs://${config.Bucket}/journal/dummy/${date}/${jobID}/dispatch-job.json
-  
+* **Data:**
+Big Query destination table:
+
+```sql
+SELECT * FROM bqtail.dummy
+```
+
+
+* **Logs:** 
+
+- gs://${config.Bucket}/Journal/Done/bqtail.dummy/$Date/$eventID.run

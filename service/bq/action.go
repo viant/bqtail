@@ -22,8 +22,8 @@ func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Jo
 	if len(toRun) == 0 {
 		return nil
 	}
-	if err != nil && onDone.SourceURL != "" {
-		sourcePath := url.Path(onDone.SourceURL)
+	if err != nil && onDone.SourceURI != "" {
+		sourcePath := url.Path(onDone.SourceURI)
 		errorURL := url.Join(s.Config.ErrorURL, sourcePath+base.ErrorSuffix)
 		if e := s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(err.Error())); e != nil {
 			return errors.Wrapf(err, "failed to write error file: %v %v", errorURL, e)

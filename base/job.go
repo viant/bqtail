@@ -37,7 +37,7 @@ func (e *Job) Source() string {
 	return ""
 }
 
-//JobID returns Job ID
+//GetJobID returns Job ID
 func (e *Job) JobID() string {
 	if e.JobReference != nil {
 		return e.JobReference.JobId
@@ -73,35 +73,6 @@ func (e *Job) Dest() string {
 	return ""
 }
 
-//ChildJobID return file job ID
-func (e *Job) ChildJobID(childID string) string {
-	result := e.JobID()
-	if index := strings.Index(result, DispatchJob); index != -1 {
-		result = string(result[:index])
-	}
-	result += childID + PathElementSeparator + DispatchJob
-	return result
-}
-
-//EventID returns event ID
-func (e *Job) EventID() string {
-	if e.Id == "" {
-		return ""
-	}
-	elements := strings.Split(e.JobID(), PathElementSeparator)
-	for i, candidate := range elements {
-		if i > 0 && (candidate == DispatchJob || candidate == TailJob) {
-			candidate = elements[i-1]
-			if !strings.Contains(candidate, "_") {
-				return candidate
-			}
-			if i > 1 {
-				return elements[i-2]
-			}
-		}
-	}
-	return e.JobID()
-}
 
 //SourceTable returns dest table
 func (e *Job) SourceTable() string {
@@ -167,24 +138,4 @@ func JobError(job *bigquery.Job) error {
 	return nil
 }
 
-//DecodePathSeparator decode job ID
-func DecodePathSeparator(jobID string, count int) string {
-	if c := strings.Count(jobID, PathElementSeparator); c > 0 {
-		jobID = strings.Replace(jobID, PathElementSeparator, "/", count)
-	}
-	return jobID
-}
 
-//EncodePathSeparator encodes job ID
-func EncodePathSeparator(jobID string) string {
-	if count := strings.Count(jobID, "/"); count > 0 {
-		jobID = strings.Replace(jobID, "/", PathElementSeparator, count)
-	}
-	if count := strings.Count(jobID, "$"); count > 0 {
-		jobID = strings.Replace(jobID, "$", "_", count)
-	}
-	if count := strings.Count(jobID, ":"); count > 0 {
-		jobID = strings.Replace(jobID, ":", "_", count)
-	}
-	return jobID
-}

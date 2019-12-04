@@ -2,10 +2,11 @@
 
 ### Scenario:
 
-This scenario tests data basic data ingestion.
+This scenario tests individual synchronous data ingestion, without post actions.
 
-BqTail function is notified once data is upload to gs://${config.Bucket}/data/case001/dummy.json
-It matches the the following rule to submit load Job to BiqQuery and wait till job is done synchronusly.
+BqTail function is notified once data is uploaded to gs://${config.Bucket}/data/case001/dummy.json
+It matches the the following rule data ingestion rule.
+
 
 [@rule.json](rule.json)
 ```json
@@ -24,7 +25,8 @@ It matches the the following rule to submit load Job to BiqQuery and wait till j
 
 **Note:**
 
-When BigQuery load time takes more than max cloud function execution time, the function is terminated, but BigQuery job continues.
+In case BigQuery load time takes more than max cloud function execution time, the function is terminated, but BigQuery job continues.
+
 
 #### Input:
 
@@ -46,4 +48,4 @@ SELECT * FROM bqtail.dummy
  
 * **Logs:** 
 
-- [gs://${config.Bucket}/journal/dummy/${date}/${storageEventId}/tail-job.json](data/expect/journal/tail-job.json)
+- gs://${config.Bucket}/Journal/Done/bqtail.dummy/$Date/$eventID.run

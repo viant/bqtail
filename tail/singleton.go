@@ -9,7 +9,6 @@ import (
 
 var srv Service
 
-var count int32
 
 //Singleton returns service
 func Singleton(ctx context.Context) (Service, error) {

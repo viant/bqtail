@@ -13,7 +13,7 @@ type Request struct {
 
 func (r Request) jobReference() *bigquery.JobReference {
 	return &bigquery.JobReference{
-		JobId:     r.JobID,
+		JobId:     r.Info.GetJobID(),
 		ProjectId: r.ProjectID,
 	}
 }

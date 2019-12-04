@@ -2,6 +2,7 @@ package bq
 
 import (
 	"bqtail/base"
+	"bqtail/stage"
 	"bqtail/task"
 	"bytes"
 	"context"
@@ -13,6 +14,7 @@ import (
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -20,11 +22,8 @@ var syncCheckTimeout = 2 * time.Second
 
 func (s *service) setJobID(ctx context.Context, actions *task.Actions) (*bigquery.JobReference, error) {
 	var ID string
-	var err error
 	if actions != nil {
-		if ID, err = actions.ID(base.JobPrefix); err != nil {
-			return nil, errors.Wrapf(err, "failed to generate job ID: %v", actions.JobID)
-		}
+		ID = actions.Info.GetJobID()
 	}
 	return &bigquery.JobReference{
 		JobId:     ID,
@@ -41,8 +40,7 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 	if err != nil {
 		return errors.Wrapf(err, "failed to encode actions: %v", actions)
 	}
-
-	filename := base.DecodePathSeparator(job.JobReference.JobId, 1)
+	filename := actions.Info.ID()
 	if path.Ext(filename) == "" {
 		filename += base.JobExt
 	}
@@ -52,6 +50,13 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 
 //Post post big query job
 func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
+	if onDoneActions != nil {
+		if onDoneActions.JobID != "" && onDoneActions.Info.Action == "" {
+			onDoneActions.Info = *stage.Parse(onDoneActions.JobID)
+			//Legacy transition
+			onDoneActions.Info.Step = strings.Count(onDoneActions.JobID, stage.PathElementSeparator)
+		}
+	}
 	job, err := s.post(ctx, projectID, callerJob, onDoneActions)
 	if job == nil {
 		job = callerJob
@@ -62,7 +67,7 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 		fmt.Printf("Job status: %v %v\n", callerJob.Id, err)
 		toolbox.Dump(job)
 	}
-	if onDoneActions.IsSyncMode() && onDoneActions != nil {
+	if  onDoneActions != nil && onDoneActions.IsSyncMode() {
 		err = base.JobError(job)
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
@@ -89,10 +94,6 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	if job.JobReference, err = s.setJobID(ctx, onDoneActions); err != nil {
 		return nil, err
 	}
-	if job.JobReference != nil {
-		job.JobReference.JobId = base.EncodePathSeparator(job.JobReference.JobId)
-	}
-
 	err = s.schedulePostTask(ctx, job, onDoneActions);
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to schedule bqJob %v", job.JobReference.JobId)
@@ -117,6 +118,9 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 			continue
 		}
 		if i > 0 && base.IsDuplicateJobError(err) {
+			if base.IsLoggingEnabled() {
+				fmt.Printf("duplicate job: [%v]: %v\n", job.Id, err)
+			}
 			err = nil
 		}
 	}

@@ -12,12 +12,7 @@ var bodyAppendable = map[string]bool{
 	"notify": true,
 }
 
-//bqJobs bq jobs
-var bqJobs = map[string]bool{
-	"copy":   true,
-	"query":  true,
-	"export": true,
-}
+
 
 //replacements replacements key
 var replacements = map[string]string{

@@ -1,6 +1,7 @@
 package base
 
 import (
+	"bqtail/stage"
 	"context"
 	"fmt"
 	"github.com/viant/afs/url"
@@ -35,23 +36,26 @@ type Config struct {
 	BatchPrefix       string
 	ErrorURL          string
 	CorruptedFileURL  string
+	InvalidSchemaURL  string
 	SlackCredentials  *Secret
 }
 
 //BuildActiveLoadURL returns active action URL for supplied event id
-func (c *Config) BuildActiveLoadURL(dest, eventID string) string {
-	return url.Join(c.ActiveWorkflowURL, path.Join(dest, eventID+ActionExt))
+func (c *Config) BuildActiveLoadURL(info *stage.Info) string {
+	return url.Join(c.ActiveWorkflowURL, path.Join(info.DestTable, info.EventID+ActionExt))
 }
 
 //BuildDoneLoadURL returns done action URL for supplied event id
-func (c *Config) BuildDoneLoadURL(dest, eventID string) string {
-	return url.Join(c.DoneWorkflowURL, path.Join(dest, eventID+ActionExt))
+func (c *Config) BuildDoneLoadURL(info *stage.Info) string {
+	date := time.Now().Format(DateLayout)
+	return url.Join(c.DoneWorkflowURL, path.Join(info.DestTable, date, info.EventID+ActionExt))
 }
 
+
 //BuildTaskURL returns an action url for supplied event ID
-func (c *Config) BuildTaskURL(eventID string) string {
+func (c *Config) BuildTaskURL(info *stage.Info) string {
 	date := time.Now().Format(DateLayout)
-	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.BqJobPrefix, date, DecodePathSeparator(eventID, 0), ActionExt)
+	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.BqJobPrefix, date, info.ID())
 }
 
 //OutputURL returns an output URL
@@ -107,8 +111,12 @@ func (c *Config) Init(ctx context.Context) error {
 	if c.DoneWorkflowURL == "" {
 		c.DoneWorkflowURL = url.Join(c.JournalURL, DoneLoadSuffix)
 	}
+	if c.InvalidSchemaURL == "" {
+		c.InvalidSchemaURL = url.Join(c.JournalURL, InvalidSchemaLocation)
+	}
 	return nil
 }
+
 
 //Validate checks if config is valid
 func (c *Config) Validate() error {

@@ -13,7 +13,7 @@ type PostActioner interface {
 }
 
 //Action represents route action
-type Action struct {
+type 	Action struct {
 	Action  string
 	Request map[string]interface{}
 }

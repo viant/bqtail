@@ -7,6 +7,7 @@ import (
 	"bqtail/service/secret"
 	"bqtail/service/slack"
 	"bqtail/service/storage"
+	"bqtail/stage"
 	"bqtail/task"
 	"context"
 	"fmt"
@@ -199,7 +200,10 @@ func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Respo
 
 //notify notify bqtail
 func (s *service) notify(ctx context.Context, job *contract.Job) error {
-	taskURL := s.config.BuildTaskURL(job.ID)
+
+	info := stage.Parse(job.ID)
+
+	taskURL := s.config.BuildTaskURL(info)
 	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
 }
 
@@ -234,14 +238,14 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 	return err
 }
 
-//JobID returns job ID for supplied URL
+//GetJobID returns job ID for supplied URL
 func JobID(baseURL string, URL string) string {
 	if len(baseURL) > len(URL) {
 		return ""
 	}
 	encoded := strings.Trim(string(URL[len(baseURL):]), "/")
 	encoded = strings.Replace(encoded, ".json", "", 1)
-	jobID := base.EncodePathSeparator(encoded)
+	jobID := stage.Decode(encoded)
 	return jobID
 }
 

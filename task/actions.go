@@ -2,41 +2,58 @@ package task
 
 import (
 	"bqtail/base"
+	"bqtail/stage"
+	"context"
 	"encoding/json"
-	"fmt"
+	"github.com/pkg/errors"
+	"github.com/viant/afs"
 	"google.golang.org/api/bigquery/v2"
 )
 
 //Actions represents actions
 type Actions struct {
-	Job          *bigquery.Job
-	SourceURL    string
-	Async        bool      `json:",omitempty"`
-	JobID        string    `json:",omitempty"`
-	OnSuccess    []*Action `json:",omitempty"`
-	OnFailure    []*Action `json:",omitempty"`
+	Job       *bigquery.Job
+	stage.Info
+	JobID string
+	OnSuccess []*Action `json:",omitempty"`
+	OnFailure []*Action `json:",omitempty"`
+}
+
+func (a *Actions) SetInfo(info *stage.Info) {
+	a.Info = *info
 }
 
 //ToRun returns actions to run
 func (a Actions) CloneOnFailure() *Actions {
 	result := &Actions{
-		SourceURL:    a.SourceURL,
-		Async:        a.Async,
-		JobID:        a.JobID,
-		OnFailure:    a.OnFailure,
+		Info:      a.Info,
+		OnFailure: a.OnFailure,
 	}
 	return result
 }
 
-var actionMapping = map[string]string{
-	"copy":  "cp",
-	"query": "sql",
+//NewActionFromURL create a new actions from URL
+func NewActionFromURL(ctx context.Context, fs afs.Service, URL string) (*Actions, error) {
+	actions := &Actions{}
+	reader, err := fs.DownloadWithURL(ctx, URL)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+	if err = json.NewDecoder(reader).Decode(&actions); err != nil {
+		return nil, errors.Wrapf(err, "unable decode: %v", URL)
+	}
+	if actions.JobID != "" && actions.Info.Action == "" {
+		actions.Info = *stage.Parse(actions.JobID)
+	}
+	return actions, nil
 }
 
 //ToRun returns actions to run
 func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 	var toRun []*Action
-
 	if err == nil {
 		toRun = append([]*Action{}, a.OnSuccess...)
 
@@ -49,33 +66,19 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 	}
 
 	for i := range toRun {
+		childInfo := a.Info.ChildInfo(toRun[i].Action, i+1)
+		toRun[i].Request[base.JobIDKey] = childInfo.GetJobID()
 
-		jobSuffix := ""
-		if !a.Async {
-			jobSuffix = "_sync"
+		for k, v := range childInfo.AsMap() {
+			toRun[i].Request[k] = v
 		}
-		if hasPostTasks := toRun[i].Request[base.OnSuccessKey] != nil || toRun[i].Request[base.OnFailureKey] != nil; !hasPostTasks {
-			jobSuffix = "_nop"
-		}
-
-		if bqJobs[toRun[i].Action] {
-			actionName := toRun[i].Action
-			if val, ok := actionMapping[actionName]; ok {
-				actionName = val
-			}
-			toRun[i].Request[base.JobIDKey] = job.ChildJobID(fmt.Sprintf("%02d_%v", i, actionName) + jobSuffix)
-		}
-
 		if bodyAppendable[toRun[i].Action] {
 			if responseJSON, err := json.Marshal(a); err == nil {
 				toRun[i].Request[base.ResponseKey] = string(responseJSON)
 			}
 		}
-		if _, ok := toRun[i].Request[base.JobIDKey]; !ok {
-			toRun[i].Request[base.JobIDKey] = job.JobID()
-		}
 		if _, ok := toRun[i].Request[base.EventIDKey]; !ok {
-			toRun[i].Request[base.EventIDKey] = job.EventID()
+			toRun[i].Request[base.EventIDKey] = a.Info.EventID
 		}
 		if _, ok := toRun[i].Request[base.DestTableKey]; !ok {
 			toRun[i].Request[base.DestTableKey] = job.DestTable()
@@ -99,16 +102,6 @@ func (a Actions) IsEmpty() bool {
 	return len(a.OnSuccess) == 0 && len(a.OnFailure) == 0
 }
 
-//ID returns actions ID
-func (a Actions) ID(prefix string) (string, error) {
-	if a.JobID != "" {
-		return a.JobID, nil
-	}
-	var err error
-	a.JobID, err = NextID(prefix)
-	return a.JobID, err
-}
-
 //IsSyncMode returns true if route uses synchronous mode
 func (a Actions) IsSyncMode() bool {
 	return !a.Async
@@ -120,13 +113,12 @@ func (a *Actions) Expand(expandable *base.Expandable) *Actions {
 		return a
 	}
 	result := &Actions{
-		Async:        a.Async,
-		JobID:        a.JobID,
-		OnSuccess:    make([]*Action, 0),
-		OnFailure:    make([]*Action, 0),
+		Info:      a.Info,
+		OnSuccess: make([]*Action, 0),
+		OnFailure: make([]*Action, 0),
 	}
 	if len(expandable.SourceURLs) > 0 {
-		result.SourceURL = expandable.SourceURLs[0]
+		result.SourceURI = expandable.SourceURLs[0]
 	}
 	appendSourceURLExpandableActions(a.OnSuccess, &result.OnSuccess, expandable)
 	appendSourceURLExpandableActions(a.OnFailure, &result.OnFailure, expandable)
@@ -169,7 +161,7 @@ func (a *Actions) AddOnFailure(actions ...*Action) {
 }
 
 //NewActions creates an actions
-func NewActions(async bool,  jobID string, onSuccess, onFailure []*Action) *Actions {
+func NewActions(async bool, info stage.Info, onSuccess, onFailure []*Action) *Actions {
 	if len(onSuccess) == 0 {
 		onSuccess = make([]*Action, 0)
 	}
@@ -177,10 +169,9 @@ func NewActions(async bool,  jobID string, onSuccess, onFailure []*Action) *Acti
 		onFailure = make([]*Action, 0)
 	}
 	return &Actions{
-		Async:        async,
-		JobID:        jobID,
-		OnSuccess:    onSuccess,
-		OnFailure:    onFailure,
+		Info:      info,
+		OnSuccess: onSuccess,
+		OnFailure: onFailure,
 	}
 }
 

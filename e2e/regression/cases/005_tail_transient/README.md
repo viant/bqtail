@@ -5,7 +5,7 @@
 This scenario tests data usage of transient/temp dataset and table.
 
 
-BqTail function is notified once data is upload to gs://${config.Bucket}/data/case005/dummy.json
+BqTail function is notified once data is uploaded to gs://${config.Bucket}/data/case005/dummy.json
 It matches the the following rule, to ingest data with transient table in temp dataset, followed by final destination ingestion.
 
 
