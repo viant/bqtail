@@ -53,11 +53,18 @@ All these limitations are addressed by asynchronous and batch mode.
 
 - JournalURL: job history location 
 - ErrorURL: - errors location
-- DeferTaskURL: transient storage location for managing deferred tasks (both BqTail and BqDispatch have to use the same URL) 
-- BatchURL: transient storage location for managing event batching.
+- AsyncTaskURL: transient storage location for managing BigQuery job post tasks (both BqTail and BqDispatch have to use the same URL) 
+- AsyncBatchURL: transient storage location for managing schedule batch load job in async mode.
+- BatchURL: transient storage location for managing batch load job in sync mode.
 - RulesURL: base URL where each rule is JSON file with routes arrays
+- ActiveIngestionURL: currently running data ingestion job URL 
+- DoneIngestionURL: completed data ingestion jobs URL
+- TriggerBucket: trigger bucket
+- CorruptedFileURL: url for currpupted files
+- InvalidSchemaURLL url for incompatibile schema files
+- SlackCredentials
 
-
+To reduce Storage Class A operation: cache file has been introduced, delete cache file alongside adding a new rule.
 
 **Individual rule** can has the following attributes:
 
@@ -263,6 +270,53 @@ In case destination table does not exists you can specify schema source table wi
    }
 ]
 ```
+
+
+#### Dynamic table destination based on source data.
+
+
+To dynamically route data based on source data values you can use the following rule.
+
+[@config/dynamic_dest.json](usage/dynamic_dest.json)
+
+```json
+[
+  {
+    "When": {
+      "Prefix": "/data/case013",
+      "Suffix": ".json"
+    },
+    "Async": true,
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "Schema": {
+        "Template": "bqtail.dummy",
+        "Split": {
+          "ClusterColumns": [
+            "id",
+            "info.key"
+          ],
+          "Mapping": [
+            {
+              "When": "MOD(id, 2) = 0",
+              "Then": "bqtail.dummy_0"
+            },
+            {
+              "When": "MOD(id, 2) = 1",
+              "Then": "bqtail.dummy_1"
+            }
+          ]
+        }
+      }
+  }
+]
+ ```
+
+
+
+
+### Partition override
 
 
 #### Destination

@@ -1,0 +1,31 @@
+[
+  {
+    "When": {
+      "Prefix": "/data/case013",
+      "Suffix": ".json"
+    },
+    "Async": true,
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "Schema": {
+        "Template": "bqtail.dummy",
+        "Split": {
+          "ClusterColumns": [
+            "id",
+            "info.key"
+          ],
+          "Mapping": [
+            {
+              "When": "MOD(id, 2) = 0",
+              "Then": "bqtail.dummy_0"
+            },
+            {
+              "When": "MOD(id, 2) = 1",
+              "Then": "bqtail.dummy_1"
+            }
+          ]
+        }
+      }
+    }
+    ]

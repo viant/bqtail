@@ -143,53 +143,18 @@ The following define rule to ingest data in batches within 60 sec time window in
 ]
 ```
 
-##### **Data extraction**
 
-The following define rule to extract data to google storate after target table is modified.
-
-[@rule.json](usage/export/rule.json)
-```json
-[
- {
-   "When": {
-     "Dest": ".+:mydataset\\.mytable",
-     "Type": "QUERY"
-   },
-   "OnSuccess": [
-     {
-       "Action": "export",
-       "Request": {
-         "DestURL": "gs://${config.Bucket}/export/mytable.json.gz"
-       }
-     }
-   ]
- }
-]
-```
 
 
 
 
 ## Deployment
 
-**Prerequisites**
-
-The following URL are used by tail/dispatch services:
-
-- JournalURL - job history journal 
-- ErrorURL - job that resulted in an error
-- DeferTaskURL - transient storage for managing deferred tasks (tail in async mode). 
-- BatchURL - transient storage for managing event batching.
-
-**Cloud function deployments**
-
-- [BqTail](tail/README.md#deployment)
-- [BqDispatch](dispatch/README.md#deployment)
-
 The following [Deployment](deployment/README.md) details generic deployment.
 
 
 ## Monitoring 
+
 
 [BqTailMonitor](mon) can be used to monitor trigger and error buckets.
 
