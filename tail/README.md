@@ -289,25 +289,4 @@ With table defined as "proj:dataset:table_$1$2$3" and source URL "gs://bucket/da
 
 ### Deployment
 
-```bash
-gcloud functions deploy XXXBQTail --entry-point BqTailFn --trigger-resource ${triggerBucket} --trigger-event google.storage.object.finalize  \n
- --set-env-vars=CONFIG=gs://${configBucket}/BqDispatch/config.json
---runtime go111
-```
-
-Where:
-- gs://${configBucket}/BqDispatch/config.json is configuration file (with expanded $variables)
-
-```json
-{
-  "BatchURL": "gs://${opsBucket}/BqTail/Batch/",
-  "ErrorURL": "gs://${opsBucket}/BqTail/errors/",
-  "JournalURL": "gs://${opsBucket}/BqTail/Journal/",
-  "DeferTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
-  "RulesURL": "gs://${configBucket}/BqTail/Rules/",
-  "CheckInMs": 10
-}
-```
-
-
 See [Generic Deployment](../deployment/README.md) automation and post deployment testing
