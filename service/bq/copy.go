@@ -20,7 +20,7 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest) (*bigquery.Job
 		Configuration: &bigquery.JobConfiguration{
 			Copy: &bigquery.JobConfigurationTableCopy{
 				SourceTable:      request.sourceTable,
-				DestinationTable: request.destTable,
+				DestinationTable: request.destinationTable,
 			},
 		},
 	}
@@ -37,11 +37,11 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest) (*bigquery.Job
 //CopyRequest represents a copy request
 type CopyRequest struct {
 	Request
-	Append      bool
-	Source      string
-	sourceTable *bigquery.TableReference
-	Dest        string
-	destTable   *bigquery.TableReference
+	Append           bool
+	Source           string
+	sourceTable      *bigquery.TableReference
+	Dest             string
+	destinationTable *bigquery.TableReference
 }
 
 //Init initialises a copy request
@@ -58,7 +58,7 @@ func (r *CopyRequest) Init(projectID string) (err error) {
 		}
 	}
 	if r.Dest != "" {
-		if r.destTable, err = base.NewTableReference(r.Dest); err != nil {
+		if r.destinationTable, err = base.NewTableReference(r.Dest); err != nil {
 			return err
 		}
 	}
@@ -67,9 +67,9 @@ func (r *CopyRequest) Init(projectID string) (err error) {
 			r.sourceTable.ProjectId = projectID
 		}
 	}
-	if r.destTable != nil {
-		if r.destTable.ProjectId == "" {
-			r.destTable.ProjectId = projectID
+	if r.destinationTable != nil {
+		if r.destinationTable.ProjectId == "" {
+			r.destinationTable.ProjectId = projectID
 		}
 	}
 	return nil
@@ -80,8 +80,8 @@ func (r *CopyRequest) Validate() error {
 	if r.sourceTable == nil {
 		return fmt.Errorf("sourceTable was empty")
 	}
-	if r.destTable == nil {
-		return fmt.Errorf("destTable was empty")
+	if r.destinationTable == nil {
+		return fmt.Errorf("destinationTable was empty")
 	}
 	return nil
 }
@@ -97,7 +97,7 @@ func NewCopyRequest(source, dest string, finally *task.Actions) *CopyRequest {
 		result.sourceTable, _ = base.NewTableReference(source)
 	}
 	if dest != "" {
-		result.destTable, _ = base.NewTableReference(dest)
+		result.destinationTable, _ = base.NewTableReference(dest)
 	}
 	if finally != nil {
 		result.Actions = *finally

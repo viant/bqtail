@@ -21,7 +21,7 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 			Query: &bigquery.JobConfigurationQuery{
 				Query:            request.SQL,
 				UseLegacySql:     &request.UseLegacy,
-				DestinationTable: request.destTable,
+				DestinationTable: request.destinationTable,
 			},
 		},
 	}
@@ -51,13 +51,13 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 
 //QueryRequest represents Query request
 type QueryRequest struct {
-	DatasetID string
-	SQL       string
-	UseLegacy bool
-	Append    bool
-	Dest      string
-	Template  string
-	destTable *bigquery.TableReference
+	DatasetID        string
+	SQL              string
+	UseLegacy        bool
+	Append           bool
+	Dest             string
+	Template         string
+	destinationTable *bigquery.TableReference
 	Request
 }
 
@@ -69,13 +69,13 @@ func (r *QueryRequest) Init(projectID string) (err error) {
 		r.ProjectID = projectID
 	}
 	if r.Dest != "" {
-		if r.destTable, err = base.NewTableReference(r.Dest); err != nil {
+		if r.destinationTable, err = base.NewTableReference(r.Dest); err != nil {
 			return err
 		}
 	}
-	if r.destTable != nil {
-		if r.destTable.ProjectId == "" {
-			r.destTable.ProjectId = projectID
+	if r.destinationTable != nil {
+		if r.destinationTable.ProjectId == "" {
+			r.destinationTable.ProjectId = projectID
 		}
 	}
 	return nil
@@ -92,8 +92,8 @@ func (r *QueryRequest) Validate() error {
 //NewQueryRequest creates a new query request
 func NewQueryRequest(SQL string, dest *bigquery.TableReference, finally *task.Actions) *QueryRequest {
 	result := &QueryRequest{
-		SQL:       SQL,
-		destTable: dest,
+		SQL:              SQL,
+		destinationTable: dest,
 	}
 	if dest != nil {
 		result.Dest = base.EncodeTableReference(dest)
