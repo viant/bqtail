@@ -7,6 +7,7 @@ pipeline:
     public: true
     availableMemoryMb: 128
     entryPoint: BqTail
+    retry: true
     runtime: go111
     serviceAccountEmail: ${gcp.serviceAccount}
     environmentVariables:
