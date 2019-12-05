@@ -44,7 +44,10 @@ var nopActions = map[string]bool{
 }
 
 func (i *Info) ChildInfo(action string, step int) *Info {
-	step = (i.Step * 1000) + step
+	upper :=  (i.Step / 1000) * 1000
+	lower := (i.Step % 100) * 1000
+	step =  upper + lower + step
+
 	suffix := i.Suffix
 	if nopActions[action] {
 		suffix = nopAction
