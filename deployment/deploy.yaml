@@ -1,23 +1,23 @@
 pipeline:
-#  bqtail:
-#    action: gcp/cloudfunctions:deploy
-#    credentials: $gcpCredentials
-#    '@name': BqTail
-#    timeout: 540s
-#    public: true
-#    availableMemoryMb: 128
-#    entryPoint: BqTail
-#    runtime: go111
-#    serviceAccountEmail: ${gcp.serviceAccount}
-#    environmentVariables:
-#      CONFIG: gs://${configBucket}/BqTail/config.json
-#      LOGGING: false
-#      GS_MAX_RETRIES: 5
-#    eventTrigger:
-#      eventType: google.storage.object.finalize
-#      resource: projects/_/buckets/${triggerBucket}
-#    source:
-#      URL: ${appPath}
+  bqtail:
+    action: gcp/cloudfunctions:deploy
+    credentials: $gcpCredentials
+    '@name': BqTail
+    timeout: 540s
+    public: true
+    availableMemoryMb: 128
+    entryPoint: BqTail
+    runtime: go111
+    serviceAccountEmail: ${gcp.serviceAccount}
+    environmentVariables:
+      CONFIG: gs://${configBucket}/BqTail/config.json
+      LOGGING: false
+      GS_MAX_RETRIES: 5
+    eventTrigger:
+      eventType: google.storage.object.finalize
+      resource: projects/_/buckets/${triggerBucket}
+    source:
+      URL: ${appPath}
 
   bqdisaptch:
     action: gcp/cloudfunctions:deploy
