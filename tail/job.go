@@ -53,6 +53,9 @@ func (j Job) Info() *stage.Info {
 	dest := j.Dest()
 	if ref, err := base.NewTableReference(dest); err == nil {
 		dest = ref.DatasetId + "." + ref.TableId
+		if ref.ProjectId != "" {
+			dest = ref.ProjectId + ":" + dest
+		}
 	}
 	source := ""
 	ruleURL := ""

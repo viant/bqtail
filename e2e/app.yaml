@@ -27,9 +27,10 @@ pipeline:
         '@name': BqTail
         timeout: 540s
         public: true
-        availableMemoryMb: 256
+        availableMemoryMb: 128
         entryPoint: BqTail
         runtime: go111
+        retry: true
         serviceAccountEmail: ${gcp.serviceAccount}
         environmentVariables:
           CONFIG: gs://${configBucket}/BqTail/config.json
@@ -46,7 +47,7 @@ pipeline:
         timeout: 60s
         public: true
         serviceAccountEmail: ${gcp.serviceAccount}
-        availableMemoryMb: 256
+        availableMemoryMb: 128
         entryPoint: BqDispatch
         runtime: go111
         environmentVariables:

@@ -419,7 +419,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parent 
 	return nil
 }
 
-//runLoadAction this method allows rerun Active/Done job as long original data files are present
+//runLoadAction this method allows rerun Activity/Done job as long original data files are present
 func (s *service) runLoadAction(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	actions := []*task.Action{}
 	reader, err := s.fs.DownloadWithURL(ctx, request.SourceURL)

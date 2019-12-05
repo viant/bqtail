@@ -20,6 +20,7 @@ type Rule struct {
 	task.Actions `json:",omitempty"`
 	Info         base.Info `json:",omitempty"`
 	Group        string    `json:",omitempty"`
+	StalledThresholdInSec int `description:"duration after which unprocess file will be flag as error"`
 }
 
 //IsAppend returns true if appends
