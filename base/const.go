@@ -98,7 +98,7 @@ const (
 	PendigState = "PENDING"
 
 	//DateLayout represents a date layout
-	DateLayout = "2006-01-02"
+	DateLayout = "2006-01-02_15"
 
 	//LoadPrefix
 	LoadPrefix = "/_load_/"
