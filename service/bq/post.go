@@ -40,7 +40,7 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 	if err != nil {
 		return errors.Wrapf(err, "failed to encode actions: %v", actions)
 	}
-	filename := actions.Info.ID()
+	filename := actions.Info.JobFilename()
 	if path.Ext(filename) == "" {
 		filename += base.JobExt
 	}

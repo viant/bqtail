@@ -21,19 +21,24 @@ const (
 
 //Info represents processing stage
 type Info struct {
-	SourceURI string  `json:",omitempty"`
-	DestTable    string  `json:",omitempty"`
-	EventID string  `json:",omitempty"`
-	Action  string  `json:",omitempty"`
-	Suffix  string  `json:",omitempty"`
-	Step    int  `json:",omitempty"`
-	Async   bool  `json:",omitempty"`
-	RuleURL string  `json:",omitempty"`
+	SourceURI string `json:",omitempty"`
+	DestTable string `json:",omitempty"`
+	EventID   string `json:",omitempty"`
+	Action    string `json:",omitempty"`
+	Suffix    string `json:",omitempty"`
+	Step      int    `json:",omitempty"`
+	Async     bool   `json:",omitempty"`
+	RuleURL   string `json:",omitempty"`
 }
 
 //ID returns stage ID
 func (i *Info) ID() string {
 	return path.Join(i.DestTable, fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action)+PathElementSeparator+i.Suffix)
+}
+
+//JobFilename returns job filename
+func (i *Info) JobFilename() string {
+	return i.DestTable + PathElementSeparator + fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action) + PathElementSeparator + i.Suffix
 }
 
 //nopActions represents nop actions
@@ -44,27 +49,24 @@ var nopActions = map[string]bool{
 }
 
 func (i *Info) ChildInfo(action string, step int) *Info {
-	upper :=  (i.Step / 1000) * 1000
+	upper := (i.Step / 1000) * 1000
 	lower := (i.Step % 100) * 1000
-	step =  upper + lower + step
-
+	step = upper + lower + step
 	suffix := i.Suffix
 	if nopActions[action] {
 		suffix = nopAction
 	}
 	return &Info{
-		SourceURI:i.SourceURI,
-		RuleURL:i.RuleURL,
-		DestTable:    i.DestTable,
-		Suffix:  suffix,
-		EventID: i.EventID,
-		Step:    step,
-		Action:  action,
-		Async: i.Async,
+		SourceURI: i.SourceURI,
+		RuleURL:   i.RuleURL,
+		DestTable: i.DestTable,
+		Suffix:    suffix,
+		EventID:   i.EventID,
+		Step:      step,
+		Action:    action,
+		Async:     i.Async,
 	}
 }
-
-
 
 func (i *Info) Wrap(action string) *Info {
 	suffix := i.Suffix
@@ -72,17 +74,16 @@ func (i *Info) Wrap(action string) *Info {
 		suffix = nopAction
 	}
 	return &Info{
-		SourceURI:i.SourceURI,
-		RuleURL:i.RuleURL,
-		DestTable:    i.DestTable,
-		Suffix:  suffix,
-		EventID: i.EventID,
-		Step:    i.Step+1,
-		Action:  action,
-		Async: i.Async,
+		SourceURI: i.SourceURI,
+		RuleURL:   i.RuleURL,
+		DestTable: i.DestTable,
+		Suffix:    suffix,
+		EventID:   i.EventID,
+		Step:      i.Step + 1,
+		Action:    action,
+		Async:     i.Async,
 	}
 }
-
 
 //GetJobID returns  a job ID
 func (i *Info) GetJobID() string {
@@ -148,13 +149,13 @@ func (i Info) AsMap() map[string]interface{} {
 //New create a processing stage info
 func New(source, dest, eventID, action, suffix string, async bool, step int, ruleURL string) *Info {
 	return &Info{
-		SourceURI:source,
-		DestTable:    dest,
-		EventID: eventID,
-		Action:  action,
-		Suffix:  suffix,
-		Step:    step,
-		Async:async,
-		RuleURL:ruleURL,
+		SourceURI: source,
+		DestTable: dest,
+		EventID:   eventID,
+		Action:    action,
+		Suffix:    suffix,
+		Step:      step,
+		Async:     async,
+		RuleURL:   ruleURL,
 	}
 }
