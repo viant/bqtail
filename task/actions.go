@@ -12,9 +12,9 @@ import (
 
 //Actions represents actions
 type Actions struct {
-	Job       *bigquery.Job
+	Job *bigquery.Job
 	stage.Info
-	JobID string
+	JobID     string
 	OnSuccess []*Action `json:",omitempty"`
 	OnFailure []*Action `json:",omitempty"`
 }
@@ -45,9 +45,10 @@ func NewActionFromURL(ctx context.Context, fs afs.Service, URL string) (*Actions
 	if err = json.NewDecoder(reader).Decode(&actions); err != nil {
 		return nil, errors.Wrapf(err, "unable decode: %v", URL)
 	}
-	if actions.JobID != "" && actions.Info.Action == "" {
+	if actions.JobID != "" && actions.Info.DestTable == "" {
 		actions.Info = *stage.Parse(actions.JobID)
 	}
+
 	return actions, nil
 }
 
@@ -67,11 +68,12 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 
 	for i := range toRun {
 		childInfo := a.Info.ChildInfo(toRun[i].Action, i+1)
-		toRun[i].Request[base.JobIDKey] = childInfo.GetJobID()
 
+		toRun[i].Request[base.JobIDKey] = childInfo.GetJobID()
 		for k, v := range childInfo.AsMap() {
 			toRun[i].Request[k] = v
 		}
+
 		if bodyAppendable[toRun[i].Action] {
 			if responseJSON, err := json.Marshal(a); err == nil {
 				toRun[i].Request[base.ResponseKey] = string(responseJSON)
@@ -80,6 +82,7 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 		if _, ok := toRun[i].Request[base.EventIDKey]; !ok {
 			toRun[i].Request[base.EventIDKey] = a.Info.EventID
 		}
+
 		if _, ok := toRun[i].Request[base.DestTableKey]; !ok {
 			toRun[i].Request[base.DestTableKey] = job.DestTable()
 		}
@@ -92,7 +95,6 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 		if _, ok := toRun[i].Request[base.SourceKey]; !ok {
 			toRun[i].Request[base.SourceKey] = job.Source()
 		}
-
 	}
 	return toRun
 }

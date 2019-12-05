@@ -5,7 +5,6 @@ import (
 	"testing"
 )
 
-
 func TestUpdateJobId(t *testing.T) {
 
 	var useCases = []struct {

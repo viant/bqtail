@@ -20,11 +20,10 @@ type Job struct {
 	Error         string                         `json:",ommittempty"`
 	Status        string                         `json:",ommittempty"`
 	*task.Actions
-	Window *batch.Window `json:",ommittempty"`
-	Rule   *config.Rule
+	Window    *batch.Window `json:",ommittempty"`
+	Rule      *config.Rule
 	DestTable string
 }
-
 
 //GetSourceURI returns data source URI
 func (j Job) GetSourceURI() string {
@@ -49,19 +48,18 @@ func (j Job) IDSuffix() string {
 	return suffix
 }
 
-
 //GetJobID returns job ID
 func (j Job) Info() *stage.Info {
 	dest := j.Dest()
-	if ref, err := base.NewTableReference(dest);err == nil {
-		dest = ref.DatasetId +"." + ref.TableId
+	if ref, err := base.NewTableReference(dest); err == nil {
+		dest = ref.DatasetId + "." + ref.TableId
 	}
 	source := ""
 	ruleURL := ""
-	async:= false
+	async := false
 	if j.Rule != nil {
 		async = j.Rule.Async
-		ruleURL =  j.Rule.Info.URL
+		ruleURL = j.Rule.Info.URL
 	}
 	if j.Window != nil {
 		source = j.Window.SourceURL
@@ -85,9 +83,6 @@ func (j Job) Dest() string {
 	}
 	return j.Load.DestinationTable.DatasetId + stage.PathElementSeparator + j.Load.DestinationTable.TableId
 }
-
-
-
 
 //SetIfError sets non nil error
 func (j *Job) SetIfError(err error) {

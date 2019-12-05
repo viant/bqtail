@@ -9,7 +9,6 @@ import (
 
 var srv Service
 
-
 //Singleton returns service
 func Singleton(ctx context.Context) (Service, error) {
 	if srv != nil {

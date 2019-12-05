@@ -51,7 +51,6 @@ func (c *Config) BuildDoneLoadURL(info *stage.Info) string {
 	return url.Join(c.DoneIngestionURL, path.Join(info.DestTable, date, info.EventID+ActionExt))
 }
 
-
 //BuildTaskURL returns an action url for supplied event ID
 func (c *Config) BuildTaskURL(info *stage.Info) string {
 	date := time.Now().Format(DateLayout)
@@ -116,7 +115,6 @@ func (c *Config) Init(ctx context.Context) error {
 	}
 	return nil
 }
-
 
 //Validate checks if config is valid
 func (c *Config) Validate() error {

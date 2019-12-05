@@ -24,7 +24,6 @@ const (
 	//LocationExt location extension
 	LocationExt = ".loc"
 
-
 	//SourceURLKey source key
 	SourceURLKey = "SourceURL"
 
@@ -73,7 +72,7 @@ const (
 	//SourceTableExpr source table epxression
 	SourceTableExpr = "$SourceTable"
 	//DestTableKey dest table key
-	DestTableKey = "destTable"
+	DestTableKey = "jobDestTable"
 	//DestTableExpr dest table expression
 	DestTableExpr = "$DestTable"
 

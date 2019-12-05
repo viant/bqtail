@@ -12,8 +12,6 @@ var bodyAppendable = map[string]bool{
 	"notify": true,
 }
 
-
-
 //replacements replacements key
 var replacements = map[string]string{
 	base.ErrorKey:       base.ErrorExpr,

@@ -6,14 +6,13 @@ import (
 	"strings"
 )
 
-
 //PostActioner represents PostActioner
 type PostActioner interface {
 	PostActions() *Actions
 }
 
 //Action represents route action
-type 	Action struct {
+type Action struct {
 	Action  string
 	Request map[string]interface{}
 }
@@ -60,7 +59,7 @@ func (a *ServiceAction) NewRequest(action *Action) (Request, error) {
 	for k, v := range action.Request {
 		req[k] = v
 		text, ok := v.(string)
-		if ! ok  {
+		if !ok {
 			continue
 		}
 		for key, exp := range replacements {

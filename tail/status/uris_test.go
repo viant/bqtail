@@ -10,19 +10,19 @@ import (
 
 func TestURIs_Classify(t *testing.T) {
 	var useCases = []struct {
-		description     string
-		job             string
-		expectMissing   []string
-		expectCorrupted []string
+		description         string
+		job                 string
+		expectMissing       []string
+		expectCorrupted     []string
 		expectInvalidSchema []string
-		expectedValid   []string
+		expectedValid       []string
 	}{
 		{
-			description:     "missing file in gs",
-			expectCorrupted: []string{},
-			expectInvalidSchema:   []string{},
-			expectMissing:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
-			expectedValid:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
+			description:         "missing file in gs",
+			expectCorrupted:     []string{},
+			expectInvalidSchema: []string{},
+			expectMissing:       []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
+			expectedValid:       []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
 			job: `{
   "configuration": {
     "jobType": "LOAD",
@@ -74,11 +74,11 @@ func TestURIs_Classify(t *testing.T) {
 		},
 
 		{
-			description:     "missing file in bigstore",
-			expectCorrupted: []string{},
-			expectInvalidSchema:   []string{},
-			expectMissing:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
-			expectedValid:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
+			description:         "missing file in bigstore",
+			expectCorrupted:     []string{},
+			expectInvalidSchema: []string{},
+			expectMissing:       []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
+			expectedValid:       []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
 			job: `{
   "configuration": {
     "jobType": "LOAD",
@@ -130,11 +130,11 @@ func TestURIs_Classify(t *testing.T) {
 		},
 
 		{
-			description:     "corrupted file",
-			expectMissing:   []string{},
-			expectInvalidSchema:   []string{},
-			expectCorrupted: []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
-			expectedValid:   []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
+			description:         "corrupted file",
+			expectMissing:       []string{},
+			expectInvalidSchema: []string{},
+			expectCorrupted:     []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log-3.2019-11-19_19-33.1.i-0c50bdd516f3eb445.gz-v0.avro"},
+			expectedValid:       []string{"gs://mybucket/nobid/xlog.request/2019/11/19/19/xlog.request.log.2019-11-19_19-41.1.i-03d29a135680c7b13.gz-v0.avro"},
 			job: `{
   "configuration": {
     "jobType": "LOAD",
@@ -186,14 +186,12 @@ func TestURIs_Classify(t *testing.T) {
 }`,
 		},
 
-
-
 		{
-			description:     "invalid schema",
-			expectMissing:   []string{},
-			expectCorrupted:[]string{},
+			description:         "invalid schema",
+			expectMissing:       []string{},
+			expectCorrupted:     []string{},
 			expectInvalidSchema: []string{"gs://myproject_bqtail/data/case018/dummy2.json"},
-			expectedValid:   []string{"gs://myproject_bqtail/data/case018/dummy1.json"},
+			expectedValid:       []string{"gs://myproject_bqtail/data/case018/dummy1.json"},
 			job: `{
   "configuration": {
     "jobType": "LOAD",

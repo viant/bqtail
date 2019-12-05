@@ -8,22 +8,17 @@ import (
 	"strings"
 )
 
-
-
 const (
-	notFoundReason   = "notFound"
+	notFoundReason = "notFound"
 )
-
 
 //URIs represents error classified URIs
 type URIs struct {
-	Valid []string `json:",omitempty"`
+	Valid         []string `json:",omitempty"`
 	InvalidSchema []string `json:",omitempty"`
-	Missing []string `json:",omitempty"`
-	Corrupted []string `json:",omitempty"`
+	Missing       []string `json:",omitempty"`
+	Corrupted     []string `json:",omitempty"`
 }
-
-
 
 func (u *URIs) Classify(ctx context.Context, fs afs.Service, job *bigquery.Job) {
 	var URIs = make(map[string]bool)
@@ -64,7 +59,6 @@ func (u *URIs) Classify(ctx context.Context, fs afs.Service, job *bigquery.Job) 
 		u.Corrupted = append(u.Corrupted, element.Location)
 	}
 
-
 	var valid = make([]string, 0)
 	for URI := range URIs {
 		if fs != nil {
@@ -76,9 +70,6 @@ func (u *URIs) Classify(ctx context.Context, fs afs.Service, job *bigquery.Job) 
 	}
 	u.Valid = valid
 }
-
-
-
 
 func getInvalidSchemaLocations(job *bigquery.Job) map[string]bool {
 	var schemaError = make(map[string]bool)
@@ -93,13 +84,12 @@ func getInvalidSchemaLocations(job *bigquery.Job) map[string]bool {
 	return schemaError
 }
 
-
 //NewURIs create am URIs
-func NewURIs() *URIs{
+func NewURIs() *URIs {
 	return &URIs{
-		Valid: make([]string, 0),
+		Valid:         make([]string, 0),
 		InvalidSchema: make([]string, 0),
-		Missing: make([]string, 0),
-		Corrupted: make([]string, 0),
+		Missing:       make([]string, 0),
+		Corrupted:     make([]string, 0),
 	}
 }

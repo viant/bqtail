@@ -128,7 +128,7 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 		age := time.Now().Sub(objects[i].ModTime())
 		if objects[i].IsDir() {
 			if err := s.processURL(ctx, URL, response, jobsByID); err != nil {
-				if ! IsContextError(err) {
+				if !IsContextError(err) {
 					response.AddError(err)
 				}
 			}
@@ -200,9 +200,7 @@ func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Respo
 
 //notify notify bqtail
 func (s *service) notify(ctx context.Context, job *contract.Job) error {
-
 	info := stage.Parse(job.ID)
-
 	taskURL := s.config.BuildTaskURL(info)
 	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
 }

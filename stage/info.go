@@ -38,7 +38,11 @@ func (i *Info) ID() string {
 
 //JobFilename returns job filename
 func (i *Info) JobFilename() string {
-	return i.DestTable + PathElementSeparator + fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action) + PathElementSeparator + i.Suffix
+	dest := i.DestTable
+	if dest != "" {
+		dest += PathElementSeparator
+	}
+	return dest + fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action) + PathElementSeparator + i.Suffix
 }
 
 //nopActions represents nop actions
@@ -56,7 +60,7 @@ func (i *Info) ChildInfo(action string, step int) *Info {
 	if nopActions[action] {
 		suffix = nopAction
 	}
-	return &Info{
+	result := &Info{
 		SourceURI: i.SourceURI,
 		RuleURL:   i.RuleURL,
 		DestTable: i.DestTable,
@@ -66,6 +70,7 @@ func (i *Info) ChildInfo(action string, step int) *Info {
 		Action:    action,
 		Async:     i.Async,
 	}
+	return result
 }
 
 func (i *Info) Wrap(action string) *Info {
@@ -87,7 +92,7 @@ func (i *Info) Wrap(action string) *Info {
 
 //GetJobID returns  a job ID
 func (i *Info) GetJobID() string {
-	ID := i.ID()
+	ID := i.JobFilename()
 	return Decode(ID)
 }
 
@@ -120,7 +125,7 @@ func Parse(encoded string) *Info {
 		result.Suffix = DispatchJob
 	}
 	elements := strings.Split(encoded, "/")
-	if len(elements) < 3 {
+	if len(elements) < 2 {
 		result.DestTable = strings.Join(elements[:len(elements)-1], PathElementSeparator)
 		result.EventID = fmt.Sprintf("%v", time.Now().Nanosecond()%10000)
 	} else {

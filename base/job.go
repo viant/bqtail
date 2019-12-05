@@ -73,7 +73,6 @@ func (e *Job) Dest() string {
 	return ""
 }
 
-
 //SourceTable returns dest table
 func (e *Job) SourceTable() string {
 	if e.Configuration == nil {
@@ -137,5 +136,3 @@ func JobError(job *bigquery.Job) error {
 	}
 	return nil
 }
-
-

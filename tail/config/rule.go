@@ -33,7 +33,6 @@ func (r *Rule) IsAppend() bool {
 	return r.Dest.WriteDisposition == "" || r.Dest.WriteDisposition == "WRITE_APPEND"
 }
 
-
 func (r *Rule) DestTable(URL string, modTime time.Time) string {
 	table, _ := r.Dest.ExpandTable(r.Dest.Table, modTime, URL)
 	if table == "" {
@@ -41,7 +40,6 @@ func (r *Rule) DestTable(URL string, modTime time.Time) string {
 	}
 	return table
 }
-
 
 //HasMatch returns true if URL matches prefix or suffix
 func (r *Rule) HasMatch(URL string) bool {
