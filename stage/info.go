@@ -15,9 +15,11 @@ const (
 	DispatchJob = "dispatch"
 	//TailJob tail job name
 	TailJob = "tail"
-
+	//no big query operation task
 	nopAction = "nop"
 )
+
+
 
 //Info represents processing stage
 type Info struct {
@@ -115,6 +117,7 @@ func Decode(jobID string) string {
 
 //Parse parse encoded job ID
 func Parse(encoded string) *Info {
+	encoded = strings.Replace(encoded, ".json", "", 1)
 	encoded = strings.Replace(encoded, PathElementSeparator, "/", strings.Count(encoded, PathElementSeparator))
 	result := &Info{
 		Suffix: TailJob,

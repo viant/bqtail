@@ -42,8 +42,9 @@ type Config struct {
 
 //BuildActiveLoadURL returns active action URL for supplied event id
 func (c *Config) BuildActiveLoadURL(info *stage.Info) string {
-	return url.Join(c.ActiveIngestionURL, path.Join(info.DestTable, info.EventID+ActionExt))
+	return url.Join(c.ActiveIngestionURL, info.DestTable +stage.PathElementSeparator + info.EventID+ActionExt)
 }
+
 
 //BuildDoneLoadURL returns done action URL for supplied event id
 func (c *Config) BuildDoneLoadURL(info *stage.Info) string {

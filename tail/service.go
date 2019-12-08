@@ -531,7 +531,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 func (s *service) runPostLoadActions(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	actions, err := task.NewActionFromURL(ctx, s.fs, request.SourceURL)
 	if err != nil {
-		object, _ := s.fs.Object(ctx, request.SourceURL)
+		object, _ := s.fs.Object(ctx, request.SourceURL, option.NewObjectKind(true))
 		if object == nil {
 			response.NotFoundError = err.Error()
 			return nil
@@ -569,7 +569,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 func (s *service) runBatch(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	window, err := batch.GetWindow(ctx, request.SourceURL, s.fs)
 	if err != nil {
-		object, _ := s.fs.Object(ctx, request.SourceURL)
+		object, _ := s.fs.Object(ctx, request.SourceURL, option.NewObjectKind(true))
 		if object == nil {
 			response.NotFoundError = err.Error()
 			return nil
