@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/toolbox"
 	"log"
 	"net/http"
 )
@@ -37,6 +38,12 @@ func checkBqTailPerformance(writer http.ResponseWriter, httpRequest *http.Reques
 	if httpRequest.ContentLength > 0 {
 		if err = json.NewDecoder(httpRequest.Body).Decode(&request); err != nil {
 			return errors.Wrapf(err, "failed to decode %T", request)
+		}
+	} else {
+		if err := httpRequest.ParseForm(); err == nil {
+			if len(httpRequest.Form) > 0 {
+				request.IncludeDone = toolbox.AsBoolean(httpRequest.Form.Get("IncludeDone"))
+			}
 		}
 	}
 	ctx := context.Background()
