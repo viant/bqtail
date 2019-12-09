@@ -1,6 +1,6 @@
 package info
 
 type Destination struct {
-	Table   string
-	RuleURL string
+	Table   string `json:",omitempty"`
+	RuleURL string `json:",omitempty"`
 }
