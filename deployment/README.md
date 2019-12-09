@@ -147,5 +147,5 @@ endly deploy authWith=myGoogleSecret.json
 **On Google Cloud Platform:**
 
 ```bash
-curl --data '{"IncludeDone":true}' -X POST  -H "Content-Type: application/json"  $monitorEndpoint
+curl --data '{"IncludeDone":false}' -X POST  -H "Content-Type: application/json"  $monitorEndpoint
 ```

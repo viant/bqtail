@@ -34,8 +34,10 @@ func checkBqTailPerformance(writer http.ResponseWriter, httpRequest *http.Reques
 		}
 	}()
 	request := &mon.Request{}
-	if err = json.NewDecoder(httpRequest.Body).Decode(&request); err != nil {
-		return errors.Wrapf(err, "failed to decode %T", request)
+	if httpRequest.ContentLength > 0 {
+		if err = json.NewDecoder(httpRequest.Body).Decode(&request); err != nil {
+			return errors.Wrapf(err, "failed to decode %T", request)
+		}
 	}
 	ctx := context.Background()
 	service, err := mon.Singleton(ctx, base.ConfigEnvKey)
