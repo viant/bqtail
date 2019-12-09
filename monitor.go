@@ -45,6 +45,7 @@ func checkBqTailPerformance(writer http.ResponseWriter, httpRequest *http.Reques
 		return err
 	}
 	response := service.Check(ctx, request)
+	writer.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(writer).Encode(response); err != nil {
 		return err
 	}
