@@ -12,7 +12,7 @@ type Request struct {
 //Response represents monitoring response
 type Response struct {
 	Status string
-	Error  string
+	Error  string `json:",omitempty"`
 	*Info
 	Dest map[string]*Info
 }
