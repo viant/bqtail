@@ -18,7 +18,7 @@ func BqTailMonitor(w http.ResponseWriter, r *http.Request) {
 			_ = r.Body.Close()
 		}()
 	}
-	err := checkStorage(w, r)
+	err := checkBqTailPerformance(w, r)
 	if err != nil {
 		log.Print(err)
 	}
@@ -27,7 +27,7 @@ func BqTailMonitor(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func checkStorage(writer http.ResponseWriter, httpRequest *http.Request) (err error) {
+func checkBqTailPerformance(writer http.ResponseWriter, httpRequest *http.Request) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
