@@ -19,15 +19,17 @@ func (m *Metric) Add(metric *Metric, addDelay bool) {
 	if m.Max.IsZero() {
 		m.Max = metric.Max
 	}
-	if metric.Min.Before(m.Min) {
-		m.Min = metric.Min
-	}
-	if m.Min.IsZero() {
-		m.Min = metric.Min
-	}
 	if metric.Max.After(m.Max) {
 		m.Max = metric.Max
 	}
+
+	if m.Min.IsZero() {
+		m.Min = metric.Min
+	}
+	if metric.Min.Before(m.Min) {
+		m.Min = metric.Min
+	}
+
 	if addDelay {
 		delayInSec := time.Now().Sub(m.Min).Seconds()
 		if delayInSec > 0 {
