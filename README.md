@@ -153,37 +153,6 @@ The following define rule to ingest data in batches within 60 sec time window in
 The following [Deployment](deployment/README.md) details generic deployment.
 
 
-## Monitoring 
-
-
-[BqTailMonitor](mon) can be used to monitor trigger and error buckets.
-
-
-**On Google Cloud Platform:**
-
-```bash
-curl -d @monitor.json -X POST  -H "Content-Type: application/json"  $monitorEndpoint
-```
-
-[@monitor.json](usage/monitor.json)
-```json
-{
-  "ConfigURL":    "gs://${configBucket}/BqTail/config.json",
-  "TriggerURL":   "gs://${triggerBucket}",
-  "UnprocessedDuration": "1hours",
-  "ErrorURL":     "gs://${opsBucket}/BqTail/errors/",
-  "ErrorRecency": "3hours"
-}
-```
-
-_where:_
-- **UnprocessedDuration** - check for any unprocessed data file over specified time
-- **ErrorRecency** - specified errors within specified time
-
-- TriggerBucket should not have very old files
-- DeferTaskURL should not have very old files, unless there is processsing error
-- BatchURL should not have very old files, unless there is processing error
-
 
 
 ## End to end testing

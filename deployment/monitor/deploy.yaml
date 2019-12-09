@@ -5,6 +5,9 @@ init:
   functionName: BqTailMonitor
   gcp: ${secrets.$gcpCredentials}
   serviceAccount: $gcp.ClientEmail
+  projectID: $gcp.ProjectID
+  prefix: $Replace(${projectID},'-','_')
+  configBucket: ${prefix}_config
 
 pipeline:
 
@@ -38,6 +41,7 @@ pipeline:
       timeout: 540s
       serviceAccountEmail: $serviceAccount
       environmentVariables:
+        CONFIG: gs://${configBucket}/BqTail/config.json
         LOGGING: 'true'
       source:
         URL: ${appPath}/

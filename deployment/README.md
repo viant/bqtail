@@ -135,3 +135,17 @@ git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment/monitor
 endly deploy authWith=myGoogleSecret.json
 ```
+
+
+
+## Monitoring 
+
+
+[BqTailMonitor](../mon) can be used to monitor bq tail performance for each table destination.
+
+
+**On Google Cloud Platform:**
+
+```bash
+curl --data '{"IncludeDone":true}' -X POST  -H "Content-Type: application/json"  $monitorEndpoint
+```
