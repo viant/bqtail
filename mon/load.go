@@ -2,6 +2,7 @@ package mon
 
 import (
 	"bqtail/base"
+	"bqtail/mon/info"
 	"bqtail/stage"
 	"strings"
 	"time"
@@ -13,22 +14,18 @@ func (l loads) groupByDest() map[string]*load {
 	var result = make(map[string]*load)
 	for i, ld := range l {
 		_, ok := result[ld.dest]
-		if ! ok {
+		if !ok {
 			result[ld.dest] = l[i]
 		}
-		result[ld.dest].count++
-		if ld.started.Before(result[ld.dest].started) {
-			result[ld.dest].started = ld.started
-		}
+		result[ld.dest].AddEvent(result[ld.dest].started)
 	}
 	return result
 }
 
-
 type load struct {
 	dest    string
 	eventID string
-	count   int
+	info.Metric
 	started time.Time
 }
 

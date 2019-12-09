@@ -5,22 +5,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-
 //Request represents monitoring request
 type Request struct {
-	TriggerBucket             string
+	TriggerBucket string
 }
-
-
 
 //Response represents monitoring response
 type Response struct {
 	Status string
-	Error string
-	Info
-	Destinations []*Info
+	Error  string
+	*Info
+	ByDestination []*Info
 }
-
 
 //Validate check if request is valid
 func (r *Request) Validate() (err error) {
@@ -33,6 +29,8 @@ func (r *Request) Validate() (err error) {
 //NewResponse create a response
 func NewResponse() *Response {
 	return &Response{
-		Status: base.StatusOK,
+		ByDestination: make([]*Info, 0),
+		Status:        base.StatusOK,
+		Info:          NewInfo(),
 	}
 }

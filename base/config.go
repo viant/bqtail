@@ -20,36 +20,34 @@ var cloudFunctionRegionEnvKeys = []string{"FUNCTION_REGION", "GOOGLE_CLOUD_REGIO
 
 //Config represents base config
 type Config struct {
-	URL                string
-	RunOnce            bool
-	ProjectID          string
-	Region             string
-	AsyncTaskURL       string
-	AsyncBatchURL      string
-	ActiveIngestionURL string
-	DoneIngestionURL   string
-	BatchURL           string
-	JournalURL         string
-	TriggerBucket      string
-	LoadJobPrefix      string
-	BqJobPrefix        string
-	BatchPrefix        string
-	ErrorURL           string
-	CorruptedFileURL   string
-	InvalidSchemaURL   string
-	SlackCredentials   *Secret
+	URL              string
+	RunOnce          bool
+	ProjectID        string
+	Region           string
+	AsyncTaskURL     string
+	SyncTaskURL      string
+	ActiveLoadURL    string
+	DoneLoadURL      string
+	JournalURL       string
+	TriggerBucket    string
+	LoadJobPrefix    string
+	BqJobPrefix      string
+	BatchPrefix      string
+	ErrorURL         string
+	CorruptedFileURL string
+	InvalidSchemaURL string
+	SlackCredentials *Secret
 }
 
 //BuildActiveLoadURL returns active action URL for supplied event id
 func (c *Config) BuildActiveLoadURL(info *stage.Info) string {
-	return url.Join(c.ActiveIngestionURL, info.DestTable +stage.PathElementSeparator + info.EventID+ActionExt)
+	return url.Join(c.ActiveLoadURL, info.DestTable+stage.PathElementSeparator+info.EventID+ActionExt)
 }
-
 
 //BuildDoneLoadURL returns done action URL for supplied event id
 func (c *Config) BuildDoneLoadURL(info *stage.Info) string {
 	date := time.Now().Format(DateLayout)
-	return url.Join(c.DoneIngestionURL, path.Join(info.DestTable, date, info.EventID+ActionExt))
+	return url.Join(c.DoneLoadURL, path.Join(info.DestTable, date, info.EventID+ActionExt))
 }
 
 //BuildTaskURL returns an action url for supplied event ID
@@ -105,11 +103,11 @@ func (c *Config) Init(ctx context.Context) error {
 	if c.BatchPrefix == "" {
 		c.BatchPrefix = BatchPrefix
 	}
-	if c.ActiveIngestionURL == "" {
-		c.ActiveIngestionURL = url.Join(c.JournalURL, ActiveLoadSuffix)
+	if c.ActiveLoadURL == "" {
+		c.ActiveLoadURL = url.Join(c.JournalURL, ActiveLoadSuffix)
 	}
-	if c.DoneIngestionURL == "" {
-		c.DoneIngestionURL = url.Join(c.JournalURL, DoneLoadSuffix)
+	if c.DoneLoadURL == "" {
+		c.DoneLoadURL = url.Join(c.JournalURL, DoneLoadSuffix)
 	}
 	if c.InvalidSchemaURL == "" {
 		c.InvalidSchemaURL = url.Join(c.JournalURL, InvalidSchemaLocation)
@@ -127,9 +125,6 @@ func (c *Config) Validate() error {
 	}
 	if c.AsyncTaskURL == "" {
 		return fmt.Errorf("asyncTaskURL were empty")
-	}
-	if c.AsyncBatchURL == "" {
-		return fmt.Errorf("asyncBatchURL were empty")
 	}
 	if c.TriggerBucket == "" {
 		return fmt.Errorf("triggerBucket were empty")

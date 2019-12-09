@@ -56,10 +56,8 @@ const (
 	//SourceTableKey source table key
 	SourceTableKey = "sourceTable"
 
-	//UnclassifiedStatus
-	UnclassifiedStatus = "unclassified"
-	//StatusUnProcess status for unprocessed file
-	StatusUnProcess = "unprocessed"
+	//StatusStalled status for unprocessed file
+	StatusStalled = "stalled"
 	//ErrorSuffix error suffix
 	ErrorSuffix = "-error"
 

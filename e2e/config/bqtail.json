@@ -1,9 +1,9 @@
 {
-  "BatchURL": "gs://${opsBucket}/BqTail/Batch/",
+
   "ErrorURL": "gs://${opsBucket}/BqTail/errors/",
   "JournalURL": "gs://${opsBucket}/BqTail/Journal/",
   "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
-  "AsyncBatchURL": "gs://${dispatchBucket}/BqDispatch/Batch/",
+  "SyncTaskURL": "gs://${opsBucket}/BqTail/Tasks/",
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqTail/Rules/",
   "TriggerBucket": "${triggerBucket}",

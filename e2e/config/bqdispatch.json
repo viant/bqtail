@@ -3,7 +3,6 @@
   "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
   "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
   "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
-  "AsyncBatchURL": "gs://${dispatchBucket}/BqDispatch/Batch/",
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
   "CheckInMs": 10,

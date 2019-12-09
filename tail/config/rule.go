@@ -13,14 +13,14 @@ import (
 
 //Rule represent matching resource route
 type Rule struct {
-	Disabled     bool          `json:",omitempty"`
-	Dest         *Destination  `json:",omitempty"`
-	When         matcher.Basic `json:",omitempty"`
-	Batch        *Batch        `json:",omitempty"`
-	task.Actions `json:",omitempty"`
-	Info         base.Info `json:",omitempty"`
-	Group        string    `json:",omitempty"`
-	StalledThresholdInSec int `description:"duration after which unprocess file will be flag as error"`
+	Disabled              bool          `json:",omitempty"`
+	Dest                  *Destination  `json:",omitempty"`
+	When                  matcher.Basic `json:",omitempty"`
+	Batch                 *Batch        `json:",omitempty"`
+	task.Actions          `json:",omitempty"`
+	Info                  base.Info `json:",omitempty"`
+	Group                 string    `json:",omitempty"`
+	StalledThresholdInSec int       `description:"duration after which unprocess file will be flag as error"`
 }
 
 //IsAppend returns true if appends

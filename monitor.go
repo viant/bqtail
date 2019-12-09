@@ -13,4 +13,3 @@ func BqTailMonitor(w http.ResponseWriter, r *http.Request) {
 	}
 	//work in progress...
 }
-

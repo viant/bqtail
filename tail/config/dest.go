@@ -93,6 +93,32 @@ func (d *Destination) Expand(dest string, created time.Time, source string) (str
 	return dest, err
 }
 
+func toComparableTable(table string) string {
+	table = strings.Replace(table, ":", "_", len(table))
+	table = strings.Replace(table, ".", "_", len(table))
+	return table
+}
+
+func (d *Destination) Match(candidate string) bool {
+	table := d.Table
+	index := strings.Index(table, "$")
+	if index != -1 {
+		table = string(table[:index])
+	}
+	if strings.Contains(candidate, table) {
+		return true
+	}
+	if ref, err := base.NewTableReference(table); err == nil {
+		table = ref.DatasetId + "." + ref.TableId
+	}
+	if strings.Contains(candidate, table) {
+		return true
+	}
+	table = toComparableTable(table)
+	candidate = toComparableTable(candidate)
+	return strings.Contains(candidate, table)
+}
+
 //TableReference returns table reference, source table syntax: project:dataset:table
 func (d *Destination) TableReference(created time.Time, source string) (*bigquery.TableReference, error) {
 	return d.CustomTableReference(d.Table, created, source)

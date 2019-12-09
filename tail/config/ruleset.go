@@ -77,6 +77,20 @@ func (r Ruleset) Match(URL string) []*Rule {
 	return matched
 }
 
+//HasMatch returns the first match route
+func (r Ruleset) MatchByTable(table string) *Rule {
+	if len(r.Rules) == 0 {
+		return nil
+	}
+
+	for i := range r.Rules {
+		if r.Rules[i].Dest.Match(table) {
+			return r.Rules[i]
+		}
+	}
+	return nil
+}
+
 //Validate checks if routes are valid
 func (r Ruleset) Validate() error {
 	if len(r.Rules) == 0 {
@@ -90,13 +104,13 @@ func (r Ruleset) Validate() error {
 	return nil
 }
 
-//UsesBatch returns true if routes uses batch
-func (r Ruleset) UsesBatch() bool {
+//UsesBatchInSyncMode returns true if routes uses batch
+func (r Ruleset) UsesBatchInSyncMode() bool {
 	if len(r.Rules) == 0 {
 		return false
 	}
 	for i := range r.Rules {
-		if r.Rules[i].Batch != nil {
+		if r.Rules[i].Batch != nil && r.Rules[i].IsSyncMode() {
 			return true
 		}
 	}

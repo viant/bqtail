@@ -57,7 +57,7 @@ func (s *service) Init(ctx context.Context) error {
 		return err
 	}
 	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.Config)
-	s.batch = batch.New(s.config.BatchURL, s.fs)
+	s.batch = batch.New(s.fs)
 	bq.InitRegistry(s.Registry, s.bq)
 	storage.InitRegistry(s.Registry, storage.New(s.fs))
 	return err

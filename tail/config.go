@@ -38,9 +38,9 @@ func (c *Config) initLoadedRules() {
 	}
 	for _, route := range c.Rules {
 		if route.Batch != nil {
-			baseURL := c.BatchURL
+			baseURL := c.SyncTaskURL
 			if route.Async {
-				baseURL = c.AsyncBatchURL
+				baseURL = c.AsyncTaskURL
 			}
 			route.Batch.Init(baseURL)
 		}
@@ -68,8 +68,8 @@ func (c *Config) Validate() error {
 	if c.CorruptedFileURL == "" {
 		return fmt.Errorf("corruptedFileURL were empty")
 	}
-	if c.Ruleset.UsesBatch() && c.BatchURL == "" {
-		return fmt.Errorf("batchURL were empty")
+	if c.Ruleset.UsesBatchInSyncMode() && c.SyncTaskURL == "" {
+		return fmt.Errorf("syncTaskURL were empty")
 	}
 	return c.Ruleset.Validate()
 }

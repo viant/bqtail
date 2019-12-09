@@ -19,18 +19,17 @@ const (
 	nopAction = "nop"
 )
 
-
-
 //Info represents processing stage
 type Info struct {
-	SourceURI string `json:",omitempty"`
-	DestTable string `json:",omitempty"`
-	EventID   string `json:",omitempty"`
-	Action    string `json:",omitempty"`
-	Suffix    string `json:",omitempty"`
-	Step      int    `json:",omitempty"`
-	Async     bool   `json:",omitempty"`
-	RuleURL   string `json:",omitempty"`
+	SourceURI  string    `json:",omitempty"`
+	DestTable  string    `json:",omitempty"`
+	EventID    string    `json:",omitempty"`
+	Action     string    `json:",omitempty"`
+	Suffix     string    `json:",omitempty"`
+	Step       int       `json:",omitempty"`
+	Async      bool      `json:",omitempty"`
+	RuleURL    string    `json:",omitempty"`
+	SourceTime time.Time `json:",omitempty"`
 }
 
 //ID returns stage ID
@@ -73,6 +72,13 @@ func (i *Info) ChildInfo(action string, step int) *Info {
 		Async:     i.Async,
 	}
 	return result
+}
+
+//Sequence returns step sequence
+func (i *Info) Sequence() int {
+	upper := (i.Step / 1000)
+	lower := (i.Step % 100) * 1000
+	return upper + lower
 }
 
 func (i *Info) Wrap(action string) *Info {

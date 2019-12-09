@@ -7,12 +7,14 @@ import (
 	"bqtail/service/secret"
 	"bqtail/service/slack"
 	"bqtail/service/storage"
+
 	"bqtail/stage"
 	"bqtail/task"
 	"context"
 	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/option"
+	astorage "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
@@ -23,6 +25,8 @@ import (
 	"sync/atomic"
 	"time"
 )
+
+var thinkTime = 1500 * time.Millisecond
 
 //Service represents event service
 type Service interface {
@@ -69,81 +73,93 @@ func (s *service) Init(ctx context.Context) error {
 func (s *service) Dispatch(ctx context.Context) *contract.Response {
 	response := contract.NewResponse()
 	defer response.SetTimeTaken(response.Started)
-	timeToLive := s.config.TimeToLive()
-	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
-	if timeInSec > 0 {
-		var cancelFunc context.CancelFunc
-		ctx, cancelFunc = context.WithTimeout(ctx, time.Duration(timeInSec-2)*time.Second)
-		defer cancelFunc()
-	}
-	startTime := time.Now()
-
-	for {
-		response.Reset()
-		waitGroup := &sync.WaitGroup{}
-		waitGroup.Add(2)
-		go func() {
-			defer waitGroup.Done()
-			err := s.dispatchBatchEvents(ctx, response)
-			if IsContextError(err) || IsNotFound(err) {
-				return
-			}
-			if err != nil {
-				response.SetIfError(err)
-			}
-		}()
-		go func() {
-			defer waitGroup.Done()
-			err := s.dispatchBqEvents(ctx, response)
-			if IsContextError(err) || IsNotFound(err) {
-				return
-			}
-			if err != nil {
-				response.SetIfError(err)
-			}
-		}()
-		response.Cycles++
-		waitGroup.Wait()
-		sleepTime := base.StorageListVisibilityDelay * time.Millisecond
-		if time.Now().Sub(startTime) > (timeToLive - sleepTime) {
-			break
-		}
-		time.Sleep(sleepTime)
+	err := s.dispatch(ctx, response)
+	if err != nil {
+		response.SetIfError(err)
 	}
 	return response
 }
 
-func (s *service) processURL(ctx context.Context, parentURL string, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs) error {
-	objects, err := s.fs.List(ctx, parentURL)
-	if err != nil {
-		return err
+//Dispatch dispatched BigQuery event
+func (s *service) dispatch(ctx context.Context, response *contract.Response) error {
+	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
+	remainingDuration := time.Duration(timeInSec)*time.Second - 500*time.Millisecond
+	timeoutDuration := s.config.TimeToLive()
+	if timeoutDuration > remainingDuration {
+		timeoutDuration = remainingDuration
 	}
+	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
+	defer cancelFunc()
+	sleepTime := 2 * thinkTime
+	running := int32(1)
+	for atomic.LoadInt32(&running) == 1 {
+		response.Reset()
+		waitGroup := &sync.WaitGroup{}
+		waitGroup.Add(2)
+		objects, err := s.fs.List(ctx, s.config.AsyncTaskURL)
+		if err != nil {
+			if IsContextError(err) || IsNotFound(err) {
+				err = nil
+			}
+			return err
+		}
+		go func(objects []astorage.Object) {
+			defer waitGroup.Done()
+			e := s.dispatchBatchEvents(ctx, response, objects)
+			if IsContextError(e) || IsNotFound(e) {
+				return
+			}
+			if e != nil {
+				response.SetIfError(e)
+			}
+		}(objects)
 
+		go func(objects []astorage.Object) {
+			defer waitGroup.Done()
+			err := s.dispatchBqEvents(ctx, response, objects)
+			if IsContextError(err) || IsNotFound(err) {
+				return
+			}
+			if err != nil {
+				response.SetIfError(err)
+			}
+
+		}(objects)
+		response.Cycles++
+
+		select {
+		case <-time.After(sleepTime):
+		case <-ctx.Done():
+			atomic.StoreInt32(&running, 0)
+			return nil
+		case <-func() chan bool {
+			boolChannel := make(chan bool)
+			go func() {
+				waitGroup.Wait()
+				boolChannel <- true
+			}()
+			return boolChannel
+		}():
+		}
+	}
+	return nil
+}
+
+func (s *service) notifyDoneJobs(ctx context.Context, objects []astorage.Object, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs) (err error) {
 	waitGroup := &sync.WaitGroup{}
-	for i := range objects {
-		URL := url.Join(parentURL, objects[i].Name())
-		if url.Equals(URL, parentURL) {
+	for i, object := range objects {
+		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
 			continue
 		}
 		age := time.Now().Sub(objects[i].ModTime())
-		if objects[i].IsDir() {
-			if err := s.processURL(ctx, URL, response, jobsByID); err != nil {
-				if !IsContextError(err) {
-					response.AddError(err)
-				}
-			}
-		}
-
 		//if just create skip to next
-		if age < 2*time.Second {
+		if age < thinkTime {
 			continue
 		}
-
-		if response.Jobs.Has(URL) {
+		if response.Jobs.Has(object.URL()) {
 			continue
 		}
-
-		jobID := JobID(s.Config().AsyncTaskURL, URL)
+		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
 		var state string
 		listJob, ok := jobsByID[jobID]
 		if ok {
@@ -159,7 +175,6 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 				state = job.Status.State
 			}
 		}
-
 		switch strings.ToUpper(state) {
 		case base.RunningState:
 			atomic.AddInt32(&response.RunningCount, 1)
@@ -168,12 +183,15 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 			atomic.AddInt32(&response.PendingCount, 1)
 			continue
 		}
-		job := contract.NewJob(jobID, URL, state)
+		job := contract.NewJob(jobID, object.URL(), state)
 		waitGroup.Add(1)
 		go func(job *contract.Job) {
 			defer waitGroup.Done()
-			if err = s.notify(ctx, job); err != nil {
+			err = s.notify(ctx, job)
+			if err == nil {
 				response.Jobs.Add(job)
+			} else {
+				response.AddError(err)
 			}
 		}(job)
 	}
@@ -181,7 +199,7 @@ func (s *service) processURL(ctx context.Context, parentURL string, response *co
 	return err
 }
 
-func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Response) (err error) {
+func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Response, objects []astorage.Object) (err error) {
 	startTime := time.Now()
 	modifiedAfter := startTime.Add(-(time.Minute * time.Duration(s.config.MaxJobLoopbackInMin)))
 	jobs, err := s.bq.ListJob(ctx, s.config.ProjectID, modifiedAfter, "done", "pending", "running")
@@ -194,7 +212,7 @@ func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Respo
 		jobsByID[jobs[i].JobReference.JobId] = jobs[i]
 	}
 	response.ListCount = len(jobsByID)
-	return s.processURL(ctx, s.config.AsyncTaskURL, response, jobsByID)
+	return s.notifyDoneJobs(ctx, objects, response, jobsByID)
 
 }
 
@@ -205,8 +223,7 @@ func (s *service) notify(ctx context.Context, job *contract.Job) error {
 	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
 }
 
-func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Response) (err error) {
-	objects, err := s.fs.List(ctx, s.config.AsyncBatchURL)
+func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Response, objects []astorage.Object) (err error) {
 	if len(objects) == 0 {
 		return nil
 	}

@@ -6,6 +6,81 @@ import (
 	"testing"
 )
 
+func TestRoutes_MatchByTable(t *testing.T) {
+	var useCases = []struct {
+		description string
+		Ruleset     []*Rule
+		table       string
+		expextTable string
+	}{
+		{
+			description: "dataset and table match",
+			Ruleset: []*Rule{
+				{
+					Dest: &Destination{
+						Table: "project:dataset.table1",
+					},
+				},
+				{
+					Dest: &Destination{
+						Table: "dataset.table2",
+					},
+				},
+			},
+			table:       "dataset.table1",
+			expextTable: "project:dataset.table1",
+		},
+		{
+			description: "project, dataset and table match",
+			Ruleset: []*Rule{
+				{
+					Dest: &Destination{
+						Table: "project:dataset.table1",
+					},
+				},
+				{
+					Dest: &Destination{
+						Table: "project:dataset.table2",
+					},
+				},
+			},
+			table:       "dataset.table1",
+			expextTable: "project:dataset.table1",
+		},
+		{
+			description: "partition table match",
+			Ruleset: []*Rule{
+				{
+					Dest: &Destination{
+						Table: "project:dataset.table1_$Mod(15)",
+					},
+				},
+				{
+					Dest: &Destination{
+						Table: "project:dataset.table2",
+					},
+				},
+			},
+			table:       "dataset.table1_12",
+			expextTable: "project:dataset.table1_$Mod(15)",
+		},
+	}
+
+	for _, useCase := range useCases {
+		rules := &Ruleset{
+			Rules: useCase.Ruleset,
+		}
+		rule := rules.MatchByTable(useCase.table)
+		if useCase.expextTable != "" {
+			if !assert.NotNil(t, rule, useCase.description) {
+				continue
+			}
+			assert.Equal(t, useCase.expextTable, rule.Dest.Table, useCase.description)
+		}
+	}
+
+}
+
 func TestRoutes_HasMatch(t *testing.T) {
 	var useCases = []struct {
 		description string

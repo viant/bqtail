@@ -2,6 +2,7 @@ package mon
 
 import (
 	"bqtail/base"
+	"bqtail/mon/info"
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
@@ -13,21 +14,17 @@ func (b batches) groupByDest() map[string]*batch {
 	var result = make(map[string]*batch, 0)
 	for i, batch := range b {
 		_, ok := result[batch.dest]
-		if ! ok {
+		if !ok {
 			result[batch.dest] = b[i]
 		}
-		if batch.dueToRun.After(result[batch.dest].dueToRun) {
-			result[batch.dest].dueToRun = batch.dueToRun
-		}
-		result[batch.dest].count++
+		batch.AddEvent(batch.dueToRun)
 	}
 	return result
 }
 
-
 type batch struct {
-	dest     string
-	count    int
+	dest string
+	info.Metric
 	dueToRun time.Time
 }
 

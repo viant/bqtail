@@ -31,8 +31,7 @@ type Service interface {
 }
 
 type service struct {
-	URL string
-	fs  afs.Service
+	fs afs.Service
 }
 
 func (s *service) addLocationFile(ctx context.Context, window *Window, location string) error {
@@ -202,9 +201,8 @@ func isRateError(err error) bool {
 }
 
 //New create stage service
-func New(batchURL string, storageService afs.Service) Service {
+func New(storageService afs.Service) Service {
 	return &service{
-		URL: batchURL,
-		fs:  storageService,
+		fs: storageService,
 	}
 }
