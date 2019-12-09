@@ -23,9 +23,6 @@ This bucket stores all configuration files:
     |      |     | - ruleN.json        
     | - BqDispatch    
     |      |- config.json        
-    |      |- Rules
-    |      |     | - rule_1.json
-    |      |     | - ruke_N.json        
         
 ```            
 
