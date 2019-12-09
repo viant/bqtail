@@ -12,6 +12,8 @@ import (
 	"github.com/viant/afs/url"
 	_ "github.com/viant/afsc/gs"
 	"path"
+	"sort"
+	"sync"
 	"time"
 )
 
@@ -42,24 +44,55 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	if err != nil {
 		return err
 	}
+
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(4)
 	infoDest := map[string]*Info{}
-	active, err := s.getActiveLoads(ctx)
-	if err != nil {
-		return err
-	}
-	s.updateActiveLoads(active, infoDest)
 
-	schedules, err := s.getScheduledBatches(ctx)
-	if err != nil {
-		return err
+	var active, doneLoads activeLoads
+	var schedules batches
+	var stages []*stage.Info
+	go func() {
+		defer waitGroup.Done()
+		var e error
+		if active, e = s.getActiveLoads(ctx);e != nil{
+			err = e
+		}
+	}()
+	go func() {
+		defer waitGroup.Done()
+		var e error
+		if doneLoads, e = s.getRecentlyDoneLoads(ctx);e != nil{
+			err = e
+		}
+	}()
+	go func() {
+		defer waitGroup.Done()
+		var e error
+		if schedules, e = s.getScheduledBatches(ctx);e != nil{
+			err = e
+		}
+	}()
+	go func() {
+		defer waitGroup.Done()
+		var e error
+		if stages, e = s.getLoadStages(ctx);e != nil{
+			err = e
+		}
+	}()
+	waitGroup.Wait()
+	if len(active) > 0 {
+		s.updateActiveLoads(active, infoDest)
 	}
-	s.updateBatches(schedules, infoDest)
-
-	stages, err := s.getLoadStages(ctx)
-	if err != nil {
-		return err
+	if len(doneLoads) > 0 {
+		s.updateRecentlyDone(doneLoads, infoDest)
 	}
-	s.updateStages(stages, infoDest)
+	if len(schedules) > 0 {
+		s.updateBatches(schedules, infoDest)
+	}
+	if len(stages) > 0 {
+		s.updateStages(stages, infoDest)
+	}
 	for k, inf := range infoDest {
 		response.Info.Add(inf)
 		if time.Now().Sub(inf.Active.Running.Min) > time.Hour {
@@ -74,7 +107,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	return nil
 }
 
-func (s *service) updateActiveLoads(loadsInfo loads, infoDest map[string]*Info) {
+func (s *service) updateActiveLoads(loadsInfo activeLoads, infoDest map[string]*Info) {
 	for k, v := range loadsInfo.groupByDest() {
 		inf := s.getInfo(k, infoDest)
 		if inf.Active.Running == nil {
@@ -84,6 +117,20 @@ func (s *service) updateActiveLoads(loadsInfo loads, infoDest map[string]*Info) 
 		infoDest[inf.Destination.Table] = inf
 	}
 }
+
+
+
+func (s *service) updateRecentlyDone(recentLoads activeLoads, infoDest map[string]*Info) {
+	for k, v := range recentLoads.groupByDest() {
+		inf := s.getInfo(k, infoDest)
+		if inf.Active.Done == nil {
+			inf.Active.Done = info.NewMetric()
+		}
+		inf.Active.Done.Add(&v.Metric)
+		infoDest[inf.Destination.Table] = inf
+	}
+}
+
 
 func (s *service) updateBatches(batchSlice batches, infoDest map[string]*Info) {
 	for k, v := range batchSlice.groupByDest() {
@@ -165,13 +212,19 @@ func (s *service) getScheduledBatches(ctx context.Context) (batches, error) {
 	return result, nil
 }
 
-func (s *service) getActiveLoads(ctx context.Context) (loads, error) {
-	result := loads{}
-	err := s.listActiveLoads(ctx, s.Config.ActiveLoadURL, &result)
+func (s *service) getActiveLoads(ctx context.Context) (activeLoads, error) {
+	result := activeLoads{}
+	err := s.listLoadJobs(ctx, s.Config.ActiveLoadURL, s.Config.ActiveLoadURL, &result)
 	return result, err
 }
 
-func (s *service) listActiveLoads(ctx context.Context, URL string, result *loads) error {
+func (s *service) getRecentlyDoneLoads(ctx context.Context) (activeLoads, error) {
+	result := activeLoads{}
+	err := s.listDoneLoads(ctx, s.Config.DoneLoadURL, &result)
+	return result, err
+}
+
+func (s *service) listLoadJobs(ctx context.Context, baseURL, URL string, result *activeLoads) error {
 	objects, err := s.fs.List(ctx, URL)
 	if err != nil {
 		return err
@@ -181,16 +234,48 @@ func (s *service) listActiveLoads(ctx context.Context, URL string, result *loads
 			continue
 		}
 		if object.IsDir() {
-			if err = s.listActiveLoads(ctx, object.URL(), result); err != nil {
+			if err = s.listLoadJobs(ctx, baseURL, object.URL(), result); err != nil {
 				return err
 			}
 			continue
 		}
-		*result = append(*result, parseLoad(s.ActiveLoadURL, object.URL(), object.ModTime()))
+		*result = append(*result, parseLoad(baseURL, object.URL(), object.ModTime()))
 
 	}
 	return nil
 }
+
+func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *activeLoads) error {
+	objects, err := s.fs.List(ctx, baseURL)
+	if err != nil {
+		return err
+	}
+
+	for _, destObject := range objects {
+		if url.Equals(destObject.URL(), baseURL) {
+			continue
+		}
+		hourDone, err := s.fs.List(ctx, destObject.URL())
+		if err != nil {
+			return err
+		}
+		if len(hourDone) == 0 {
+			continue
+		}
+		sortedHours := NewObjects(hourDone[1:], byModTime)
+		sort.Sort(sortedHours)
+		if len(sortedHours.Elements) == 0 {
+			continue
+		}
+
+		recentHour := sortedHours.Elements[len(sortedHours.Elements)-1]
+		if err = s.listLoadJobs(ctx, baseURL, recentHour.URL(), result); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 
 //New creates monitoring service
 func New(ctx context.Context, config *tail.Config) (Service, error) {

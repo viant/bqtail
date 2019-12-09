@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-type loads []*load
+type activeLoads []*load
 
-func (l loads) groupByDest() map[string]*load {
+func (l activeLoads) groupByDest() map[string]*load {
 	var result = make(map[string]*load)
 	for i, ld := range l {
 		_, ok := result[ld.dest]
@@ -32,8 +32,14 @@ type load struct {
 func parseLoad(baseURL string, URL string, modTime time.Time) *load {
 	relative := string(URL[len(baseURL):])
 	relative = strings.Replace(relative, stage.PathElementSeparator, "/", len(relative))
+	relative = strings.Trim(relative, "/")
 	elements := strings.Split(relative, "/")
-	eventID := strings.Replace(elements[len(elements)-1], base.ActionExt, "", 1)
+
+	if len(elements) > 2 {
+		elements  = []string{elements[0], elements[2]}
+	}
+	encoded := elements[len(elements)-1]
+	eventID := strings.Replace(encoded, base.ActionExt, "", 1)
 	dest := strings.Trim(elements[len(elements)-2], "/")
 	return &load{
 		started: modTime,

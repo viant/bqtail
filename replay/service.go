@@ -67,7 +67,6 @@ func (s *service) list(ctx context.Context, URL string, modifiedBefore *time.Tim
 	timeMatcher := matcher.NewModification(modifiedBefore, nil)
 	recursive := option.NewRecursive(true)
 	exists, _ := s.fs.Exists(ctx, URL)
-	//fmt.Printf("%v  %v\n", exists, err)
 	if !exists {
 		return []storage.Object{}, nil
 	}
