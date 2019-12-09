@@ -6,7 +6,7 @@ import (
 
 //Info represents load info
 type Info struct {
-	Destination *info.Destination
+	*info.Destination
 	*info.Activity          `json:",omitempty"`
 	Stalled     map[string]*info.Metric `json:",omitempty"`
 }

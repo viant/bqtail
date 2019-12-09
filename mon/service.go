@@ -51,7 +51,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	go func() {
 		defer waitGroup.Done()
 		var e error
-		if active, e = s.getActiveLoads(ctx);e != nil{
+		if active, e = s.getActiveLoads(ctx); e != nil {
 			err = e
 		}
 	}()
@@ -61,21 +61,21 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 		if ! request.IncludeDone {
 			return
 		}
-		if doneLoads, e = s.getRecentlyDoneLoads(ctx);e != nil{
+		if doneLoads, e = s.getRecentlyDoneLoads(ctx); e != nil {
 			err = e
 		}
 	}()
 	go func() {
 		defer waitGroup.Done()
 		var e error
-		if schedules, e = s.getScheduledBatches(ctx);e != nil{
+		if schedules, e = s.getScheduledBatches(ctx); e != nil {
 			err = e
 		}
 	}()
 	go func() {
 		defer waitGroup.Done()
 		var e error
-		if stages, e = s.getLoadStages(ctx);e != nil{
+		if stages, e = s.getLoadStages(ctx); e != nil {
 			err = e
 		}
 	}()
@@ -103,7 +103,8 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 				response.Stalled[inf.Destination.Table].AddEvent(inf.Activity.Running.Min)
 			}
 		}
-		response.ByDestination = append(response.ByDestination, infoDest[k])
+		response.Dest[k] = infoDest[k]
+
 	}
 	return nil
 }
@@ -119,8 +120,6 @@ func (s *service) updateActiveLoads(loadsInfo activeLoads, infoDest map[string]*
 	}
 }
 
-
-
 func (s *service) updateRecentlyDone(recentLoads activeLoads, infoDest map[string]*Info) {
 	for k, v := range recentLoads.groupByDest() {
 		inf := s.getInfo(k, infoDest)
@@ -131,7 +130,6 @@ func (s *service) updateRecentlyDone(recentLoads activeLoads, infoDest map[strin
 		infoDest[inf.Destination.Table] = inf
 	}
 }
-
 
 func (s *service) updateBatches(batchSlice batches, infoDest map[string]*Info) {
 	for k, v := range batchSlice.groupByDest() {
@@ -254,14 +252,13 @@ func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *act
 		return err
 	}
 
-
 	var destLocations = make(map[string]storage.Object)
 	sortedTables := NewObjects(objects[1:], byModTime)
 	sort.Sort(sortedTables)
 
 	for i, destObject := range sortedTables.Elements {
 		key := destObject.Name()
-		if rule := s.Config.MatchByTable(key);rule != nil {
+		if rule := s.Config.MatchByTable(key); rule != nil {
 			key = rule.Dest.Table
 		}
 		destLocations[key] = sortedTables.Elements[i]
@@ -290,7 +287,6 @@ func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *act
 	}
 	return nil
 }
-
 
 //New creates monitoring service
 func New(ctx context.Context, config *tail.Config) (Service, error) {

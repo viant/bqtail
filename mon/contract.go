@@ -14,14 +14,14 @@ type Response struct {
 	Status string
 	Error  string
 	*Info
-	ByDestination []*Info
+	Dest map[string]*Info
 }
 
 
 //NewResponse create a response
 func NewResponse() *Response {
 	return &Response{
-		ByDestination: make([]*Info, 0),
+		Dest: make(map[string]*Info),
 		Status:        base.StatusOK,
 		Info:          NewInfo(),
 	}
