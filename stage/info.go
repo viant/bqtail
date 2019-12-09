@@ -77,7 +77,7 @@ func (i *Info) ChildInfo(action string, step int) *Info {
 //Sequence returns step sequence
 func (i *Info) Sequence() int {
 	upper := (i.Step / 1000)
-	lower := (i.Step % 100) * 1000
+	lower := (i.Step % 100)
 	return upper + lower
 }
 

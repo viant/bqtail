@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/cache"
+	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	_ "github.com/viant/afsc/gs"
 	"path"
@@ -39,12 +40,7 @@ func (s *service) Check(ctx context.Context, request *Request) *Response {
 	return response
 }
 
-func (s *service) check(ctx context.Context, request *Request, response *Response) error {
-	err := request.Validate()
-	if err != nil {
-		return err
-	}
-
+func (s *service) check(ctx context.Context, request *Request, response *Response) (err error) {
 	waitGroup := &sync.WaitGroup{}
 	waitGroup.Add(4)
 	infoDest := map[string]*Info{}
@@ -62,6 +58,9 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	go func() {
 		defer waitGroup.Done()
 		var e error
+		if ! request.IncludeDone {
+			return
+		}
 		if doneLoads, e = s.getRecentlyDoneLoads(ctx);e != nil{
 			err = e
 		}
@@ -95,12 +94,14 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	}
 	for k, inf := range infoDest {
 		response.Info.Add(inf)
-		if time.Now().Sub(inf.Active.Running.Min) > time.Hour {
-			if _, has := response.Stalled[inf.Destination.Table]; !has {
-				response.Stalled[inf.Destination.Table] = info.NewMetric()
+		if inf.Activity.Running != nil {
+			if time.Now().Sub(inf.Activity.Running.Min) > time.Hour {
+				if _, has := response.Stalled[inf.Destination.Table]; !has {
+					response.Stalled[inf.Destination.Table] = info.NewMetric()
+				}
+				response.Status = base.StatusStalled
+				response.Stalled[inf.Destination.Table].AddEvent(inf.Activity.Running.Min)
 			}
-			response.Status = base.StatusStalled
-			response.Stalled[inf.Destination.Table].AddEvent(inf.Active.Running.Min)
 		}
 		response.ByDestination = append(response.ByDestination, infoDest[k])
 	}
@@ -110,10 +111,10 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 func (s *service) updateActiveLoads(loadsInfo activeLoads, infoDest map[string]*Info) {
 	for k, v := range loadsInfo.groupByDest() {
 		inf := s.getInfo(k, infoDest)
-		if inf.Active.Running == nil {
-			inf.Active.Running = info.NewMetric()
+		if inf.Activity.Running == nil {
+			inf.Activity.Running = info.NewMetric()
 		}
-		inf.Active.Running.Add(&v.Metric)
+		inf.Activity.Running.Add(&v.Metric, true)
 		infoDest[inf.Destination.Table] = inf
 	}
 }
@@ -123,10 +124,10 @@ func (s *service) updateActiveLoads(loadsInfo activeLoads, infoDest map[string]*
 func (s *service) updateRecentlyDone(recentLoads activeLoads, infoDest map[string]*Info) {
 	for k, v := range recentLoads.groupByDest() {
 		inf := s.getInfo(k, infoDest)
-		if inf.Active.Done == nil {
-			inf.Active.Done = info.NewMetric()
+		if inf.Activity.Done == nil {
+			inf.Activity.Done = info.NewMetric()
 		}
-		inf.Active.Done.Add(&v.Metric)
+		inf.Activity.Done.Add(&v.Metric, false)
 		infoDest[inf.Destination.Table] = inf
 	}
 }
@@ -135,10 +136,10 @@ func (s *service) updateRecentlyDone(recentLoads activeLoads, infoDest map[strin
 func (s *service) updateBatches(batchSlice batches, infoDest map[string]*Info) {
 	for k, v := range batchSlice.groupByDest() {
 		inf := s.getInfo(k, infoDest)
-		if inf.Active.Scheduled == nil {
-			inf.Active.Scheduled = info.NewMetric()
+		if inf.Activity.Scheduled == nil {
+			inf.Activity.Scheduled = info.NewMetric()
 		}
-		inf.Active.Scheduled.Add(&v.Metric)
+		inf.Activity.Scheduled.Add(&v.Metric, true)
 		infoDest[inf.Destination.Table] = inf
 	}
 }
@@ -146,16 +147,17 @@ func (s *service) updateBatches(batchSlice batches, infoDest map[string]*Info) {
 func (s *service) updateStages(stages []*stage.Info, infoDest map[string]*Info) {
 	for _, stageInfo := range stages {
 		inf := s.getInfo(stageInfo.DestTable, infoDest)
-		if len(inf.Active.Stages) == 0 {
-			inf.Active.Stages = make(map[string]*info.Metric)
+
+		if len(inf.Activity.Stages) == 0 {
+			inf.Activity.Stages = make(map[string]*info.Metric)
 		}
 		stageKey := fmt.Sprintf("%04d-%v", stageInfo.Sequence(), stageInfo.Action)
-		stageValue, ok := inf.Active.Stages[stageKey]
+		stageValue, ok := inf.Activity.Stages[stageKey]
 		if !ok {
 			stageValue = info.NewMetric()
 		}
 		stageValue.AddEvent(stageInfo.SourceTime)
-		inf.Active.Stages[stageKey] = stageValue
+		inf.Activity.Stages[stageKey] = stageValue
 		infoDest[inf.Destination.Table] = inf
 	}
 }
@@ -187,9 +189,10 @@ func (s *service) listLoadStages(ctx context.Context, result *[]*stage.Info) err
 		return err
 	}
 	for _, object := range objects {
-		if object.IsDir() {
+		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
 			continue
 		}
+
 		stageInfo := stage.Parse(object.Name())
 		stageInfo.SourceTime = object.ModTime()
 		*result = append(*result, stageInfo)
@@ -251,7 +254,20 @@ func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *act
 		return err
 	}
 
-	for _, destObject := range objects {
+
+	var destLocations = make(map[string]storage.Object)
+	sortedTables := NewObjects(objects[1:], byModTime)
+	sort.Sort(sortedTables)
+
+	for i, destObject := range sortedTables.Elements {
+		key := destObject.Name()
+		if rule := s.Config.MatchByTable(key);rule != nil {
+			key = rule.Dest.Table
+		}
+		destLocations[key] = sortedTables.Elements[i]
+	}
+
+	for _, destObject := range destLocations {
 		if url.Equals(destObject.URL(), baseURL) {
 			continue
 		}
@@ -267,7 +283,6 @@ func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *act
 		if len(sortedHours.Elements) == 0 {
 			continue
 		}
-
 		recentHour := sortedHours.Elements[len(sortedHours.Elements)-1]
 		if err = s.listLoadJobs(ctx, baseURL, recentHour.URL(), result); err != nil {
 			return err

@@ -1,16 +1,21 @@
 package info
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 //Metric represents a metrc
 type Metric struct {
-	Count int       `json:",omitempty"`
-	Min   time.Time `json:",omitempty"`
-	Max   time.Time `json:",omitempty"`
+	Count      int       `json:",omitempty"`
+	Min        time.Time `json:",omitempty"`
+	Max        time.Time `json:",omitempty"`
+	Delay      string    `json:",omitempty"`
+	DelayInSec int       `json:",omitempty"`
 }
 
 //Add adds a metric
-func (m *Metric) Add(metric *Metric) {
+func (m *Metric) Add(metric *Metric, addDelay bool) {
 	if m.Max.IsZero() {
 		m.Max = metric.Max
 	}
@@ -22,6 +27,13 @@ func (m *Metric) Add(metric *Metric) {
 	}
 	if metric.Max.After(m.Max) {
 		m.Max = metric.Max
+	}
+	if addDelay {
+		delayInSec := time.Now().Sub(m.Min).Seconds()
+		if delayInSec > 0 {
+			m.DelayInSec = int(delayInSec)
+			m.Delay = fmt.Sprintf("%s", (time.Second * time.Duration(delayInSec)))
+		}
 	}
 	m.Count += metric.Count
 }
