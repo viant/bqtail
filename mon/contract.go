@@ -17,12 +17,11 @@ type Response struct {
 	Dest map[string]*Info
 }
 
-
 //NewResponse create a response
 func NewResponse() *Response {
 	return &Response{
-		Dest: make(map[string]*Info),
-		Status:        base.StatusOK,
-		Info:          NewInfo(),
+		Dest:   make(map[string]*Info),
+		Status: base.StatusOK,
+		Info:   NewInfo(),
 	}
 }

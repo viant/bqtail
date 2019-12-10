@@ -36,7 +36,7 @@ func parseLoad(baseURL string, URL string, modTime time.Time) *load {
 	elements := strings.Split(relative, "/")
 
 	if len(elements) > 2 {
-		elements  = []string{elements[0], elements[2]}
+		elements = []string{elements[0], elements[2]}
 	}
 	encoded := elements[len(elements)-1]
 	eventID := strings.Replace(encoded, base.ActionExt, "", 1)

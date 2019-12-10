@@ -44,7 +44,7 @@ pipeline:
       bqdisaptch:
         action: gcp/cloudfunctions:deploy
         '@name': BqDispatch
-        timeout: 60s
+        timeout: 59s
         public: true
         serviceAccountEmail: ${gcp.serviceAccount}
         availableMemoryMb: 128

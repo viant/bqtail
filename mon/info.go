@@ -7,8 +7,8 @@ import (
 //Info represents load info
 type Info struct {
 	*info.Destination
-	*info.Activity          `json:",omitempty"`
-	Stalled     map[string]*info.Metric `json:",omitempty"`
+	*info.Activity `json:",omitempty"`
+	Stalled        map[string]*info.Metric `json:",omitempty"`
 }
 
 func (i *Info) Add(inf *Info) {

@@ -58,7 +58,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	go func() {
 		defer waitGroup.Done()
 		var e error
-		if ! request.IncludeDone {
+		if !request.IncludeDone {
 			return
 		}
 		if doneLoads, e = s.getRecentlyDoneLoads(ctx); e != nil {

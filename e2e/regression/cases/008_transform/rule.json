@@ -1,15 +1,21 @@
 [
   {
+
     "When": {
-      "Dest": ".+:bqdispatch\\.dummy_v2",
-      "Type": "QUERY"
+      "Prefix": "/data/case008",
+      "Suffix": ".json"
+    },
+    "Async": true,
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "Transform": {
+        "event_type": "CASE WHEN type_id =1 THEN 'type 1' WHEN type_id = 2 THEN 'type 2'  WHEN type_id = 3 THEN 'type 3' END"
+      }
     },
     "OnSuccess": [
       {
-        "Action": "export",
-        "Request": {
-          "DestURL": "gs://${exportBucket}/BqDispatch/export/dummy.json.gz"
-        }
+        "Action": "delete"
       }
     ]
   }

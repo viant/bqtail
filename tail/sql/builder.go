@@ -2,6 +2,7 @@ package sql
 
 import (
 	"bqtail/base"
+	"bqtail/tail/config"
 	"fmt"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -17,7 +18,7 @@ func buildNestedDedupeSQL(sourceTable string, schema Schema, uniqueColumns []str
 			innerProjection = append(innerProjection, fmt.Sprintf("%v AS %v", expression, field.Name))
 			continue
 		}
-		innerProjection = append(innerProjection, field.Name)
+		innerProjection = append(innerProjection, fmt.Sprintf("t.%v AS %v", field.Name, field.Name))
 	}
 	return fmt.Sprintf(`SELECT %v
 FROM (
@@ -25,7 +26,7 @@ FROM (
       %v,
       ROW_NUMBER() OVER (PARTITION BY %v) row_number
   FROM %v $WHERE
-)
+) t $JOIN
 WHERE row_number = 1`, strings.Join(innerProjection, ", "), strings.Join(projection, ", "), strings.Join(uniqueColumns, ","), sourceTable)
 }
 
@@ -38,14 +39,14 @@ func buildDedupeSQL(sourceTable string, schema Schema, unique map[string]bool, t
 			projection = append(projection, field.Name)
 			continue
 		}
-		expression := field.Name
+		expression := fmt.Sprintf("t.%v", field.Name)
 		if transformExpression, ok := transform[strings.ToLower(field.Name)]; ok {
 			expression = transformExpression
 		}
 		projection = append(projection, fmt.Sprintf("MAX(%v) AS %v", expression, field.Name))
 	}
 	return fmt.Sprintf(`SELECT %v 
-FROM %v 
+FROM %v t $JOIN
 $WHERE
 GROUP BY %v`,
 		strings.Join(projection, ", "),
@@ -61,17 +62,42 @@ func buildSelectAll(sourceTable string, schema Schema, transform map[string]stri
 			projection = append(projection, fmt.Sprintf("%v AS %v", expression, field.Name))
 			continue
 		}
-		projection = append(projection, field.Name)
+
+		projection = append(projection, fmt.Sprintf("t.%v AS %v", field.Name, field.Name))
 	}
 	return fmt.Sprintf(`SELECT %v 
-FROM %v  $WHERE`,
+FROM %v t $JOIN $WHERE`,
 		strings.Join(projection, ", "),
 		sourceTable,
 	)
 }
 
 //BuildSelect returns select SQL statement for specified parameter, if uniqueColumns SQL de-duplicates data
-func BuildSelect(source *bigquery.TableReference, tableScheme *bigquery.TableSchema, uniqueColumns []string, transform map[string]string) string {
+func BuildSelect(source *bigquery.TableReference, tableScheme *bigquery.TableSchema, uniqueColumns []string, transform map[string]string, sideInputs []*config.SideInput) string {
+	SQL := buildSelect(source, tableScheme, uniqueColumns, transform)
+	join := buildJoins(sideInputs)
+	SQL = strings.Replace(SQL, "$JOIN", join, 1)
+	return SQL
+}
+
+
+func buildJoins(sideInputs []*config.SideInput) string {
+	if len(sideInputs) == 0 {
+		return ""
+	}
+	var joins = make([]string, 0)
+	for _, sideInput := range sideInputs {
+		table := sideInput.Table
+		if sideInput.From != "" {
+			table = "(" + sideInput.From + ")"
+		}
+		joins = append(joins, fmt.Sprintf(" LEFT JOIN %v %v ON %v", table, sideInput.Alias, sideInput.On))
+	}
+	return strings.Join(joins, "\n  ")
+}
+
+//buildSelect returns select SQL statement for specified parameter, if uniqueColumns SQL de-duplicates data
+func buildSelect(source *bigquery.TableReference, tableScheme *bigquery.TableSchema, uniqueColumns []string, transform map[string]string) string {
 	tableId := base.TableID(source.TableId)
 	sourceTable := source.DatasetId + "." + tableId
 	schema := Schema(*tableScheme)

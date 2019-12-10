@@ -32,6 +32,7 @@ type Destination struct {
 	TransientDataset string            `json:",omitempty"`
 	UniqueColumns    []string          `json:",omitempty"`
 	Transform        map[string]string `json:",omitempty"`
+	SideInputs      []*SideInput `json:",omitempty"`
 	Override         *bool
 }
 
@@ -60,6 +61,13 @@ func (d *Destination) Validate() error {
 			return fmt.Errorf("dest.Schema.Split requires dest.TransientDataset")
 		}
 		return d.Schema.Split.Validate()
+	}
+	if len(d.SideInputs) > 0 {
+		for _, sideInput := range d.SideInputs {
+			if err := sideInput.Validate(); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

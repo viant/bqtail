@@ -278,7 +278,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 		return nil, err
 	}
 	actions.AddOnSuccess(dropAction)
-	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, rule.Dest.UniqueColumns, rule.Dest.Transform)
+	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, rule.Dest.UniqueColumns, rule.Dest.Transform, rule.Dest.SideInputs)
 	if rule.Dest.HasSplit() {
 		return result, s.addSplitActions(ctx, selectAll, parent, job, rule, result, actions)
 	}
@@ -287,7 +287,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 
 	partition := base.TablePartition(destTable.TableId)
 
-	if len(rule.Dest.UniqueColumns) > 0 || partition != "" {
+	if len(rule.Dest.UniqueColumns) > 0 || partition != "" || len(rule.Dest.Transform) > 0 {
 		query := bq.NewQueryRequest(selectAll, destTable, actions)
 		query.Append = rule.IsAppend()
 		queryAction, err := task.NewAction("query", query)

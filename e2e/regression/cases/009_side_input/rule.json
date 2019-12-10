@@ -1,15 +1,27 @@
 [
   {
     "When": {
-      "Dest": ".+:bqdispatch\\.dummy_v3",
-      "Type": "LOAD"
+      "Prefix": "/data/case009",
+      "Suffix": ".json"
+    },
+    "Async": true,
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "Transform": {
+        "event_type": "et.name"
+      },
+      "SideInputs": [
+        {
+          "Table": "bqtail.event_types",
+          "Alias": "et",
+          "On": "t.type_id = et.id"
+        }
+      ]
     },
     "OnSuccess": [
       {
-        "Action": "copy",
-        "Request": {
-          "Dest": "bqdispatch.dummy_v4"
-        }
+        "Action": "delete"
       }
     ]
   }

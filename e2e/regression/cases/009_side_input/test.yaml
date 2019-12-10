@@ -1,16 +1,41 @@
-pipeline:
 
+pipeline:
   prepare:
-    init-bqdispatch:
+    init-temp:
       action: dsunit:init
-      datastore: bqdispatch
+      datastore: temp
       config:
         driverName: bigquery
         credentials: $gcpCredentials
         parameters:
-          datasetId: bqdispatch
+          datasetId: temp
+      recreate: true
+
+    init-dbtail:
+      action: dsunit:init
+      datastore: bqtail
+      config:
+        driverName: bigquery
+        credentials: $gcpCredentials
+        parameters:
+          datasetId: bqtail
       scripts:
-        - URL: ${parent.path}/bqdispatch/schema.sql
+        - URL: ${parent.path}/bqtail/schema.sql
+
+    populate:
+      action: dsunit:prepare
+      datastore: bqtail
+      URL:  ${parent.path}/bqtail/prepare
+
+
+  cleanUp:
+    action: storage:remove
+    sleepTimeMs: 1000
+    assets:
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
+        credentials: $gcpCredentials
+      - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/rule.json'
+        credentials: $gcpCredentials
 
   setupRule:
     action: storage:copy
@@ -19,20 +44,23 @@ pipeline:
       URL: ${parent.path}/rule.json
     dest:
       credentials: $gcpCredentials
-      URL: gs://${configBucket}/BqDispatch/Rules/case_${parent.index}.json
-
+      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}.json
 
   trigger:
-    action: dsunit:prepare
-    datastore: bqdispatch
-    URL:  ${parent.path}/bqdispatch/prepare
-
+    action: storage:copy
+    sleepTimeMs: 10000
+    source:
+      URL: ${parent.path}/data/trigger/
+    dest:
+      URL: gs://${triggerBucket}/data/case${parent.index}/
+      credentials: $gcpCredentials
 
   waitForServerless:
     action: nop
-    sleepTimeMs: 20000
+    sleepTimeMs: 45000
 
   validate:
-    action: dsunit:expect
-    datastore: bqdispatch
-    URL:  ${parent.path}/bqdispatch/expect
+    check-db:
+      action: dsunit:expect
+      datastore: bqtail
+      URL:  ${parent.path}/bqtail/expect
