@@ -1,22 +1,14 @@
 {
-  "DeferTaskURL": "gs://${config.Bucket}/tasks/",
-  "Async": true,
-  "JobID": "~/\\d+/",
-  "OnSuccess": [
-    {
-      "Action": "delete",
-      "Request": {
-        "SourceURL": "gs://${triggerBucket}/data/dataset/table.json"
-      }
-    }
-  ],
-  "OnFailure": [
-    {
-      "Action": "move",
-      "Request": {
-        "SourceURL": "gs://${triggerBucket}/data/dataset/table.json",
-        "DestURL": "gs://${config.Bucket}/errors"
-      }
-    }
-  ]
+  "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
+  "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
+  "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
+  "CheckInMs": 10,
+  "TimeToLiveInMin": 1,
+  "TriggerBucket": "${triggerBucket}",
+  "SlackCredentials": {
+    "URL": "gs://${configBucket}/Secrets/slack.json.enc",
+    "Key": "${prefix}_ring/${prefix}_key"
+  },
+  "MaxConcurrentSQL": 50,
+  "MaxConcurrentJobs": 20
 }

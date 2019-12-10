@@ -12,22 +12,62 @@ Where $JobID uses [info.go](../../../../stage/info.go) to encode dest table, ori
 ```json
 {
   "Status": "ok",
-  "Jobs": {
-    "...":"..." 
-  },
-  "Batched": {
-    "...":"..."
-  },
-  "BatchCount": 44,
-  "Cycles": 4,
-  "ListTime": "3.71546899s",
-  "ListCount": 573,
-  "GetCount": 49,
+  "Jobs": {},
+  "Batched": {},
+  "BatchCount": 0,
+  "Cycles": 12,
   "Errors": [],
-  "RunningCount": 20,
-  "PendingCount": 0
+  "Running": {
+    "QueryJobs": 1,
+    "LoadJobs": 5
+  },
+  "Pending": {},
+  "Dispatched": {
+    "QueryJobs": 40,
+    "LoadJobs": 10
+  },
+  "Throttled": {}
 }
 ```
+
+### Configuration:
+
+
+Configuration is defined as [config.go](config.go)
+
+**Configuration options:**
+
+- JournalURL: active/past job journal URL 
+- ErrorURL: - errors location
+- AsyncTaskURL: transient storage location for managing async batches and BigQuery job post actions 
+- TriggerBucket - trigger bucket
+- CheckInMs reload config changes frequency
+- TimeToLiveInMin: time to live in sec (1 second by default)
+- MaxConcurrentSQL: if specified control number of dispatched SQL events
+- MaxConcurrentJobs: if specified control number of dispatched Load/Copy events
+     Note that there is undocumented Big Query quota of 20 concurrent load/export jobs, affecting load performance till quota is cleared (hourly).  
+
+
+Example configuration
+
+[@config.json](usage/dispatch.json)
+```json
+{
+  "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
+  "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
+  "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
+  "CheckInMs": 10,
+  "TimeToLiveInMin": 1,
+  "TriggerBucket": "${triggerBucket}",
+  "SlackCredentials": {
+    "URL": "gs://${configBucket}/Secrets/slack.json.enc",
+    "Key": "${prefix}_ring/${prefix}_key"
+  },
+  "MaxConcurrentSQL": 50,
+  "MaxConcurrentJobs": 20
+}
+```
+
 
 ### Deployment
 
