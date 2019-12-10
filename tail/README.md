@@ -1,92 +1,51 @@
-## Tail Service
+# Tail Service
 
-Tail service ingests data to Big Query with Load API. 
+Tail service ingests data to Big Query with Load/Copy or Query API. 
 
 - [Introduction](#introduction)
 - [Usage](#usage)
 - [Deployment](#deployment)
 
-### Introduction 
+## Introduction 
 
-![BqTail](../images/tail.png)  
+Tail service is a google storage triggered cloud function that: 
+
+- matches incoming data files with specified ingestion rules
+- batches matches incoming data files 
+- matches async batching tasks triggered by the dispatch service
+- matches async post load actions triggered  by the dispatch service 
 
 
-### Usage
-
-### Configuration
+## Configuration
 
 Configuration is defined as [config.go](config.go)
 
-The following example defines single rule to ingested any JSON file matching /data/folder prefix to mydataset.mytable.
-
-In this configuration scenario each data file is ingested  to Big Query by dedicated cloud function instance.
-After initiating a load Job, the function waits for job completion to finally run on success tasks. 
-
-This per data file synchronous mode is very cost inefficient, since each data file uses dedicated cloud function for the whole data ingestion duration.
-Another limitation that needs to be consider is number of data files, if you expect more than 1K per day you reach daily load job count restriction.
-On top of that if Big Query load job takes more than cloud function max execution time, the function is terminated 
-and the post task execution does not run at all.
-
-All these limitations are addressed by asynchronous and batch mode. 
- 
-[@config/sync.json](usage/sync.json)
-```json
-[
-    {
-      "When": {
-        "Prefix": "/data/folder",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "mydataset.mytable"
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ]
-    }
-]
-```
 
 **Configuration options:**
 
-- JournalURL: job history location 
+- JournalURL: active/past job journal URL 
 - ErrorURL: - errors location
-- AsyncTaskURL: transient storage location for managing BigQuery job post tasks (both BqTail and BqDispatch have to use the same URL) 
-- AsyncBatchURL: transient storage location for managing schedule batch load job in async mode.
-- BatchURL: transient storage location for managing batch load job in sync mode.
+- AsyncTaskURL: transient storage location for managing async batches and BigQuery job post actions 
+- SyncTaskURL: transient storage location for managing batch load job in sync mode.
 - RulesURL: base URL where each rule is JSON file with rules arrays
-- ActiveIngestionURL: currently running data ingestion job URL 
-- DoneIngestionURL: completed data ingestion jobs URL
-- TriggerBucket: trigger bucket
-- CorruptedFileURL: url for currpupted files
+- CorruptedFileURL: url for corrupted files
 - InvalidSchemaURLL: url for incompatible schema files
+- TriggerBucket - trigger bucket
+- ActiveLoadJobURL: currently running data ingestion jobs URL
+- DoneLoadJobURL: past data ingestion jobs URL
 - SlackCredentials
 
+
+**Note:**
 To reduce Storage Class A operations: cache file is used for config files:  delete cache file alongside adding a new rule.
 
-**Individual rule** can has the following attributes:
 
-- When defines matching filter
-  - Prefix: path prefix or
-  - Suffix: path suffix or
-  - Filter: path regexp
-- OnSuccess: actions to run when job completed without errors
-- OnFailure: actions to run when job completed with errors
+### Data ingestion rules
 
-Post actions can use predefined [Cloud Service](../service/README.md) operation.
+Individual rules are defined in JSON format. The following is example of asynchronous batched data ingestion:
 
 
-#### Asynchronous mode
-
-In asynchronous mode BqTailFn cloud function schedules post task execution using deferred task base URL and submit load job. 
-Once BigQuery job completes it is picked up by BqDispatchFn cloud function to run post tasks. 
-
-In this mode cloud function execution time is stremlined to actual task run without unnecessary waits.
-
-
-[@config/async.json](usage/async.json)
+[@rule.json](usage/async.json)
 ```json
  [
     {
@@ -95,6 +54,11 @@ In this mode cloud function execution time is stremlined to actual task run with
         "Suffix": ".json"
       },
       "Async": true,
+       "Batch": {
+          "Window": {
+              "DurationInSec": 90
+          }
+       },
       "Dest": {
         "Table": "mydataset.mytable"
       },
@@ -115,43 +79,108 @@ In this mode cloud function execution time is stremlined to actual task run with
 ]
 ```
 
-#### Batch ingestion
+**Individual rule** can has the following attributes:
 
-In batch mode, storage event are batch by time window, in this mode only one cloud function manages batching while others ends
-after scheduling event source.  The batching process is details [here](batch/README.md).
+- Async: asynchronous mode flag, always set to true to use async mode which is cost effect and robust.
+- [Dest](#data-destination): data destination with transformation rules
+- When defines matching filter
+  - Prefix: path prefix or
+  - Suffix: path suffix or
+  - Filter: path regexp
+ 
+- Batch: specified batch window 
+- OnSuccess: actions to run when job completed without errors
+- OnFailure: actions to run when job completed with errors
+ 
+Post actions can use predefined [Cloud Service](../service/README.md) operation.
 
-Batch URL is used to manged batch windowing process.
 
-The following configuration specify batch sync mode.
+#### Data destination  
 
-[@config/batch.json](usage/batch.json)
+Dest types is defined by [config/dest.go](config/dest.go) with the following attributes: 
+It extends bigquery.JobConfigurationLoad load job configuration.
+
+
+- **Table**
+
+    Destination table uses the following syntax: [projectID]:datasetId.tableId
+    
+    The following dynamic expression is supported:
+
+    - **$Mod(x)**, where x is a number, modulo is based datafile created unix time, i,e:  **mydataset.mytable_$Mod(4)**
+    - **$Date**, where data is based on datafile created time, i.e.: **mydataset.mytable_$Mod(40)_$Date**
+
+- **Pattern**
+
+    To derive table name from source path you can use pattern to define regular expression groups referenced by **$X** expression, X is the pattern occurence sequence.   
+    
+    For example the following pattern: "data/(\\d{4})/(\\d{2})/(\\d{2})/.+", extracts 3 groups with $1, $2, and $3 respectively. 
+    
+    With table defined as "proj:dataset:table_$1$2$3" and source URL "gs://bucket/data/2019/02/04/logs_xxx.avro" the specified table expands to: "proj:dataset:table_20190204"
+    
+    
+    "/nobid/adlog.request/(\\d{4})/(\\d{2})/(\\d{2})/.+"
+
+- **Override** dest table override flag (append by default)
+- **Partition** dest table partition.
+- **Schema** defines dest table schem
+- **TransientDataset** transient dataset. (It is recommended to always used transient dataset)
+- **UniqueColumns** deduplication unique columns
+- **Transform** map of dest table column with transformation expression
+- **SideInputs** transformation left join tables.
+
+
+#### Partition override
+
+For daily data ingestion you can use the following rule to override individual partition at a time.
+
+
+[@rule.json](usage/override.json)
 ```json
 [
-    {
-      "When": {
-        "Prefix": "/data/folder",
-        "Suffix": ".json"
-      },
-      "Batch": {
-        "Window": {
-          "DurationInSec": 45
+  {
+    "When": {
+      "Prefix": "/data/",
+      "Suffix": ".csv"
+    },
+    "Async": true,
+    "Dest": {
+      "Override": true,
+      "Table": "myproject:mydataset.mytable",
+      "Partition": "$Date",
+      "TransientDataset": "temp",
+      "SkipLeadingRows": 1,
+      "MaxBadRecords": 3,
+      "FieldDelimiter": ",",
+      "IgnoreUnknownValues": true
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ],
+    "OnFailure": [
+      {
+        "Action": "notify",
+        "Request": {
+          "Channels": [
+            "#e2e"
+          ],
+          "Title": "Failed to load $Source to ${gcp.ProjectID}:test.dummy",
+          "Message": "$Error"
         }
-      },
-      "Dest": {
-        "Table": "mydataset.mytable"
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ]
-    }
-  ]
+      }
+    ]
+  }
+]
+
 ```
 
-The following configuration specify batch asynchronous  mode.
+#### Template table
 
-[@config/async_batch.json](usage/async_batch.json)
+In case destination table does not exists you can specify schema source table with schema.template attribute.
+
+[@config/template.json](usage/template.json)
 ```json
 [
     {
@@ -159,22 +188,14 @@ The following configuration specify batch asynchronous  mode.
         "Prefix": "/data/folder",
         "Suffix": ".json"
       },
-      "Async": true,
-      "Batch": {
-        "Window": {
-          "DurationInSec": 45
-        }
-      },
       "Dest": {
-        "Table": "mydataset.mytable"
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
+        "Table": "mydataset.mytable",
+        "Schema": {
+          "Template": "mydataset.template_table"
         }
-      ]
-    }
-  ]
+      }
+   }
+]
 ```
 
 
@@ -214,6 +235,8 @@ The following configuration specify transient dataset.
 ]
 ```
 
+
+
 #### Data deduplication
 
 When using transient table you can specify unique columns to deduplicate data while moving to destination table.
@@ -249,27 +272,6 @@ When using transient table you can specify unique columns to deduplicate data wh
 ]
 ```
 
-#### Template table
-
-In case destination table does not exists you can specify schema source table with schema.template attribute.
-
-[@config/template.json](usage/template.json)
-```json
-[
-    {
-      "When": {
-        "Prefix": "/data/folder",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "mydataset.mytable",
-        "Schema": {
-          "Template": "mydataset.template_table"
-        }
-      }
-   }
-]
-```
 
 
 #### Dynamic table destination based on source data.
@@ -315,34 +317,40 @@ To dynamically rule data based on source data values you can use the following r
  ```
 
 
-### Partition override
+### Data transformation with side inputs
 
-### Data transformation
+[@rule.json](usage/side_input.json)
+```json
+[
+  {
+    "When": {
+      "Prefix": "/data/case009",
+      "Suffix": ".json"
+    },
+    "Async": true,
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "Transform": {
+        "event_type": "et.name"
+      },
+      "SideInputs": [
+        {
+          "Table": "bqtail.event_types",
+          "Alias": "et",
+          "On": "t.type_id = et.id"
+        }
+      ]
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ]
+  }
+]
+```
 
-### Data enrichement with side inputs
-
-
-#### Destination
-
-**Table**
-
-Destination table uses the following syntax: [projectID]:datasetId.tableId
-
-The following dynamic expression is supported:
-
-- **$Mod(x)**, where x is a number, modulo is based datafile created unix time, i,e:  **mydataset.mytable_$Mod(4)**
-- **$Date**, where data is based on datafile created time, i.e.: **mydataset.mytable_$Mod(40)_$Date**
-
-**Pattern**
-
-To derive table name from source path you can use pattern to define regular expression groups referenced by **$X** expression, X is the pattern occurence sequence.   
-
-For example the following pattern: "data/(\\d{4})/(\\d{2})/(\\d{2})/.+", extracts 3 groups with $1, $2, and $3 respectively. 
-
-With table defined as "proj:dataset:table_$1$2$3" and source URL "gs://bucket/data/2019/02/04/logs_xxx.avro" the specified table expands to: "proj:dataset:table_20190204"
-
-
-"/nobid/adlog.request/(\\d{4})/(\\d{2})/(\\d{2})/.+"
 
 ### Deployment
 

@@ -11,23 +11,30 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Usage](#usage)
 - [End to end testing](#end-to-end-testing)
 
+
+
 ## Motivation
 
-The goal of this project is to provide cost effective events driven, data ingestion and extraction with Big Query.
+
+The goal of this project is to provide robust and cost effective events driven, data ingestion to Big Query.
+BqTail elegantly addresses all Big Query restriction/quotas (load jobs per table / project) with batching and transient dataset approach.
+In addition it also provides data transformation enrichment and deduplication capabilities.
+
+This project is used by Viant to ingest **70+ billions** transactions daily, **1.4 million files** to 100+ tables, all under $15.
+
+
 
 ## Introduction
-
 
 ![BqTail](images/bqtail.png)
 
 
 - [Tail Service](tail/README.md)
 - [Dispatch Service](dispatch/README.md)
-- [Task Service](task/README.md)
+- [Task Service](service/README.md)
 
 
 ## Usage
-
 
 ##### **Data ingestion**
 
@@ -145,22 +152,20 @@ The following define rule to ingest data in batches within 60 sec time window in
 
 
 
-
-
-
 ## Deployment
 
 The following [Deployment](deployment/README.md) details generic deployment.
 
 
-
-
 ## End to end testing
 
-You can try on all data ingestion and extraction scenarios by simply running e2e test cases:
+Bqtail is fully end to end test with including batch allocation stress testing with 2k files.
+
+You can try on all data ingestion by simply running e2e test cases:
 
 - [Prerequisites](e2e/README.md#prerequisites)
 - [Use cases](e2e/README.md#use-cases)
+
 
 ## License
 

@@ -1,6 +1,6 @@
 # Cloud services
 
-This package defines cloud service.
+This package defines task service.
 
 The following services and actions are currently supported.
 

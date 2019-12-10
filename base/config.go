@@ -26,8 +26,8 @@ type Config struct {
 	Region           string
 	AsyncTaskURL     string
 	SyncTaskURL      string
-	ActiveLoadURL    string
-	DoneLoadURL      string
+	ActiveLoadJobURL string
+	DoneLoadJobURL   string
 	JournalURL       string
 	TriggerBucket    string
 	LoadJobPrefix    string
@@ -41,13 +41,13 @@ type Config struct {
 
 //BuildActiveLoadURL returns active action URL for supplied event id
 func (c *Config) BuildActiveLoadURL(info *stage.Info) string {
-	return url.Join(c.ActiveLoadURL, info.DestTable+stage.PathElementSeparator+info.EventID+ActionExt)
+	return url.Join(c.ActiveLoadJobURL, info.DestTable+stage.PathElementSeparator+info.EventID+ActionExt)
 }
 
 //BuildDoneLoadURL returns done action URL for supplied event id
 func (c *Config) BuildDoneLoadURL(info *stage.Info) string {
 	date := time.Now().Format(DateLayout)
-	return url.Join(c.DoneLoadURL, path.Join(info.DestTable, date, info.EventID+ActionExt))
+	return url.Join(c.DoneLoadJobURL, path.Join(info.DestTable, date, info.EventID+ActionExt))
 }
 
 //BuildTaskURL returns an action url for supplied event ID
@@ -103,11 +103,11 @@ func (c *Config) Init(ctx context.Context) error {
 	if c.BatchPrefix == "" {
 		c.BatchPrefix = BatchPrefix
 	}
-	if c.ActiveLoadURL == "" {
-		c.ActiveLoadURL = url.Join(c.JournalURL, ActiveLoadSuffix)
+	if c.ActiveLoadJobURL == "" {
+		c.ActiveLoadJobURL = url.Join(c.JournalURL, ActiveLoadSuffix)
 	}
-	if c.DoneLoadURL == "" {
-		c.DoneLoadURL = url.Join(c.JournalURL, DoneLoadSuffix)
+	if c.DoneLoadJobURL == "" {
+		c.DoneLoadJobURL = url.Join(c.JournalURL, DoneLoadSuffix)
 	}
 	if c.InvalidSchemaURL == "" {
 		c.InvalidSchemaURL = url.Join(c.JournalURL, InvalidSchemaLocation)

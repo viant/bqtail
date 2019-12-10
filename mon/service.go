@@ -215,13 +215,13 @@ func (s *service) getScheduledBatches(ctx context.Context) (batches, error) {
 
 func (s *service) getActiveLoads(ctx context.Context) (activeLoads, error) {
 	result := activeLoads{}
-	err := s.listLoadJobs(ctx, s.Config.ActiveLoadURL, s.Config.ActiveLoadURL, &result)
+	err := s.listLoadJobs(ctx, s.Config.ActiveLoadJobURL, s.Config.ActiveLoadJobURL, &result)
 	return result, err
 }
 
 func (s *service) getRecentlyDoneLoads(ctx context.Context) (activeLoads, error) {
 	result := activeLoads{}
-	err := s.listDoneLoads(ctx, s.Config.DoneLoadURL, &result)
+	err := s.listDoneLoads(ctx, s.Config.DoneLoadJobURL, &result)
 	return result, err
 }
 

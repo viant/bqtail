@@ -1,0 +1,36 @@
+[
+  {
+    "When": {
+      "Prefix": "/data/",
+      "Suffix": ".csv"
+    },
+    "Async": true,
+    "Dest": {
+      "Override": true,
+      "Table": "myproject:mydataset.mytable",
+      "Partition": "$Date",
+      "TransientDataset": "temp",
+      "SkipLeadingRows": 1,
+      "MaxBadRecords": 3,
+      "FieldDelimiter": ",",
+      "IgnoreUnknownValues": true
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
+      }
+    ],
+    "OnFailure": [
+      {
+        "Action": "notify",
+        "Request": {
+          "Channels": [
+            "#e2e"
+          ],
+          "Title": "Failed to load $Source to ${gcp.ProjectID}:test.dummy",
+          "Message": "$Error"
+        }
+      }
+    ]
+  }
+]

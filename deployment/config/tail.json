@@ -3,7 +3,6 @@
 
   "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "SyncTaskURL": "gs://${opsBucket}/BqTail/Tasks/",
-  "BatchURL": "gs://${opsBucket}/BqTail/Batch/",
   "ErrorURL": "gs://${opsBucket}/BqTail/errors/",
   "JournalURL": "gs://${opsBucket}/BqTail/Journal/",
   "CorruptedFileURL": "gs://${mirrorBucket}/bqtail/corrupted/",

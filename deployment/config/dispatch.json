@@ -1,7 +1,6 @@
 {
 
 
-  "AsyncBatchURL": "gs://${dispatchBucket}/BqDispatch/Batch/",
   "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
   "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
