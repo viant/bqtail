@@ -20,7 +20,7 @@ BqTail elegantly addresses all Big Query limitations/restriction/quotas (load jo
 In addition it also provides data transformation enrichment and deduplication capabilities.
 
 This project is used by Viant to ingest **70+ billions** transactions _daily_, **1.4 million files** to 100+ tables, all under $15, as cost effective alternative
-for Big Query Streaming API, Cloud Dataflow and [in house build cost optimize ETL](https://github.com/viant/etly) framework. 
+for Big Query Streaming API, Cloud Dataflow and [in house build cost optimized ETL](https://github.com/viant/etly) framework. 
 
 
 ## Introduction
