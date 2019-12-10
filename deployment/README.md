@@ -4,6 +4,16 @@ The following document describes generic shared deployments for various rules, w
 BqTail and BqDispatch cloud functions per project.
 
 
+
+It is highly recommended to use transient project just for bqtail ingestion with transient dataset option. 
+In this case you do not count load/query/copy jobs towards project level quota, and still have ability
+to ingest data to your transient project's dataset.
+If there is no transformation option used, after loading data to transient table, data is appended to dest project table with 
+Copy operation which is free. 
+Otherwise transformation SQLs are used to dedupe or enrich data, which comes with regular running SQL cost.
+
+
+
 ### Google Storage layout:
 
 The following google storage layout is used:

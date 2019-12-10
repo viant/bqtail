@@ -555,10 +555,14 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 			return nil
 		}
 	}
+	response.Retriable = base.IsRetryError(bqJobError)
 	toRun := actions.ToRun(bqJobError, &job, s.config.AsyncTaskURL)
 	if len(toRun) > 0 {
 		for i := range toRun {
 			if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {
+				if ! response.Retriable {
+					response.Retriable = base.IsRetryError(err)
+				}
 				return err
 			}
 		}
