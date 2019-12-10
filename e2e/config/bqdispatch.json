@@ -1,4 +1,3 @@
-
 {
   "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
   "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
@@ -11,5 +10,7 @@
   "SlackCredentials": {
     "URL": "gs://${configBucket}/Secrets/slack.json.enc",
     "Key": "${prefix}_ring/${prefix}_key"
-  }
+  },
+  "MaxConcurrentSQL": 50,
+  "MaxConcurrentJobs": 20
 }
