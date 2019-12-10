@@ -22,6 +22,7 @@ In addition it also provides data transformation enrichment and deduplication ca
 This project is used by Viant to ingest **70+ billions** transactions _daily_, **1.4 million files** to 100+ tables, all under $15, as cost effective alternative
 for Big Query Streaming API, Cloud Dataflow and [in house build cost optimized ETL](https://github.com/viant/etly) framework. 
 
+
 ## Introduction
 
 ![BqTail](images/bqtail.png)
@@ -148,6 +149,12 @@ The following define rule to ingest data in batches within 60 sec time window in
 ]
 ```
 
+
+## Cost optimized serverless
+
+The following snapshot show serverless cost overhead per one day data ingestion (70TB, 1.6 millions files).
+ 
+![BqTail](images/serverless_cost.png)
 
 
 ## Deployment
