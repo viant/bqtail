@@ -88,7 +88,7 @@ Individual rules are defined in JSON format. The following is example of asynchr
   - Suffix: path suffix or
   - Filter: path regexp
  
-- Batch: specified batch window 
+- Batch: specified batch window, when specifying window make sure that number of batches never exceed 1K per day.
 - OnSuccess: actions to run when job completed without errors
 - OnFailure: actions to run when job completed with errors
  
