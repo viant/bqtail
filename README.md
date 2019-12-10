@@ -15,9 +15,8 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 ## Motivation
 
-
 The goal of this project is to provide robust and cost effective events driven, data ingestion to Big Query.
-BqTail elegantly addresses all Big Query restriction/quotas (load jobs per table / project) with batching and transient dataset approach.
+BqTail elegantly addresses all Big Query limitations/restriction/quotas (load jobs per table, project, corrupted data files) with batching and transient dataset approach.
 In addition it also provides data transformation enrichment and deduplication capabilities.
 
 This project is used by Viant to ingest **70+ billions** transactions _daily_, **1.4 million files** to 100+ tables, all under $15.
