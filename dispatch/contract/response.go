@@ -13,18 +13,12 @@ type Response struct {
 	BatchCount   int
 	Cycles       int
 	ListTime     string
-	ListCount    int
 	GetCount     int
 	Errors       []string
-	MissingCount int32
-	RunningCount int32
-	PendingCount int32
+	*Performance
 }
 
 func (r *Response) Reset() {
-	r.PendingCount = 0
-	r.RunningCount = 0
-	r.MissingCount = 0
 	r.BatchCount = 0
 }
 
@@ -55,6 +49,7 @@ func (r *Response) AddError(err error) {
 func NewResponse() *Response {
 	return &Response{
 		Jobs:     NewJobs(),
+		Performance: NewPerformance(),
 		Batched:  make(map[string]time.Time),
 		Errors:   make([]string, 0),
 		Response: *base.NewResponse(""),

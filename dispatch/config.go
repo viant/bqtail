@@ -20,6 +20,8 @@ type Config struct {
 	config.Ruleset
 	TimeToLiveInMin     int
 	MaxJobLoopbackInMin int
+	MaxConcurrentSQL    int
+	MaxConcurrentJobs   int
 }
 
 //TimeToLive returns time to live
