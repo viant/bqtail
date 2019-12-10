@@ -15,10 +15,15 @@ type Performance struct {
 	MissingStatus int `json:",omitempty"`
 }
 
+//Merge merges performance
 func (p *Performance) Merge(perf *Performance) {
 	p.MissingStatus = perf.MissingStatus
-	p.Running = perf.Running
-	p.Pending = perf.Pending
+	if perf.Running.Count() > 0 {
+		p.Running = perf.Running
+	}
+	if perf.Pending.Count() > 0 {
+		p.Pending = perf.Pending
+	}
 	p.Dispatched.Merge(perf.Dispatched)
 	p.Throttled.Merge(perf.Throttled)
 }
