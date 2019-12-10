@@ -34,6 +34,7 @@ func (r *Rule) IsAppend() bool {
 	return r.Dest.WriteDisposition == "" || r.Dest.WriteDisposition == "WRITE_APPEND"
 }
 
+//DestTable returns dest table
 func (r *Rule) DestTable(URL string, modTime time.Time) string {
 	table, _ := r.Dest.ExpandTable(r.Dest.Table, modTime, URL)
 	if table == "" {
@@ -49,6 +50,7 @@ func (r *Rule) HasMatch(URL string) bool {
 	return r.When.Match(parent, file.NewInfo(name, 0, 0644, time.Now(), false))
 }
 
+//Validate checks if rule is valid
 func (r Rule) Validate() error {
 	if r.Dest == nil {
 		return fmt.Errorf("dest was empty")

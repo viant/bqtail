@@ -19,11 +19,12 @@ type Actions struct {
 	OnFailure []*Action `json:",omitempty"`
 }
 
+//SetInfo sets action info
 func (a *Actions) SetInfo(info *stage.Info) {
 	a.Info = *info
 }
 
-//ToRun returns actions to run
+//CloneOnFailure returns actions to run
 func (a Actions) CloneOnFailure() *Actions {
 	result := &Actions{
 		Info:      a.Info,
@@ -89,8 +90,8 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 		if _, ok := toRun[i].Request[base.SourceTableKey]; !ok {
 			toRun[i].Request[base.SourceTableKey] = job.SourceTable()
 		}
-		if _, ok := toRun[i].Request[base.DeferTaskURL]; !ok {
-			toRun[i].Request[base.DeferTaskURL] = deferredURL
+		if _, ok := toRun[i].Request[base.AsyncTaskURL]; !ok {
+			toRun[i].Request[base.AsyncTaskURL] = deferredURL
 		}
 		if _, ok := toRun[i].Request[base.SourceKey]; !ok {
 			toRun[i].Request[base.SourceKey] = job.Source()

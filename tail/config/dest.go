@@ -14,15 +14,16 @@ import (
 )
 
 const (
-	//Mod expression computed from first table in batch or individual table
-	ModExpr    = "$Mod"
+	//ModExpr expression computed from first table in batch or individual table
+	ModExpr = "$Mod"
+	//DateExpr data expression
 	DateExpr   = "$Date"
 	dateLayout = "20060102"
 )
 
+//Destination data ingestion destination
 type Destination struct {
-	Table string `json:"table,omitempty"`
-
+	Table     string `json:"table,omitempty"`
 	Partition string `json:"partition,omitempty"`
 	//Pattern uses URI relative path (without leading backslash)
 	bigquery.JobConfigurationLoad
@@ -32,14 +33,16 @@ type Destination struct {
 	TransientDataset string            `json:",omitempty"`
 	UniqueColumns    []string          `json:",omitempty"`
 	Transform        map[string]string `json:",omitempty"`
-	SideInputs      []*SideInput `json:",omitempty"`
+	SideInputs       []*SideInput      `json:",omitempty"`
 	Override         *bool
 }
 
+//HasSplit returns true if dest has split
 func (d Destination) HasSplit() bool {
 	return d.Schema.Split != nil
 }
 
+//Clone clones destination
 func (d Destination) Clone() *Destination {
 	return &Destination{
 		Table:            d.Table,
@@ -48,6 +51,7 @@ func (d Destination) Clone() *Destination {
 		Schema:           d.Schema,
 		TransientDataset: d.TransientDataset,
 		UniqueColumns:    d.UniqueColumns,
+		SideInputs:       d.SideInputs,
 	}
 }
 
@@ -72,7 +76,7 @@ func (d *Destination) Validate() error {
 	return nil
 }
 
-//Expand returns sourced table
+//ExpandTable returns expanded table
 func (d *Destination) ExpandTable(table string, created time.Time, source string) (string, error) {
 	return d.Expand(table, created, source)
 }
@@ -107,6 +111,7 @@ func toComparableTable(table string) string {
 	return table
 }
 
+//Match matched candidate table with the dest
 func (d *Destination) Match(candidate string) bool {
 	table := d.Table
 	index := strings.Index(table, "$")
@@ -132,7 +137,7 @@ func (d *Destination) TableReference(created time.Time, source string) (*bigquer
 	return d.CustomTableReference(d.Table, created, source)
 }
 
-//TableReference returns table reference, source table syntax: project:dataset:table
+//CustomTableReference returns custom table reference
 func (d *Destination) CustomTableReference(table string, created time.Time, source string) (*bigquery.TableReference, error) {
 	table, err := d.ExpandTable(table, created, source)
 	if err != nil {
@@ -194,7 +199,7 @@ func expandWithPattern(expr *regexp.Regexp, sourceURL string, table string) stri
 	return table
 }
 
-//NewLoadRequest creates a new load request
+//NewJobConfigurationLoad creates a new load request
 func (d *Destination) NewJobConfigurationLoad(created time.Time, URIs ...string) (*bigquery.JobConfigurationLoad, error) {
 	if len(URIs) == 0 {
 		return nil, fmt.Errorf("URIs were empty")

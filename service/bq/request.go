@@ -18,6 +18,7 @@ func (r Request) jobReference() *bigquery.JobReference {
 	}
 }
 
+//PostActions returns post actions
 func (r Request) PostActions() *task.Actions {
 	return &r.Actions
 }

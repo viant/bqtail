@@ -22,7 +22,6 @@ In addition it also provides data transformation enrichment and deduplication ca
 This project is used by Viant to ingest **70+ billions** transactions _daily_, **1.4 million files** to 100+ tables, all under $15, as cost effective alternative
 for Big Query Streaming API, Cloud Dataflow and [in house build cost optimized ETL](https://github.com/viant/etly) framework. 
 
-
 ## Introduction
 
 ![BqTail](images/bqtail.png)

@@ -36,18 +36,18 @@ func EncodeTableReference(table *bigquery.TableReference) string {
 
 //TableID returns a table id
 func TableID(table string) string {
-	tableId := table
-	if index := strings.Index(tableId, "$"); index != -1 {
-		return string(tableId[:index])
+	tableID := table
+	if index := strings.Index(tableID, "$"); index != -1 {
+		return string(tableID[:index])
 	}
-	return tableId
+	return tableID
 }
 
 //TablePartition returns a table partition
 func TablePartition(table string) string {
-	tableId := table
-	if index := strings.Index(tableId, "$"); index != -1 {
-		return string(tableId[index+1:])
+	tableID := table
+	if index := strings.Index(tableID, "$"); index != -1 {
+		return string(tableID[index+1:])
 	}
 	return ""
 }

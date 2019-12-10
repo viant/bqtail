@@ -22,9 +22,10 @@ import (
 	"strings"
 )
 
+//Service representa a batch service
 type Service interface {
 	//Try to acquire batch window
-	TryAcquireWindow(ctx context.Context, eventId string, source storage.Object, rule *config.Rule) (*BatchedWindow, error)
+	TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule) (*Info, error)
 
 	//MatchWindowDataURLs returns matching data URLs
 	MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) error
@@ -44,7 +45,7 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 }
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
-func (s *service) TryAcquireWindow(ctx context.Context, eventId string, source storage.Object, rule *config.Rule) (*BatchedWindow, error) {
+func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule) (*Info, error) {
 	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, source.ModTime(), source.URL())
 	if err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventId string, source s
 		if rule.Batch.MultiPath {
 			err = s.addLocationFile(ctx, window, parentURL)
 		}
-		return &BatchedWindow{OwnerEventID: window.EventID}, err
+		return &Info{OwnerEventID: window.EventID}, err
 	}
 	endTime := batch.WindowEndTime(source.ModTime())
 	startTime := endTime.Add(-batch.Window.Duration)
@@ -73,7 +74,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventId string, source s
 			startTime = startTime.Add(-batch.Window.Duration)
 		}
 	}
-	window = NewWindow(eventId, dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
+	window = NewWindow(eventID, dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
 	windowData, _ := json.Marshal(window)
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
 	if err != nil {
@@ -85,13 +86,13 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventId string, source s
 			if rule.Batch.MultiPath {
 				err = s.addLocationFile(ctx, window, parentURL)
 			}
-			return &BatchedWindow{OwnerEventID: window.EventID}, err
+			return &Info{OwnerEventID: window.EventID}, err
 		}
 	}
 	if rule.Batch.MultiPath {
 		err = s.addLocationFile(ctx, window, parentURL)
 	}
-	return &BatchedWindow{Window: window}, err
+	return &Info{Window: window}, err
 }
 
 func (s *service) readLocation(ctx context.Context, URL string) (string, error) {

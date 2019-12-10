@@ -70,7 +70,8 @@ func (m *Loader) Notify(ctx context.Context, fs afs.Service) (bool, error) {
 	return m.notify(ctx, rules), nil
 }
 
-func NewNotifier(baeURL string, checkFrequency time.Duration, fs afs.Service, onChanged, onRemoved Notify) *Loader {
+//NewLoader create a loader
+func NewLoader(baeURL string, checkFrequency time.Duration, fs afs.Service, onChanged, onRemoved Notify) *Loader {
 	if checkFrequency == 0 {
 		checkFrequency = time.Minute
 	}

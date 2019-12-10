@@ -8,20 +8,22 @@ import (
 //Response represents response
 type Response struct {
 	base.Response
-	Jobs         *Jobs
-	Batched      map[string]time.Time
-	BatchCount   int
-	Cycles       int
-	ListTime     string
-	GetCount     int
-	Errors       []string
+	Jobs       *Jobs
+	Batched    map[string]time.Time
+	BatchCount int
+	Cycles     int
+	ListTime   string
+	GetCount   int
+	Errors     []string
 	*Performance
 }
 
+//Reset reset response
 func (r *Response) Reset() {
 	r.BatchCount = 0
 }
 
+//HasBatch returns true if it has a bach
 func (r *Response) HasBatch(URL string) bool {
 	r.Jobs.mux.Lock()
 	defer r.Jobs.mux.Unlock()
@@ -29,12 +31,14 @@ func (r *Response) HasBatch(URL string) bool {
 	return ok
 }
 
+//AddBatch add a batch
 func (r *Response) AddBatch(URL string, ts time.Time) {
 	r.Jobs.mux.Lock()
 	defer r.Jobs.mux.Unlock()
 	r.Batched[URL] = ts
 }
 
+//AddError adds an error
 func (r *Response) AddError(err error) {
 	if err == nil {
 		return
@@ -48,10 +52,10 @@ func (r *Response) AddError(err error) {
 //NewResponse creates a new response
 func NewResponse() *Response {
 	return &Response{
-		Jobs:     NewJobs(),
+		Jobs:        NewJobs(),
 		Performance: NewPerformance(),
-		Batched:  make(map[string]time.Time),
-		Errors:   make([]string, 0),
-		Response: *base.NewResponse(""),
+		Batched:     make(map[string]time.Time),
+		Errors:      make([]string, 0),
+		Response:    *base.NewResponse(""),
 	}
 }

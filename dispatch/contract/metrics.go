@@ -22,23 +22,24 @@ func (m *Metrics) Update(jobID string) *stage.Info {
 	return stageInfo
 }
 
-//Update updates a metrics with job ID
+//Add updates a metrics with supplied stage action and count
 func (m *Metrics) Add(stageInfo *stage.Info, count int) {
 	switch stageInfo.Action {
 	case "query":
-		m.QueryJobs+=count
+		m.QueryJobs += count
 	case "copy":
-		m.CopyJobs+=count
+		m.CopyJobs += count
 	case "load", "reload":
-		m.LoadJobs+=count
+		m.LoadJobs += count
 	default:
-		m.OtherJobs+=count
+		m.OtherJobs += count
 	}
 }
 
+//Merge merges metrics
 func (m *Metrics) Merge(metrics *Metrics) {
-	m.CopyJobs+=metrics.CopyJobs
-	m.QueryJobs+=metrics.QueryJobs
-	m.LoadJobs+=metrics.LoadJobs
-	m.OtherJobs+=metrics.OtherJobs
+	m.CopyJobs += metrics.CopyJobs
+	m.QueryJobs += metrics.QueryJobs
+	m.LoadJobs += metrics.LoadJobs
+	m.OtherJobs += metrics.OtherJobs
 }

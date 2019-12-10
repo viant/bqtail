@@ -63,7 +63,7 @@ func (r *Ruleset) Get(ctx context.Context, URL string, filter *matcher.Basic) *R
 	return nil
 }
 
-//HasMatch returns the first match route
+//Match returns the match rules
 func (r Ruleset) Match(URL string) []*Rule {
 	if len(r.Rules) == 0 {
 		return nil
@@ -77,7 +77,7 @@ func (r Ruleset) Match(URL string) []*Rule {
 	return matched
 }
 
-//HasMatch returns the first match route
+//MatchByTable returns the first match route
 func (r Ruleset) MatchByTable(table string) *Rule {
 	if len(r.Rules) == 0 {
 		return nil
@@ -136,16 +136,17 @@ func (r *Ruleset) Init(ctx context.Context, fs afs.Service, projectID string) er
 		return err
 	}
 	checkFrequency := time.Duration(r.CheckInMs) * time.Millisecond
-	r.Loader = base.NewNotifier(r.RulesURL, checkFrequency, fs, r.modify, r.remove)
+	r.Loader = base.NewLoader(r.RulesURL, checkFrequency, fs, r.modify, r.remove)
 	_, err := r.Loader.Notify(ctx, fs)
 	return err
 }
 
+//ReloadIfNeeded reloads rule if there is a change
 func (r *Ruleset) ReloadIfNeeded(ctx context.Context, fs afs.Service) (bool, error) {
 	return r.Loader.Notify(ctx, fs)
 }
 
-func (c *Ruleset) loadRule(ctx context.Context, storage afs.Service, URL string) ([]*Rule, error) {
+func (r *Ruleset) loadRule(ctx context.Context, storage afs.Service, URL string) ([]*Rule, error) {
 	reader, err := storage.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to load resource: %v", URL)

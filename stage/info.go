@@ -53,6 +53,7 @@ var nopActions = map[string]bool{
 	"notify": true,
 }
 
+//ChildInfo returns children info
 func (i *Info) ChildInfo(action string, step int) *Info {
 	upper := (i.Step / 1000) * 1000
 	lower := (i.Step % 100) * 1000
@@ -81,6 +82,7 @@ func (i *Info) Sequence() int {
 	return upper + lower
 }
 
+//Wrap wraps info
 func (i *Info) Wrap(action string) *Info {
 	suffix := i.Suffix
 	if nopActions[action] {

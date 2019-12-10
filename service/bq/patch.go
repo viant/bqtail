@@ -6,11 +6,12 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
-//Export export table data to google fs
+//Patch patch temp table
 func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.Job, error) {
 	if err := request.Init(s.projectID); err != nil {
 		return nil, err
 	}
+	//TODO complete implementation
 
 	if err := request.Validate(); err != nil {
 		return nil, err
@@ -34,7 +35,7 @@ func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.J
 	return nil, nil
 }
 
-//ExportRequest represents an export request
+//PatchRequest represents an export request
 type PatchRequest struct {
 	Template    string
 	Destination string

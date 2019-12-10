@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+//URLToWindowEndTime converts URL to batch window end time
 func URLToWindowEndTime(URL string) (*time.Time, error) {
 	index := strings.LastIndex(URL, "_")
 	if index == -1 {

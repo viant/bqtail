@@ -8,7 +8,7 @@ import (
 var singleton Service
 var singletonEnvKey string
 
-//NewFromEnv returns singleton service for env key
+//Singleton returns singleton service for env key
 func Singleton(ctx context.Context, envKey string) (Service, error) {
 	if singleton != nil && envKey == singletonEnvKey {
 		return singleton, nil

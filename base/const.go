@@ -45,8 +45,6 @@ const (
 	//JobIDKey job id key
 	JobIDKey = "JobID"
 
-	//Info key
-	InfoKey = "Info"
 	//JobIDExpr job id expression
 	JobIDExpr = "$GetJobID"
 	//EventIDKey event key
@@ -62,7 +60,7 @@ const (
 	ErrorSuffix = "-error"
 
 	//AsyncTaskURL deferred URL
-	DeferTaskURL = "AsyncTaskURL"
+	AsyncTaskURL = "AsyncTaskURL"
 
 	//SourceKey source URI
 	SourceKey = "Source"
@@ -77,34 +75,34 @@ const (
 	//ConfigEnvKey config env key
 	ConfigEnvKey = "CONFIG"
 
-	//MaxRetries
+	//MaxRetries defines max retries
 	MaxRetries = 3
 
-	//RetrySleepInSec
+	//RetrySleepInSec sleep between retries
 	RetrySleepInSec = 3
 
-	//StorageListVisibilityDelay
+	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
 	StorageListVisibilityDelay = 4000
 
 	//DoneState done status
 	DoneState = "DONE"
 
-	//DoneState done status
+	//RunningState done status
 	RunningState = "RUNNING"
 
-	//DoneState done status
+	//PendigState done status
 	PendigState = "PENDING"
 
 	//DateLayout represents a date layout
 	DateLayout = "2006-01-02_15"
 
-	//LoadPrefix
+	//LoadPrefix - load job default prefix
 	LoadPrefix = "/_load_/"
 
-	//BqJobPrefix
+	//BqJobPrefix bg job default prefix
 	BqJobPrefix = "/_bqjob_/"
 
-	//BatchPrefix
+	//BatchPrefix batch task default prefix
 	BatchPrefix = "/_batch_/"
 
 	//InvalidSchemaLocation invalid schema

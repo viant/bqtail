@@ -11,6 +11,7 @@ type Info struct {
 	Stalled        map[string]*info.Metric `json:",omitempty"`
 }
 
+//Add adds info
 func (i *Info) Add(inf *Info) {
 	if i.Activity.Running == nil {
 		i.Activity.Running = info.NewMetric()

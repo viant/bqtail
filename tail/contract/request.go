@@ -17,7 +17,7 @@ type Request struct {
 	source      *storage.Object
 }
 
-//IsLoadAction returns true if action URL
+//HasURLPrefix returns true if source URL has prefix
 func (r *Request) HasURLPrefix(prefix string) bool {
 	_, PathURL := url.Base(r.SourceURL, "")
 	return strings.HasPrefix(PathURL, prefix)

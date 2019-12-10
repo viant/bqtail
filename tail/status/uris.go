@@ -20,6 +20,7 @@ type URIs struct {
 	Corrupted     []string `json:",omitempty"`
 }
 
+//Classify classify uri
 func (u *URIs) Classify(ctx context.Context, fs afs.Service, job *bigquery.Job) {
 	var URIs = make(map[string]bool)
 	for _, URI := range job.Configuration.Load.SourceUris {

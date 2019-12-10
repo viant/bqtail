@@ -35,7 +35,7 @@ pipeline:
       credentials: $gcpCredentials
       public: true
       '@name': $functionName
-      entryPoint: $functionName
+      entryPoint: Monitor
       runtime: go111
       availableMemoryMb: 256
       timeout: 540s

@@ -8,7 +8,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
-//Copy copy source to dest table
+//Drop drop source table
 func (s *service) Drop(ctx context.Context, request *DropRequest) error {
 	if err := request.Init(s.projectID); err != nil {
 		return err
@@ -26,7 +26,7 @@ func (s *service) Drop(ctx context.Context, request *DropRequest) error {
 	return err
 }
 
-//CopyRequest represents a copy request
+//DropRequest represents a copy request
 type DropRequest struct {
 	Request
 	Table     string
@@ -59,7 +59,7 @@ func (r *DropRequest) Validate() error {
 	return nil
 }
 
-//NewCopyRequest creates a new copy request
+//NewDropRequest creates a new drop request
 func NewDropRequest(table string, finally *task.Actions) *DropRequest {
 	result := &DropRequest{
 		Table: table,

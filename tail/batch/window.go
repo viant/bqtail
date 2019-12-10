@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-type BatchedWindow struct {
+//Info represents batch info, process can be owner of be owner by existing batch
+type Info struct {
 	*Window
 	OwnerEventID string
 }
@@ -46,6 +47,7 @@ func NewWindow(eventID string, dest string, startTime, endTime time.Time, source
 	}
 }
 
+//GetWindow returns a batch window or erro
 func GetWindow(ctx context.Context, URL string, fs afs.Service) (*Window, error) {
 	reader, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {

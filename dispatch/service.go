@@ -273,7 +273,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 	return err
 }
 
-//GetJobID returns job ID for supplied URL
+//JobID returns job ID for supplied URL
 func JobID(baseURL string, URL string) string {
 	if len(baseURL) > len(URL) {
 		return ""

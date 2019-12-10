@@ -12,6 +12,7 @@ const (
 	agoKeyword        = "Ago"
 )
 
+//Request represents reply request
 type Request struct {
 	TriggerURL                string
 	ReplayBucket              string
@@ -19,6 +20,7 @@ type Request struct {
 	unprocessedModifiedBefore *time.Time
 }
 
+//Response represents replay response
 type Response struct {
 	Replayed []string
 	Status   string
@@ -39,6 +41,7 @@ func (r *Request) Init() (err error) {
 	return nil
 }
 
+//Validate check if request is valid
 func (r *Request) Validate() error {
 	if r.ReplayBucket == "" {
 		return errors.New("replayBucket was empty")

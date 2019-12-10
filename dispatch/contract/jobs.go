@@ -2,11 +2,13 @@ package contract
 
 import "sync"
 
+//Jobs represents job map
 type Jobs struct {
 	Jobs map[string]*Job
 	mux  *sync.Mutex
 }
 
+//Add adds a job to a map
 func (j *Jobs) Add(job *Job) {
 	j.mux.Lock()
 	defer j.mux.Unlock()

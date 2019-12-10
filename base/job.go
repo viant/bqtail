@@ -37,7 +37,7 @@ func (e *Job) Source() string {
 	return ""
 }
 
-//GetJobID returns Job ID
+//JobID returns Job ID
 func (e *Job) JobID() string {
 	if e.JobReference != nil {
 		return e.JobReference.JobId
@@ -49,7 +49,7 @@ func (e *Job) JobID() string {
 	return string(e.Id[index:])
 }
 
-//Table returns job destination
+//Dest returns job destination
 func (e *Job) Dest() string {
 	switch e.Configuration.JobType {
 	case "QUERY":

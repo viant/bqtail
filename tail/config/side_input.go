@@ -13,6 +13,7 @@ type SideInput struct {
 	Alias string
 }
 
+//Validate checks if side input is valid
 func (s SideInput) Validate() error {
 	if s.Table == "" && s.From == "" {
 		return errors.New("table was empty")

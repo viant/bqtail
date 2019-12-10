@@ -8,11 +8,11 @@ import (
 
 //Performance performance
 type Performance struct {
-	Running *Metrics `json:",omitempty"`
-	Pending *Metrics `json:",omitempty"`
-	Dispatched *Metrics `json:",omitempty"`
-	Throttled *Metrics `json:",omitempty"`
-	MissingStatus int `json:",omitempty"`
+	Running       *Metrics `json:",omitempty"`
+	Pending       *Metrics `json:",omitempty"`
+	Dispatched    *Metrics `json:",omitempty"`
+	Throttled     *Metrics `json:",omitempty"`
+	MissingStatus int      `json:",omitempty"`
 }
 
 //Merge merges performance
@@ -30,19 +30,17 @@ func (p *Performance) Merge(perf *Performance) {
 
 //ActiveJobCount returns active jobs (load, copy)
 func (p Performance) ActiveJobCount() int {
-	return p.Dispatched.LoadJobs +  p.Dispatched.CopyJobs +
-		p.Pending.LoadJobs +  p.Pending.CopyJobs +
-		p.Running.LoadJobs +  p.Running.CopyJobs
+	return p.Dispatched.LoadJobs + p.Dispatched.CopyJobs +
+		p.Pending.LoadJobs + p.Pending.CopyJobs +
+		p.Running.LoadJobs + p.Running.CopyJobs
 }
-
 
 //ActiveQueryCount returns active query count
 func (p Performance) ActiveQueryCount() int {
-	return p.Dispatched.QueryJobs +  p.Dispatched.QueryJobs +
-		p.Pending.QueryJobs +  p.Pending.QueryJobs +
-		p.Running.QueryJobs +  p.Running.QueryJobs
+	return p.Dispatched.QueryJobs + p.Dispatched.QueryJobs +
+		p.Pending.QueryJobs + p.Pending.QueryJobs +
+		p.Running.QueryJobs + p.Running.QueryJobs
 }
-
 
 //AddEvent adds running, pending metrics
 func (p *Performance) AddEvent(state string, jobID string) {
@@ -63,20 +61,18 @@ func (p *Performance) AddDispatch(jobID string) *stage.Info {
 	return p.Dispatched.Update(jobID)
 }
 
-
-//AddDispatch add dispatched metrics
+//AddThrottled add throttled metrics
 func (p *Performance) AddThrottled(jobID string) {
 	stageInfo := p.Throttled.Update(jobID)
 	p.Dispatched.Add(stageInfo, -1)
 }
 
-
 //NewPerformance create a performance
-func NewPerformance() *Performance{
+func NewPerformance() *Performance {
 	return &Performance{
-		Running: &Metrics{},
-		Pending: &Metrics{},
+		Running:    &Metrics{},
+		Pending:    &Metrics{},
 		Dispatched: &Metrics{},
-		Throttled: &Metrics{},
+		Throttled:  &Metrics{},
 	}
 }

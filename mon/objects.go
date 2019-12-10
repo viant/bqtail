@@ -4,6 +4,7 @@ import (
 	"github.com/viant/afs/storage"
 )
 
+//Objects represents sorting container
 type Objects struct {
 	Elements []storage.Object
 	By       func(o1, o2 storage.Object) bool
@@ -38,6 +39,7 @@ func byModTime(o1, o2 storage.Object) bool {
 	return o1.ModTime().Before(o2.ModTime())
 }
 
+//NewObjects creates a new objects
 func NewObjects(objects []storage.Object, by func(o1, o2 storage.Object) bool) *Objects {
 	return &Objects{
 		Elements: objects,

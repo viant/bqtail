@@ -80,7 +80,6 @@ func BuildSelect(source *bigquery.TableReference, tableScheme *bigquery.TableSch
 	return SQL
 }
 
-
 func buildJoins(sideInputs []*config.SideInput) string {
 	if len(sideInputs) == 0 {
 		return ""
@@ -98,8 +97,8 @@ func buildJoins(sideInputs []*config.SideInput) string {
 
 //buildSelect returns select SQL statement for specified parameter, if uniqueColumns SQL de-duplicates data
 func buildSelect(source *bigquery.TableReference, tableScheme *bigquery.TableSchema, uniqueColumns []string, transform map[string]string) string {
-	tableId := base.TableID(source.TableId)
-	sourceTable := source.DatasetId + "." + tableId
+	tableID := base.TableID(source.TableId)
+	sourceTable := source.DatasetId + "." + tableID
 	schema := Schema(*tableScheme)
 	if len(uniqueColumns) == 0 {
 		return buildSelectAll(sourceTable, schema, transform)

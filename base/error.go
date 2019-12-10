@@ -23,7 +23,7 @@ func IsRetryError(err error) bool {
 	return strings.Contains(message, backendError) || strings.Contains(message, internalError)
 }
 
-//IsRetryError returns true if backend error
+//IsNotFoundError returns true if not found error
 func IsNotFoundError(err error) bool {
 	if err == nil {
 		return false

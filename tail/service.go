@@ -560,7 +560,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	if len(toRun) > 0 {
 		for i := range toRun {
 			if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {
-				if ! response.Retriable {
+				if !response.Retriable {
 					response.Retriable = base.IsRetryError(err)
 				}
 				return err

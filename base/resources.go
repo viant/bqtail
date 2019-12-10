@@ -5,23 +5,27 @@ import (
 	"time"
 )
 
+//Resources represents a resource
 type Resources struct {
 	mutex    *sync.RWMutex
 	elements map[string]time.Time
 }
 
+//Add add url with modified time
 func (r *Resources) Add(URL string, modified time.Time) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.elements[URL] = modified
 }
 
+//Remove removes URL from a elements
 func (r *Resources) Remove(URL string) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	delete(r.elements, URL)
 }
 
+//Has returns true if has URL
 func (r *Resources) Has(URL string) bool {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
@@ -29,6 +33,7 @@ func (r *Resources) Has(URL string) bool {
 	return ok
 }
 
+//Get returns URL last modified time
 func (r *Resources) Get(URL string) *time.Time {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
@@ -53,6 +58,7 @@ func (r *Resources) GetMissing(snapshot map[string]time.Time) []string {
 	return missing
 }
 
+//NewResources creates a resources container
 func NewResources() *Resources {
 	return &Resources{
 		mutex:    &sync.RWMutex{},

@@ -11,6 +11,7 @@ import (
 	"github.com/viant/afs/cache"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	//add gcs storage API
 	_ "github.com/viant/afsc/gs"
 	"path"
 	"sort"

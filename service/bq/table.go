@@ -12,8 +12,8 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	if reference.ProjectId == "" {
 		reference.ProjectId = s.projectID
 	}
-	tableId := base.TableID(reference.TableId)
-	call := bigquery.NewTablesService(s.Service).Get(reference.ProjectId, reference.DatasetId, tableId)
+	tableID := base.TableID(reference.TableId)
+	call := bigquery.NewTablesService(s.Service).Get(reference.ProjectId, reference.DatasetId, tableID)
 
 	for i := 0; i < base.MaxRetries; i++ {
 		call.Context(ctx)

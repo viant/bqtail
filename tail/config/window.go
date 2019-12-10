@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	MinWindowDuration        = 10 * time.Second
+	//MinWindowDuration min window duration
+	MinWindowDuration = 10 * time.Second
+	//DefaultWindowDurationSec default window duration
 	DefaultWindowDurationSec = 95
 )
 
@@ -16,6 +18,7 @@ type Window struct {
 	DurationInSec int
 }
 
+//Init initialises window
 func (w *Window) Init() {
 	if w.DurationInSec == 0 && w.Duration == 0 {
 		w.DurationInSec = DefaultWindowDurationSec
@@ -28,6 +31,7 @@ func (w *Window) Init() {
 	}
 }
 
+//Validate checks if window is valid
 func (w *Window) Validate() error {
 	if w.Duration < MinWindowDuration {
 		return fmt.Errorf("invalid window duration: had: %v, but min allowed: %v", w.DurationInSec, time.Duration(MinWindowDuration))

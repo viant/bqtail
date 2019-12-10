@@ -48,7 +48,7 @@ func (j Job) IDSuffix() string {
 	return suffix
 }
 
-//GetJobID returns job ID
+//Info returns job info
 func (j Job) Info() *stage.Info {
 	dest := j.Dest()
 	if ref, err := base.NewTableReference(dest); err == nil {
@@ -76,7 +76,7 @@ func (j Job) IsSyncMode() bool {
 	return !j.Rule.Async
 }
 
-//Table returns dataset and table destination
+//Dest returns dataset and table destination
 func (j Job) Dest() string {
 	if j.Load == nil {
 		return ""

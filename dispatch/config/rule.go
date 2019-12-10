@@ -12,6 +12,7 @@ type Rule struct {
 	Info base.Info `json:",omitempty"`
 }
 
+//Init initialises rule
 func (r *Rule) Init() error {
 	if err := r.When.Init(); err != nil {
 		return err
