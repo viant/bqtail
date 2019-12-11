@@ -29,7 +29,7 @@ func (c *Config) TimeToLive() time.Duration {
 	if c.TimeToLiveInMin == 0 {
 		c.TimeToLiveInMin = 1
 	}
-	return time.Minute*time.Duration(c.TimeToLiveInMin) - (100 * time.Millisecond)
+	return time.Minute*time.Duration(c.TimeToLiveInMin) - (2 * time.Second)
 }
 
 //Init initialises config
