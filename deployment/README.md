@@ -82,7 +82,7 @@ You can deploy the described infrastructure with BqTail and BqDispatch cloud fun
 ```bash
 git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment
-endly run authWith=myGoogleSecret.json
+endly run authWith=myGoogleSecret.json region='us-central1'
 ```
 
 
