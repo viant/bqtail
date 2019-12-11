@@ -545,7 +545,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	}
 	bqJob, err := s.bq.GetJob(ctx, s.config.ProjectID, actions.Job.JobReference.JobId)
 	if err != nil {
-		response.Retriable = true
+		response.Retriable = base.IsRetryError(err)
 		return errors.Wrapf(err, "failed to fetch job %v", actions.Job.JobReference.JobId)
 	}
 	job := base.Job(*bqJob)
@@ -588,7 +588,9 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 	request.EventID = window.EventID
 	job, err := s.runInBatch(ctx, window, response)
 	if err == nil || job == nil {
-		response.Retriable = true
+		if err != nil {
+			response.Retriable = base.IsRetryError(err)
+		}
 		return err
 	}
 	return s.tryRecover(ctx, request, job.Actions, job.Job, response)
