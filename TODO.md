@@ -1,1 +1,1 @@
-- Added incompatible avro schema recovery with schema patch
+- Add incompatible avro schema recovery with schema patch
