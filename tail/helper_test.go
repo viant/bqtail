@@ -17,13 +17,13 @@ func TestUpdateJobId(t *testing.T) {
 			description: "event id replcement",
 			jobID:       "temp--dummy_850558231030311/850558231030311/dispatch",
 			eventID:     "333333",
-			expect:      "temp--dummy_333333/333333/dispatch",
+			expect:      "temp--dummy_850558231030311--333333_00000_nop--dispatch",
 		},
 		{
 			description: "event id replcement",
 			jobID:       "temp--dummy_850558231030311_850558231030311/dispatch",
 			eventID:     "333333",
-			expect:      "333333temp--dummy_850558231030311_850558231030311/dispatch",
+			expect:      "temp--333333_97677_850558231030311--dispatch",
 		},
 	}
 

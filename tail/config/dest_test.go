@@ -111,19 +111,20 @@ func TestDestination_TableReference(t *testing.T) {
 			expect: &bigquery.TableReference{
 				ProjectId: "proj",
 				DatasetId: "dataset",
-				TableId:   "table_4",
+				TableId:   "table_0",
 			},
 		},
 
 		{
 			description: "mod expression",
 			created:     inThePast,
+			sourceURI: "gs://mybucket/data.avro",
 			dest: &Destination{
 				Table: "dataset.table_$Mod(7)",
 			},
 			expect: &bigquery.TableReference{
 				DatasetId: "dataset",
-				TableId:   "table_4",
+				TableId:   "table_2",
 			},
 		},
 

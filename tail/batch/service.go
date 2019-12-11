@@ -162,7 +162,7 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 func (s *service) matchcData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, matcher option.Matcher, result *[]string) error {
 	objects, err := s.fs.List(ctx, baseURL, matcher)
 	if err != nil {
-		return errors.Wrapf(err, "failed to list batch %v(%) data files", baseURL)
+		return errors.Wrapf(err, "failed to list batch %v data files", baseURL)
 	}
 	for _, object := range objects {
 		if rule.HasMatch(object.URL()) {
