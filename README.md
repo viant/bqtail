@@ -153,13 +153,15 @@ The following define rule to ingest data in batches within 60 sec time window in
 ## Cost optimized serverless
 
 The following snapshot show serverless cost overhead per one day data ingestion (70TB, 1.6 millions files).
- 
+
 ![BqTail](images/serverless_cost.png)
+
+Note that actual data ingestion with load and copy BigQuery operation is free of charge.
 
 
 ## Deployment
 
-The following [Deployment](deployment/README.md) details generic deployment.
+The following [link](deployment/README.md) details generic deployment.
 
 
 ## End to end testing
