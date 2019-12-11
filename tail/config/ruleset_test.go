@@ -144,8 +144,8 @@ func TestRoutes_HasMatch(t *testing.T) {
 		}
 
 		actual := rules.Match(useCase.URL)
-		if useCase.expextTable == "" {
-			assert.Nil(t, actual, useCase.description)
+		if useCase.expextTable == ""  {
+			assert.True(t, len(actual)==0, useCase.description)
 			continue
 		}
 

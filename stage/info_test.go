@@ -32,7 +32,7 @@ func TestParse(t *testing.T) {
 		{
 			description: "invalid",
 			encoded:     "bqtail869694905034386--tail",
-			expect:      `{"DestTable":"bqtail869694905034386", "Action":"nop","Suffix":"tail","Step":0}`,
+			expect:      `{"DestTable":"", "Action":"nop","Suffix":"tail","Step":0}`,
 		},
 		{
 			description: "legacy mixed",
