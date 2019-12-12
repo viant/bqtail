@@ -180,7 +180,7 @@ You can try on all data ingestion by simply running e2e test cases:
 
 BqTail is an open source project and contributors are welcome!
 
-See [TODO](TODO.md)
+See [TODO](TODO.md) list
 
 ## License
 
