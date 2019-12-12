@@ -1,1 +1,3 @@
-- Add incompatible avro schema recovery with schema patch
+- Different schema for transient and destination with patch on the fly
+- REST API call
+- SQL loaded from URL (more expression like $EventID for post SQL actions)
