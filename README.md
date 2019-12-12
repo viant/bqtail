@@ -178,7 +178,7 @@ You can try on all data ingestion by simply running e2e test cases:
 
 ## Contributing to bqtail
 
-bqtail is an open source project and contributors are welcome!
+BqTail is an open source project and contributors are welcome!
 
 See [TODO](TODO.md)
 
