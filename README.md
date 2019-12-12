@@ -174,6 +174,14 @@ You can try on all data ingestion by simply running e2e test cases:
 - [Use cases](e2e/README.md#use-cases)
 
 
+
+
+## Contributing to endly
+
+bqtail is an open source project and contributors are welcome!
+
+See [TODO](TODO.md)
+
 ## License
 
 The source code is made available under the terms of the Apache License, Version 2, as stated in the file `LICENSE`.
