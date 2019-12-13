@@ -45,7 +45,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	waitGroup := &sync.WaitGroup{}
 	waitGroup.Add(4)
 	infoDest := map[string]*Info{}
-
+	_ = s.Config.ReloadIfNeeded(ctx, s.fs)
 	var active, doneLoads activeLoads
 	var schedules batches
 	var stages []*stage.Info

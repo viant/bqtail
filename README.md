@@ -174,8 +174,6 @@ You can try on all data ingestion by simply running e2e test cases:
 - [Use cases](e2e/README.md#use-cases)
 
 
-
-
 ## Contributing to bqtail
 
 BqTail is an open source project and contributors are welcome!
