@@ -1,4 +1,4 @@
-# BigQuery Tail (bqtail)
+# BigQuery Google Storage Based Data Loader (bqtail) 
 
 This library is compatible with Go 1.11+
 
