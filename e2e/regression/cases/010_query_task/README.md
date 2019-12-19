@@ -2,7 +2,8 @@
 
 ### Scenario:
 
-This scenario tests data ingestion with summary query in sync mode.
+This scenario tests data ingestion with summary query in sync mode that produces batch row count, batching event id and 
+source file URIs.
 
 
 You can use the following variables in the SQL:
