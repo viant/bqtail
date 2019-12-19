@@ -48,7 +48,9 @@ It matches the the following rule to submit load Job to BiqQuery.
       },
       {
         "Action": "query",
+        
         "Request": {
+          "Append": true,
           "SQL": "SELECT '$EventID' AS event_id, SPLIT('$URLs', ',') AS uris, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $TempTable",
           "Dest": "bqtail.summary"
         }
