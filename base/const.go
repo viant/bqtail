@@ -50,7 +50,6 @@ const (
 	ActionCall = "call"
 )
 
-
 const (
 	//URLsKey urls key
 	URLsKey = "URLs"
@@ -67,8 +66,6 @@ const (
 	//ConfigEnvKey config env key
 	ConfigEnvKey = "CONFIG"
 )
-
-
 
 //BigQuery job status
 const (
@@ -96,12 +93,10 @@ const (
 	DoneLoadSuffix = "Done"
 	//ActiveLoadSuffix active done suffix
 	ActiveLoadSuffix = "Running"
-
 )
 
 //DateLayout represents a date layout
 const DateLayout = "2006-01-02_15"
-
 
 //Waits and retries
 const (

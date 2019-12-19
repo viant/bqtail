@@ -5,7 +5,6 @@ import (
 	"bqtail/task"
 )
 
-
 const id = "fs"
 
 //InitRegistry initialises registry

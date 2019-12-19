@@ -2,7 +2,6 @@ package task
 
 import "bqtail/base"
 
-
 var sourceURLExpandable = map[string]bool{
 	base.ActionMove:   true,
 	base.ActionDelete: true,
@@ -15,7 +14,6 @@ var bodyAppendable = map[string]bool{
 
 //rootContextActions represents nop actions
 var rootContextActions = map[string]bool{
-	base.ActionQuery:true,
+	base.ActionQuery:  true,
 	base.ActionNotify: true,
 }
-

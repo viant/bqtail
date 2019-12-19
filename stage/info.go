@@ -173,7 +173,7 @@ func (i Info) ExpandText(text string) string {
 //Expand expand any data type
 func (i Info) Expand(value interface{}) interface{} {
 	aMap := data.Map(i.AsMap())
-	aMap[URLsKey] =  strings.Join(i.LoadURIs, ",")
+	aMap[URLsKey] = strings.Join(i.LoadURIs, ",")
 	return aMap.Expand(value)
 }
 

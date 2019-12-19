@@ -11,7 +11,6 @@ import (
 	"strings"
 )
 
-
 //NotifyRequest represents a notify request
 type NotifyRequest struct {
 	Root        *stage.Info

@@ -41,12 +41,12 @@ func (a Action) New(root *stage.Info, request map[string]interface{}) *Action {
 	}
 
 	for k, v := range a.Request {
-		if _, ok :=  result.Request[k]; ok {
+		if _, ok := result.Request[k]; ok {
 			continue
 		}
 		result.Request[k] = v
 	}
-	if rootContextActions[a.Action]{
+	if rootContextActions[a.Action] {
 		expanded := root.ExpandMap(result.Request)
 		if base.IsLoggingEnabled() {
 			fmt.Printf("context map:")
@@ -69,13 +69,11 @@ func (a Action) New(root *stage.Info, request map[string]interface{}) *Action {
 func NewAction(action string, root *stage.Info, req interface{}) (*Action, error) {
 	result := &Action{Action: action}
 	err := result.SetRequest(req)
-	if rootContextActions[action]{
+	if rootContextActions[action] {
 		result.Request[base.RootKey] = root.AsMap()
 	}
 	return result, err
 }
-
-
 
 //ServiceAction represets service action
 type ServiceAction struct {

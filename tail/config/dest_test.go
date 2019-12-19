@@ -118,7 +118,7 @@ func TestDestination_TableReference(t *testing.T) {
 		{
 			description: "mod expression",
 			created:     inThePast,
-			sourceURI: "gs://mybucket/data.avro",
+			sourceURI:   "gs://mybucket/data.avro",
 			dest: &Destination{
 				Table: "dataset.table_$Mod(7)",
 			},

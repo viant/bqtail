@@ -67,7 +67,6 @@ func (a Actions) ToRun(err error, job *base.Job) []*Action {
 		}
 	}
 
-	
 	for i := range toRun {
 		childInfo := a.Info.ChildInfo(toRun[i].Action, i+1)
 		toRun[i].Request[base.JobIDKey] = childInfo.GetJobID()
@@ -124,7 +123,6 @@ func expandSource(actions []*Action, info *stage.Info) {
 	}
 }
 
-
 //AddOnSuccess adds on sucess action
 func (a *Actions) AddOnSuccess(actions ...*Action) {
 	if len(a.OnSuccess) == 0 {
@@ -160,7 +158,6 @@ func NewActions(async bool, info stage.Info, onSuccess, onFailure []*Action) *Ac
 	}
 }
 
-
 func appendSourceURLinfoActions(source []*Action, dest *[]*Action, info *stage.Info) {
 	if len(source) == 0 {
 		return
@@ -186,7 +183,6 @@ func appendSourceURLinfoActions(source []*Action, dest *[]*Action, info *stage.I
 		return
 	}
 }
-
 
 func appendSourceURLNoninfoActions(source []*Action, dest *[]*Action, info *stage.Info) {
 	for _, action := range source {

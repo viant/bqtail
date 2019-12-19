@@ -5,7 +5,6 @@ import (
 	"bqtail/task"
 )
 
-
 const id = "slack"
 
 //InitRegistry initialises registry with bq actions

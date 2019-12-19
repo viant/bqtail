@@ -572,8 +572,6 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	return bqJobError
 }
 
-
-
 func (s *service) runBatch(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	window, err := batch.GetWindow(ctx, request.SourceURL, s.fs)
 	if err != nil {
