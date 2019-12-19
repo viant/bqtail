@@ -23,31 +23,35 @@ It matches the the following rule to submit load Job to BiqQuery.
 [@rule.json](rule.json)
 ```json
 [{
-      "When": {
-        "Prefix": "/data/case010",
-        "Suffix": ".json"
+    "When": {
+      "Prefix": "/data/case010",
+      "Suffix": ".json"
+    },
+    "Dest": {
+      "Table": "bqtail.dummy",
+      "TransientDataset": "temp",
+      "UniqueColumns": ["id"],
+      "Transform": {
+        "event_id": "$EventID"
+      }
+    },
+    "Batch": {
+      "RollOver": true,
+      "Window": {
+        "DurationInSec": 15
+      }
+    },
+    "OnSuccess": [
+      {
+        "Action": "delete"
       },
-      "Dest": {
-        "Table": "bqtail.dummy",
-        "TransientDataset": "temp",
-        "UniqueColumns": ["id"]
-      },
-      "Batch": {
-        "Window": {
-          "DurationInSec": 15
+      {
+        "Action": "query",
+        "Request": {
+          "SQL": "SELECT '$EventID' AS event_id, SPLIT('$URLs', ',') AS uris, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $TempTable",
+          "Dest": "bqtail.summary"
         }
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        },
-        {
-          "Action": "query",
-          "Request": {
-            "SQL": "SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $DestTable",
-            "Dest": "bqtail.summary"
-          }
-        }
+      }
     ]
 }]
 ```
