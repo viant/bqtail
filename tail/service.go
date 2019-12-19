@@ -179,14 +179,17 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	if len(job.Load.SourceUris) == 0 {
 		return nil, errors.Errorf("sourceUris was empty")
 	}
+
 	load, err := s.buildLoadRequest(ctx, job, rule)
 	if err != nil {
 		return nil, err
 	}
 
-	actions := rule.Actions.Expand(&base.Expandable{SourceURLs: job.Load.SourceUris})
 	info := stage.New(job.GetSourceURI(), job.Dest(), job.EventID, "load", job.IDSuffix(), rule.Async, 0, rule.Info.URL)
-	actions.SetInfo(info)
+	info.LoadURIs = load.SourceUris
+	info.TempTable = load.DestinationTable.DatasetId + "." + load.DestinationTable.TableId
+	actions := rule.Actions.Expand(info)
+
 	if err = appendBatchAction(job.Window, actions); err == nil {
 		info := job.Info()
 		actions, err = s.addTransientDatasetActions(ctx, *info, job, rule, actions)
@@ -200,12 +203,10 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 			return nil, errors.Wrapf(err, "failed to upload load schema")
 		}
 	}
-
 	activeURL := s.config.BuildActiveLoadURL(job.Info())
 	doneURL := s.config.BuildDoneLoadURL(job.Info())
-
-	s.appendLoadJobFinalActions(activeURL, doneURL, load)
-	if e := s.createLoadAction(ctx, activeURL, load); e != nil {
+	s.appendLoadJobFinalActions(activeURL, doneURL, load, &actions.Info)
+	if e := s.createLoadAction(ctx, activeURL, load, &actions.Info); e != nil {
 		return nil, errors.Wrapf(err, "failed to create load job actions: %v", activeURL)
 	}
 	bqJob, err := s.bq.Load(ctx, load)
@@ -223,14 +224,14 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 }
 
 //appendLoadJobFinalActions append track action
-func (s *service) appendLoadJobFinalActions(activeURL, doneURL string, load *bq.LoadRequest) {
+func (s *service) appendLoadJobFinalActions(activeURL, doneURL string, load *bq.LoadRequest, info *stage.Info) {
 	moveRequest := storage.MoveRequest{SourceURL: activeURL, DestURL: doneURL, IsDestAbsoluteURL: true}
-	moveAction, _ := task.NewAction("move", moveRequest)
+	moveAction, _ := task.NewAction("move", info, moveRequest)
 	load.Actions.AddOnSuccess(moveAction)
 }
 
-func (s *service) createLoadAction(ctx context.Context, URL string, loadJob *bq.LoadRequest) error {
-	loadTrace, err := task.NewAction("load", loadJob)
+func (s *service) createLoadAction(ctx context.Context, URL string, loadJob *bq.LoadRequest, info *stage.Info) error {
+	loadTrace, err := task.NewAction("load", info, loadJob)
 	if err != nil {
 		return err
 	}
@@ -251,7 +252,7 @@ func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 	URLsToDelete := make([]string, 0)
 	URLsToDelete = append(URLsToDelete, window.URL)
 	deleteReq := storage.DeleteRequest{URLs: URLsToDelete}
-	deleteAction, err := task.NewAction("delete", deleteReq)
+	deleteAction, err := task.NewAction("delete", &actions.Info, deleteReq)
 	if err != nil {
 		return err
 	}
@@ -273,12 +274,13 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 		result.AddOnFailure(actions.OnFailure...)
 	}
 	tableID := job.Load.DestinationTable.DatasetId + "." + job.Load.DestinationTable.TableId
-	dropAction, err := task.NewAction("drop", bq.NewDropRequest(tableID, onFailureAction))
+	dropAction, err := task.NewAction("drop", &result.Info, bq.NewDropRequest(tableID, onFailureAction))
 	if err != nil {
 		return nil, err
 	}
 	actions.AddOnSuccess(dropAction)
 	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, rule.Dest.UniqueColumns, rule.Dest.Transform, rule.Dest.SideInputs)
+	selectAll = result.Info.ExpandText(selectAll)
 	if rule.Dest.HasSplit() {
 		return result, s.addSplitActions(ctx, selectAll, parent, job, rule, result, actions)
 	}
@@ -290,7 +292,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 	if len(rule.Dest.UniqueColumns) > 0 || partition != "" || len(rule.Dest.Transform) > 0 {
 		query := bq.NewQueryRequest(selectAll, destTable, actions)
 		query.Append = rule.IsAppend()
-		queryAction, err := task.NewAction("query", query)
+		queryAction, err := task.NewAction("query", &result.Info, query)
 		if err != nil {
 			return nil, err
 		}
@@ -300,7 +302,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 		dest := base.EncodeTableReference(destTable)
 		copyRequest := bq.NewCopyRequest(source, dest, actions)
 		copyRequest.Append = rule.IsAppend()
-		copyAction, err := task.NewAction("copy", copyRequest)
+		copyAction, err := task.NewAction("copy", &result.Info, copyRequest)
 		if err != nil {
 			return nil, err
 		}
@@ -382,7 +384,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parent 
 		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
 		query := bq.NewQueryRequest(dest, destTable, next)
 		query.Append = rule.IsAppend()
-		queryAction, err := task.NewAction("query", query)
+		queryAction, err := task.NewAction("query", &onDone.Info, query)
 		if err != nil {
 			return err
 		}
@@ -405,7 +407,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parent 
 
 			query := bq.NewQueryRequest(DML, nil, next)
 			query.Append = rule.IsAppend()
-			queryAction, err := task.NewAction("query", query)
+			queryAction, err := task.NewAction("query", &onDone.Info, query)
 			if err != nil {
 				return err
 			}
@@ -556,7 +558,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		}
 	}
 	response.Retriable = base.IsRetryError(bqJobError)
-	toRun := actions.ToRun(bqJobError, &job, s.config.AsyncTaskURL)
+	toRun := actions.ToRun(bqJobError, &job)
 	if len(toRun) > 0 {
 		for i := range toRun {
 			if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {
@@ -569,6 +571,8 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	}
 	return bqJobError
 }
+
+
 
 func (s *service) runBatch(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	window, err := batch.GetWindow(ctx, request.SourceURL, s.fs)

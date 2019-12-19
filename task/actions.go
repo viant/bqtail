@@ -54,7 +54,7 @@ func NewActionFromURL(ctx context.Context, fs afs.Service, URL string) (*Actions
 }
 
 //ToRun returns actions to run
-func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
+func (a Actions) ToRun(err error, job *base.Job) []*Action {
 	var toRun []*Action
 	if err == nil {
 		toRun = append([]*Action{}, a.OnSuccess...)
@@ -67,34 +67,20 @@ func (a Actions) ToRun(err error, job *base.Job, deferredURL string) []*Action {
 		}
 	}
 
+	
 	for i := range toRun {
 		childInfo := a.Info.ChildInfo(toRun[i].Action, i+1)
-
 		toRun[i].Request[base.JobIDKey] = childInfo.GetJobID()
 		for k, v := range childInfo.AsMap() {
 			toRun[i].Request[k] = v
 		}
-
 		if bodyAppendable[toRun[i].Action] {
 			if responseJSON, err := json.Marshal(a); err == nil {
 				toRun[i].Request[base.ResponseKey] = string(responseJSON)
 			}
 		}
-		if _, ok := toRun[i].Request[base.EventIDKey]; !ok {
-			toRun[i].Request[base.EventIDKey] = a.Info.EventID
-		}
-
-		if _, ok := toRun[i].Request[base.DestTableKey]; !ok {
-			toRun[i].Request[base.DestTableKey] = job.DestTable()
-		}
-		if _, ok := toRun[i].Request[base.SourceTableKey]; !ok {
-			toRun[i].Request[base.SourceTableKey] = job.SourceTable()
-		}
-		if _, ok := toRun[i].Request[base.AsyncTaskURL]; !ok {
-			toRun[i].Request[base.AsyncTaskURL] = deferredURL
-		}
-		if _, ok := toRun[i].Request[base.SourceKey]; !ok {
-			toRun[i].Request[base.SourceKey] = job.Source()
+		if _, ok := toRun[i].Request[base.JobSourceKey]; !ok {
+			toRun[i].Request[base.JobSourceKey] = job.Source()
 		}
 	}
 	return toRun
@@ -111,37 +97,33 @@ func (a Actions) IsSyncMode() bool {
 }
 
 //Expand creates clone actions with expanded sources URLs
-func (a *Actions) Expand(expandable *base.Expandable) *Actions {
-	if expandable == nil {
-		return a
-	}
+func (a *Actions) Expand(info *stage.Info) *Actions {
+	a.SetInfo(info)
 	result := &Actions{
 		Info:      a.Info,
 		OnSuccess: make([]*Action, 0),
 		OnFailure: make([]*Action, 0),
 	}
-	if len(expandable.SourceURLs) > 0 {
-		result.SourceURI = expandable.SourceURLs[0]
-	}
-	appendSourceURLExpandableActions(a.OnSuccess, &result.OnSuccess, expandable)
-	appendSourceURLExpandableActions(a.OnFailure, &result.OnFailure, expandable)
-	appendSourceURLNonExpandableActions(a.OnSuccess, &result.OnSuccess)
-	appendSourceURLNonExpandableActions(a.OnFailure, &result.OnFailure)
-	expandSource(result.OnSuccess, expandable)
-	expandSource(result.OnFailure, expandable)
+	appendSourceURLinfoActions(a.OnSuccess, &result.OnSuccess, info)
+	appendSourceURLinfoActions(a.OnFailure, &result.OnFailure, info)
+	appendSourceURLNoninfoActions(a.OnSuccess, &result.OnSuccess, info)
+	appendSourceURLNoninfoActions(a.OnFailure, &result.OnFailure, info)
+	expandSource(result.OnSuccess, info)
+	expandSource(result.OnFailure, info)
 	return result
 }
 
-func expandSource(actions []*Action, expandable *base.Expandable) {
-	if expandable.Source == "" {
+func expandSource(actions []*Action, info *stage.Info) {
+	if info.TempTable == "" {
 		return
 	}
 	for i := range actions {
-		if _, has := actions[i].Request[base.SourceKey]; !has {
-			actions[i].Request[base.SourceKey] = expandable.Source
+		if _, has := actions[i].Request[base.JobSourceKey]; !has {
+			actions[i].Request[base.JobSourceKey] = info.TempTable
 		}
 	}
 }
+
 
 //AddOnSuccess adds on sucess action
 func (a *Actions) AddOnSuccess(actions ...*Action) {
@@ -178,39 +160,39 @@ func NewActions(async bool, info stage.Info, onSuccess, onFailure []*Action) *Ac
 	}
 }
 
-func appendSourceURLExpandableActions(source []*Action, dest *[]*Action, expandable *base.Expandable) {
+
+func appendSourceURLinfoActions(source []*Action, dest *[]*Action, info *stage.Info) {
 	if len(source) == 0 {
 		return
 	}
-
-	if len(source) == 1 && source[0].Action == "delete" {
-		*dest = append(*dest, source[0].New(map[string]interface{}{
-			base.URLsKey: expandable.SourceURLs,
+	if len(source) == 1 && source[0].Action == base.ActionDelete {
+		*dest = append(*dest, source[0].New(info, map[string]interface{}{
+			base.URLsKey: info.LoadURIs,
 		}))
 		return
 	}
 
-	if len(expandable.SourceURLs) > 0 {
-		for i := range expandable.SourceURLs {
+	if len(info.LoadURIs) > 0 {
+		for i := range info.LoadURIs {
 			for _, action := range source {
 				if !sourceURLExpandable[action.Action] {
 					continue
 				}
-				*dest = append(*dest, action.New(map[string]interface{}{
-					base.SourceURLKey: expandable.SourceURLs[i],
+				*dest = append(*dest, action.New(info, map[string]interface{}{
+					base.URLsKey: []string{info.LoadURIs[i]},
 				}))
-
 			}
 		}
 		return
 	}
 }
 
-func appendSourceURLNonExpandableActions(source []*Action, dest *[]*Action) {
+
+func appendSourceURLNoninfoActions(source []*Action, dest *[]*Action, info *stage.Info) {
 	for _, action := range source {
 		if sourceURLExpandable[action.Action] {
 			continue
 		}
-		*dest = append(*dest, action.New(map[string]interface{}{}))
+		*dest = append(*dest, action.New(info, map[string]interface{}{}))
 	}
 }

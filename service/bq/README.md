@@ -10,7 +10,7 @@ When use with dispatch service, source value is populated from event destination
 
 ```json
 {
-   "Action": "copy",
+   "Action": "export",
    "Request": {
       "Source": "mydataset:source_table",
       "Dest": "mydataset.dest_table"
@@ -59,8 +59,18 @@ where request should be compatible with the following type:
 type QueryRequest struct {
 	DatasetID string
 	SQL       string
+	SQLURL   string
 	UseLegacy bool
 	Append    bool
 	Dest      string
 }
 ```
+
+Query task can use the following substitution variables:
+
+- $DestTable: destination table
+- $TempTable: temp table
+- $EventID: storage event id triggering load or batch
+- $URLs: coma separated list of load URIs
+- $SourceURI: one of load URI
+- $RuleURL: transfer rule URL

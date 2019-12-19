@@ -28,7 +28,6 @@ pipeline:
       - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/rule.json'
         credentials: $gcpCredentials
 
-
   setupRule:
     action: storage:copy
     expand: true

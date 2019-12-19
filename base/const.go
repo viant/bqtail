@@ -1,5 +1,6 @@
 package base
 
+//Process status
 const (
 	//StatusOK response status
 	StatusOK = "ok"
@@ -9,108 +10,105 @@ const (
 	StatusNotFound = "notFound"
 	//StatusDisabled status rule disabled
 	StatusDisabled = "disabled"
-
 	//StatusError response status
 	StatusError = "error"
+	//StatusStalled status for unprocessed file
+	StatusStalled = "stalled"
+)
 
+//Process Extension
+const (
 	//JobExt job extension
 	JobExt = ".json"
 	//ActionExt job extension
 	ActionExt = ".run"
-
 	//WindowExt batch window extension file
 	WindowExt = ".win"
-
 	//LocationExt location extension
 	LocationExt = ".loc"
+)
 
-	//SourceURLKey source key
-	SourceURLKey = "SourceURL"
+//Process action
+const (
+	//ActionLoad load action
+	ActionLoad = "load"
+	//ActionLoad action copy table
+	ActionCopy = "copy"
+	//ActionQuery query action
+	ActionQuery = "query"
+	//ActionExport action export
+	ActionExport = "export"
+	//ActionMove move storage file
+	ActionMove = "move"
+	//ActionDelete delete storage file
+	ActionDelete = "delete"
+	//ActionNotify slack notify
+	ActionNotify = "notify"
+	//ActionDrop drop table
+	ActionDrop = "drop"
+	//ActionCall http call action
+	ActionCall = "call"
+)
 
+
+const (
 	//URLsKey urls key
 	URLsKey = "URLs"
-
 	//ResponseKey response key
 	ResponseKey = "Response"
-
-	//OnSuccessKey OnSuccess key
-	OnSuccessKey = "OnSuccess"
-	//OnFailureKey OnFailure key
-	OnFailureKey = "OnFailure"
-
-	//ErrorKey error key
-	ErrorKey = "Error"
-	//ErrorExpr error expression
-	ErrorExpr = "$Error"
+	//RootKey
+	RootKey = "Root"
 	//JobIDKey job id key
 	JobIDKey = "JobID"
-
-	//JobIDExpr job id expression
-	JobIDExpr = "$GetJobID"
-	//EventIDKey event key
-	EventIDKey = "eventID"
-	//EventIDExpr event id expression
-	EventIDExpr = "$EventID"
-	//SourceTableKey source table key
-	SourceTableKey = "sourceTable"
-
-	//StatusStalled status for unprocessed file
-	StatusStalled = "stalled"
-	//ErrorSuffix error suffix
-	ErrorSuffix = "-error"
-
-	//AsyncTaskURL deferred URL
-	AsyncTaskURL = "AsyncTaskURL"
-
-	//SourceKey source URI
-	SourceKey = "Source"
-
-	//SourceTableExpr source table epxression
-	SourceTableExpr = "$SourceTable"
-	//DestTableKey dest table key
-	DestTableKey = "jobDestTable"
-	//DestTableExpr dest table expression
-	DestTableExpr = "$DestTable"
-
+	//JobSourceKey source table/sql
+	JobSourceKey = "JobSource"
+	//ErrorKey error key
+	ErrorKey = "Error"
 	//ConfigEnvKey config env key
 	ConfigEnvKey = "CONFIG"
+)
 
-	//MaxRetries defines max retries
-	MaxRetries = 3
 
-	//RetrySleepInSec sleep between retries
-	RetrySleepInSec = 3
 
-	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
-	StorageListVisibilityDelay = 4000
-
+//BigQuery job status
+const (
 	//DoneState done status
 	DoneState = "DONE"
-
 	//RunningState done status
 	RunningState = "RUNNING"
+	//PendingState done status
+	PendingState = "PENDING"
+)
 
-	//PendigState done status
-	PendigState = "PENDING"
-
-	//DateLayout represents a date layout
-	DateLayout = "2006-01-02_15"
-
+//Setting prefix/suffix
+const (
+	//ErrorSuffix error suffix
+	ErrorSuffix = "-error"
 	//LoadPrefix - load job default prefix
 	LoadPrefix = "/_load_/"
-
 	//BqJobPrefix bg job default prefix
 	BqJobPrefix = "/_bqjob_/"
-
 	//BatchPrefix batch task default prefix
 	BatchPrefix = "/_batch_/"
-
 	//InvalidSchemaLocation invalid schema
 	InvalidSchemaLocation = "invalid_schema"
-
 	//DoneLoadSuffix load done suffix
 	DoneLoadSuffix = "Done"
-
 	//ActiveLoadSuffix active done suffix
 	ActiveLoadSuffix = "Running"
+
+)
+
+//DateLayout represents a date layout
+const DateLayout = "2006-01-02_15"
+
+
+//Waits and retries
+const (
+	//MaxRetries defines max retries
+	MaxRetries = 3
+	//RetrySleepInSec sleep between retries
+	RetrySleepInSec = 3
+	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
+	StorageListVisibilityDelay = 4000
 )

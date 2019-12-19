@@ -7,7 +7,6 @@ import (
 )
 
 const backendError = "backendError"
-const internalError = "internal error"
 
 //IsRetryError returns true if backend error
 func IsRetryError(err error) bool {
@@ -20,7 +19,7 @@ func IsRetryError(err error) bool {
 		}
 	}
 	message := err.Error()
-	return strings.Contains(message, backendError) || strings.Contains(message, internalError)
+	return strings.Contains(message, backendError)
 }
 
 //IsNotFoundError returns true if not found error

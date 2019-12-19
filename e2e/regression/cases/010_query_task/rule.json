@@ -8,7 +8,10 @@
     "Dest": {
       "Table": "bqtail.dummy",
       "TransientDataset": "temp",
-      "UniqueColumns": ["id"]
+      "UniqueColumns": ["id"],
+      "Transform": {
+        "event_id": "$EventID"
+      }
     },
     "Batch": {
       "RollOver": true,
@@ -23,7 +26,7 @@
       {
         "Action": "query",
         "Request": {
-          "SQL": "SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $DestTable",
+          "SQL": "SELECT '$EventID' AS event_id, SPLIT('$URLs', ',') AS uris, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $TempTable",
           "Dest": "bqtail.summary"
         }
       }

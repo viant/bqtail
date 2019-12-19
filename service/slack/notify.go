@@ -2,6 +2,7 @@ package slack
 
 import (
 	"bqtail/base"
+	"bqtail/stage"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,8 +11,10 @@ import (
 	"strings"
 )
 
+
 //NotifyRequest represents a notify request
 type NotifyRequest struct {
+	Root        *stage.Info
 	Channels    []string
 	From        string
 	Title       string

@@ -3,6 +3,7 @@ package stage
 import (
 	"fmt"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"path"
 	"strings"
 	"time"
@@ -17,11 +18,15 @@ const (
 	TailJob = "tail"
 	//no big query operation task
 	nopAction = "nop"
+	//URLsKey URLs keys
+	URLsKey = "URLs"
 )
 
 //Info represents processing stage
 type Info struct {
 	SourceURI  string    `json:",omitempty"`
+	LoadURIs   []string  `json:",omitempty"`
+	TempTable  string    `json:",omitempty"`
 	DestTable  string    `json:",omitempty"`
 	EventID    string    `json:",omitempty"`
 	Action     string    `json:",omitempty"`
@@ -153,6 +158,23 @@ func Parse(encoded string) *Info {
 	}
 	result.Async = strings.HasSuffix(result.Suffix, DispatchJob)
 	return result
+}
+
+//ExpandMap expands a map
+func (i Info) ExpandMap(value map[string]interface{}) map[string]interface{} {
+	return toolbox.AsMap(i.Expand(value))
+}
+
+//ExpandMap expands a text
+func (i Info) ExpandText(text string) string {
+	return toolbox.AsString(i.Expand(text))
+}
+
+//Expand expand any data type
+func (i Info) Expand(value interface{}) interface{} {
+	aMap := data.Map(i.AsMap())
+	aMap[URLsKey] =  strings.Join(i.LoadURIs, ",")
+	return aMap.Expand(value)
 }
 
 //AsMap returns info map

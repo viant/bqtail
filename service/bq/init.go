@@ -1,13 +1,18 @@
 package bq
 
-import "bqtail/task"
+import (
+	"bqtail/base"
+	"bqtail/task"
+)
+
+const id = "bq"
 
 //InitRegistry initialises registry with bq actions
 func InitRegistry(registry task.Registry, service Service) {
-	registry.RegisterService("bq", service)
-	registry.RegisterAction("copy", task.NewServiceAction("bq", CopyRequest{}))
-	registry.RegisterAction("drop", task.NewServiceAction("bq", DropRequest{}))
-	registry.RegisterAction("query", task.NewServiceAction("bq", QueryRequest{}))
-	registry.RegisterAction("load", task.NewServiceAction("bq", LoadRequest{}))
-	registry.RegisterAction("export", task.NewServiceAction("bq", ExportRequest{}))
+	registry.RegisterService(id, service)
+	registry.RegisterAction(base.ActionCopy, task.NewServiceAction(id, CopyRequest{}))
+	registry.RegisterAction(base.ActionDrop, task.NewServiceAction(id, DropRequest{}))
+	registry.RegisterAction(base.ActionQuery, task.NewServiceAction(id, QueryRequest{}))
+	registry.RegisterAction(base.ActionLoad, task.NewServiceAction(id, LoadRequest{}))
+	registry.RegisterAction(base.ActionExport, task.NewServiceAction(id, ExportRequest{}))
 }

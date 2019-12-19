@@ -1,9 +1,15 @@
 package slack
 
-import "bqtail/task"
+import (
+	"bqtail/base"
+	"bqtail/task"
+)
+
+
+const id = "slack"
 
 //InitRegistry initialises registry with bq actions
 func InitRegistry(registry task.Registry, service Service) {
-	registry.RegisterService("slack", service)
-	registry.RegisterAction("notify", task.NewServiceAction("slack", NotifyRequest{}))
+	registry.RegisterService(id, service)
+	registry.RegisterAction(base.ActionNotify, task.NewServiceAction(id, NotifyRequest{}))
 }

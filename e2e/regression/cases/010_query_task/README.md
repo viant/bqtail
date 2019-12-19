@@ -5,6 +5,18 @@
 This scenario tests data ingestion with summary query in sync mode.
 
 
+You can use the following variables in the SQL:
+
+- $DestTable: destination table
+- $TempTable: temp table
+- $EventID: storage event id triggering load or batch
+- $URLs: coma separated list of load URIs
+- $SourceURI: one of load URI
+- $RuleURL: transfer rule URL
+
+
+
+
 BqTail function is notified once data is uploaded to gs://${triggerBucket}/data/case010/dummy[1..2].json
 It matches the the following rule to submit load Job to BiqQuery. 
 

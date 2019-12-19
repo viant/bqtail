@@ -1,9 +1,11 @@
 package task
 
 import (
+	"bqtail/base"
+	"bqtail/stage"
+	"fmt"
 	"github.com/viant/toolbox"
 	"reflect"
-	"strings"
 )
 
 //PostActioner represents PostActioner
@@ -20,30 +22,60 @@ type Action struct {
 //SetRequest set request for supplied req instance
 func (a *Action) SetRequest(req interface{}) error {
 	a.Request = map[string]interface{}{}
+	err := toolbox.DefaultConverter.AssignConverted(&a.Request, req)
 
-	return toolbox.DefaultConverter.AssignConverted(&a.Request, req)
+	return err
 }
 
 //New creates a new action
-func (a Action) New(request map[string]interface{}) *Action {
+func (a Action) New(root *stage.Info, request map[string]interface{}) *Action {
 	var result = &Action{
 		Action:  a.Action,
 		Request: make(map[string]interface{}),
 	}
 	for k, v := range request {
+		if v == nil {
+			continue
+		}
 		result.Request[k] = v
 	}
+
 	for k, v := range a.Request {
+		if _, ok :=  result.Request[k]; ok {
+			continue
+		}
 		result.Request[k] = v
 	}
+	if rootContextActions[a.Action]{
+		expanded := root.ExpandMap(result.Request)
+		if base.IsLoggingEnabled() {
+			fmt.Printf("context map:")
+			toolbox.Dump(expanded)
+			fmt.Printf("expanded:")
+			toolbox.Dump(expanded)
+		}
+		result.Request = expanded
+	}
+
+	if base.IsLoggingEnabled() {
+		fmt.Printf("new action: %v\n", result.Action)
+		toolbox.Dump(result)
+	}
+
 	return result
 }
 
 //NewAction creates a new action for supplied name, action
-func NewAction(action string, req interface{}) (*Action, error) {
+func NewAction(action string, root *stage.Info, req interface{}) (*Action, error) {
 	result := &Action{Action: action}
-	return result, result.SetRequest(req)
+	err := result.SetRequest(req)
+	if rootContextActions[action]{
+		result.Request[base.RootKey] = root.AsMap()
+	}
+	return result, err
 }
+
+
 
 //ServiceAction represets service action
 type ServiceAction struct {
@@ -54,28 +86,7 @@ type ServiceAction struct {
 //NewRequest creates a new request
 func (a *ServiceAction) NewRequest(action *Action) (Request, error) {
 	result := reflect.New(a.RequestType).Interface()
-	var req = map[string]interface{}{}
-
-	for k, v := range action.Request {
-		req[k] = v
-		text, ok := v.(string)
-		if !ok {
-			continue
-		}
-		for key, exp := range replacements {
-			value, ok := action.Request[key]
-			if !ok {
-				continue
-			}
-			exprValue := value.(string)
-			if count := strings.Count(text, exp); count > 0 {
-				text = strings.Replace(text, exp, exprValue, count)
-			}
-		}
-		req[k] = text
-	}
-
-	err := toolbox.DefaultConverter.AssignConverted(result, req)
+	err := toolbox.DefaultConverter.AssignConverted(result, action.Request)
 	return result, err
 }
 

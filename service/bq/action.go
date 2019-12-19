@@ -18,7 +18,7 @@ func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Jo
 	}
 	baseJob := base.Job(*parent)
 
-	toRun := onDone.ToRun(err, &baseJob, s.Config.AsyncTaskURL)
+	toRun := onDone.ToRun(err, &baseJob)
 	if len(toRun) == 0 {
 		return nil
 	}

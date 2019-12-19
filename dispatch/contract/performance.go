@@ -48,7 +48,7 @@ func (p *Performance) AddEvent(state string, jobID string) {
 	switch strings.ToUpper(state) {
 	case base.RunningState:
 		metrics = p.Running
-	case base.PendigState:
+	case base.PendingState:
 		metrics = p.Pending
 	}
 	if metrics != nil {

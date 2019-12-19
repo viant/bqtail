@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
 )
 
@@ -13,7 +14,7 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 		return err
 	}
 
-	_, sourceLocation := url.Base(request.SourceURL, "file")
+	_, sourceLocation := url.Base(request.SourceURL, file.Scheme)
 	destURL := url.Join(request.DestURL, sourceLocation)
 
 	if request.IsDestAbsoluteURL {

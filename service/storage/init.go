@@ -1,10 +1,16 @@
 package storage
 
-import "bqtail/task"
+import (
+	"bqtail/base"
+	"bqtail/task"
+)
+
+
+const id = "fs"
 
 //InitRegistry initialises registry
 func InitRegistry(registry task.Registry, service Service) {
-	registry.RegisterService("fs", service)
-	registry.RegisterAction("move", task.NewServiceAction("fs", MoveRequest{}))
-	registry.RegisterAction("delete", task.NewServiceAction("fs", DeleteRequest{}))
+	registry.RegisterService(id, service)
+	registry.RegisterAction(base.ActionMove, task.NewServiceAction(id, MoveRequest{}))
+	registry.RegisterAction(base.ActionDelete, task.NewServiceAction(id, DeleteRequest{}))
 }

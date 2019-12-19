@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bqtail/base"
 	"context"
 	"fmt"
 )
@@ -20,6 +21,9 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 
 	processed := map[string]bool{}
 	for i := range request.URLs {
+		if base.IsLoggingEnabled() {
+			fmt.Printf("deleteing: %v\n", request.URLs[i])
+		}
 		if processed[request.URLs[i]] {
 			continue
 		}

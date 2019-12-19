@@ -186,7 +186,7 @@ func (s *service) notifyDoneJobs(ctx context.Context, objects []astorage.Object,
 		}
 
 		switch strings.ToUpper(state) {
-		case base.RunningState, base.PendigState:
+		case base.RunningState, base.PendingState:
 			continue
 		}
 		stageInfo := perf.AddDispatch(jobID)

@@ -5,7 +5,9 @@ import (
 	"bqtail/task"
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"google.golang.org/api/bigquery/v2"
+	"io/ioutil"
 )
 
 //Query run supplied SQL
@@ -13,6 +15,18 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 	if err := request.Init(s.projectID); err != nil {
 		return nil, err
 	}
+	if request.SQL == "" && request.SQLURL != "" {
+		reader, err := s.fs.DownloadWithURL(ctx, request.SQLURL)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to load SQL from: %v", request.SQLURL)
+		}
+		data, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to read SQL from: %v", request.SQLURL)
+		}
+		request.SQL = string(data)
+	}
+
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -32,7 +46,6 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 		} else {
 			job.Configuration.Query.WriteDisposition = "WRITE_TRUNCATE"
 		}
-
 	}
 
 	if request.UseLegacy {
@@ -53,6 +66,7 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 type QueryRequest struct {
 	DatasetID        string
 	SQL              string
+	SQLURL           string
 	UseLegacy        bool
 	Append           bool
 	Dest             string
