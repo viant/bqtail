@@ -19,8 +19,8 @@ The goal of this project is to provide robust and cost effective events driven, 
 BqTail elegantly addresses all Big Query limitations/restriction/quotas (load jobs per table, project, corrupted data files) with batching and transient dataset approach.
 In addition it also provides data transformation enrichment and deduplication capabilities.
 
-This project is used by Viant to ingest **70+ billions** transactions _daily_, **1.4 million files** to 100+ tables, all under $15, as cost effective alternative
-for Big Query Streaming API, Cloud Dataflow and [in house build cost optimized ETL](https://github.com/viant/etly) framework. 
+This project is used by Viant to ingest **70+ billions** transactions _daily_, **1.4 million files** to 100+ tables, all under $15, as viable alternative
+for Big Query Streaming API, BigQuery Transfer Service, Cloud Dataflow. 
 
 
 ## Introduction
