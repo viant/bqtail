@@ -32,10 +32,15 @@ const (
 const (
 	//ActionLoad load action
 	ActionLoad = "load"
+
+	//ActionReload re load action
+	ActionReload = "reload"
 	//ActionLoad action copy table
 	ActionCopy = "copy"
 	//ActionQuery query action
 	ActionQuery = "query"
+	//ActionPatch action patch
+	ActionPatch = "patch"
 	//ActionExport action export
 	ActionExport = "export"
 	//ActionMove move storage file

@@ -1,0 +1,13 @@
+[
+  {"@indexBy@": "id"},
+  {"id": 1, "name": "dummy 1", "type_id": 1},
+  {"id": 2, "name": "dummy 2", "type_id": 1},
+  {"id": 3, "name": "dummy 3", "type_id": 1},
+  {"id": 4, "name": "dummy 4", "type_id": 2},
+  {"id": 5, "name": "dummy 5", "type_id": 2},
+  {"id": 6, "name": "dummy 6", "type_id": 2},
+  {"id": 7, "name": "dummy 7", "type_id": 3},
+  {"id": 8, "name": "dummy 8", "type_id": 3},
+  {"id": 9, "name": "dummy 9", "type_id": 1},
+  {"id": 10, "name": "dummy 10", "type_id": 1}
+]

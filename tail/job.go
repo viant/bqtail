@@ -19,6 +19,8 @@ type Job struct {
 	Load          *bigquery.JobConfigurationLoad `json:"load,ommittempty"`
 	Error         string                         `json:",ommittempty"`
 	Status        string                         `json:",ommittempty"`
+	TempSchema    *bigquery.TableSchema
+	DestSchema    *bigquery.TableSchema
 	*task.Actions
 	Window    *batch.Window `json:",ommittempty"`
 	Rule      *config.Rule

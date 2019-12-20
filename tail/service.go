@@ -197,18 +197,20 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	if err != nil {
 		return nil, err
 	}
+
 	load.Actions = *actions
 	if rule.Dest.HasSplit() {
-		if err = s.updateTempTableScheme(ctx, load.JobConfigurationLoad, rule); err != nil {
-			return nil, errors.Wrapf(err, "failed to upload load schema")
+		if _, err = s.updateTempTableScheme(ctx, load.JobConfigurationLoad, rule); err != nil {
+			return nil, errors.Wrapf(err, "failed to update temp schema")
 		}
 	}
 	activeURL := s.config.BuildActiveLoadURL(job.Info())
 	doneURL := s.config.BuildDoneLoadURL(job.Info())
-	s.appendLoadJobFinalActions(activeURL, doneURL, load, &actions.Info)
-	if e := s.createLoadAction(ctx, activeURL, load, &actions.Info); e != nil {
+	s.appendLoadJobFinalActions(activeURL, doneURL, load, info)
+	if e := s.createLoadAction(ctx, activeURL, load, info); e != nil {
 		return nil, errors.Wrapf(err, "failed to create load job actions: %v", activeURL)
 	}
+
 	bqJob, err := s.bq.Load(ctx, load)
 	if bqJob != nil {
 		job.JobStatus = bqJob.Status
@@ -226,12 +228,12 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 //appendLoadJobFinalActions append track action
 func (s *service) appendLoadJobFinalActions(activeURL, doneURL string, load *bq.LoadRequest, info *stage.Info) {
 	moveRequest := storage.MoveRequest{SourceURL: activeURL, DestURL: doneURL, IsDestAbsoluteURL: true}
-	moveAction, _ := task.NewAction("move", info, moveRequest)
+	moveAction, _ := task.NewAction(base.ActionMove, info, moveRequest)
 	load.Actions.AddOnSuccess(moveAction)
 }
 
 func (s *service) createLoadAction(ctx context.Context, URL string, loadJob *bq.LoadRequest, info *stage.Info) error {
-	loadTrace, err := task.NewAction("load", info, loadJob)
+	loadTrace, err := task.NewAction(base.ActionLoad, info, loadJob)
 	if err != nil {
 		return err
 	}
@@ -252,7 +254,7 @@ func appendBatchAction(window *batch.Window, actions *task.Actions) error {
 	URLsToDelete := make([]string, 0)
 	URLsToDelete = append(URLsToDelete, window.URL)
 	deleteReq := storage.DeleteRequest{URLs: URLsToDelete}
-	deleteAction, err := task.NewAction("delete", &actions.Info, deleteReq)
+	deleteAction, err := task.NewAction(base.ActionDelete, &actions.Info, deleteReq)
 	if err != nil {
 		return err
 	}
@@ -274,7 +276,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 		result.AddOnFailure(actions.OnFailure...)
 	}
 	tableID := job.Load.DestinationTable.DatasetId + "." + job.Load.DestinationTable.TableId
-	dropAction, err := task.NewAction("drop", &result.Info, bq.NewDropRequest(tableID, onFailureAction))
+	dropAction, err := task.NewAction(base.ActionDrop, &result.Info, bq.NewDropRequest(tableID, onFailureAction))
 	if err != nil {
 		return nil, err
 	}
@@ -284,15 +286,15 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 	if rule.Dest.HasSplit() {
 		return result, s.addSplitActions(ctx, selectAll, parent, job, rule, result, actions)
 	}
+
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
 	destTable, _ := rule.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
-
 	partition := base.TablePartition(destTable.TableId)
 
 	if len(rule.Dest.UniqueColumns) > 0 || partition != "" || len(rule.Dest.Transform) > 0 {
 		query := bq.NewQueryRequest(selectAll, destTable, actions)
 		query.Append = rule.IsAppend()
-		queryAction, err := task.NewAction("query", &result.Info, query)
+		queryAction, err := task.NewAction(base.ActionQuery, &result.Info, query)
 		if err != nil {
 			return nil, err
 		}
@@ -302,7 +304,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 		dest := base.EncodeTableReference(destTable)
 		copyRequest := bq.NewCopyRequest(source, dest, actions)
 		copyRequest.Append = rule.IsAppend()
-		copyAction, err := task.NewAction("copy", &result.Info, copyRequest)
+		copyAction, err := task.NewAction(base.ActionCopy, &result.Info, copyRequest)
 		if err != nil {
 			return nil, err
 		}
@@ -329,11 +331,12 @@ func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.Tab
 	return nil
 }
 
-func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobConfigurationLoad, rule *config.Rule) error {
+func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobConfigurationLoad, rule *config.Rule) (bool, error) {
 	split := rule.Dest.Schema.Split
 	if job.Schema == nil {
-		return nil
+		return false, nil
 	}
+	extendedSchema := false
 	if len(split.ClusterColumns) > 0 {
 		if split.TimeColumn == "" {
 			split.TimeColumn = "ts"
@@ -344,18 +347,18 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 				Name: split.TimeColumn,
 				Type: "TIMESTAMP",
 			})
+			extendedSchema = true
 		}
 		job.TimePartitioning = &bigquery.TimePartitioning{
 			Field: split.TimeColumn,
 			Type:  "DAY",
 		}
-
 		var clusterdColumn = make([]string, 0)
 		for i, name := range split.ClusterColumns {
 			if strings.Contains(split.ClusterColumns[i], ".") {
 				column := getColumn(job.Schema.Fields, split.ClusterColumns[i])
 				if column == nil {
-					return errors.Errorf("failed to lookup cluster column: %v", name)
+					return false, errors.Errorf("failed to lookup cluster column: %v", name)
 				}
 				job.Schema.Fields = append(job.Schema.Fields, column)
 				clusterdColumn = append(clusterdColumn, column.Name)
@@ -368,7 +371,21 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 			Fields: clusterdColumn,
 		}
 	}
-	return nil
+	return extendedSchema, nil
+}
+
+func (s *service) addSchemaPatchAction(actions *task.Actions, dest *config.Destination, job *Job) (*task.Actions, error) {
+	template := dest.Schema.Template
+	if template == "" {
+		template = job.DestTable
+	}
+	patch, err := task.NewAction(base.ActionQuery, &actions.Info, bq.NewPatchRequest(template, job.TempTable, actions))
+	if err != nil {
+		return nil, err
+	}
+	group := task.NewActions(actions.Async, actions.Info, nil, nil)
+	group.AddOnSuccess(patch)
+	return group, nil
 }
 
 func (s *service) addSplitActions(ctx context.Context, selectAll string, parent stage.Info, job *Job, rule *config.Rule, result, onDone *task.Actions) error {
@@ -378,13 +395,12 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parent 
 		next = task.NewActions(rule.Async, parent, nil, nil)
 	}
 	for i := range split.Mapping {
-
 		mapping := split.Mapping[i]
 		destTable, _ := rule.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
 		dest := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
 		query := bq.NewQueryRequest(dest, destTable, next)
 		query.Append = rule.IsAppend()
-		queryAction, err := task.NewAction("query", &onDone.Info, query)
+		queryAction, err := task.NewAction(base.ActionQuery, &onDone.Info, query)
 		if err != nil {
 			return err
 		}
@@ -407,7 +423,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parent 
 
 			query := bq.NewQueryRequest(DML, nil, next)
 			query.Append = rule.IsAppend()
-			queryAction, err := task.NewAction("query", &onDone.Info, query)
+			queryAction, err := task.NewAction(base.ActionQuery, &onDone.Info, query)
 			if err != nil {
 				return err
 			}
@@ -470,11 +486,25 @@ func (s *service) tailIndividually(ctx context.Context, source store.Object, rul
 }
 
 func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destination, tableReference *bigquery.TableReference, job *Job) error {
-	if dest.Schema.Table != nil {
-		return nil
-	}
 	var err error
 	var table *bigquery.Table
+	if dest.Schema.TransientTemplate != "" {
+		templateReference, err := base.NewTableReference(dest.Schema.TransientTemplate)
+		if err != nil {
+			return errors.Wrapf(err, "failed to create table from TransientSchema: %v", dest.Schema.TransientTemplate)
+		}
+		if table, err = s.bq.Table(ctx, templateReference); err != nil {
+			return errors.Wrapf(err, "failed to get tempalte table: %v", templateReference)
+		}
+		job.TempSchema = table.Schema
+		updateLoadJobSchema(table, job, dest)
+
+	}
+
+	if dest.Schema.Table != nil {
+		job.DestSchema = dest.Schema.Table
+		return nil
+	}
 
 	if dest.Schema.Template != "" {
 		templateReference, err := base.NewTableReference(dest.Schema.Template)
@@ -489,7 +519,16 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 			return err
 		}
 	}
+	if table != nil {
+		job.DestSchema = table.Schema
+	}
+	if dest.Schema.TransientTemplate == "" {
+		updateLoadJobSchema(table, job, dest)
+	}
+	return nil
+}
 
+func updateLoadJobSchema(table *bigquery.Table, job *Job, dest *config.Destination) {
 	if table != nil {
 		job.Load.Schema = table.Schema
 		if job.Load.Schema == nil && dest.Schema.Autodetect {
@@ -506,7 +545,6 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 			job.Load.Clustering = table.Clustering
 		}
 	}
-	return nil
 }
 
 func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*Job, error) {
@@ -663,7 +701,7 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	}
 	bqJob := bigquery.Job(*job)
 	load.Job = &bqJob
-	load.Info = *load.Wrap("reload")
+	load.Info = *load.Wrap(base.ActionReload)
 	response.JobRef = bqJob.JobReference
 	load.ProjectID = s.config.ProjectID
 	loadJob, err := s.bq.Load(ctx, load)

@@ -1,0 +1,1 @@
+transient_table_schema

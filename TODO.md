@@ -1,3 +1,1 @@
-- Different schema for transient and destination with patch on the fly
 - REST API call action
-- SQL loaded from URL (more expression like $EventID for post SQL actions)

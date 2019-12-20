@@ -1,44 +1,62 @@
 package bq
 
 import (
+	"bqtail/base"
+	"bqtail/task"
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"google.golang.org/api/bigquery/v2"
+	"time"
 )
 
 //Patch patch temp table
-func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.Job, error) {
+func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.Table, error) {
 	if err := request.Init(s.projectID); err != nil {
 		return nil, err
 	}
-	//TODO complete implementation
-
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
+	tableRef, err := base.NewTableReference(request.Table)
+	if err != nil {
+		return nil, errors.Wrapf(err, "invalid table: %v", request.Table)
+	}
+	if tableRef.ProjectId == "" {
+		tableRef.ProjectId = s.ProjectID
+	}
+	templateRef, err := base.NewTableReference(request.Template)
+	if err != nil {
+		return nil, errors.Wrapf(err, "invalid template table: %v", request.Template)
+	}
+	schema, err := s.Table(ctx, templateRef)
+	if err != nil {
+		return nil, errors.Wrapf(err, "invalid get template table: %v", request.Table)
+	}
 
-	//
-	//job := &bigquery.Job{
-	//	Configuration: &bigquery.JobConfiguration{
-	//		Extract: &bigquery.JobConfigurationExtract{
-	//			SourceTable:       request.sourceTable,
-	//			DestinationUris:   []string{request.DestURL},
-	//			PrintHeader:       request.IncludeHeader,
-	//			Compression:       request.Compression,
-	//			FieldDelimiter:    request.FieldDelimiter,
-	//			DestinationFormat: request.Format,
-	//		},
-	//	},
-	//}
-	//job.JobReference = request.jobReference()
-	//return s.Post(ctx, request.ProjectID, job, &request.Actions)
-	return nil, nil
+	call := s.Service.Tables.Patch(tableRef.ProjectId, tableRef.DatasetId, tableRef.TableId, schema)
+	call.Context(ctx)
+
+	var table *bigquery.Table
+	for i := 0; i < base.MaxRetries; i++ {
+		call.Context(ctx)
+		if table, err = call.Do(); err == nil {
+			return nil, err
+		}
+		if base.IsRetryError(err) {
+			//do extra sleep before retrying
+			time.Sleep(base.RetrySleepInSec * time.Second)
+			continue
+		}
+		break
+	}
+	return table, err
 }
 
 //PatchRequest represents an export request
 type PatchRequest struct {
-	Template    string
-	Destination string
+	Template string
+	Table    string
 	Request
 }
 
@@ -57,8 +75,20 @@ func (r *PatchRequest) Validate() error {
 	if r.Template == "" {
 		return fmt.Errorf("template was empty")
 	}
-	if r.Destination == "" {
+	if r.Table == "" {
 		return fmt.Errorf("destination was empty")
 	}
 	return nil
+}
+
+//NewPatchRequest creates a new patch request
+func NewPatchRequest(template, table string, finally *task.Actions) *PatchRequest {
+	result := &PatchRequest{
+		Table:    table,
+		Template: template,
+	}
+	if finally != nil {
+		result.Actions = *finally
+	}
+	return result
 }
