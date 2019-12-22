@@ -157,9 +157,9 @@ endly -t=init
     endly -t=test -i=invalid_schema
 ```
 
-- [Avro Schema patch](regression/cases/019_avro_schema_patch)
+- [Transient Schema](regression/cases/019_transient_schema)
 
 ```bash
-    endly -t=test -i=avro_schema_patch
+    endly -t=test -i=transient_schema
 ```
 
