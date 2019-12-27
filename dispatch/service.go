@@ -186,9 +186,12 @@ func (s *service) notifyDoneJobs(ctx context.Context, objects []astorage.Object,
 		}
 
 		switch strings.ToUpper(state) {
-		case base.RunningState, base.PendingState:
+		case base.DoneState:
+			break
+		default:
 			continue
 		}
+
 		stageInfo := perf.AddDispatch(jobID)
 		if !s.canNotify(stageInfo, perf) {
 			perf.AddThrottled(jobID)

@@ -14,7 +14,7 @@ pipeline:
     tag: $pathMatch
     description: '@info'
     subPath: 'cases/${index}_*'
-    range: 1..019
+    range: 1..021
     template:
       setVars:
         action: nop

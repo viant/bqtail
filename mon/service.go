@@ -104,8 +104,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 				response.Stalled[inf.Destination.Table].AddEvent(inf.Activity.Running.Min)
 			}
 		}
-		response.Dest[k] = infoDest[k]
-
+		response.Dest = append(response.Dest, infoDest[k])
 	}
 	return nil
 }

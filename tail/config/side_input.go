@@ -14,7 +14,7 @@ type SideInput struct {
 }
 
 //Validate checks if side input is valid
-func (s SideInput) Validate() error {
+func (s SideInput) Validate(alias string) error {
 	if s.Table == "" && s.From == "" {
 		return errors.New("table was empty")
 	}
@@ -29,8 +29,8 @@ func (s SideInput) Validate() error {
 	if s.Alias == "" {
 		return errors.New("alias was empty")
 	}
-	if strings.Count(s.On, "t.") == 0 {
-		return errors.Errorf("on criteria missing reference to main table with 't.' alias: %v", s.On)
+	if strings.Count(s.On, alias+".") == 0 {
+		return errors.Errorf("on criteria missing reference to main table with '%v.' alias: %v", alias, s.On)
 	}
 	if strings.Count(s.On, s.Alias+".") == 0 {
 		return errors.Errorf("on criteria missing reference to side table with '%v.' alias: %v", s.Alias, s.On)

@@ -31,6 +31,7 @@ type Destination struct {
 	pattern          *regexp.Regexp
 	Schema           Schema            `json:",omitempty"`
 	TransientDataset string            `json:",omitempty"`
+	TransientAlias   string            `json:",omitempty"`
 	UniqueColumns    []string          `json:",omitempty"`
 	Transform        map[string]string `json:",omitempty"`
 	SideInputs       []*SideInput      `json:",omitempty"`
@@ -50,13 +51,14 @@ func (d Destination) Clone() *Destination {
 		pattern:          d.pattern,
 		Schema:           d.Schema,
 		TransientDataset: d.TransientDataset,
+		TransientAlias:   d.TransientAlias,
 		UniqueColumns:    d.UniqueColumns,
 		SideInputs:       d.SideInputs,
 	}
 }
 
 //Validate checks if destination is valid
-func (d *Destination) Validate() error {
+func (d Destination) Validate() error {
 	if d.Table == "" {
 		return fmt.Errorf("dest.Table was empty")
 	}
@@ -68,10 +70,18 @@ func (d *Destination) Validate() error {
 	}
 	if len(d.SideInputs) > 0 {
 		for _, sideInput := range d.SideInputs {
-			if err := sideInput.Validate(); err != nil {
+			if err := sideInput.Validate(d.TransientAlias); err != nil {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+//Validate checks if destination is valid
+func (d *Destination) Init() error {
+	if d.TransientDataset != "" && d.TransientAlias == "" {
+		d.TransientAlias = "t"
 	}
 	return nil
 }

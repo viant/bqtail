@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"reflect"
+	"strings"
 )
 
 //PostActioner represents PostActioner
@@ -19,11 +20,35 @@ type Action struct {
 	Request map[string]interface{}
 }
 
+func (a Action) RequestValue(key string) interface{} {
+	if len(a.Request) == 0 {
+		return nil
+	}
+	value, ok := a.Request[key]
+	if ok {
+		return value
+	}
+	key = strings.ToLower(key)
+	for k, v := range a.Request {
+		if strings.ToLower(k) == key {
+			return v
+		}
+	}
+	return ""
+}
+
+func (a Action) RequestStringValue(key string) string {
+	value := a.RequestValue(key)
+	if value == nil {
+		return ""
+	}
+	return toolbox.AsString(value)
+}
+
 //SetRequest set request for supplied req instance
 func (a *Action) SetRequest(req interface{}) error {
 	a.Request = map[string]interface{}{}
 	err := toolbox.DefaultConverter.AssignConverted(&a.Request, req)
-
 	return err
 }
 
@@ -47,14 +72,7 @@ func (a Action) New(root *stage.Info, request map[string]interface{}) *Action {
 		result.Request[k] = v
 	}
 	if rootContextActions[a.Action] {
-		expanded := root.ExpandMap(result.Request)
-		if base.IsLoggingEnabled() {
-			fmt.Printf("context map:")
-			toolbox.Dump(expanded)
-			fmt.Printf("expanded:")
-			toolbox.Dump(expanded)
-		}
-		result.Request = expanded
+		result.Request = root.ExpandMap(result.Request)
 	}
 
 	if base.IsLoggingEnabled() {

@@ -17,7 +17,6 @@ func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Jo
 		return fmt.Errorf("parent was empty")
 	}
 	baseJob := base.Job(*parent)
-
 	toRun := onDone.ToRun(err, &baseJob)
 	if len(toRun) == 0 {
 		return nil
@@ -29,10 +28,6 @@ func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Jo
 			return errors.Wrapf(err, "failed to write error file: %v %v", errorURL, e)
 		}
 	}
-	for i := range toRun {
-		if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {
-			return err
-		}
-	}
+	_, err = task.RunAll(ctx, s.Registry, toRun)
 	return err
 }

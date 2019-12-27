@@ -14,13 +14,13 @@ type Response struct {
 	Status string
 	Error  string `json:",omitempty"`
 	*Info
-	Dest map[string]*Info
+	Dest []*Info
 }
 
 //NewResponse create a response
 func NewResponse() *Response {
 	return &Response{
-		Dest:   make(map[string]*Info),
+		Dest:   make([]*Info, 0),
 		Status: base.StatusOK,
 		Info:   NewInfo(),
 	}

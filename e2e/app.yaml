@@ -67,3 +67,14 @@ pipeline:
 #            User-Agent: Google-Cloud-Scheduler
 #          httpMethod: GET
 #          uri: https://us-central1-${gcp.ProjectID}.cloudfunctions.net/BqDispatch
+#
+      echo:
+        action: gcp/cloudfunctions:deploy
+        '@name': Echo
+        timeout: 30s
+        availableMemoryMb: 128
+        entryPoint: Echo
+        runtime: go111
+        serviceAccountEmail: ${gcp.serviceAccount}
+        source:
+          URL: ${appPath}/e2e/echo

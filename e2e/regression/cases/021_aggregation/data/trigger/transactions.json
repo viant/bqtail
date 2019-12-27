@@ -1,0 +1,6 @@
+{ "id":"A8B0492A-330D-48A2-A18F-78BF42EECFF",  "timestamp": "$FormatTime('2daysAgo','yyyy-MM-dd hh:mm:ss')", "event_id": 101, "sku_id": 10023, "supply_entity_id": 22012, "payment": 32.2,  "demany_entity_id":332421, "fee_id": 1}
+{ "id":"021C1141-1342-4243-BFF8-3DCD0F0732A8", "timestamp": "$FormatTime('2daysAgo','yyyy-MM-dd hh:mm:ss')", "event_id": 102, "sku_id": 50623, "supply_entity_id": 22010, "payment": 15.2,  "demany_entity_id":332421, "fee_id": 1}
+{ "id":"46CAC8F6-6F15-4A94-B0B1-D97C18A05F2F", "timestamp": "$FormatTime('2daysAgo','yyyy-MM-dd hh:mm:ss')", "event_id": 101, "sku_id": 10023, "supply_entity_id": 22012, "payment": 32.2,  "demany_entity_id":632438, "fee_id": 1 }
+{ "id":"6D50CC7E-1944-489A-AFE4-CD8FEE58A33C", "timestamp": "$FormatTime('2daysAgo','yyyy-MM-dd hh:mm:ss')", "event_id": 102, "sku_id": 50623, "supply_entity_id": 22010, "payment": 15.2,  "demany_entity_id":632438, "fee_id": 1 }
+{ "id":"337059BF-7494-4697-8CC3-46F960D77834", "timestamp": "$FormatTime('2daysAgo','yyyy-MM-dd hh:mm:ss')", "event_id": 101, "sku_id": 86622, "supply_entity_id": 22012, "payment":102.7,  "demany_entity_id":332421, "fee_id": 2 }
+{ "id":"C9260B5E-DEED-4934-880E-A81077C5A6BD", "timestamp": "$FormatTime('1daysAgo','yyyy-MM-dd hh:mm:ss')", "event_id": 102, "sku_id": 86621, "supply_entity_id": 22010, "payment": 56.31, "demany_entity_id":632438, "fee_id": 2}

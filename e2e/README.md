@@ -163,3 +163,15 @@ endly -t=init
     endly -t=test -i=transient_schema
 ```
 
+- [HTTP API Call](regression/cases/020_api_call)
+
+```bash
+    endly -t=test -i=api_call
+```
+
+- [Data aggregation with side input](regression/cases/021_aggregation)
+
+```bash
+    endly -t=test -i=aggregation
+```
+

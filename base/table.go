@@ -12,6 +12,10 @@ func NewTableReference(table string) (*bigquery.TableReference, error) {
 	if dotIndex == -1 {
 		return nil, fmt.Errorf("datasetID is missing, invalid table format: %v", table)
 	}
+	count := strings.Count(table, ".")
+	if count == 2 {
+		table = strings.Replace(table, ".", ":", 1)
+	}
 	tableID := string(table[dotIndex+1:])
 	datasetID := string(table[:dotIndex])
 	projectID := ""

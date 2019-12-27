@@ -8,6 +8,7 @@
     "Dest": {
       "Table": "bqtail.dummy",
       "TransientDataset": "temp",
+      "TransientAlias": "t",
       "Transform": {
         "event_type": "et.name"
       },

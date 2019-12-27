@@ -1,0 +1,69 @@
+init:
+  parentURL: gs://${configBucket}/BqTail/Rules/case_${parent.index}
+
+pipeline:
+  prepare:
+    init-temp:
+      action: dsunit:init
+      datastore: temp
+      config:
+        driverName: bigquery
+        credentials: $gcpCredentials
+        parameters:
+          datasetId: temp
+      recreate: true
+
+    init-dbtail:
+      action: dsunit:init
+      datastore: bqtail
+      config:
+        driverName: bigquery
+        credentials: $gcpCredentials
+        parameters:
+          datasetId: bqtail
+      scripts:
+        - URL: ${parent.path}/bqtail/schema.sql
+
+    populate:
+      action: dsunit:prepare
+      datastore: bqtail
+      URL:  ${parent.path}/bqtail/prepare
+
+
+  cleanUp:
+    action: storage:remove
+    sleepTimeMs: 1000
+    assets:
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
+        credentials: $gcpCredentials
+      - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/rule.json'
+        credentials: $gcpCredentials
+
+  setupRule:
+    action: storage:copy
+    expand: true
+    source:
+      URL: ${parent.path}/rule
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}/
+
+  trigger:
+    action: storage:copy
+    sleepTimeMs: 10000
+    expand: true
+    source:
+      URL: ${parent.path}/data/trigger/
+    dest:
+      URL: gs://${triggerBucket}/data/case${parent.index}/
+      credentials: $gcpCredentials
+
+  waitForServerless:
+    action: nop
+    sleepTimeMs: 55000
+
+  validate:
+    check-db:
+      action: dsunit:expect
+      datastore: bqtail
+      URL:  ${parent.path}/bqtail/expect

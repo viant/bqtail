@@ -3,6 +3,7 @@ package tail
 import (
 	"bqtail/base"
 	"bqtail/service/bq"
+	"bqtail/service/http"
 	"bqtail/service/secret"
 	"bqtail/service/slack"
 	"bqtail/service/storage"
@@ -59,6 +60,7 @@ func (s *service) Init(ctx context.Context) error {
 	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.Config)
 	s.batch = batch.New(s.fs)
 	bq.InitRegistry(s.Registry, s.bq)
+	http.InitRegistry(s.Registry, http.New())
 	storage.InitRegistry(s.Registry, storage.New(s.fs))
 	return err
 }
@@ -179,38 +181,33 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	if len(job.Load.SourceUris) == 0 {
 		return nil, errors.Errorf("sourceUris was empty")
 	}
-
 	load, err := s.buildLoadRequest(ctx, job, rule)
 	if err != nil {
 		return nil, err
 	}
-
 	info := stage.New(job.GetSourceURI(), job.Dest(), job.EventID, "load", job.IDSuffix(), rule.Async, 0, rule.Info.URL)
 	info.LoadURIs = load.SourceUris
 	info.TempTable = load.DestinationTable.DatasetId + "." + load.DestinationTable.TableId
 	actions := rule.Actions.Expand(info)
-
-	if err = appendBatchAction(job.Window, actions); err == nil {
-		info := job.Info()
-		actions, err = s.addTransientDatasetActions(ctx, *info, job, rule, actions)
-	}
-	if err != nil {
+	if err = appendBatchAction(job.Window, actions); err != nil {
 		return nil, err
 	}
-
+	activeURL := s.config.BuildActiveLoadURL(job.Info())
+	doneURL := s.config.BuildDoneLoadURL(job.Info())
+	s.appendLoadJobFinalActions(activeURL, doneURL, load, info)
+	if actions, err = s.addTransientDatasetActions(ctx, *info, job, rule, actions); err != nil {
+		return nil, err
+	}
 	load.Actions = *actions
+
 	if rule.Dest.HasSplit() {
 		if _, err = s.updateTempTableScheme(ctx, load.JobConfigurationLoad, rule); err != nil {
 			return nil, errors.Wrapf(err, "failed to update temp schema")
 		}
 	}
-	activeURL := s.config.BuildActiveLoadURL(job.Info())
-	doneURL := s.config.BuildDoneLoadURL(job.Info())
-	s.appendLoadJobFinalActions(activeURL, doneURL, load, info)
 	if e := s.createLoadAction(ctx, activeURL, load, info); e != nil {
 		return nil, errors.Wrapf(err, "failed to create load job actions: %v", activeURL)
 	}
-
 	bqJob, err := s.bq.Load(ctx, load)
 	if bqJob != nil {
 		job.JobStatus = bqJob.Status
@@ -281,12 +278,11 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 		return nil, err
 	}
 	actions.AddOnSuccess(dropAction)
-	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, rule.Dest.UniqueColumns, rule.Dest.Transform, rule.Dest.SideInputs)
+	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, rule.Dest.TransientAlias, rule.Dest.UniqueColumns, rule.Dest.Transform, rule.Dest.SideInputs)
 	selectAll = result.Info.ExpandText(selectAll)
 	if rule.Dest.HasSplit() {
 		return result, s.addSplitActions(ctx, selectAll, parent, job, rule, result, actions)
 	}
-
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
 	destTable, _ := rule.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
 	partition := base.TablePartition(destTable.TableId)
@@ -452,13 +448,11 @@ func (s *service) runLoadAction(ctx context.Context, request *contract.Request, 
 		return errors.Wrapf(err, "unable decode load action: %v", request.SourceURL)
 	}
 	replacement := buildJobIDReplacementMap(request.EventID, actions)
-	for _, action := range actions {
-		action.Request = toolbox.ReplaceMapKeys(action.Request, replacement, true)
-		toolbox.Dump(action.Request)
-		if err = task.Run(ctx, s.Registry, action); err != nil {
-			return err
-		}
+
+	for i, action := range actions {
+		actions[i].Request = toolbox.ReplaceMapKeys(action.Request, replacement, true)
 	}
+	_, err = task.RunAll(ctx, s.Registry, actions)
 	_, sourcePath := url.Base(request.SourceURL, "")
 	journalURL := url.Join(s.config.JournalURL, sourcePath)
 	if e := s.fs.Move(ctx, request.SourceURL, journalURL, option.NewObjectKind(true)); e != nil {
@@ -596,16 +590,16 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		}
 	}
 	response.Retriable = base.IsRetryError(bqJobError)
+	if err := actions.Init(ctx, s.cfs); err != nil {
+		return err
+	}
 	toRun := actions.ToRun(bqJobError, &job)
-	if len(toRun) > 0 {
-		for i := range toRun {
-			if err = task.Run(ctx, s.Registry, toRun[i]); err != nil {
-				if !response.Retriable {
-					response.Retriable = base.IsRetryError(err)
-				}
-				return err
-			}
-		}
+	retriable, err := task.RunAll(ctx, s.Registry, toRun)
+	if retriable {
+		response.Retriable = true
+	}
+	if err != nil {
+		return err
 	}
 	return bqJobError
 }

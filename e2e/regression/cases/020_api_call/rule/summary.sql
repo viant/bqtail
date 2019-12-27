@@ -1,0 +1,1 @@
+SELECT $Data.BatchID AS batch_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $DestTable

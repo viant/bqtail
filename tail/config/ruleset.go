@@ -146,8 +146,8 @@ func (r *Ruleset) ReloadIfNeeded(ctx context.Context, fs afs.Service) (bool, err
 	return r.Loader.Notify(ctx, fs)
 }
 
-func (r *Ruleset) loadRule(ctx context.Context, storage afs.Service, URL string) ([]*Rule, error) {
-	reader, err := storage.DownloadWithURL(ctx, URL)
+func (r *Ruleset) loadRule(ctx context.Context, fs afs.Service, URL string) ([]*Rule, error) {
+	reader, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to load resource: %v", URL)
 	}
@@ -174,6 +174,13 @@ func (r *Ruleset) loadRule(ctx context.Context, storage afs.Service, URL string)
 		if rules[i].Info.Workflow == "" {
 			rules[i].Info.Workflow = name
 		}
+		if err := rules[i].Dest.Init(); err != nil {
+			return nil, err
+		}
+		if err := rules[i].Actions.Init(ctx, fs); err != nil {
+			return nil, errors.Wrap(err, "failed to initialises pose action")
+		}
+
 	}
 	return rules, nil
 }

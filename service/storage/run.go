@@ -3,17 +3,16 @@ package storage
 import (
 	"bqtail/task"
 	"context"
-	"fmt"
+	"github.com/pkg/errors"
 )
 
 //Run handles fs request
-func (s *service) Run(ctx context.Context, request task.Request) error {
+func (s *service) Run(ctx context.Context, request task.Request) (task.Response, error) {
 	switch req := request.(type) {
 	case *DeleteRequest:
-		return s.Delete(ctx, req)
+		return nil, s.Delete(ctx, req)
 	case *MoveRequest:
-		return s.Move(ctx, req)
-	default:
-		return fmt.Errorf("unsupported request type:%T", request)
+		return nil, s.Move(ctx, req)
 	}
+	return nil, errors.Errorf("unsupported request type:%T", request)
 }

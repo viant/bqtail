@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-const deleteRoutines = 5
+const deleteRoutines = 6
 
 //Delete deletes supplied URLs
 func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {

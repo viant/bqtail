@@ -16,4 +16,5 @@ var bodyAppendable = map[string]bool{
 var rootContextActions = map[string]bool{
 	base.ActionQuery:  true,
 	base.ActionNotify: true,
+	base.ActionCall:   true,
 }

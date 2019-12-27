@@ -24,6 +24,55 @@ func (a *Actions) SetInfo(info *stage.Info) {
 	a.Info = *info
 }
 
+//Init initialises actions
+func (a *Actions) Init(ctx context.Context, fs afs.Service) error {
+	err := a.init(ctx, fs, a.OnSuccess)
+	if err != nil {
+		return err
+	}
+	return a.init(ctx, fs, a.OnFailure)
+}
+
+func (a *Actions) init(ctx context.Context, fs afs.Service, actions []*Action) error {
+	if len(actions) == 0 {
+		return nil
+	}
+	for i, action := range actions {
+		if len(action.Request) == 0 {
+			continue
+		}
+		if action.Action == base.ActionCall {
+			if err := loadResource(actions[i], ctx, fs, "Body", "BodyURL"); err != nil {
+				return err
+			}
+			continue
+		}
+		if action.Action == base.ActionQuery {
+			if err := loadResource(actions[i], ctx, fs, "SQL", "SQLURL"); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func loadResource(action *Action, ctx context.Context, fs afs.Service, dataKey, URLKey string) error {
+	body := action.RequestStringValue(dataKey)
+	if body != "" {
+		return nil
+	}
+	bodyURL := action.RequestStringValue(URLKey)
+	if bodyURL == "" {
+		return nil
+	}
+	body, err := load(ctx, fs, bodyURL)
+	if err != nil {
+		return err
+	}
+	action.Request[dataKey] = body
+	return nil
+}
+
 //CloneOnFailure returns actions to run
 func (a Actions) CloneOnFailure() *Actions {
 	result := &Actions{
