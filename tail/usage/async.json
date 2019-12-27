@@ -1,19 +1,17 @@
 {
   "When": {
-    "Prefix": "/data/case004",
+    "Prefix": "/data/folder",
     "Suffix": ".json"
   },
-  "Dest": {
-    "Table": "bqtail.dummy"
-  },
+  "Async": true,
   "Batch": {
-    "RollOver": true,
-    "MultiPath": true,
     "Window": {
-      "DurationInSec": 15
+      "DurationInSec": 90
     }
   },
-  "Async": true,
+  "Dest": {
+    "Table": "mydataset.mytable"
+  },
   "OnSuccess": [
     {
       "Action": "delete"

@@ -1,0 +1,7 @@
+[
+  {"@indexBy@": ["sku_id", "supply_entity_id"]},
+  {"date":"$FormatTime('2daysAgo','yyyy-MM-dd')","sku_id":"86622","supply_entity_id":"22012","payment":102.7,"qty":1,"charge":128.375},
+  {"date":"$FormatTime('2daysAgo','yyyy-MM-dd')","sku_id":"50623","supply_entity_id":"22010","payment":30.4,"qty":2,"charge":32.4},
+  {"date":"$FormatTime('1daysAgo','yyyy-MM-dd')","sku_id":"86621","supply_entity_id":"22010","payment":56.31,"qty":1,"charge":70.3875},
+  {"date":"$FormatTime('2daysAgo','yyyy-MM-dd')","sku_id":"10023","supply_entity_id":"22012","payment":64.4,"qty":2,"charge":66.4}
+]

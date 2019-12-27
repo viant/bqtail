@@ -40,7 +40,7 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 	}
 	filename := actions.Info.JobFilename()
 	if path.Ext(filename) == "" {
-		filename += base.JobExt
+		filename += base.JSONExt
 	}
 	URL := url.Join(s.Config.AsyncTaskURL, filename)
 	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))

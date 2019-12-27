@@ -1,0 +1,15 @@
+When:
+  Prefix: "/data/folder"
+  Suffix: ".json"
+Async: true
+Batch:
+  Window:
+    DurationInSec: 90
+Dest:
+  Table: mydataset.mytable
+OnSuccess:
+  - Action: delete
+OnFailure:
+  - Action: move
+    Request:
+      DestURL: gs://e2e-data/errors

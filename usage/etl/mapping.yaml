@@ -1,0 +1,34 @@
+When:
+  Prefix: "/mylogs/"
+Async: true
+Batch:
+  Window:
+    DurationInSec: 120
+Dest:
+  Pattern: "/mylogs/.+/.+/(\\d{4})/(\\d{2})/(\\d{2})/.+"
+  Table: myproject:mydataset.mytable_$1$2$3
+  SourceFormat: NEWLINE_DELIMITED_JSON
+  TransientDataset: temp
+  Schema:
+    Template: myproject:mydataset.mytempate
+    Split:
+      ClusterColumns:
+        - meta.eventId
+      Mapping:
+        - When: meta.eventId IN (101, 102)
+          Then: myproject:mydataset.my_table1_$1$2$3
+        - When: meta.eventId IN (103, 104)
+          Then: myproject:mydataset.my_table2_$1$2$3
+OnSuccess:
+  - Action: delete
+OnFailure:
+  - Action: notify
+    Request:
+      Channels:
+        - "#my_error_channel"
+      Title: Unision log ingestion
+      Message: "$Error"
+Info:
+  Workflow: My log ingestion
+  ProjectURL: JIRA/WIKi or any link referece
+  LeadEngineer: Me@email.com

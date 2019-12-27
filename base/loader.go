@@ -88,10 +88,13 @@ func NewLoader(baeURL string, checkFrequency time.Duration, fs afs.Service, onCh
 func indexRules(rules []storage.Object) map[string]time.Time {
 	var indexed = make(map[string]time.Time)
 	for _, rule := range rules {
-		if rule.IsDir() || path.Ext(rule.Name()) != ".json" {
+		if rule.IsDir() {
 			continue
 		}
-		indexed[rule.URL()] = rule.ModTime()
+		ext := path.Ext(rule.Name())
+		if ext == JSONExt || ext == YAMLExt {
+			indexed[rule.URL()] = rule.ModTime()
+		}
 	}
 	return indexed
 }

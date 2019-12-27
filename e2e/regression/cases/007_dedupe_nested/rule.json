@@ -1,26 +1,24 @@
-[
-  {
-    "When": {
-      "Prefix": "/data/case007",
-      "Suffix": ".json"
-    },
-    "Dest": {
-      "Table": "bqtail.dummy",
-      "TransientDataset": "temp",
-      "UniqueColumns": [
-        "id"
-      ]
-    },
-    "OnSuccess": [
-      {
-        "Action": "delete"
-      }
-    ],
-    "Batch": {
-      "RollOver": true,
-      "Window": {
-        "DurationInSec": 20
-      }
+{
+  "When": {
+    "Prefix": "/data/case007",
+    "Suffix": ".json"
+  },
+  "Dest": {
+    "Table": "bqtail.dummy",
+    "TransientDataset": "temp",
+    "UniqueColumns": [
+      "id"
+    ]
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete"
+    }
+  ],
+  "Batch": {
+    "RollOver": true,
+    "Window": {
+      "DurationInSec": 20
     }
   }
-]
+}

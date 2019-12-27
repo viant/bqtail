@@ -18,8 +18,10 @@ const (
 
 //Process Extension
 const (
-	//JobExt job extension
-	JobExt = ".json"
+	//JSONExt job extension
+	JSONExt = ".json"
+	//YAMLExt job extension
+	YAMLExt = ".yaml"
 	//ActionExt job extension
 	ActionExt = ".run"
 	//WindowExt batch window extension file

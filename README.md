@@ -39,85 +39,103 @@ for Big Query Streaming API, BigQuery Transfer Service, Cloud Dataflow.
 
 The following define rule to ingest data in batches within 30 sec time window in async mode.
 
-[@rule.json](usage/batch/rule.json)
-```json
-[
-    {
-      "When": {
-        "Prefix": "/data/",
-        "Suffix": ".avro"
-      },
-      "Dest": {
-        "Table": "mydataset.mytable"
-      },
-      "Async": true,
-      "Batch": {
-        "Window": {
-          "DurationInSec": 30
-        }
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ]
-    }
-]
+[@rule.yaml](usage/batch/rule.yaml)
+```yaml
+When:
+  Prefix: "/data/"
+  Suffix: ".avro"
+Dest:
+  Table: mydataset.mytable
+Async: true
+Batch:
+  Window:
+    DurationInSec: 30
+OnSuccess:
+- Action: delete
+
 ```
-
-
 ##### **Data ingestion with deduplication**
 
 The following define rule to ingest data in batches within 60 sec time window in async mode.
 
-[@rule.json](usage/dedupe/rule.json)
-```json
- [
-    {
-      "Async": true,
-      "When": {
-        "Prefix": "/data/",
-        "Suffix": ".avro"
-      },
-      "Dest": {
-        "Table": "mydataset.mytable",
-        "TempDataset": "transfer",
-        "UniqueColumns": ["id"]
-      },
-      "Batch": {
-        "Window": {
-          "DurationInSec": 60
-        }
-      },
-      "OnSuccess": [
-        {
-          "Action": "query",
-          "Request": {
-            "SQL": "SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $DestTable",
-            "Dest": "mydataset.summary"
-          }
-        },
-        {
-          "Action": "delete"
-        }
-      ],
-      "OnFailure": [
-        {
-          "Action": "notify",
-          "Request": {
-            "Channels": [
-              "#e2e"
-            ],
-            "From": "BqTail",
-            "Title": "bqtail.wrong_dummy ingestion",
-            "Message": "$Error",
-            "Token": "SlackToken"
-          }
-        }
-      ]
-    }
-]
+[@rule.yaml](usage/dedupe/rule.yaml)
+```yaml
+Async: true
+When:
+  Prefix: "/data/"
+  Suffix: ".avro"
+Dest:
+  Table: mydataset.mytable
+  TempDataset: transfer
+  UniqueColumns:
+  - id
+Batch:
+  Window:
+    DurationInSec: 60
+OnSuccess:
+- Action: query
+  Request:
+    SQL: SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS
+      completed FROM $TempTable
+    Dest: mydataset.summary
+- Action: delete
+OnFailure:
+- Action: notify
+  Request:
+    Channels:
+    - "#e2e"
+    From: BqTail
+    Title: bqtail.wrong_dummy ingestion
+    Message: "$Error"
+    Token: SlackToken
+
 ```
+
+##### **Data ingestion with URL date extraction and destnation mapping**
+
+For example if your logs are stored in gs://$bqTailTriggerBucket/mylogs/logName1/2020/01/11/
+you can extract date to use in destination table suffix.
+
+
+[@rule.yaml](usage/etl/mapping.yaml)
+```yaml
+When:
+  Prefix: "/mylogs/"
+Async: true
+Batch:
+  Window:
+    DurationInSec: 120
+Dest:
+  Pattern: "/mylogs/.+/(\\d{4})/(\\d{2})/(\\d{2})/.+"
+  Table: myproject:mydataset.mytable_$1$2$3
+  SourceFormat: NEWLINE_DELIMITED_JSON
+  TransientDataset: temp
+  Schema:
+    Template: myproject:mydataset.mytempate
+    Split:
+      ClusterColumns:
+        - meta.eventId
+      Mapping:
+        - When: meta.eventId IN (101, 102)
+          Then: myproject:mydataset.my_table1_$1$2$3
+        - When: meta.eventId IN (103, 104)
+          Then: myproject:mydataset.my_table2_$1$2$3
+OnSuccess:
+  - Action: delete
+OnFailure:
+  - Action: notify
+    Request:
+      Channels:
+        - "#my_error_channel"
+      Title: Unision log ingestion
+      Message: "$Error"
+Info:
+  Workflow: My log ingestion
+  ProjectURL: JIRA/WIKi or any link referece
+  LeadEngineer: Me@email.com
+```
+
+
 
 ##### **Data ingestion with partition override**
 
@@ -147,6 +165,49 @@ The following define rule to ingest data in batches within 60 sec time window in
     ]
   }
 ]
+```
+
+
+###### **Data ingestion with aggregation**
+
+[@rule.yaml](usage/etl/aggregation.yaml)
+
+```yaml
+When:
+  Prefix: "/mypath/mysubpath"
+  Suffix: ".json"
+Async: true
+Batch:
+  Window:
+    DurationInSec: 10
+Dest:
+  Table: bqtail.transactions
+  TransientDataset: temp
+  TransientAlias: t
+  Transform:
+    charge: (CASE WHEN type_id = 1 THEN t.payment + f.value WHEN type_id = 2 THEN t.payment * (1 + f.value) END)
+  SideInputs:
+    - Table: bqtail.fees
+      Alias: f
+      'On': t.fee_id = f.id
+OnSuccess:
+  - Action: query
+    Request:
+      SQL: SELECT
+        DATE(timestamp) AS date,
+        sku_id,
+        supply_entity_id,
+        MAX($EventID) AS batch_id,
+        SUM( payment) payment,
+        SUM((CASE WHEN type_id = 1 THEN t.payment + f.value WHEN type_id = 2 THEN t.payment * (1 + f.value) END)) charge,
+        SUM(COALESCE(qty, 1.0)) AS qty
+        FROM $TempTable t
+        LEFT JOIN bqtail.fees f ON f.id = t.fee_id
+        GROUP BY 1, 2, 3
+      Dest: bqtail.supply_performance
+      Append: true
+    OnSuccess:
+      - Action: delete
 ```
 
 

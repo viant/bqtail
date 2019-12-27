@@ -11,7 +11,7 @@ It matches the the following rule, to ingest data with transient table in temp d
 
 
 ```json
-[{
+{
       "When": {
         "Prefix": "/data/case007",
         "Suffix": ".json"
@@ -31,7 +31,7 @@ It matches the the following rule, to ingest data with transient table in temp d
           "DurationInSec": 10
         }
       }
-}]
+}
 ```
 
 Since table uses nested column the following SQL is used for de duplications

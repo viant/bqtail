@@ -1,0 +1,11 @@
+When:
+Prefix: "/data/"
+Suffix: ".avro"
+Dest:
+Table: mydataset.mytable
+Async: true
+Batch:
+Window:
+DurationInSec: 30
+OnSuccess:
+- Action: delete

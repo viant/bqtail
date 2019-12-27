@@ -175,3 +175,9 @@ endly -t=init
     endly -t=test -i=aggregation
 ```
 
+- [Data aggregation with inline side input](regression/cases/022_aggregation_inline)
+
+```bash
+    endly -t=test -i=aggregation_inline
+```
+

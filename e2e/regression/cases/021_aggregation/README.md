@@ -6,8 +6,7 @@ This scenario test data aggregation with side input.
 
 It uses the following rule:
 
-
-[@rule.json](rule.json)
+[@rule.json](rule/rule.json)
 ```json
 [
   {

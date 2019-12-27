@@ -1,3 +1,2 @@
-
-- REST API call action
-- Add invalid schema and corruted data location on rule level.
+- Add invalid schema and corrupted data location on rule level.
+ 

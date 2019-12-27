@@ -27,7 +27,7 @@ Configuration is defined as [config.go](config.go)
 - ErrorURL: - errors location
 - AsyncTaskURL: transient storage location for managing async batches and BigQuery job post actions 
 - SyncTaskURL: transient storage location for managing batch load job in sync mode.
-- RulesURL: base URL where each rule is JSON file with rules arrays
+- RulesURL: base URL where each rule is JSON or YAML file with one or more rule
 - CorruptedFileURL: url for corrupted files
 - InvalidSchemaURLL: url for incompatible schema files
 - TriggerBucket - trigger bucket
@@ -42,42 +42,62 @@ To reduce Storage Class A operations: cache file is used for config files:  dele
 
 ### Data ingestion rules
 
-Individual rules are defined in JSON format. The following is example of asynchronous batched data ingestion:
+Individual rules are defined in JSON or YAML format. The following is example of asynchronous batched data ingestion:
 
+
+[@rule.yaml](usage/async.yaml) 
+```yaml
+When:
+  Prefix: "/data/folder"
+  Suffix: ".json"
+Async: true
+Batch:
+  Window:
+    DurationInSec: 90
+Dest:
+  Table: mydataset.mytable
+OnSuccess:
+  - Action: delete
+OnFailure:
+  - Action: move
+    Request:
+      DestURL: gs://e2e-data/errors
+```
+
+or
 
 [@rule.json](usage/async.json)
 ```json
- [
+{
+  "When": {
+    "Prefix": "/data/folder",
+    "Suffix": ".json"
+  },
+  "Async": true,
+   "Batch": {
+      "Window": {
+          "DurationInSec": 90
+      }
+   },
+  "Dest": {
+    "Table": "mydataset.mytable"
+  },
+  "OnSuccess": [
     {
-      "When": {
-        "Prefix": "/data/folder",
-        "Suffix": ".json"
-      },
-      "Async": true,
-       "Batch": {
-          "Window": {
-              "DurationInSec": 90
-          }
-       },
-      "Dest": {
-        "Table": "mydataset.mytable"
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ],
-      "OnFailure": [
-        {
-          "Action": "move",
-          "Request": {
-            "DestURL": "gs://e2e-data/errors"
-          }
-        }
-      ]
+      "Action": "delete"
     }
-]
+  ],
+  "OnFailure": [
+    {
+      "Action": "move",
+      "Request": {
+        "DestURL": "gs://e2e-data/errors"
+      }
+    }
+  ]
+}
 ```
+
 
 **Individual rule** can has the following attributes:
 

@@ -1,11 +1,9 @@
-[
-  {
-    "When": {
-      "Prefix": "/data/case001",
-      "Suffix": ".json"
-    },
-    "Dest": {
-      "Table": "bqtail.dummy"
-    }
+{
+  "When": {
+    "Prefix": "/data/case001",
+    "Suffix": ".json"
+  },
+  "Dest": {
+    "Table": "bqtail.dummy"
   }
-]
+}

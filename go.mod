@@ -16,4 +16,5 @@ require (
 	github.com/viant/toolbox v0.29.1
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	google.golang.org/api v0.9.0
+	gopkg.in/yaml.v2 v2.2.2
 )

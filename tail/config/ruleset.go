@@ -8,8 +8,11 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/url"
+	"github.com/viant/toolbox"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"log"
-	"strings"
+	"path"
 	"time"
 )
 
@@ -154,9 +157,12 @@ func (r *Ruleset) loadRule(ctx context.Context, fs afs.Service, URL string) ([]*
 	defer func() {
 		_ = reader.Close()
 	}()
-	rules := make([]*Rule, 0)
 
-	err = json.NewDecoder(reader).Decode(&rules)
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	rules, err := loadRules(data, path.Ext(URL))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode: %v", URL)
 	}
@@ -165,8 +171,9 @@ func (r *Ruleset) loadRule(ctx context.Context, fs afs.Service, URL string) ([]*
 		return nil, errors.Wrapf(err, "invalid rule: %v", URL)
 	}
 	_, name := url.Split(URL, "")
-	if strings.HasSuffix(name, ".json") {
-		name = string(name[:len(name)-5])
+	ext := path.Ext(name)
+	if ext != "" {
+		name = string(name[:len(name)-len(ext)])
 	}
 
 	for i := range rules {
@@ -181,6 +188,35 @@ func (r *Ruleset) loadRule(ctx context.Context, fs afs.Service, URL string) ([]*
 			return nil, errors.Wrap(err, "failed to initialises pose action")
 		}
 
+	}
+	return rules, nil
+}
+
+func loadRules(data []byte, ext string) ([]*Rule, error) {
+	var rules = make([]*Rule, 0)
+	switch ext {
+	case base.YAMLExt:
+		ruleMap := map[string]interface{}{}
+		if err := yaml.Unmarshal(data, &ruleMap); err != nil {
+			rulesMap := []map[string]interface{}{}
+			err = json.Unmarshal(data, &rulesMap)
+			if err != nil {
+				return nil, err
+			}
+			err = toolbox.DefaultConverter.AssignConverted(&rules, rulesMap)
+			return rules, err
+		}
+		rule := &Rule{}
+		err := toolbox.DefaultConverter.AssignConverted(&rule, ruleMap)
+		rules = append(rules, rule)
+		return rules, err
+	default:
+		rule := &Rule{}
+		if err := json.Unmarshal(data, rule); err != nil {
+			err = json.Unmarshal(data, &rules)
+			return rules, err
+		}
+		rules = append(rules, rule)
 	}
 	return rules, nil
 }
