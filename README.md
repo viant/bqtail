@@ -168,7 +168,7 @@ Info:
 ```
 
 
-###### **Data ingestion with aggregation**
+###### **Data ingestion with post load aggregation task**
 
 [@rule.yaml](usage/etl/aggregation.yaml)
 
