@@ -40,7 +40,7 @@ pipeline:
 
   trigger:
     action: storage:copy
-    sleepTimeMs: 50000
+    sleepTimeMs: 60000
     source:
       URL: ${parent.path}/data/trigger/
     dest:

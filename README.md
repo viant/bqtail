@@ -94,7 +94,7 @@ OnFailure:
 ##### **Data ingestion with URL date extraction and destnation mapping**
 
 For example if your logs are stored in gs://$bqTailTriggerBucket/mylogs/logName1/2020/01/11/
-you can extract date to use in destination table suffix.
+you can extract date from URL to use in destination table suffix.
 
 
 [@rule.yaml](usage/etl/mapping.yaml)
