@@ -127,7 +127,7 @@ OnFailure:
     Request:
       Channels:
         - "#my_error_channel"
-      Title: Unision log ingestion
+      Title: My log ingestion
       Message: "$Error"
 Info:
   Workflow: My log ingestion
