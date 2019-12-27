@@ -120,6 +120,9 @@ Dest:
           Then: myproject:mydataset.my_table1_$1$2$3
         - When: meta.eventId IN (103, 104)
           Then: myproject:mydataset.my_table2_$1$2$3
+        - When: meta.eventId > 104
+          Then: myproject:mydataset.my_table2_$Mod(10)_$1$2$3
+          
 OnSuccess:
   - Action: delete
 OnFailure:
