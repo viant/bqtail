@@ -75,7 +75,7 @@ Batch:
 OnSuccess:
 - Action: query
   Request:
-    SQL: SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS
+    SQL: SELECT $EventID AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS
       completed FROM $TempTable
     Dest: mydataset.summary
 - Action: delete
