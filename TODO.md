@@ -1,2 +1,3 @@
-- Add invalid schema and corrupted data location on rule level.
+- Update documentation/examples
+- Added monitoring responses to bigquery
  

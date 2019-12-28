@@ -57,10 +57,15 @@ func (r *Ruleset) remove(ctx context.Context, fs afs.Service, URL string) {
 func (r *Ruleset) Get(ctx context.Context, URL string, filter *matcher.Basic) *Rule {
 	rules := r.Rules
 	for i, rule := range rules {
-		if rule.Info.URL == URL && rule.When.Prefix == filter.Prefix &&
-			rule.When.Suffix == filter.Suffix &&
-			rule.When.Filter == filter.Filter {
-			return rules[i]
+		if rule.Info.URL == URL {
+			if filter == nil {
+				return rule
+			}
+			if rule.When.Prefix == filter.Prefix &&
+				rule.When.Suffix == filter.Suffix &&
+				rule.When.Filter == filter.Filter {
+				return rules[i]
+			}
 		}
 	}
 	return nil

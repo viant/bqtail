@@ -6,4 +6,6 @@ type Activity struct {
 	Scheduled *Metric            `json:",omitempty"`
 	Done      *Metric            `json:",omitempty"`
 	Stages    map[string]*Metric `json:",omitempty"`
+	Error     *Error             `json:",omitempty"`
+	Stalled   *Metric            `json:",omitempty"`
 }

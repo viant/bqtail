@@ -21,6 +21,8 @@ type Rule struct {
 	Info                  base.Info `json:",omitempty"`
 	Group                 string    `json:",omitempty"`
 	StalledThresholdInSec int       `description:"duration after which unprocess file will be flag as error"`
+	CorruptedFileURL      string    `json:",omitempty"`
+	InvalidSchemaURL      string    `json:",omitempty"`
 }
 
 //IsAppend returns true if appends

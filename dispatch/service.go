@@ -152,7 +152,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	return nil
 }
 
-func (s *service) notifyDoneJobs(ctx context.Context, objects []astorage.Object, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs, perf *contract.Performance) (err error) {
+func (s *service) notifyDoneProcesss(ctx context.Context, objects []astorage.Object, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs, perf *contract.Performance) (err error) {
 	waitGroup := &sync.WaitGroup{}
 
 	for i, object := range objects {
@@ -235,7 +235,7 @@ func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Respo
 		perf.AddEvent(job.State, job.JobReference.JobId)
 		jobsByID[jobs[i].JobReference.JobId] = jobs[i]
 	}
-	return perf, s.notifyDoneJobs(ctx, objects, response, jobsByID, perf)
+	return perf, s.notifyDoneProcesss(ctx, objects, response, jobsByID, perf)
 
 }
 

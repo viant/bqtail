@@ -79,10 +79,10 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source s
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
 	if err != nil {
 		if isPreConditionError(err) || isRateError(err) {
-			window, err := GetWindow(ctx, windowURL, s.fs)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to load window: %v", windowURL)
-			}
+			window := &Window{EventID:fmt.Sprintf("%v", endTime), URL:windowURL}
+			//if err != nil {
+			//	return nil, errors.Wrapf(err, "failed to load window: %v", windowURL)
+			//}
 			if rule.Batch.MultiPath {
 				err = s.addLocationFile(ctx, window, parentURL)
 			}

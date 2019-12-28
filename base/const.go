@@ -22,8 +22,8 @@ const (
 	JSONExt = ".json"
 	//YAMLExt job extension
 	YAMLExt = ".yaml"
-	//ActionExt job extension
-	ActionExt = ".run"
+	//ProcessExt job extension
+	ProcessExt = ".run"
 	//WindowExt batch window extension file
 	WindowExt = ".win"
 	//LocationExt location extension
@@ -86,8 +86,13 @@ const (
 
 //Setting prefix/suffix
 const (
-	//ErrorSuffix error suffix
-	ErrorSuffix = "-error"
+	//ErrorExt error ext
+	ErrorExt = ".err"
+	//ActionErrorExt
+	ActionErrorExt = ".act"
+	//ResponseErrorExt
+	ResponseErrorExt = ".rsp"
+
 	//LoadPrefix - load job default prefix
 	LoadPrefix = "/_load_/"
 	//BqJobPrefix bg job default prefix

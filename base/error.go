@@ -7,6 +7,8 @@ import (
 )
 
 const backendError = "backendError"
+const internalError = "internal error"
+const noFound = "Not found"
 
 //IsRetryError returns true if backend error
 func IsRetryError(err error) bool {
@@ -22,6 +24,20 @@ func IsRetryError(err error) bool {
 	return strings.Contains(message, backendError)
 }
 
+//IsInternalError returns true if internal error
+func IsInternalError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if apiError, ok := err.(*googleapi.Error); ok {
+		if apiError.Code == http.StatusInternalServerError {
+			return true
+		}
+	}
+	message := err.Error()
+	return strings.Contains(message, internalError)
+}
+
 //IsNotFoundError returns true if not found error
 func IsNotFoundError(err error) bool {
 	if err == nil {
@@ -32,7 +48,8 @@ func IsNotFoundError(err error) bool {
 			return true
 		}
 	}
-	return false
+	message := err.Error()
+	return strings.Contains(message, noFound)
 }
 
 //IsDuplicateJobError returns true if duplicate job error
@@ -58,5 +75,6 @@ func IsPermissionDenied(err error) bool {
 			return true
 		}
 	}
+
 	return false
 }

@@ -9,8 +9,12 @@ import (
 	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/cache"
+	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	"io/ioutil"
+	"strings"
+
 	//add gcs storage API
 	_ "github.com/viant/afsc/gs"
 	"path"
@@ -18,6 +22,8 @@ import (
 	"sync"
 	"time"
 )
+
+const maxErrors = 40
 
 //Service represents monitoring service
 type Service interface {
@@ -43,11 +49,12 @@ func (s *service) Check(ctx context.Context, request *Request) *Response {
 
 func (s *service) check(ctx context.Context, request *Request, response *Response) (err error) {
 	waitGroup := &sync.WaitGroup{}
-	waitGroup.Add(4)
+	waitGroup.Add(5)
 	infoDest := map[string]*Info{}
 	_ = s.Config.ReloadIfNeeded(ctx, s.fs)
 	var active, doneLoads activeLoads
 	var schedules batches
+	var errors []*info.Error
 	var stages []*stage.Info
 	go func() {
 		defer waitGroup.Done()
@@ -56,6 +63,17 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 			err = e
 		}
 	}()
+
+	go func() {
+		defer waitGroup.Done()
+		var e error
+		if errors, e = s.getErrors(ctx);e != nil {
+			err = e
+		}
+	}()
+
+
+
 	go func() {
 		defer waitGroup.Done()
 		var e error
@@ -93,6 +111,11 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	if len(stages) > 0 {
 		s.updateStages(stages, infoDest)
 	}
+
+	if len(errors) > 0 {
+		s.updateErrors(errors, infoDest)
+	}
+
 	for k, inf := range infoDest {
 		response.Info.Add(inf)
 		if inf.Activity.Running != nil {
@@ -176,6 +199,72 @@ func (s *service) getInfo(destKey string, infoDest map[string]*Info) *Info {
 	return inf
 }
 
+func (s *service) getErrors(ctx context.Context) ([]*info.Error, error) {
+	destFolders, err := s.fs.List(ctx, s.Config.ErrorURL)
+	if err != nil {
+		return nil, err
+	}
+
+	var result = make([]*info.Error, 0)
+	for _, folder := range destFolders {
+		if url.Equals(folder.URL(), s.Config.ErrorURL) || !folder.IsDir() {
+			continue
+		}
+		dest := folder.Name()
+		files, err := s.fs.List(ctx, folder.URL(), option.NewPage(0, maxErrors))
+		if err != nil {
+			return nil, err
+		}
+		inofErr, err := s.getError(ctx, dest, files)
+		if err != nil || inofErr == nil {
+			continue
+		}
+		result = append(result, inofErr)
+	}
+	return result, nil
+}
+
+func (s *service) getError(ctx context.Context, dest string, files []storage.Object) (*info.Error, error) {
+	if len(files) == 0 {
+		return nil, nil
+	}
+
+	sortedFiles := NewObjects(files[1:], byModTime)
+	count := len(sortedFiles.Elements)
+	if count > maxErrors {
+		count = maxErrors
+	}
+	eventID := ""
+	result := &info.Error{Destination:dest}
+	for i := 0; i < count; i++ {
+		file := sortedFiles.Elements[i]
+		ext := path.Ext(file.Name())
+		if ext == base.ProcessExt || ext == base.ErrorExt {
+			eventID = strings.Replace(file.Name(), ext, "", 1)
+			result.ModTime = file.ModTime()
+			break
+		}
+	}
+	if eventID == "" {
+		return nil, nil
+	}
+	errName := fmt.Sprintf("%v%v", eventID, base.ErrorExt)
+	errorURL := url.Join(files[0].URL(), errName)
+	reader, err := s.fs.DownloadWithURL(ctx, errorURL)
+	if err == nil {
+		data, err := ioutil.ReadAll(reader)
+		_ = reader.Close()
+		if err == nil {
+			result.Error = string(data)
+		}
+	}
+	processName := fmt.Sprintf("%v%v", eventID, base.ProcessExt)
+	processURL := url.Join(files[0].URL(), processName)
+	result.ProcessURL = processURL
+	return result, nil
+}
+
+
 func (s *service) getLoadStages(ctx context.Context) ([]*stage.Info, error) {
 	result := make([]*stage.Info, 0)
 	return result, s.listLoadStages(ctx, &result)
@@ -215,27 +304,28 @@ func (s *service) getScheduledBatches(ctx context.Context) (batches, error) {
 
 func (s *service) getActiveLoads(ctx context.Context) (activeLoads, error) {
 	result := activeLoads{}
-	err := s.listLoadJobs(ctx, s.Config.ActiveLoadJobURL, s.Config.ActiveLoadJobURL, &result)
+	err := s.listLoadProcesss(ctx, s.Config.ActiveLoadProcessURL, s.Config.ActiveLoadProcessURL, &result)
 	return result, err
 }
 
 func (s *service) getRecentlyDoneLoads(ctx context.Context) (activeLoads, error) {
 	result := activeLoads{}
-	err := s.listDoneLoads(ctx, s.Config.DoneLoadJobURL, &result)
+	err := s.listDoneLoads(ctx, s.Config.DoneLoadProcessURL, &result)
 	return result, err
 }
 
-func (s *service) listLoadJobs(ctx context.Context, baseURL, URL string, result *activeLoads) error {
+func (s *service) listLoadProcesss(ctx context.Context, baseURL, URL string, result *activeLoads) error {
 	objects, err := s.fs.List(ctx, URL)
 	if err != nil {
 		return err
 	}
-	for _, object := range objects {
+	for i := range objects {
+		object := objects[i]
 		if url.Equals(object.URL(), URL) {
 			continue
 		}
 		if object.IsDir() {
-			if err = s.listLoadJobs(ctx, baseURL, object.URL(), result); err != nil {
+			if err = s.listLoadProcesss(ctx, baseURL, object.URL(), result); err != nil {
 				return err
 			}
 			continue
@@ -281,12 +371,20 @@ func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *act
 			continue
 		}
 		recentHour := sortedHours.Elements[len(sortedHours.Elements)-1]
-		if err = s.listLoadJobs(ctx, baseURL, recentHour.URL(), result); err != nil {
+		if err = s.listLoadProcesss(ctx, baseURL, recentHour.URL(), result); err != nil {
 			return err
 		}
 	}
 	return nil
 }
+
+func (s *service) updateErrors(errors []*info.Error, infos map[string]*Info) {
+	for i := range errors {
+		inf := s.getInfo(errors[i].Destination, infos)
+		inf.Error = errors[i]
+	}
+}
+
 
 //New creates monitoring service
 func New(ctx context.Context, config *tail.Config) (Service, error) {

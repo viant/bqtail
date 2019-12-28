@@ -10,6 +10,7 @@ type Response struct {
 	Status        string
 	Error         string                 `json:",omitempty"`
 	NotFoundError string                 `json:",omitempty"`
+	UploadError   string                 `json:",omitempty"`
 	EventID       string                 `json:",omitempty"`
 	Matched       bool                   `json:",omitempty"`
 	MatchedURL    string                 `json:",omitempty"`

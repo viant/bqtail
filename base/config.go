@@ -20,48 +20,40 @@ var cloudFunctionRegionEnvKeys = []string{"FUNCTION_REGION", "GOOGLE_CLOUD_REGIO
 
 //Config represents base config
 type Config struct {
-	URL              string
-	RunOnce          bool
-	ProjectID        string
-	Region           string
-	AsyncTaskURL     string
-	SyncTaskURL      string
-	ActiveLoadJobURL string
-	DoneLoadJobURL   string
-	JournalURL       string
-	TriggerBucket    string
-	LoadJobPrefix    string
-	BqJobPrefix      string
-	BatchPrefix      string
-	ErrorURL         string
-	CorruptedFileURL string
-	InvalidSchemaURL string
-	SlackCredentials *Secret
+	URL                  string
+	RunOnce              bool
+	ProjectID            string
+	Region               string
+	AsyncTaskURL         string
+	SyncTaskURL          string
+	ActiveLoadProcessURL string
+	DoneLoadProcessURL   string
+	JournalURL           string
+	TriggerBucket        string
+	LoadProcessPrefix    string
+	BqJobPrefix          string
+	BatchPrefix          string
+	ErrorURL             string
+	CorruptedFileURL     string
+	InvalidSchemaURL     string
+	SlackCredentials     *Secret
 }
 
 //BuildActiveLoadURL returns active action URL for supplied event id
 func (c *Config) BuildActiveLoadURL(info *stage.Info) string {
-	return url.Join(c.ActiveLoadJobURL, info.DestTable+stage.PathElementSeparator+info.EventID+ActionExt)
+	return url.Join(c.ActiveLoadProcessURL, info.DestTable+stage.PathElementSeparator+info.EventID+ProcessExt)
 }
 
 //BuildDoneLoadURL returns done action URL for supplied event id
 func (c *Config) BuildDoneLoadURL(info *stage.Info) string {
 	date := time.Now().Format(DateLayout)
-	return url.Join(c.DoneLoadJobURL, path.Join(info.DestTable, date, info.EventID+ActionExt))
+	return url.Join(c.DoneLoadProcessURL, path.Join(info.DestTable, date, info.EventID+ProcessExt))
 }
 
 //BuildTaskURL returns an action url for supplied event ID
 func (c *Config) BuildTaskURL(info *stage.Info) string {
 	date := time.Now().Format(DateLayout)
 	return fmt.Sprintf("gs://%v%v%v/%v%v", c.TriggerBucket, c.BqJobPrefix, date, info.ID(), JSONExt)
-}
-
-//OutputURL returns an output URL
-func (c *Config) OutputURL(hasError bool) string {
-	if hasError {
-		return c.ErrorURL
-	}
-	return c.JournalURL
 }
 
 //Init initialises config
@@ -94,8 +86,8 @@ func (c *Config) Init(ctx context.Context) error {
 		c.Region = defaultRegion
 	}
 
-	if c.LoadJobPrefix == "" {
-		c.LoadJobPrefix = LoadPrefix
+	if c.LoadProcessPrefix == "" {
+		c.LoadProcessPrefix = LoadPrefix
 	}
 	if c.BqJobPrefix == "" {
 		c.BqJobPrefix = BqJobPrefix
@@ -103,11 +95,11 @@ func (c *Config) Init(ctx context.Context) error {
 	if c.BatchPrefix == "" {
 		c.BatchPrefix = BatchPrefix
 	}
-	if c.ActiveLoadJobURL == "" {
-		c.ActiveLoadJobURL = url.Join(c.JournalURL, ActiveLoadSuffix)
+	if c.ActiveLoadProcessURL == "" {
+		c.ActiveLoadProcessURL = url.Join(c.JournalURL, ActiveLoadSuffix)
 	}
-	if c.DoneLoadJobURL == "" {
-		c.DoneLoadJobURL = url.Join(c.JournalURL, DoneLoadSuffix)
+	if c.DoneLoadProcessURL == "" {
+		c.DoneLoadProcessURL = url.Join(c.JournalURL, DoneLoadSuffix)
 	}
 	if c.InvalidSchemaURL == "" {
 		c.InvalidSchemaURL = url.Join(c.JournalURL, InvalidSchemaLocation)

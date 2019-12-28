@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/cache"
+	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	store "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
@@ -83,20 +84,29 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 
 	defer s.OnDone(ctx, request, response)
 	var err error
-	if request.HasURLPrefix(s.config.LoadJobPrefix) {
-		err = s.runLoadAction(ctx, request, response)
+	if request.HasURLPrefix(s.config.LoadProcessPrefix) {
+		err = s.runLoadProcess(ctx, request, response)
 
 	} else if request.HasURLPrefix(s.config.BqJobPrefix) {
 		err = s.runPostLoadActions(ctx, request, response)
-
 	} else if request.HasURLPrefix(s.config.BatchPrefix) {
 		err = s.runBatch(ctx, request, response)
 
 	} else {
 		err = s.tail(ctx, request, response)
+		if err != nil {
+			if base.IsNotFoundError(err) {
+				response.NotFoundError = err.Error()
+				err = nil
+			}
+		}
 	}
+
 	if err != nil {
 		response.SetIfError(err)
+		if !response.Retriable {
+			err = s.handlerProcessError(ctx, err, request, response)
+		}
 	}
 	return response
 }
@@ -144,7 +154,7 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 	if err == nil || job == nil {
 		return err
 	}
-	return s.tryRecover(ctx, request, job.Actions, job.Job, response)
+	return s.tryRecover(ctx, rule, request, job.Actions, job.Job, response)
 }
 
 func (s *service) buildLoadRequest(ctx context.Context, job *Job, rule *config.Rule) (*bq.LoadRequest, error) {
@@ -188,13 +198,14 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	info := stage.New(job.GetSourceURI(), job.Dest(), job.EventID, "load", job.IDSuffix(), rule.Async, 0, rule.Info.URL)
 	info.LoadURIs = load.SourceUris
 	info.TempTable = load.DestinationTable.DatasetId + "." + load.DestinationTable.TableId
+	response.Info = info
 	actions := rule.Actions.Expand(info)
 	if err = appendBatchAction(job.Window, actions); err != nil {
 		return nil, err
 	}
 	activeURL := s.config.BuildActiveLoadURL(job.Info())
 	doneURL := s.config.BuildDoneLoadURL(job.Info())
-	s.appendLoadJobFinalActions(activeURL, doneURL, load, info)
+	s.appendLoadProcessFinalActions(activeURL, doneURL, load, info)
 	if actions, err = s.addTransientDatasetActions(ctx, *info, job, rule, actions); err != nil {
 		return nil, err
 	}
@@ -222,8 +233,8 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	return job, err
 }
 
-//appendLoadJobFinalActions append track action
-func (s *service) appendLoadJobFinalActions(activeURL, doneURL string, load *bq.LoadRequest, info *stage.Info) {
+//appendLoadProcessFinalActions append track action
+func (s *service) appendLoadProcessFinalActions(activeURL, doneURL string, load *bq.LoadRequest, info *stage.Info) {
 	moveRequest := storage.MoveRequest{SourceURL: activeURL, DestURL: doneURL, IsDestAbsoluteURL: true}
 	moveAction, _ := task.NewAction(base.ActionMove, info, moveRequest)
 	load.Actions.AddOnSuccess(moveAction)
@@ -433,8 +444,8 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parent 
 	return nil
 }
 
-//runLoadAction this method allows rerun Activity/Done job as long original data files are present
-func (s *service) runLoadAction(ctx context.Context, request *contract.Request, response *contract.Response) error {
+//runLoadProcess this method allows rerun Activity/Done job as long original data files are present
+func (s *service) runLoadProcess(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	actions := []*task.Action{}
 	reader, err := s.fs.DownloadWithURL(ctx, request.SourceURL)
 	if err != nil {
@@ -491,7 +502,7 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 			return errors.Wrapf(err, "failed to get tempalte table: %v", templateReference)
 		}
 		job.TempSchema = table.Schema
-		updateLoadJobSchema(table, job, dest)
+		updateLoadProcessSchema(table, job, dest)
 
 	}
 
@@ -517,12 +528,12 @@ func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destina
 		job.DestSchema = table.Schema
 	}
 	if dest.Schema.TransientTemplate == "" {
-		updateLoadJobSchema(table, job, dest)
+		updateLoadProcessSchema(table, job, dest)
 	}
 	return nil
 }
 
-func updateLoadJobSchema(table *bigquery.Table, job *Job, dest *config.Destination) {
+func updateLoadProcessSchema(table *bigquery.Table, job *Job, dest *config.Destination) {
 	if table != nil {
 		job.Load.Schema = table.Schema
 		if job.Load.Schema == nil && dest.Schema.Autodetect {
@@ -559,7 +570,7 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 	if rule.Async {
 		return nil, nil
 	}
-	return s.runInBatch(ctx, batchWindow.Window, response)
+	return s.runInBatch(ctx, rule, batchWindow.Window, response)
 }
 
 func (s *service) runPostLoadActions(ctx context.Context, request *contract.Request, response *contract.Response) error {
@@ -577,6 +588,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 			return err
 		}
 	}
+	response.Info = &actions.Info
 	bqJob, err := s.bq.GetJob(ctx, s.config.ProjectID, actions.Job.JobReference.JobId)
 	if err != nil {
 		response.Retriable = base.IsRetryError(err)
@@ -585,7 +597,8 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	job := base.Job(*bqJob)
 	bqJobError := job.Error()
 	if bqJobError != nil {
-		if bqJobError = s.tryRecover(ctx, request, actions, bqJob, response); bqJobError == nil {
+		rule := s.config.Get(ctx, actions.RuleURL, nil)
+		if bqJobError = s.tryRecover(ctx, rule, request, actions, bqJob, response); bqJobError == nil {
 			return nil
 		}
 	}
@@ -619,23 +632,24 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 			return err
 		}
 	}
+	rule := s.config.Get(ctx, window.RuleURL, window.Filter)
+	response.Rule = rule
 	request.EventID = window.EventID
-	job, err := s.runInBatch(ctx, window, response)
+	job, err := s.runInBatch(ctx, rule, window, response)
 	if err == nil || job == nil {
 		if err != nil {
 			response.Retriable = base.IsRetryError(err)
 		}
 		return err
 	}
-	return s.tryRecover(ctx, request, job.Actions, job.Job, response)
+	return s.tryRecover(ctx, rule, request, job.Actions, job.Job, response)
 }
 
-func (s *service) runInBatch(ctx context.Context, window *batch.Window, response *contract.Response) (*Job, error) {
+func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *batch.Window, response *contract.Response) (*Job, error) {
 	response.Window = window
 	response.BatchRunner = true
-	rule := s.config.Get(ctx, window.RuleURL, window.Filter)
 	if rule == nil {
-		return nil, fmt.Errorf("failed locaet rule for :%v, %v", window.RuleURL, window.Filter)
+		return nil, fmt.Errorf("rule was empyt for %v", window.RuleURL)
 	}
 	batchingDistributionDelay := time.Duration(getRandom(base.StorageListVisibilityDelay, rule.Batch.MaxDelayMs(base.StorageListVisibilityDelay))) * time.Millisecond
 	remainingDuration := window.End.Sub(time.Now()) + batchingDistributionDelay
@@ -665,7 +679,7 @@ func (s *service) runInBatch(ctx context.Context, window *batch.Window, response
 	return job, err
 }
 
-func (s *service) tryRecover(ctx context.Context, request *contract.Request, actions *task.Actions, job *bigquery.Job, response *contract.Response) error {
+func (s *service) tryRecover(ctx context.Context, rule *config.Rule, request *contract.Request, actions *task.Actions, job *bigquery.Job, response *contract.Response) error {
 	configuration := actions.Job.Configuration
 	if configuration.Load == nil || len(configuration.Load.SourceUris) <= 1 {
 		return base.JobError(job)
@@ -673,12 +687,13 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	uris := status.NewURIs()
 	response.URIs = *uris
 	uris.Classify(ctx, s.fs, job)
-	if err := s.moveAssets(ctx, uris.Corrupted, s.config.CorruptedFileURL); err != nil {
-		err = errors.Wrapf(err, "failed to move %v to %v", response.Corrupted, s.config.CorruptedFileURL)
+	corruptedFileURL, invalidSchemaURL := s.getDataErrorsURLs(rule)
+	if err := s.moveAssets(ctx, uris.Corrupted, corruptedFileURL); err != nil {
+		err = errors.Wrapf(err, "failed to move %v to %v", response.Corrupted, corruptedFileURL)
 		response.NotFoundError = err.Error()
 	}
-	if err := s.moveAssets(ctx, uris.InvalidSchema, s.config.InvalidSchemaURL); err != nil {
-		err = errors.Wrapf(err, "failed to move %v to %v", response.Corrupted, s.config.InvalidSchemaURL)
+	if err := s.moveAssets(ctx, uris.InvalidSchema, invalidSchemaURL); err != nil {
+		err = errors.Wrapf(err, "failed to move %v to %v", response.Corrupted, invalidSchemaURL)
 		response.NotFoundError = err.Error()
 	}
 	if len(uris.Valid) == 0 {
@@ -705,6 +720,20 @@ func (s *service) tryRecover(ctx context.Context, request *contract.Request, act
 	return err
 }
 
+func (s *service) getDataErrorsURLs(rule *config.Rule) (string, string) {
+	corruptedFileURL := s.config.CorruptedFileURL
+	invalidSchemaURL := s.config.InvalidSchemaURL
+	if rule != nil {
+		if rule.CorruptedFileURL != "" {
+			corruptedFileURL = rule.CorruptedFileURL
+		}
+		if rule.InvalidSchemaURL != "" {
+			invalidSchemaURL = rule.InvalidSchemaURL
+		}
+	}
+	return corruptedFileURL, invalidSchemaURL
+}
+
 func (s *service) moveAssets(ctx context.Context, URLs []string, baseDestURL string) error {
 	var err error
 	if len(URLs) == 0 {
@@ -721,6 +750,44 @@ func (s *service) moveAssets(ctx context.Context, URLs []string, baseDestURL str
 		}
 	}
 	return err
+}
+
+func (s *service) handlerProcessError(ctx context.Context, err error, request *contract.Request, response *contract.Response) error {
+	info := response.Info
+	if info == nil {
+		return err
+	}
+	activeURL := s.config.BuildActiveLoadURL(info)
+	if base.IsInternalError(err) {
+		if exists, _ := s.fs.Exists(ctx, activeURL); exists {
+			return s.replayLoadProcess(ctx, activeURL, request)
+		}
+	}
+	response.SetIfError(err)
+
+	if data, e := json.Marshal(response); e == nil {
+		errorResponseURL := url.Join(s.config.ErrorURL, info.DestTable+fmt.Sprintf("%v%v", request.EventID, base.ResponseErrorExt))
+		if e := s.fs.Upload(ctx, errorResponseURL, file.DefaultFileOsMode, bytes.NewReader(data)); e != nil {
+			response.UploadError = e.Error()
+		}
+
+	}
+	errorURL := url.Join(s.config.ErrorURL, info.DestTable+fmt.Sprintf("%v%v", request.EventID, base.ErrorExt))
+	if e := s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(err.Error())); e != nil {
+		response.UploadError = e.Error()
+	}
+	processErrorURL := url.Join(s.config.ErrorURL, info.DestTable+fmt.Sprintf("%v%v", request.EventID, base.ProcessExt))
+	_ = s.fs.Copy(ctx, activeURL, processErrorURL)
+	doneURL := s.config.BuildDoneLoadURL(info)
+	_ = s.fs.Move(ctx, activeURL, doneURL)
+	return err
+}
+
+func (s *service) replayLoadProcess(ctx context.Context, sourceURL string, request *contract.Request) error {
+	bucket := url.Host(request.SourceURL)
+	_, name := url.Split(sourceURL, gs.Scheme)
+	loadJobURL := fmt.Sprintf("gs://%v/%v/%v", bucket, s.config.LoadProcessPrefix, name)
+	return s.fs.Copy(ctx, sourceURL, loadJobURL)
 }
 
 //New creates a new service
