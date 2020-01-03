@@ -27,6 +27,8 @@ import (
 
 var thinkTime = 1500 * time.Millisecond
 
+
+
 //Service represents event service
 type Service interface {
 	Dispatch(ctx context.Context) *contract.Response
@@ -81,6 +83,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 
 //Dispatch dispatched BigQuery event
 func (s *service) dispatch(ctx context.Context, response *contract.Response) error {
+
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
 	timeoutDuration := s.config.TimeToLive()
@@ -89,13 +92,16 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	}
 	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
 	defer cancelFunc()
-	sleepTime := 2 * thinkTime
+
 	running := int32(1)
+	timeoutDuration = timeoutDuration - thinkTime
+	cycleStartTime := time.Now()
 	for atomic.LoadInt32(&running) == 1 {
 		response.Reset()
 		waitGroup := &sync.WaitGroup{}
 		waitGroup.Add(2)
 		objects, err := s.fs.List(ctx, s.config.AsyncTaskURL)
+		fmt.Printf("pending events: %v, pending load jobs:%v, running load jobs: %v\n", len(objects), response.Pending.LoadProcesss, response.Running.LoadProcesss)
 		if err != nil {
 			if IsContextError(err) || IsNotFound(err) {
 				err = nil
@@ -122,10 +128,9 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 			}
 			response.SetIfError(err)
 		}(objects)
-
 		response.Cycles++
 		select {
-		case <-time.After(sleepTime):
+		case <-time.After(timeoutDuration):
 			continue
 		case <-ctx.Done():
 			atomic.StoreInt32(&running, 0)
@@ -139,21 +144,27 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 			}()
 			return boolChannel
 		}():
+
+			timeoutDuration -= time.Now().Sub(cycleStartTime)
+			cycleStartTime = time.Now()
+			if timeoutDuration < 0 {
+				return nil
+			}
 		}
 
 		select {
-		case <-time.After(sleepTime):
+		case <-time.After(thinkTime):
 		case <-ctx.Done():
 			atomic.StoreInt32(&running, 0)
 			return nil
 		}
-
 	}
 	return nil
 }
 
 func (s *service) notifyDoneProcesss(ctx context.Context, objects []astorage.Object, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs, perf *contract.Performance) (err error) {
 	waitGroup := &sync.WaitGroup{}
+
 
 	for i, object := range objects {
 		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
@@ -167,6 +178,8 @@ func (s *service) notifyDoneProcesss(ctx context.Context, objects []astorage.Obj
 		if response.Jobs.Has(object.URL()) {
 			continue
 		}
+
+
 		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
 		var state string
 		listJob, ok := jobsByID[jobID]

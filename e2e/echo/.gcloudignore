@@ -1,0 +1,11 @@
+e2e
+.idea
+.gcloudignore
+.git
+.gitignore
+node_modules
+main
+go.mod
+go.sum
+local.go
+local_test.go

@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-const replayExtension = ".replay"
 
 //Service represents replay service
 type Service interface {
@@ -47,7 +46,7 @@ func (s *service) replay(ctx context.Context, request *Request, response *Respon
 	}
 
 	mover := newMover(s.fs)
-	mover.Run(ctx, 6)
+	mover.Run(ctx, 20)
 
 	objects, err := s.list(ctx, request.TriggerURL, request.unprocessedModifiedBefore)
 	fmt.Printf("%v %v\n", request.TriggerURL, len(objects))

@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+//backend errors states that retries may solve error but actually it never does.
 //const backendError = "backendError"
 const internalError = "internal error"
 const noFound = "Not found"
@@ -24,7 +25,7 @@ func IsRetryError(err error) bool {
 		}
 	}
 	message := err.Error()
-	return strings.Contains(message, fmt.Sprintf("%v", http.StatusServiceUnavailable))
+	return strings.Contains(message, fmt.Sprintf("%v", http.StatusServiceUnavailable)) //|| strings.Contains(message, backendError)
 }
 
 //IsInternalError returns true if internal error

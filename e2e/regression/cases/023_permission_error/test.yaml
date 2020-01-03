@@ -63,6 +63,13 @@ pipeline:
       source:
         Credentials: $gcpCredentials
         URL: 'gs://${opsBucket}/BqTail/Journal/Done'
+
+
+
+  wait:
+    action: nop
+    sleepTineMs: 5000
+
   validate:
     action: http/runner:send
     requests:
@@ -71,3 +78,4 @@ pipeline:
         expect:
           JSONBody:
             PermissionError: /User does not have bigquery.tables.create permission for dataset/
+

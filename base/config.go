@@ -37,6 +37,7 @@ type Config struct {
 	CorruptedFileURL     string
 	InvalidSchemaURL     string
 	SlackCredentials     *Secret
+	MaxRetries           int
 }
 
 //BuildActiveLoadURL returns active action URL for supplied event id
@@ -94,6 +95,9 @@ func (c *Config) Init(ctx context.Context) error {
 	}
 	if c.BatchPrefix == "" {
 		c.BatchPrefix = BatchPrefix
+	}
+	if c.MaxRetries == 0 {
+		c.MaxRetries = MaxRetries
 	}
 	if c.ActiveLoadProcessURL == "" {
 		c.ActiveLoadProcessURL = url.Join(c.JournalURL, ActiveLoadSuffix)

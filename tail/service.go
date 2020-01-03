@@ -28,6 +28,7 @@ import (
 	"github.com/viant/afsc/gs"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
+	"io/ioutil"
 	"strings"
 	"time"
 )
@@ -66,18 +67,64 @@ func (s *service) Init(ctx context.Context) error {
 	return err
 }
 
+
+
 func (s *service) OnDone(ctx context.Context, request *contract.Request, response *contract.Response) {
 	response.ListOpCount = gs.GetListCounter(true)
 	response.StorageRetries = gs.GetRetryCodes(true)
 	response.SetTimeTaken(response.Started)
-	if response.Retriable {
-		response.RetriableError = response.Error
+
+	errorCounterURL := url.Join(s.config.ErrorURL,base.RetryCounterSubpath, request.EventID+base.CounterExt)
+	counter,  err := s.getCounterAndIncrease(ctx, errorCounterURL)
+	if err != nil {
+		response.CounterError = err.Error()
+	}
+	if counter > s.config.MaxRetries {
+		response.RetryError = response.Error
+		response.Status = base.StatusOK
+		location := url.Path(request.SourceURL)
+		retryDataURL := url.Join(s.config.ErrorURL, base.RetryDataSubpath, request.EventID, location)
+		if err := s.fs.Move(ctx, request.SourceURL, retryDataURL);err != nil {
+			response.MoveError = err.Error()
+		}
 		return
 	}
+
+	if response.Retriable {
+		response.RetryError = response.Error
+		response.Error = ""
+		return
+	}
+
 	if e := s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true)); e != nil && response.NotFoundError == "" {
 		response.NotFoundError = fmt.Sprintf("failed to delete: %v, %v", request.SourceURL, e)
 	}
 }
+
+func (s *service) getCounterAndIncrease(ctx context.Context, URL string) (int, error) {
+	ok, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true))
+	counter := 0
+	if ok {
+		reader, err := s.fs.DownloadWithURL(ctx, URL)
+		if err != nil {
+			return 0, errors.Wrapf(err, "failed to download counter :%v", URL)
+		}
+		 data, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return 0, errors.Wrapf(err, "failed to read counter :%v", URL)
+		}
+		counter = toolbox.AsInt(string(data))
+
+	}
+	counter++
+	err := s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(fmt.Sprintf("%v", counter)))
+	if err != nil {
+		return counter, errors.Wrapf(err, "failed to update counter: %v", URL)
+	}
+	return counter, nil
+}
+
+
 
 func (s *service) Tail(ctx context.Context, request *contract.Request) *contract.Response {
 	response := contract.NewResponse(request.EventID)
@@ -102,7 +149,6 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 			}
 		}
 	}
-
 	if err != nil {
 		response.SetIfError(err)
 		if !response.Retriable {
