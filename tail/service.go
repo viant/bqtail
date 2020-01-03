@@ -722,8 +722,12 @@ func (s *service) tryRecoverAndReport(ctx context.Context, rule *config.Rule, re
 
 func (s *service) tryRecover(ctx context.Context, rule *config.Rule, request *contract.Request, actions *task.Actions, job *bigquery.Job, response *contract.Response) error {
 	configuration := actions.Job.Configuration
+	response.Info = &actions.Info
+
 	if configuration.Load == nil || len(configuration.Load.SourceUris) == 0 {
-		return base.JobError(job)
+		err := base.JobError(job)
+		response.Retriable = base.IsRetryError(err)
+		return err
 	}
 	uris := status.NewURIs()
 	response.URIs = *uris

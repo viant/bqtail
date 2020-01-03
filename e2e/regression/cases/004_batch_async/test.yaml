@@ -46,6 +46,7 @@ pipeline:
 
   trigger:
     action: storage:copy
+    sleepTimeMs: 10000
     source:
       URL: ${parent.path}/data/trigger/
     dest:
@@ -70,6 +71,10 @@ pipeline:
       when: $Len(${listDone.Assets}) = 0 && $doneCounter < 10
       task: waitForDone
 
+
+  wait:
+    action: nop
+    sleepTimeMs: 5000
 
   validate:
     check-db:
