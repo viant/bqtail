@@ -1,9 +1,0 @@
-{
-  "When": {
-    "Prefix": "/data/case001",
-    "Suffix": ".json"
-  },
-  "Dest": {
-    "Table": "bqtail.dummy"
-  }
-}

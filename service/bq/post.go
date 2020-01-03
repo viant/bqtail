@@ -65,6 +65,7 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 		fmt.Printf("Job status: %v %v\n", callerJob.Id, err)
 		toolbox.Dump(job)
 	}
+
 	if onDoneActions != nil && onDoneActions.IsSyncMode() {
 		err = base.JobError(job)
 		if err == nil {

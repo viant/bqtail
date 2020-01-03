@@ -1,0 +1,5 @@
+When:
+  Prefix: "/data/case${parentIndex}/"
+  Suffix: ".json"
+Dest:
+  Table: bqtail.dummy_v${parentIndex}

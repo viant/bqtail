@@ -1,0 +1,8 @@
+When:
+  Prefix: "/data/case${parentIndex}/"
+  Suffix: ".json"
+Async: true
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+OnSuccess:
+  - Action: delete

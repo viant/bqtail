@@ -4,28 +4,19 @@
 
 This scenario test a transformation expressions defined below:
 
-[@rule.json](rule.json)
-```json
-[
-  {
+[@rule.yaml](rule/rule.yaml)
+```yaml
+When:
+  Prefix: /data/case${parentIndex}/
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+  TransientDataset: temp
+  Transform:
+    event_type: CASE WHEN type_id =1 THEN 'type 1' WHEN type_id = 2 THEN 'type 2'  WHEN
+      type_id = 3 THEN 'type 3' END
+Async: true
+OnSuccess:
+  - Action: delete
 
-    "When": {
-      "Prefix": "/data/case008",
-      "Suffix": ".json"
-    },
-    "Async": true,
-    "Dest": {
-      "Table": "bqtail.dummy",
-      "TransientDataset": "temp",
-      "Transform": {
-        "event_type": "CASE WHEN type_id =1 THEN 'type 1' WHEN type_id = 2 THEN 'type 2'  WHEN type_id = 3 THEN 'type 3' END"
-      }
-    },
-    "OnSuccess": [
-      {
-        "Action": "delete"
-      }
-    ]
-  }
-]
 ```

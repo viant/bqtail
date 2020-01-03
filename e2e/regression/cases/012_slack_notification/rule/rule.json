@@ -1,0 +1,21 @@
+{
+  "When": {
+    "Prefix": "/data/case${parentIndex}",
+    "Suffix": ".json"
+  },
+  "Dest": {
+    "Table": "bqtail.wrong_dummy_v${parentIndex}"
+  },
+  "OnFailure": [
+    {
+      "Action": "notify",
+      "Request": {
+        "Channels": [
+          "#e2e"
+        ],
+        "Title": "bqtail.wrong_dummy ingestion",
+        "Message": "$Error"
+      }
+    }
+  ]
+}

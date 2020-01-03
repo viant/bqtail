@@ -251,6 +251,71 @@ func TestURIs_Classify(t *testing.T) {
   "user_email": "myproject-cloud-function@myproject.iam.gserviceaccount.com"
 }`,
 		},
+
+		{
+			description:         "corrupted JSON data",
+			expectMissing:       []string{},
+			expectCorrupted:     []string{"gs://myproject_bqtail/data/case021/dummy2.json"},
+			expectInvalidSchema: []string{},
+			expectedValid:       []string{},
+			job: `{
+  "configuration": {
+    "jobType": "LOAD",
+    "load": {
+      "createDisposition": "CREATE_IF_NEEDED",
+      "destinationTable": {
+        "datasetId": "temp",
+        "projectId": "myproject",
+        "tableId": "mytable"
+      },
+      "sourceFormat": "NEWLINE_DELIMITED_JSON",
+      "sourceUris": [
+         "gs://myproject_bqtail/data/case021/dummy2.json"
+      ],
+      "writeDisposition": "WRITE_TRUNCATE"
+    }
+  },
+  "etag": "CPmxTyCVv2jOT55WwdVweg==",
+  "id": "myproject:US.temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch",
+  "jobReference": {
+    "jobId": "temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch",
+    "location": "US",
+    "projectId": "myproject"
+  },
+  "kind": "bigquery#jobID",
+  "selfLink": "https://www.googleapis.com/bigquery/v2/projects/myproject/jobs/temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch?location=US",
+  "statistics": {
+    "creationTime": "1574193994917",
+    "endTime": "1574193995142",
+    "startTime": "1574193995061"
+  },
+  "status": {
+    "errorResult": {
+      "location": "gs://myproject_bqtail/data/case021/dummy2.json",
+      "message": "Error while reading data, error message: JSON table encountered too many errors, giving up. Rows: 12; errors: 1. Please look into the errors[] collection for more details.",
+      "reason": "invalid"
+    },
+    "errors": [
+  {
+    "location": "gs://myproject_bqtail/data/case021/dummy2.json",
+    "message": "Error while reading data, error message: JSON table encountered too many errors, giving up. Rows: 12; errors: 1. Please look into the errors[] collection for more details.",
+    "reason": "invalid"
+  },
+  {
+    "message": "Error while reading data, error message: JSON processing encountered too many errors, giving up. Rows: 12; errors: 1; max bad: 0; error percent: 0",
+    "reason": "invalid"
+  },
+  {
+    "location": "gs://myproject_bqtail/data/case021/dummy2.json",
+    "message": "Error while reading data, error message: JSON parsing error in row starting at position 497: Closing quote expected in string",
+    "reason": "invalid"
+  }
+    ],
+    "state": "DONE"
+  },
+  "user_email": "myproject-cloud-function@myproject.iam.gserviceaccount.com"
+}`,
+		},
 	}
 	for _, useCase := range useCases {
 		job := &bigquery.Job{}

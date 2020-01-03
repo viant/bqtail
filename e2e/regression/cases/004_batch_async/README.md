@@ -11,27 +11,22 @@ Later BqTail is also notified by BqDispatcher with batch which is due to run (/$
 and corresponding (/${BqJobPrefix}/) BigQuery job that have post actions. 
 
 
-[@rule.json](rule.json)
-```json
-[{
-      "When": {
-        "Prefix": "/data/case003",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "bqtail.dummy"
-      },
-      "Batch": {
-        "Window": {
-          "DurationInSec": 10
-        }
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ]
-}]
+[@rule.yaml](rule/rule.yaml)
+```yaml
+When:
+  Prefix: /data/case${parentIndex}/
+  Suffix: ".json"
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+Batch:
+  RollOver: true
+  MultiPath: true
+  Window:
+    DurationInSec: 15
+Async: true
+OnSuccess:
+  - Action: delete
+
 ```
 
 Each file tries to acquire batch window per destination table. Only one data file can successfully acquire window for specified batch time window.

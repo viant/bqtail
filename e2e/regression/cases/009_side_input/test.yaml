@@ -1,3 +1,6 @@
+init:
+  doneCounter: 0
+  parentIndex: ${parent.index}
 
 pipeline:
   prepare:
@@ -14,6 +17,7 @@ pipeline:
     init-dbtail:
       action: dsunit:init
       datastore: bqtail
+      expand: true
       config:
         driverName: bigquery
         credentials: $gcpCredentials
@@ -34,17 +38,19 @@ pipeline:
     assets:
       - URL: 'gs://${configBucket}/BqTail/_.cache'
         credentials: $gcpCredentials
-      - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/rule.json'
+      - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/'
+        credentials: $gcpCredentials
+      - URL: 'gs://${opsBucket}/BqTail/Journal/Done'
         credentials: $gcpCredentials
 
   setupRule:
     action: storage:copy
     expand: true
     source:
-      URL: ${parent.path}/rule.json
+      URL: ${parent.path}/rule
     dest:
       credentials: $gcpCredentials
-      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}.json
+      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}
 
   trigger:
     action: storage:copy
@@ -55,9 +61,22 @@ pipeline:
       URL: gs://${triggerBucket}/data/case${parent.index}/
       credentials: $gcpCredentials
 
-  waitForServerless:
-    action: nop
-    sleepTimeMs: 45000
+  waitForDone:
+    listDone:
+      init:
+        _: $doneCounter++
+      action: storage:list
+      sleepTimeMs: 10000
+      match:
+        Filter: '.+bqtail.dummy_v${parentIndex}\.+'
+      source:
+        Credentials: $gcpCredentials
+        URL: 'gs://${opsBucket}/BqTail/Journal/Done'
+
+    checkDone:
+      action: goto
+      when: $Len(${listDone.Assets}) = 0 && $doneCounter < 10
+      task: waitForDone
 
   validate:
     check-db:

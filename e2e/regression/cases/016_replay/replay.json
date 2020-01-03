@@ -37,7 +37,7 @@
             "Append": true,
             "Async": true,
             "DatasetID": "",
-            "Dest": "bqtail.dummy",
+            "Dest": "bqtail.dummy_v${parentIndex}",
             "Job": {},
             "JobID": "temp--dummy_850558231030311/850558231030311/dispatch",
             "OnFailure": null,
@@ -46,8 +46,8 @@
                 "Action": "delete",
                 "Request": {
                   "URLs": [
-                    "gs://viant_e2e_bqtail/data/case016/dummy1.json",
-                    "gs://viant_e2e_bqtail/data/case016/dummy2.json"
+                    "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy1.json",
+                    "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy2.json"
                   ]
                 }
               },
@@ -60,7 +60,7 @@
                   "OnFailure": null,
                   "OnSuccess": null,
                   "ProjectID": "",
-                  "SourceURL": "gs://viant_e2e_bqtail/data/case016/dummy1.json",
+                  "SourceURL": "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy1.json",
                   "Table": "temp.dummy_850558231030311"
                 }
               }
@@ -73,12 +73,11 @@
           }
         },
         {
-          "Action": "delete",
+          "Action": "move",
           "Request": {
-            "SourceURL": "",
-            "URLs": [
-              "gs://viant_e2e_operation/BqTail/Journal/_Replay/2019-11-21_15/850558231030311.run"
-            ]
+            "DestURL": "gs://viant_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-01-03_00/917949814415512.run",
+            "IsDestAbsoluteURL": true,
+            "SourceURL": "gs://viant_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}-917949814415512.run"
           }
         }
       ],
@@ -129,8 +128,8 @@
       "SourceFormat": "",
       "SourceURL": "gs://viant_e2e_bqtail/data/case006/dummy1.json",
       "SourceUris": [
-        "gs://viant_e2e_bqtail/data/case016/dummy1.json",
-        "gs://viant_e2e_bqtail/data/case016/dummy2.json"
+        "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy1.json",
+        "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy2.json"
       ],
       "TimePartitioning": {},
       "UseAvroLogicalTypes": false,

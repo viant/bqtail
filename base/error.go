@@ -1,14 +1,17 @@
 package base
 
 import (
+	"fmt"
 	"google.golang.org/api/googleapi"
 	"net/http"
 	"strings"
 )
 
-const backendError = "backendError"
+//const backendError = "backendError"
 const internalError = "internal error"
 const noFound = "Not found"
+const accessDenied = "Error 403"
+const tableFragment = "Table"
 
 //IsRetryError returns true if backend error
 func IsRetryError(err error) bool {
@@ -21,7 +24,7 @@ func IsRetryError(err error) bool {
 		}
 	}
 	message := err.Error()
-	return strings.Contains(message, backendError)
+	return strings.Contains(message, fmt.Sprintf("%v", http.StatusServiceUnavailable))
 }
 
 //IsInternalError returns true if internal error
@@ -38,9 +41,14 @@ func IsInternalError(err error) bool {
 	return strings.Contains(message, internalError)
 }
 
-//IsNotFoundError returns true if not found error
+//IsNotFoundError returns true if not found storage error
 func IsNotFoundError(err error) bool {
 	if err == nil {
+		return false
+	}
+	message := err.Error()
+	//exclude BigQuery table not found error
+	if strings.Contains(message, tableFragment) {
 		return false
 	}
 	if apiError, ok := err.(*googleapi.Error); ok {
@@ -48,7 +56,6 @@ func IsNotFoundError(err error) bool {
 			return true
 		}
 	}
-	message := err.Error()
 	return strings.Contains(message, noFound)
 }
 
@@ -75,6 +82,6 @@ func IsPermissionDenied(err error) bool {
 			return true
 		}
 	}
-
-	return false
+	message := err.Error()
+	return strings.Contains(message, accessDenied)
 }

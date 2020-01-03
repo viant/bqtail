@@ -2,13 +2,17 @@ package mon
 
 import (
 	"bqtail/mon/info"
+	"bqtail/tail/config"
 )
 
 //Info represents load info
 type Info struct {
 	*info.Destination
 	*info.Activity `json:",omitempty"`
-	Stalled        map[string]*info.Metric `json:",omitempty"`
+	Stalled        info.Metrics `json:",omitempty"`
+	Corrupted      *info.Metric `json:",omitempty"`
+	InvalidSchema  *info.Metric `json:",omitempty"`
+	rule           *config.Rule
 }
 
 //Add adds info
@@ -32,7 +36,6 @@ func (i *Info) Add(inf *Info) {
 func NewInfo() *Info {
 	return &Info{
 		Activity:    &info.Activity{},
-		Stalled:     make(map[string]*info.Metric),
 		Destination: &info.Destination{},
 	}
 }

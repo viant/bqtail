@@ -1,20 +1,28 @@
+init:
+  schemaURL: $Pwd(../mon/schema/schema.sql)
 pipeline:
   set_sdk:
     action: sdk.set
     target: $target
     sdk: go:1.12
-  set_env:
-    action: exec:run
-    comments: vendor build for deployment speedup
-    target: $target
-    commands:
-      - unset GOPATH
-      - export GO111MODULE=on
+
+  init-db:
+      expand: true
+      action: dsunit:init
+      datastore: bqtail
+      config:
+        driverName: bigquery
+        credentials: $gcpCredentials
+        parameters:
+          datasetId: bqtail
+      scripts:
+        - URL: $schemaURL
+
   test:
     tag: $pathMatch
     description: '@info'
     subPath: 'cases/${index}_*'
-    range: 1..022
+    range: 1..026
     template:
       setVars:
         action: nop
@@ -25,6 +33,7 @@ pipeline:
         when: $HasResource(${path}/test.yaml)
         action: run
         request: '@test'
+
 
     post-test-sleep:
       action: nop

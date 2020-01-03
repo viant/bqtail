@@ -4,10 +4,10 @@ import "bqtail/stage"
 
 //Metrics represents BqQuery jobs metric
 type Metrics struct {
-	CopyJobs  int `json:",omitempty"`
-	QueryJobs int `json:",omitempty"`
-	LoadProcesss  int `json:",omitempty"`
-	OtherJobs int `json:",omitempty"`
+	CopyJobs     int `json:",omitempty"`
+	QueryJobs    int `json:",omitempty"`
+	LoadProcesss int `json:",omitempty"`
+	OtherJobs    int `json:",omitempty"`
 }
 
 //Count returns total metrics count

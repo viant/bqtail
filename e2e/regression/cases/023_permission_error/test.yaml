@@ -1,0 +1,73 @@
+init:
+  doneCounter: 0
+  parentIndex: ${parent.index}
+  monitorURL: https://${region}-${projectID}.cloudfunctions.net/BqMonitor
+
+pipeline:
+  prepare:
+    init-db:
+      action: dsunit:init
+      datastore: bqtail
+      expand: true
+      config:
+        driverName: bigquery
+        credentials: $gcpCredentials
+        parameters:
+          datasetId: bqtail
+      scripts:
+        - URL: ${parent.path}/bqtail/schema.sql
+    populate:
+      bqtail:
+        expand: true
+        action: dsunit:prepare
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/prepare
+
+
+  cleanUp:
+    action: storage:remove
+    sleepTimeMs: 1000
+    assets:
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
+        credentials: $gcpCredentials
+      - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/'
+        credentials: $gcpCredentials
+      - URL: 'gs://${opsBucket}/BqTail/Journal/Done'
+        credentials: $gcpCredentials
+
+  setupRule:
+    action: storage:copy
+    expand: true
+    source:
+      URL: ${parent.path}/rule
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}/
+
+  trigger:
+    action: storage:copy
+    source:
+      URL: ${parent.path}/data/trigger/
+    dest:
+      URL: gs://${triggerBucket}/data/case${parent.index}/
+      credentials: $gcpCredentials
+
+  waitForDone:
+    listDone:
+      init:
+        _: $doneCounter++
+      action: storage:list
+      sleepTimeMs: 10000
+      match:
+        Filter: '.+green\.trips_2014.+'
+      source:
+        Credentials: $gcpCredentials
+        URL: 'gs://${opsBucket}/BqTail/Journal/Done'
+  validate:
+    action: http/runner:send
+    requests:
+      - URL: $monitorURL
+        method: GET
+        expect:
+          JSONBody:
+            PermissionError: /User does not have bigquery.tables.create permission for dataset/

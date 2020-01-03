@@ -1,0 +1,16 @@
+When:
+  Prefix: "/data/case025"
+  Suffix: ".csv"
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+  TransientDataset: temp
+  AllowJaggedRows: true
+  Schema:
+    TransientTemplate: bqtail.dummy_v${parentIndex}_temp
+Batch:
+  RollOver: true
+  Window:
+    DurationInSec: 10
+Async: true
+OnSuccess:
+  - Action: delete

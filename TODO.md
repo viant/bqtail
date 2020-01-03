@@ -1,3 +1,3 @@
 - Update documentation/examples
-- Added monitoring responses to bigquery
- 
+- Add conditional tasks
+- Add optional ingestion per destination table global counter

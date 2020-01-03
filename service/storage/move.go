@@ -1,9 +1,11 @@
 package storage
 
 import (
+	"bqtail/base"
 	"context"
 	"fmt"
 	"github.com/viant/afs/file"
+	"github.com/viant/afs/option"
 	"github.com/viant/afs/url"
 )
 
@@ -13,16 +15,18 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 	if err != nil {
 		return err
 	}
-
 	_, sourceLocation := url.Base(request.SourceURL, file.Scheme)
 	destURL := url.Join(request.DestURL, sourceLocation)
 
 	if request.IsDestAbsoluteURL {
 		destURL = request.DestURL
 	}
+	if base.IsLoggingEnabled() {
+		fmt.Printf("moving: %v -> %v\n", request.SourceURL, destURL)
+	}
 	err = s.fs.Move(ctx, request.SourceURL, destURL)
 	if err != nil {
-		if exists, _ := s.fs.Exists(ctx, request.SourceURL); !exists {
+		if exists, err := s.fs.Exists(ctx, request.SourceURL, option.NewObjectKind(true)); !exists && err == nil {
 			return nil
 		}
 	}

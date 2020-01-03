@@ -57,3 +57,13 @@ type NotifyRequest struct {
 }
 
 ```
+
+In addition slack can use the following variables:
+
+- $DestTable: destination table
+- $TempTable: temp table
+- $EventID: storage event id triggering load or batch
+- $URLs: coma separated list of load URIs
+- $SourceURI: one of load URI
+- $RuleURL: transfer rule URL
+- $Error - error message

@@ -1,0 +1,11 @@
+When:
+  Prefix: "/data/case${parentIndex}"
+  Suffix: ".json"
+Async: true
+Dest:
+  Table: bqtail.dummy_v${parentIndex}_$Mod(2)
+Batch:
+  Window:
+    DurationInSec: 15
+OnSuccess:
+  - Action: delete

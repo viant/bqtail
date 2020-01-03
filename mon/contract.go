@@ -2,17 +2,23 @@ package mon
 
 import (
 	"bqtail/base"
+	"time"
 )
 
 //Request represents monitoring request
 type Request struct {
 	IncludeDone bool
+	Recency     string
+	DestURL     string
 }
 
 //Response represents monitoring response
 type Response struct {
-	Status string
-	Error  string `json:",omitempty"`
+	Status          string
+	Error           string `json:",omitempty"`
+	UploadError     string `json:",omitempty"`
+	PermissionError string `json:",omitempty"`
+	Timestamp       time.Time
 	*Info
 	Dest []*Info
 }
@@ -20,8 +26,9 @@ type Response struct {
 //NewResponse create a response
 func NewResponse() *Response {
 	return &Response{
-		Dest:   make([]*Info, 0),
-		Status: base.StatusOK,
-		Info:   NewInfo(),
+		Timestamp: time.Now(),
+		Dest:      make([]*Info, 0),
+		Status:    base.StatusOK,
+		Info:      NewInfo(),
 	}
 }

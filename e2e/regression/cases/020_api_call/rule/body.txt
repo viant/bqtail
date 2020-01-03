@@ -1,3 +1,4 @@
 {
-  "BatchID": "$EventID"
+  "BatchID": "$EventID",
+  "URIS":"$URLs"
 }

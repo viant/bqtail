@@ -11,29 +11,28 @@ It matches the the following rule to submit load Job to BiqQuery that fails.
 On failure actions run with slack notification.
 
 
-[@rule.json](rule.json)
+[@rule.json](rule/rule.json)
 ```json
-[
-  {
-    "When": {
-      "Prefix": "/data/case012",
-      "Suffix": ".json"
-    },
-    "Dest": {
-      "Table": "bqtail.wrong_dummy"
-    },
-    "OnFailure": [
-      {
-        "Action": "notify",
-        "Request": {
-          "Channels": [
-            "#e2e"
-          ],
-          "Title": "bqtail.wrong_dummy ingestion",
-          "Message": "$Error"
-        }
+{
+  "When": {
+    "Prefix": "/data/case${parentIndex}",
+    "Suffix": ".json"
+  },
+  "Dest": {
+    "Table": "bqtail.wrong_dummy_v${parentIndex}"
+  },
+  "OnFailure": [
+    {
+      "Action": "notify",
+      "Request": {
+        "Channels": [
+          "#e2e"
+        ],
+        "Title": "bqtail.wrong_dummy ingestion",
+        "Message": "$Error"
       }
-    ]
-  }
-]
+    }
+  ]
+}
+
 ```

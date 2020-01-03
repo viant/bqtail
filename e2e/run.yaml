@@ -17,6 +17,10 @@ init:
   opsBucket: ${prefix}_operation
   exportBucket: ${prefix}_export
   mirrorBucket: ${prefix}_trigger
+  tirggerBucket: ${prefix}_bqtail
+
+  #make that json Google Secret has region key that is inline with this value
+  region: us-central1
 
 pipeline:
 

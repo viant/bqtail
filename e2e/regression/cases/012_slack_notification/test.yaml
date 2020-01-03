@@ -1,23 +1,7 @@
-
+init:
+  parentIndex: ${parent.index}
 
 pipeline:
-  prepare:
-    init-db:
-      action: dsunit:init
-      datastore: bqtail
-      config:
-        driverName: bigquery
-        credentials: $gcpCredentials
-        parameters:
-          datasetId: bqtail
-      scripts:
-        - URL: ${parent.path}/bqtail/schema.sql
-    populate:
-      bqtail:
-        action: dsunit:prepare
-        datastore: bqtail
-        URL:  ${parent.path}/bqtail/prepare
-
 
   cleanUp:
     action: storage:remove
@@ -25,7 +9,7 @@ pipeline:
     assets:
       - URL: 'gs://${configBucket}/BqTail/_.cache'
         credentials: $gcpCredentials
-      - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/rule.json'
+      - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/'
         credentials: $gcpCredentials
 
 
@@ -33,10 +17,10 @@ pipeline:
     action: storage:copy
     expand: true
     source:
-      URL: ${parent.path}/rule.json
+      URL: ${parent.path}/rule
     dest:
       credentials: $gcpCredentials
-      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}.json
+      URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}
 
   trigger:
     action: storage:copy

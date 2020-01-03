@@ -1,0 +1,20 @@
+When:
+  Prefix: /data/case${parentIndex}/
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+  TransientDataset: temp
+  UniqueColumns:
+    - id
+Async: true
+Batch:
+  RollOver: true
+  Window:
+    DurationInSec: 15
+OnSuccess:
+  - Action: delete
+  - Action: query
+    Request:
+      SQL: SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS
+        completed FROM $DestTable
+      Dest: bqtail.summary_v${parentIndex}

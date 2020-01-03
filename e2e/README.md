@@ -16,8 +16,8 @@ This project uses [endly](https://github.com/viant/endly/) end to end test runne
 }
 ```
 
-If you do not have slack testing token just create a file with dummy data.
 
+If you do not have slack testing token just create a file with dummy data.
  
 6. Checkout the this project:
 ```bash
@@ -126,10 +126,10 @@ endly -t=init
     endly -t=test -i=schema_split
 ```
 
-- [Corrupted batch recovery](regression/cases/014_batch_with_corruption)
+- [Aggregation ETL](regression/cases/014_aggregation)
 
 ```bash
-    endly -t=test -i=batch_with_corruption
+    endly -t=test -i=aggregation
 ```
 
 - [Batch allocation 2k stress test](regression/cases/015_batch_stress)
@@ -151,10 +151,10 @@ endly -t=init
     endly -t=test -i=sync_corruption
 ```
 
-- [Invalid schema batch recovery](regression/cases/018_invalid_schema)
+- [Inline Aggregation](regression/cases/018_aggregation_inline)
 
 ```bash
-    endly -t=test -i=invalid_schema
+    endly -t=test -i=aggregation_inline
 ```
 
 - [Transient Schema](regression/cases/019_transient_schema)
@@ -169,15 +169,48 @@ endly -t=init
     endly -t=test -i=api_call
 ```
 
-- [Data aggregation with side input](regression/cases/021_aggregation)
+- [Partial batch with corruption](regression/cases/021_partial_batch_corruption)
 
 ```bash
-    endly -t=test -i=aggregation
+    endly -t=test -i=partial_batch_corruption
 ```
 
-- [Data aggregation with inline side input](regression/cases/022_aggregation_inline)
+- [Partial schema error](regression/cases/022_partial_schema_error)
 
 ```bash
-    endly -t=test -i=aggregation_inline
+    endly -t=test -i=schema_error
+```
+
+- [Permission error](regression/cases/023_permission_error)
+
+```bash
+    
+    #remove skip.txt then run:
+    
+    endly -t=test -i=permission_error
+```
+
+
+- [Batch corruption](regression/cases/024_batch_corruption)
+
+```bash
+    
+    endly -t=test -i=batch_corruption
+```
+
+
+- [Copy job error](regression/cases/025_copy_error)
+
+```bash
+    
+    endly -t=test -i=copy_error
+```
+
+
+- [Post query job error](regression/cases/026_post_query_error)
+
+```bash
+    
+    endly -t=test -i=post_query_error
 ```
 

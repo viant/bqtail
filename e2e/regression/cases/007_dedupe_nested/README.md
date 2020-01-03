@@ -10,29 +10,25 @@ It matches the the following rule, to ingest data with transient table in temp d
 
 
 
-```json
-{
-      "When": {
-        "Prefix": "/data/case007",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "bqtail.dummy",
-        "TransientDataset": "temp",
-        "UniqueColumns": ["id"]
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ],
-      "Batch": {
-        "Window": {
-          "DurationInSec": 10
-        }
-      }
-}
+[@rule.yaml](rule/rule.yaml)
+```yaml
+When:
+  Prefix: /data/case${parentIndex}/
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+  TransientDataset: temp
+  UniqueColumns:
+    - id
+OnSuccess:
+  - Action: delete
+Batch:
+  RollOver: true
+  Window:
+    DurationInSec: 20
+
 ```
+
 
 Since table uses nested column the following SQL is used for de duplications
 

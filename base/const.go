@@ -28,13 +28,14 @@ const (
 	WindowExt = ".win"
 	//LocationExt location extension
 	LocationExt = ".loc"
+	//CounterExt counter file extension
+	CounterExt = ".cnt"
 )
 
 //Process action
 const (
 	//ActionLoad load action
 	ActionLoad = "load"
-
 	//ActionReload re load action
 	ActionReload = "reload"
 	//ActionLoad action copy table
@@ -117,5 +118,5 @@ const (
 	//RetrySleepInSec sleep between retries
 	RetrySleepInSec = 3
 	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
-	StorageListVisibilityDelay = 4000
+	StorageListVisibilityDelay = 5000
 )

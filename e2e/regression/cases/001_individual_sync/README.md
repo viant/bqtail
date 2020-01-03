@@ -8,17 +8,14 @@ BqTail function is notified once data is uploaded to gs://${triggerBucket}/data/
 It matches the the following rule data ingestion rule.
 
 
-[@rule.json](rule.json)
-```json
- [{
-      "When": {
-        "Prefix": "/data/case1",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "db1.dummy"
-      }
- }]
+[@rule.yaml](rule/rule.yaml)
+```yaml
+When:
+  Prefix: "/data/case${parentIndex}/"
+  Suffix: ".json"
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+
 ```
 
 

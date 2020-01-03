@@ -43,8 +43,14 @@ func checkBqTailPerformance(writer http.ResponseWriter, httpRequest *http.Reques
 		if err := httpRequest.ParseForm(); err == nil {
 			if len(httpRequest.Form) > 0 {
 				request.IncludeDone = toolbox.AsBoolean(httpRequest.Form.Get("IncludeDone"))
+				request.Recency = httpRequest.Form.Get("Recency")
+				request.DestURL = httpRequest.Form.Get("DestURL")
 			}
 		}
+	}
+
+	if request.Recency == "" {
+		request.Recency = "1hour"
 	}
 	ctx := context.Background()
 	service, err := mon.Singleton(ctx, base.ConfigEnvKey)

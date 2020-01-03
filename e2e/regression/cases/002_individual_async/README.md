@@ -9,23 +9,17 @@ It matches the the following rule data ingestion rule.
 
 Later it is also notified by BqDispatcher (/${BqJobPrefix}/) once BigQuery job is completed with post actions.
 
-[@rule.json](rule.json)
-```json
- [{
-      "When": {
-        "Prefix": "/data/case002",
-        "Suffix": ".json"
-      },
-      "Async": true,
-      "Dest": {
-        "Table": "bqtail.dummy"
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ]
-}]
+[@rule.yaml](rule/rule.yaml)
+```yaml
+When:
+  Prefix: "/data/case${parentIndex}/"
+  Suffix: ".json"
+Async: true
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+OnSuccess:
+  - Action: delete
+
 ```
 
 BqTail function does not wait for job completion, but instead if generate post action file with handled by BqDispatch once Big Query job completes.

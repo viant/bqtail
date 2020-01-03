@@ -25,6 +25,7 @@ const (
 //Info represents processing stage
 type Info struct {
 	SourceURI  string    `json:",omitempty"`
+	Counter    int       `json:",omitempty"`
 	LoadURIs   []string  `json:",omitempty"`
 	TempTable  string    `json:",omitempty"`
 	DestTable  string    `json:",omitempty"`

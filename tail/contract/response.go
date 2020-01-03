@@ -11,24 +11,24 @@ import (
 type Response struct {
 	base.Response
 	status.URIs
-	Rule            *config.Rule `json:",omitempty"`
-	RuleCount       int
-	Destination     string `json:",omitempty"`
+	Rule        *config.Rule `json:",omitempty"`
+	RuleCount   int
+	Destination string `json:",omitempty"`
 
 	JobID           string `json:",omitempty"`
 	Batched         bool   `json:",omitempty"`
 	BatchRunner     bool   `json:",omitempty"`
 	BatchingEventID string `json:",omitempty"`
 
-
-	TriggerURL      string
-	ScheduledURL    string         `json:",omitempty"`
-	Window          interface{}    `json:",omitempty"`
+	TriggerURL   string
+	ScheduledURL string      `json:",omitempty"`
+	Window       interface{} `json:",omitempty"`
 
 	Info           *stage.Info `json:",omitempty"`
 	ListOpCount    int         `json:",omitempty"`
 	StorageRetries map[int]int `json:",omitempty"`
 	Retriable      bool        `json:",omitempty"`
+	RetriableError string      `json:",omitempty"`
 }
 
 //NewResponse creates a new response

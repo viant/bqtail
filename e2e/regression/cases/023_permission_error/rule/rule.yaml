@@ -1,0 +1,12 @@
+When:
+  Prefix: "/data/case${parentIndex}"
+  Suffix: ".json"
+Async: true
+Batch:
+  Window:
+    DurationInSec: 15
+Dest:
+  Table: nyc-tlc:green.trips_2014
+  TransientDataset: temp
+OnSuccess:
+  - Action: delete

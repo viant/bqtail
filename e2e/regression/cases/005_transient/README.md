@@ -9,24 +9,19 @@ BqTail function is notified once data is uploaded to gs://${triggerBucket}/data/
 It matches the the following rule, to ingest data with transient table in temp dataset, followed by final destination ingestion.
 
 
-[@rule.json](rule.json)
-```json
-  [{
-      "When": {
-        "Prefix": "/data/case005",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "bqtail.dummy",
-        "TransientDataset": "temp"
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ]
-    }]
+
+[@rule.yaml](rule/rule.yaml)
+```yaml
+When:
+  Prefix: /data/case${parentIndex}/
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+  TransientDataset: temp
+OnSuccess:
+  - Action: delete
 ```
+
 
 Since rule is configured in asynchronous mode, all post actions inherit that mode.
 If there is no error temp table is dropped after appending data to dest table.

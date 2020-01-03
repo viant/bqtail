@@ -3,15 +3,21 @@ package mon
 import (
 	"bqtail/base"
 	"bqtail/mon/info"
+	"bqtail/service/bq"
 	"bqtail/stage"
 	"bqtail/tail"
+	"bqtail/task"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/cache"
+	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	"github.com/viant/toolbox"
 	"io/ioutil"
 	"strings"
 
@@ -67,12 +73,10 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	go func() {
 		defer waitGroup.Done()
 		var e error
-		if errors, e = s.getErrors(ctx);e != nil {
+		if errors, e = s.getErrors(ctx); e != nil {
 			err = e
 		}
 	}()
-
-
 
 	go func() {
 		defer waitGroup.Done()
@@ -116,20 +120,98 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 		s.updateErrors(errors, infoDest)
 	}
 
+	var keys = make([]string, 0)
 	for k, inf := range infoDest {
+		permissionError := false
 		response.Info.Add(inf)
-		if inf.Activity.Running != nil {
-			if time.Now().Sub(inf.Activity.Running.Min) > time.Hour {
-				if _, has := response.Stalled[inf.Destination.Table]; !has {
-					response.Stalled[inf.Destination.Table] = info.NewMetric()
+
+		var doneTime *time.Time
+		if inf.Activity.Done != nil {
+			doneTime = inf.Activity.Done.Max
+		}
+
+		if inf.Error != nil && len(inf.Error.DataURLs) > 0 {
+			if response.Status == base.StatusOK {
+				if permissionError = inf.Error.IsPermission; permissionError {
+					if doneTime == nil || doneTime.Before(inf.Error.ModTime) {
+						response.PermissionError = inf.Error.Message
+					}
+				} else {
+					response.Status = base.StatusError
 				}
-				response.Status = base.StatusStalled
-				response.Stalled[inf.Destination.Table].AddEvent(inf.Activity.Running.Min)
 			}
 		}
+		rule := inf.rule
+		if rule == nil {
+			rule = s.Config.Get(ctx, inf.RuleURL, nil)
+		}
+		if rule != nil {
+			inf.Corrupted, _ = s.getURLMetrics(ctx, rule.CorruptedFileURL, inf, request.Recency)
+			inf.InvalidSchema, _ = s.getURLMetrics(ctx, rule.InvalidSchemaURL, inf, request.Recency)
+		}
+
+		if inf.Activity != nil {
+			if inf.Activity.Running != nil {
+				stalledDuration := time.Hour
+				if rule != nil && rule.StalledThresholdInSec > 0 {
+					stalledDuration = time.Duration(rule.StalledThresholdInSec) * time.Second
+				}
+
+				if time.Now().Sub(*inf.Activity.Running.Min) > stalledDuration {
+					metric := response.Stalled.GetOrCreate(inf.Destination.Table)
+					if response.Status == base.StatusOK && !permissionError {
+						response.Status = base.StatusStalled
+					}
+					metric.AddEvent(*inf.Activity.Running.Min)
+				}
+			}
+
+		}
+		keys = append(keys, k)
+
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
 		response.Dest = append(response.Dest, infoDest[k])
 	}
+	if request.DestURL != "" {
+		data, err := json.Marshal(response)
+		if err != nil {
+			response.UploadError = err.Error()
+			return nil
+		}
+		destURL := path.Join(request.DestURL, fmt.Sprintf("%v.json", time.Now().UnixNano()))
+		if err = s.fs.Upload(ctx, destURL, file.DefaultFileOsMode, bytes.NewReader(data)); err != nil {
+			response.UploadError = err.Error()
+		}
+	}
 	return nil
+}
+
+func (s *service) getURLMetrics(ctx context.Context, URL string, inf *Info, recencyExpr string) (*info.Metric, error) {
+	if URL == "" {
+		return nil, nil
+	}
+	inThePast, err := toolbox.TimeAt(recencyExpr + "ago")
+	if err != nil {
+		return nil, err
+	}
+	recency := time.Now().Sub(*inThePast)
+	objects, err := s.fs.List(ctx, URL, option.NewRecursive(true))
+	if err != nil || len(objects) == 0 {
+		return nil, err
+	}
+	var result = info.NewMetric()
+	for _, candidate := range objects {
+		if candidate.IsDir() {
+			continue
+		}
+		if time.Now().Sub(candidate.ModTime()) > recency {
+			continue
+		}
+		result.AddEvent(candidate.ModTime())
+	}
+	return result, nil
 }
 
 func (s *service) updateActiveLoads(loadsInfo activeLoads, infoDest map[string]*Info) {
@@ -139,7 +221,6 @@ func (s *service) updateActiveLoads(loadsInfo activeLoads, infoDest map[string]*
 			inf.Activity.Running = info.NewMetric()
 		}
 		inf.Activity.Running.Add(&v.Metric, true)
-		infoDest[inf.Destination.Table] = inf
 	}
 }
 
@@ -150,7 +231,6 @@ func (s *service) updateRecentlyDone(recentLoads activeLoads, infoDest map[strin
 			inf.Activity.Done = info.NewMetric()
 		}
 		inf.Activity.Done.Add(&v.Metric, false)
-		infoDest[inf.Destination.Table] = inf
 	}
 }
 
@@ -161,42 +241,17 @@ func (s *service) updateBatches(batchSlice batches, infoDest map[string]*Info) {
 			inf.Activity.Scheduled = info.NewMetric()
 		}
 		inf.Activity.Scheduled.Add(&v.Metric, true)
-		infoDest[inf.Destination.Table] = inf
 	}
 }
 
 func (s *service) updateStages(stages []*stage.Info, infoDest map[string]*Info) {
 	for _, stageInfo := range stages {
 		inf := s.getInfo(stageInfo.DestTable, infoDest)
-
-		if len(inf.Activity.Stages) == 0 {
-			inf.Activity.Stages = make(map[string]*info.Metric)
-		}
 		stageKey := fmt.Sprintf("%04d-%v", stageInfo.Sequence(), stageInfo.Action)
-		stageValue, ok := inf.Activity.Stages[stageKey]
-		if !ok {
-			stageValue = info.NewMetric()
-		}
+		stageValue := inf.Activity.Stages.GetOrCreate(stageKey)
 		stageValue.AddEvent(stageInfo.SourceTime)
-		inf.Activity.Stages[stageKey] = stageValue
-		infoDest[inf.Destination.Table] = inf
 	}
-}
 
-func (s *service) getInfo(destKey string, infoDest map[string]*Info) *Info {
-	rule := s.Config.MatchByTable(destKey)
-	if rule != nil {
-		destKey = rule.Dest.Table
-	}
-	inf, ok := infoDest[destKey]
-	if !ok {
-		inf = NewInfo()
-		if rule != nil {
-			inf.Destination.Table = rule.Dest.Table
-			inf.Destination.RuleURL = rule.Info.URL
-		}
-	}
-	return inf
 }
 
 func (s *service) getErrors(ctx context.Context) ([]*info.Error, error) {
@@ -224,46 +279,97 @@ func (s *service) getErrors(ctx context.Context) ([]*info.Error, error) {
 	return result, nil
 }
 
+func (s *service) getInfo(destKey string, infoDest map[string]*Info) *Info {
+	rule := s.Config.MatchByTable(destKey)
+	if rule != nil {
+		destKey = rule.Dest.Table
+	}
+	inf, ok := infoDest[destKey]
+	if !ok {
+		inf = NewInfo()
+		if rule != nil {
+			inf.Destination.Table = rule.Dest.Table
+			inf.Destination.RuleURL = rule.Info.URL
+		}
+		if destKey != "" {
+			infoDest[destKey] = inf
+		}
+	}
+	inf.rule = rule
+	return inf
+}
+
 func (s *service) getError(ctx context.Context, dest string, files []storage.Object) (*info.Error, error) {
 	if len(files) == 0 {
 		return nil, nil
 	}
-
 	sortedFiles := NewObjects(files[1:], byModTime)
-	count := len(sortedFiles.Elements)
-	if count > maxErrors {
-		count = maxErrors
-	}
-	eventID := ""
-	result := &info.Error{Destination:dest}
-	for i := 0; i < count; i++ {
-		file := sortedFiles.Elements[i]
-		ext := path.Ext(file.Name())
-		if ext == base.ProcessExt || ext == base.ErrorExt {
-			eventID = strings.Replace(file.Name(), ext, "", 1)
-			result.ModTime = file.ModTime()
-			break
-		}
-	}
-	if eventID == "" {
+	result := newError(dest, sortedFiles)
+	if result == nil {
 		return nil, nil
 	}
-	errName := fmt.Sprintf("%v%v", eventID, base.ErrorExt)
+
+	errName := fmt.Sprintf("%v%v", result.EventID, base.ErrorExt)
+	processName := fmt.Sprintf("%v%v", result.EventID, base.ProcessExt)
 	errorURL := url.Join(files[0].URL(), errName)
+
 	reader, err := s.fs.DownloadWithURL(ctx, errorURL)
 	if err == nil {
 		data, err := ioutil.ReadAll(reader)
 		_ = reader.Close()
 		if err == nil {
-			result.Error = string(data)
+			result.Message = string(data)
 		}
 	}
-	processName := fmt.Sprintf("%v%v", eventID, base.ProcessExt)
+
 	processURL := url.Join(files[0].URL(), processName)
 	result.ProcessURL = processURL
+
+	if processURL != "" {
+		actions := []*task.Action{}
+		if reader, err := s.fs.DownloadWithURL(ctx, processURL); err == nil {
+			if err = json.NewDecoder(reader).Decode(&actions); err == nil && len(actions) > 0 {
+				result.DataURLs, _ = s.getUnprocessedFiles(ctx, actions[0])
+			}
+			_ = reader.Close()
+		}
+	}
+
+	result.IsPermission = base.IsPermissionDenied(fmt.Errorf(result.Message))
 	return result, nil
 }
 
+//newError create a en error object
+func newError(dest string, sortedFiles *Objects) *info.Error {
+	eventID := ""
+	errorEventID := ""
+	count := len(sortedFiles.Elements)
+	if count > maxErrors {
+		count = maxErrors
+	}
+	result := &info.Error{Destination: dest}
+	for i := 0; i < count; i++ {
+		object := sortedFiles.Elements[i]
+		ext := path.Ext(object.Name())
+
+		if ext == base.ProcessExt {
+			eventID = strings.Replace(object.Name(), ext, "", 1)
+			result.ModTime = object.ModTime()
+			break
+		}
+		if ext == base.ErrorExt {
+			errorEventID = strings.Replace(object.Name(), ext, "", 1)
+			result.ModTime = object.ModTime()
+		}
+	}
+	if eventID == "" {
+		if eventID = errorEventID; eventID == "" {
+			return nil
+		}
+	}
+	result.EventID = eventID
+	return result
+}
 
 func (s *service) getLoadStages(ctx context.Context) ([]*stage.Info, error) {
 	result := make([]*stage.Info, 0)
@@ -304,7 +410,7 @@ func (s *service) getScheduledBatches(ctx context.Context) (batches, error) {
 
 func (s *service) getActiveLoads(ctx context.Context) (activeLoads, error) {
 	result := activeLoads{}
-	err := s.listLoadProcesss(ctx, s.Config.ActiveLoadProcessURL, s.Config.ActiveLoadProcessURL, &result)
+	err := s.listLoadProcess(ctx, s.Config.ActiveLoadProcessURL, s.Config.ActiveLoadProcessURL, &result)
 	return result, err
 }
 
@@ -314,7 +420,7 @@ func (s *service) getRecentlyDoneLoads(ctx context.Context) (activeLoads, error)
 	return result, err
 }
 
-func (s *service) listLoadProcesss(ctx context.Context, baseURL, URL string, result *activeLoads) error {
+func (s *service) listLoadProcess(ctx context.Context, baseURL, URL string, result *activeLoads) error {
 	objects, err := s.fs.List(ctx, URL)
 	if err != nil {
 		return err
@@ -325,7 +431,7 @@ func (s *service) listLoadProcesss(ctx context.Context, baseURL, URL string, res
 			continue
 		}
 		if object.IsDir() {
-			if err = s.listLoadProcesss(ctx, baseURL, object.URL(), result); err != nil {
+			if err = s.listLoadProcess(ctx, baseURL, object.URL(), result); err != nil {
 				return err
 			}
 			continue
@@ -338,10 +444,9 @@ func (s *service) listLoadProcesss(ctx context.Context, baseURL, URL string, res
 
 func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *activeLoads) error {
 	objects, err := s.fs.List(ctx, baseURL)
-	if err != nil {
+	if err != nil || len(objects) <= 1 {
 		return err
 	}
-
 	var destLocations = make(map[string]storage.Object)
 	sortedTables := NewObjects(objects[1:], byModTime)
 	sort.Sort(sortedTables)
@@ -371,7 +476,7 @@ func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *act
 			continue
 		}
 		recentHour := sortedHours.Elements[len(sortedHours.Elements)-1]
-		if err = s.listLoadProcesss(ctx, baseURL, recentHour.URL(), result); err != nil {
+		if err = s.listLoadProcess(ctx, baseURL, recentHour.URL(), result); err != nil {
 			return err
 		}
 	}
@@ -385,6 +490,28 @@ func (s *service) updateErrors(errors []*info.Error, infos map[string]*Info) {
 	}
 }
 
+//getUnprocessedFiles return get unprocessed files
+func (s *service) getUnprocessedFiles(ctx context.Context, action *task.Action) ([]string, error) {
+	loadRequest := &bq.LoadRequest{}
+	err := toolbox.DefaultConverter.AssignConverted(&loadRequest, action.Request)
+	if err != nil {
+		return nil, err
+	}
+	URICount := len(loadRequest.SourceUris)
+	if URICount == 0 {
+		return nil, err
+	}
+	URIIndexes := []int{0}
+	if URICount > 1 {
+		URIIndexes = append(URIIndexes, URICount-1)
+	}
+	for i := range URIIndexes {
+		if exists, _ := s.fs.Exists(ctx, loadRequest.SourceUris[i], option.NewObjectKind(true)); exists {
+			return loadRequest.SourceUris, nil
+		}
+	}
+	return nil, err
+}
 
 //New creates monitoring service
 func New(ctx context.Context, config *tail.Config) (Service, error) {

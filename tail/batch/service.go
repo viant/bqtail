@@ -15,9 +15,7 @@ import (
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
-	"google.golang.org/api/googleapi"
 	"io/ioutil"
-	"net/http"
 	"path"
 	"strings"
 )
@@ -77,18 +75,19 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source s
 	window = NewWindow(eventID, dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
 	windowData, _ := json.Marshal(window)
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
-	if err != nil {
-		if isPreConditionError(err) || isRateError(err) {
-			window := &Window{EventID:fmt.Sprintf("%v", endTime), URL:windowURL}
-			//if err != nil {
-			//	return nil, errors.Wrapf(err, "failed to load window: %v", windowURL)
-			//}
-			if rule.Batch.MultiPath {
-				err = s.addLocationFile(ctx, window, parentURL)
-			}
-			return &Info{OwnerEventID: window.EventID}, err
+
+	if isPreConditionError(err) || isRateError(err) {
+		window := &Window{EventID: fmt.Sprintf("%v", endTime), URL: windowURL}
+		//if err != nil {
+		//	return nil, errors.Wrapf(err, "failed to load window: %v", windowURL)
+		//}
+		err = nil
+		if rule.Batch.MultiPath {
+			err = s.addLocationFile(ctx, window, parentURL)
 		}
+		return &Info{OwnerEventID: window.EventID}, err
 	}
+
 	if rule.Batch.MultiPath {
 		err = s.addLocationFile(ctx, window, parentURL)
 	}
@@ -183,22 +182,6 @@ func (s *service) matchcData(ctx context.Context, window *Window, rule *config.R
 		}
 	}
 	return nil
-}
-
-func isPreConditionError(err error) bool {
-	origin := errors.Cause(err)
-	if googleError, ok := origin.(*googleapi.Error); ok && googleError.Code == http.StatusPreconditionFailed {
-		return true
-	}
-	return false
-}
-
-func isRateError(err error) bool {
-	origin := errors.Cause(err)
-	if googleError, ok := origin.(*googleapi.Error); ok && googleError.Code == http.StatusTooManyRequests {
-		return true
-	}
-	return false
 }
 
 //New create stage service

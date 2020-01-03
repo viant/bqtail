@@ -12,31 +12,26 @@ Later BqTail is also notified by BqDispatcher with batch which is due to run (/$
 and corresponding (/${BqJobPrefix}/) BigQuery job that have post actions. 
 
 
-[@rule.json](rule.json)
-```json
- [{
-      "When": {
-        "Prefix": "/data/case006",
-        "Suffix": ".json"
-      },
-      "Dest": {
-        "Table": "bqtail.dummy",
-        "TransientDataset": "temp",
-         "UniqueColumns": ["id"]
-      },
-      "OnSuccess": [
-        {
-          "Action": "delete"
-        }
-      ],
-      "Batch": {
-        "Window": {
-          "DurationInSec": 15
-        }
-      },
-      "Async": true
-   }]
+[@rule.yaml](rule/rule.yaml)
+```yaml
+When:
+  Prefix: /data/case${parentIndex}/
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+  TransientDataset: temp
+  UniqueColumns:
+    - id
+OnSuccess:
+  - Action: delete
+Batch:
+  RollOver: true
+  Window:
+    DurationInSec: 15
+Async: true
+
 ```
+
 
 
 Since table does not use nested column the following SQL is used for de duplications
