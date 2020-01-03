@@ -12,4 +12,5 @@ type Error struct {
 	DataURLs     []string  `json:",omitempty"`
 	IsPermission bool      `json:",omitempty"`
 	IsSchema     bool      `json:",omitempty"`
+	IsCorrupted bool      `json:",omitempty"`
 }

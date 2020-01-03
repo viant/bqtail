@@ -90,7 +90,10 @@ CREATE OR REPLACE  TABLE bqtail.bqmon (
                                  Message STRING,
                                  EventID INT64,
                                  ModTime TIMESTAMP,
-                                 Destination STRING
+                                 Destination STRING,
+                                 IsPermission BOOL,
+                                 IsSchema BOOL,
+                                 IsCorrupted BOOL
                     >,
                     InvalidSchema STRUCT<
                                         Min TIMESTAMP,
