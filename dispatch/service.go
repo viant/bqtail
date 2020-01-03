@@ -27,8 +27,6 @@ import (
 
 var thinkTime = 1500 * time.Millisecond
 
-
-
 //Service represents event service
 type Service interface {
 	Dispatch(ctx context.Context) *contract.Response
@@ -165,7 +163,6 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 func (s *service) notifyDoneProcesss(ctx context.Context, objects []astorage.Object, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs, perf *contract.Performance) (err error) {
 	waitGroup := &sync.WaitGroup{}
 
-
 	for i, object := range objects {
 		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
 			continue
@@ -178,7 +175,6 @@ func (s *service) notifyDoneProcesss(ctx context.Context, objects []astorage.Obj
 		if response.Jobs.Has(object.URL()) {
 			continue
 		}
-
 
 		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
 		var state string

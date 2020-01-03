@@ -1,0 +1,34 @@
+init:
+  schemaURL: $Pwd(../mon/schema/schema.sql)
+
+pipeline:
+  init:
+    expand: true
+    action: dsunit:init
+    datastore: bqtail
+    config:
+      driverName: bigquery
+      credentials: $gcpCredentials
+      parameters:
+        datasetId: bqtail
+    scripts:
+      - URL: $schemaURL
+
+  deploy:
+    cleanUp:
+      action: storage:remove
+      sleepTimeMs: 1000
+      assets:
+        - URL: 'gs://${configBucket}/BqTail/_.cache'
+          credentials: $gcpCredentials
+        - URL: 'gs://${configBucket}/BqTail/Rules/bqmon/'
+          credentials: $gcpCredentials
+
+  setupRule:
+    action: storage:copy
+    expand: true
+    source:
+      URL: rule
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${configBucket}/BqTail/Rules/bqmon

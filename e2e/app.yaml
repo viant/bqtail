@@ -101,4 +101,4 @@ pipeline:
           headers:
             User-Agent: Google-Cloud-Scheduler
           httpMethod: GET
-          uri: https://${region}-${gcp.ProjectID}.cloudfunctions.net/BqMonitor?IncludeDone=true&DestURL=gs://${tirggerBucket}/bqmon/
+          uri: https://${region}-${gcp.ProjectID}.cloudfunctions.net/BqMonitor?IncludeDone=true&DestBucket=${tirggerBucket}&DestPath=bqmon

@@ -44,7 +44,8 @@ func checkBqTailPerformance(writer http.ResponseWriter, httpRequest *http.Reques
 			if len(httpRequest.Form) > 0 {
 				request.IncludeDone = toolbox.AsBoolean(httpRequest.Form.Get("IncludeDone"))
 				request.Recency = httpRequest.Form.Get("Recency")
-				request.DestURL = httpRequest.Form.Get("DestURL")
+				request.DestBucket = httpRequest.Form.Get("DestBucket")
+				request.DestPath = httpRequest.Form.Get("DestPath")
 			}
 		}
 	}

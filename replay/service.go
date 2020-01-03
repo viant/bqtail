@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-
 //Service represents replay service
 type Service interface {
 	Replay(context.Context, *Request) *Response

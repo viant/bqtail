@@ -108,13 +108,11 @@ const (
 	ActiveLoadSuffix = "Running"
 
 	//RetryCounterSubpath retry couter subpath
-	RetryCounterSubpath ="retry/counter"
+	RetryCounterSubpath = "retry/counter"
 
 	//RetryDataSubpath retry data subpath
-	RetryDataSubpath ="retry/data"
+	RetryDataSubpath = "retry/data"
 )
-
-
 
 //DateLayout represents a date layout
 const DateLayout = "2006-01-02_15"

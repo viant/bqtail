@@ -12,6 +12,22 @@ CREATE OR REPLACE  TABLE bqtail.bqmon (
                    Lag STRING,
                    LagInSec INT64
                  >,
+    Stages STRUCT<
+                        Items  ARRAY<STRUCT<
+                                            Key STRING,
+                                            Min TIMESTAMP,
+                                            Max TIMESTAMP,
+                                            Count INT64
+                                        >
+                                >
+    >,
+    Stalled STRUCT<
+                    Min TIMESTAMP,
+                    Max TIMESTAMP,
+                    Count INT64,
+                    Lag STRING,
+                    LagInSec INT64
+    >,
     Scheduled STRUCT<
                    Count INT64,
                    Min TIMESTAMP,
@@ -19,6 +35,17 @@ CREATE OR REPLACE  TABLE bqtail.bqmon (
                    Lag STRING,
                    LagInSec INT64
     >,
+   InvalidSchema STRUCT<
+        Min TIMESTAMP,
+        Max TIMESTAMP,
+        Count INT64
+    >,
+    Corrupted STRUCT<
+        Min TIMESTAMP,
+        Max TIMESTAMP,
+        Count INT64
+    >,
+
     Dest ARRAY<
             STRUCT<
                     Table STRING,
@@ -42,7 +69,13 @@ CREATE OR REPLACE  TABLE bqtail.bqmon (
                             Max TIMESTAMP,
                             Count INT64
                     >,
-
+                    Stalled STRUCT<
+                        Min TIMESTAMP,
+                        Max TIMESTAMP,
+                        Count INT64,
+                        Lag STRING,
+                        LagInSec INT64
+                    >,
                     Stages STRUCT<
                         Items  ARRAY<STRUCT<
                                             Key STRING,

@@ -1,22 +1,9 @@
-init:
-  schemaURL: $Pwd(../mon/schema/schema.sql)
 pipeline:
   set_sdk:
     action: sdk.set
     target: $target
     sdk: go:1.12
 
-  init-db:
-      expand: true
-      action: dsunit:init
-      datastore: bqtail
-      config:
-        driverName: bigquery
-        credentials: $gcpCredentials
-        parameters:
-          datasetId: bqtail
-      scripts:
-        - URL: $schemaURL
 
   test:
     tag: $pathMatch

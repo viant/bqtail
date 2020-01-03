@@ -9,7 +9,8 @@ import (
 type Request struct {
 	IncludeDone bool
 	Recency     string
-	DestURL     string
+	DestPath    string
+	DestBucket  string
 }
 
 //Response represents monitoring response

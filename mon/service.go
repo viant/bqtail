@@ -174,13 +174,17 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	for _, k := range keys {
 		response.Dest = append(response.Dest, infoDest[k])
 	}
-	if request.DestURL != "" {
+
+	if request.DestPath != "" {
 		data, err := json.Marshal(response)
 		if err != nil {
 			response.UploadError = err.Error()
 			return nil
 		}
-		destURL := path.Join(request.DestURL, fmt.Sprintf("%v.json", time.Now().UnixNano()))
+
+		baseURL := fmt.Sprintf("gs://%v/%v", request.DestBucket, strings.Trim(request.DestPath, "/"))
+		destURL := url.Join(baseURL, fmt.Sprintf("%v.json", time.Now().UnixNano()))
+		fmt.Printf("uploading %v\n", destURL)
 		if err = s.fs.Upload(ctx, destURL, file.DefaultFileOsMode, bytes.NewReader(data)); err != nil {
 			response.UploadError = err.Error()
 		}

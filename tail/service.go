@@ -67,15 +67,13 @@ func (s *service) Init(ctx context.Context) error {
 	return err
 }
 
-
-
 func (s *service) OnDone(ctx context.Context, request *contract.Request, response *contract.Response) {
 	response.ListOpCount = gs.GetListCounter(true)
 	response.StorageRetries = gs.GetRetryCodes(true)
 	response.SetTimeTaken(response.Started)
 
-	errorCounterURL := url.Join(s.config.ErrorURL,base.RetryCounterSubpath, request.EventID+base.CounterExt)
-	counter,  err := s.getCounterAndIncrease(ctx, errorCounterURL)
+	errorCounterURL := url.Join(s.config.JournalURL, base.RetryCounterSubpath, request.EventID+base.CounterExt)
+	counter, err := s.getCounterAndIncrease(ctx, errorCounterURL)
 	if err != nil {
 		response.CounterError = err.Error()
 	}
@@ -83,8 +81,8 @@ func (s *service) OnDone(ctx context.Context, request *contract.Request, respons
 		response.RetryError = response.Error
 		response.Status = base.StatusOK
 		location := url.Path(request.SourceURL)
-		retryDataURL := url.Join(s.config.ErrorURL, base.RetryDataSubpath, request.EventID, location)
-		if err := s.fs.Move(ctx, request.SourceURL, retryDataURL);err != nil {
+		retryDataURL := url.Join(s.config.JournalURL, base.RetryDataSubpath, request.EventID, location)
+		if err := s.fs.Move(ctx, request.SourceURL, retryDataURL); err != nil {
 			response.MoveError = err.Error()
 		}
 		return
@@ -109,7 +107,7 @@ func (s *service) getCounterAndIncrease(ctx context.Context, URL string) (int, e
 		if err != nil {
 			return 0, errors.Wrapf(err, "failed to download counter :%v", URL)
 		}
-		 data, err := ioutil.ReadAll(reader)
+		data, err := ioutil.ReadAll(reader)
 		if err != nil {
 			return 0, errors.Wrapf(err, "failed to read counter :%v", URL)
 		}
@@ -123,8 +121,6 @@ func (s *service) getCounterAndIncrease(ctx context.Context, URL string) (int, e
 	}
 	return counter, nil
 }
-
-
 
 func (s *service) Tail(ctx context.Context, request *contract.Request) *contract.Response {
 	response := contract.NewResponse(request.EventID)
@@ -856,13 +852,14 @@ func (s *service) handlerProcessError(ctx context.Context, err error, request *c
 		return err
 	}
 	activeURL := s.config.BuildActiveLoadURL(info)
-	if base.IsInternalError(err) {
+
+	//Replay the whole load process - some individual BigQuery job can not be recovered
+	if base.IsInternalError(err) || base.IsBackendError(err) {
 		if exists, _ := s.fs.Exists(ctx, activeURL); exists {
 			return s.replayLoadProcess(ctx, activeURL, request)
 		}
 	}
 	response.SetIfError(err)
-
 	if data, e := json.Marshal(response); e == nil {
 		errorResponseURL := url.Join(s.config.ErrorURL, info.DestTable, fmt.Sprintf("%v%v", request.EventID, base.ResponseErrorExt))
 		if e := s.fs.Upload(ctx, errorResponseURL, file.DefaultFileOsMode, bytes.NewReader(data)); e != nil {
