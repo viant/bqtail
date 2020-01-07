@@ -1,7 +1,8 @@
-## Jan 7 2019 1.1.0
+## Jan 8 2019 1.1.0
 
   * Added HTTP API call
   * Added YAML rule format support
+  * Optimized further down Storage Class A usage
   * Streamlining error handling
     - recoverable vs non-recoverable errors
     - recoverable error with retires limit

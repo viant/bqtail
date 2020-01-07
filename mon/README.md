@@ -53,9 +53,34 @@ Make sure that destination table uses the following schema:
 
 [@schema.sql](schema/schema.sql)
  
- 
+
+Once all is in place you can build query base monitoring with the following:
+
+```sql
+SELECT 
+    Status, 
+    Timestamp, 
+    Running.Count AS Runnng,
+    Running.LagInSec AS RunningLagInSec,
+    Scheduled.Count AS Scheduled,
+    (SELECT SUM(i.Count) as stalled FROM UNNEST(Stalled.Items) i) AS Stalled,
+    Error, 
+    PermissionError,
+    SchemaError, 
+    CorruptedError
+FROM `viant-dataflow.bqtail.bqmon`
+WHERE DATE(timestamp) = CURRENT_DATE()
+ORDER BY timestamp DESC
+LIMIT 1
+``` 
+
+
+
 ### Deployment 
 
 Monitoring service can be run manually or can be scheduled with cloud scheduler.
 
 The following [link](../deployment/README.md#monitoring) details monitoring deployment.
+
+
+ 
