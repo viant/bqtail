@@ -15,6 +15,9 @@ const (
 
 func getRandom(min, max int) int {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	if max-min == 0 {
+		max++
+	}
 	return min + int(rnd.Int63())%(max-min)
 }
 
