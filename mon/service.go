@@ -133,9 +133,11 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 			}
 			if inf.Error.IsPermission {
 				response.PermissionError = inf.Error.Message
-			} else if inf.Error.IsSchema{
+			}
+			if inf.Error.IsSchema{
 				response.SchemaError = inf.Error.Message
-			} else if inf.Error.IsCorrupted {
+			}
+			if inf.Error.IsCorrupted {
 				response.CorruptedError = inf.Error.Message
 			}
 
