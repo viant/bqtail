@@ -19,6 +19,8 @@ type Response struct {
 	Error           string `json:",omitempty"`
 	UploadError     string `json:",omitempty"`
 	PermissionError string `json:",omitempty"`
+	SchemaError     string `json:",omitempty"`
+	CorruptedError  string `json:",omitempty"`
 	Timestamp       time.Time
 	*Info
 	Dest []*Info

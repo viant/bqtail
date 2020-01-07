@@ -4,7 +4,8 @@ CREATE OR REPLACE  TABLE bqtail.bqmon (
     Error  STRING,
     UploadError STRING,
     PermissionError STRING,
-
+    SchemaError STRING,
+    CorruptedError STRING,
     Running STRUCT<
                    Count INT64,
                    Min TIMESTAMP,

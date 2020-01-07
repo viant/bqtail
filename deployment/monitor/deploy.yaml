@@ -1,13 +1,15 @@
 init:
 
   '!gcpCredentials': $params.authWith
+  '!region': $params.region
   appPath: /tmp/bqmonitor
-  functionName: BqTailMonitor
+  functionName: BqMonitor
   gcp: ${secrets.$gcpCredentials}
   serviceAccount: $gcp.ClientEmail
   projectID: $gcp.ProjectID
   prefix: $Replace(${projectID},'-','_')
   configBucket: ${prefix}_config
+  tirggerBucket: ${prefix}_bqtail
 
 pipeline:
 
@@ -46,3 +48,15 @@ pipeline:
       source:
         URL: ${appPath}/
       sleepTimeMs: 5000
+
+    scheduleMonitor:
+      action: gcp/cloudscheduler:deploy
+      credentials: $gcpCredentials
+      name: BqMonitor
+      schedule: '*/1 * * * *'
+      timeZone: GMT
+      httpTarget:
+        headers:
+          User-Agent: Google-Cloud-Scheduler
+        httpMethod: GET
+        uri: https://${region}-${gcp.ProjectID}.cloudfunctions.net/BqMonitor?IncludeDone=true&DestBucket=${tirggerBucket}&DestPath=bqmon

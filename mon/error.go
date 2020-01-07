@@ -1,13 +1,15 @@
 package mon
 
+import "strings"
+
 //IsSchemaError returns true if schema error
-func IsSchemaError(text string ) bool {
-	return false
+func IsSchemaError(text string) bool {
+	message := strings.ToLower(text)
+	return strings.Contains(message, "field") || strings.Contains(message, "schema")
 }
 
-//IsCorruptionError returns true if corrupted error
-func IsCorruptionError(text string ) bool {
-	return false
+//IsCorruptedError returns true if corrupted error
+func IsCorruptedError(text string) bool {
+	message := strings.ToLower(text)
+	return strings.Contains(message, "gs://") && strings.Contains(message, "location")
 }
-
-

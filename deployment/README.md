@@ -139,29 +139,22 @@ You can find more example for various configuration setting in [end to end tetst
 
 ## Monitoring
 
-You can deploy the described infrastructure Monitor cloud function with [endly](https://github.com/viant/endly/) automation runner.
+Deploy monitor with scheduler
 
 ```bash
 git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment/monitor
-endly deploy authWith=myGoogleSecret.json
+endly deploy authWith=myGoogleSecret.json region=us-central1
 ```
 
 
+#### Ingesting monitoring status
 
-## Monitoring 
+To ingest monitoring status:
+
+1. Run the following DDL to create destination table 
+    - [@schema.sql](../mon/schema/schema.sql)
+2. Add the bqtail ingestion rule to gs://${opsConfig}/BqTail/Rules/bqmon/rule.yml
+    - [@rule.yaml](monitor/rule.yaml)
 
 
-[BqTailMonitor](../mon) can be used to monitor bq tail performance for each table destination.
-
-
-**On Google Cloud Platform:**
-
-```bash
-curl --data '{"IncludeDone":true}' -X POST  -H "Content-Type: application/json"  $monitorEndpoint
-
-## or 
-curl  $monitorEndpoint
- 
-
-```

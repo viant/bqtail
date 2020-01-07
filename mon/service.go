@@ -140,6 +140,14 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 					response.Status = base.StatusError
 				}
 			}
+
+			if schemeError := inf.Error.IsSchema; schemeError {
+				response.SchemaError = inf.Error.Message
+			}
+			if corruptedError := inf.Error.IsCorrupted; corruptedError {
+				response.CorruptedError = inf.Error.Message
+			}
+
 		}
 		rule := inf.rule
 		if rule == nil {
@@ -340,6 +348,9 @@ func (s *service) getError(ctx context.Context, dest string, files []storage.Obj
 	}
 
 	result.IsPermission = base.IsPermissionDenied(fmt.Errorf(result.Message))
+	if result.IsSchema = IsSchemaError(result.Message); !result.IsSchema {
+		result.IsCorrupted = IsCorruptedError(result.Message)
+	}
 	return result, nil
 }
 
