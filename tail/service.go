@@ -703,8 +703,10 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 		}
 	}
 	rule := s.config.Get(ctx, window.RuleURL, window.Filter)
+	if rule == nil {
+		rule = s.config.Get(ctx, window.RuleURL, nil)
+	}
 	response.Rule = rule
-
 	request.EventID = window.EventID
 	job, err := s.runInBatch(ctx, rule, window, response)
 
