@@ -82,6 +82,6 @@ pipeline:
     normalizeKVPairs: true
     expect:
       '@indexBy@': Table
-      bqtail.edummy_v${parentIndex}:
+      bqtail.dummy_v${parentIndex}:
         Corrupted:
           Count: 2
