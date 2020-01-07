@@ -125,26 +125,17 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 		permissionError := false
 		response.Info.Add(inf)
 
-		var doneTime *time.Time
-		if inf.Activity.Done != nil {
-			doneTime = inf.Activity.Done.Max
-		}
-
 		if inf.Error != nil && len(inf.Error.DataURLs) > 0 {
 			if response.Status == base.StatusOK {
-				if permissionError = inf.Error.IsPermission; permissionError {
-					if doneTime == nil || doneTime.Before(inf.Error.ModTime) {
-						response.PermissionError = inf.Error.Message
-					}
-				} else {
+				if permissionError = inf.Error.IsPermission; ! permissionError {
 					response.Status = base.StatusError
 				}
 			}
-
-			if schemeError := inf.Error.IsSchema; schemeError {
+			if inf.Error.IsPermission {
+				response.PermissionError = inf.Error.Message
+			} else if inf.Error.IsSchema{
 				response.SchemaError = inf.Error.Message
-			}
-			if corruptedError := inf.Error.IsCorrupted; corruptedError {
+			} else if inf.Error.IsCorrupted {
 				response.CorruptedError = inf.Error.Message
 			}
 
