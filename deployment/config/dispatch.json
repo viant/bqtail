@@ -10,6 +10,6 @@
     "URL": "gs://${configBucket}/Secrets/slack.json.enc",
     "Key": "${prefix}_ring/${prefix}_key"
   },
-  "MaxConcurrentSQL": 50,
-  "MaxConcurrentJobs": 20
+  "MaxConcurrentSQL": 80,
+  "MaxConcurrentJobs": 80
 }

@@ -20,7 +20,7 @@ type Response struct {
 
 //Reset reset response
 func (r *Response) Reset() {
-	r.BatchCount = 0
+
 }
 
 //HasBatch returns true if it has a bach

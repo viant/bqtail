@@ -99,7 +99,8 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		waitGroup := &sync.WaitGroup{}
 		waitGroup.Add(2)
 		objects, err := s.fs.List(ctx, s.config.AsyncTaskURL)
-		fmt.Printf("pending events: %v, pending load jobs:%v, running load jobs: %v\n", len(objects), response.Pending.LoadProcesss, response.Running.LoadProcesss)
+
+		fmt.Printf("pending events: %v, pending: {load:%v, copy: %v,  query: %v}, running: {load : %v, copy: %v, query: %v}, batched: %v\n", len(objects), response.Pending.LoadProcesss, response.Pending.CopyJobs,  response.Pending.QueryJobs,response.Running.LoadProcesss, response.Running.CopyJobs, response.Running.QueryJobs, len(response.Batched))
 		if err != nil {
 			if IsContextError(err) || IsNotFound(err) {
 				err = nil
@@ -259,7 +260,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 	if len(objects) == 0 {
 		return nil
 	}
-	response.BatchCount += len(objects)
+	response.BatchCount = len(objects)
 	for _, obj := range objects {
 		if obj.IsDir() || path.Ext(obj.Name()) != base.WindowExt {
 			continue
