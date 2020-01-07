@@ -293,13 +293,12 @@ func (s *service) newInfo(ctx context.Context, job *Job, rule *config.Rule, load
 	info.LoadURIs = job.Load.SourceUris
 	info.TempTable = load.DestinationTable.DatasetId + "." + load.DestinationTable.TableId
 	if rule.CounterURL != "" {
-		counterURL := url.Join(rule.CounterURL, info.DestTable + base.CounterExt)
+		counterURL := url.Join(rule.CounterURL, info.DestTable+base.CounterExt)
 		counter, err := s.getCounterAndIncrease(ctx, counterURL)
 		if err == nil {
 			info.Counter = counter
 		}
 	}
-
 	return info
 }
 
