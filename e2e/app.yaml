@@ -75,21 +75,21 @@ pipeline:
         source:
           URL: ${appPath}/e2e/echo
 
-#      monitor:
-#        action: gcp/cloudfunctions:deploy
-#        '@name': BqMonitor
-#        timeout: 540s
-#        public: true
-#        availableMemoryMb: 256
-#        entryPoint: Monitor
-#        runtime: go111
-#        retry: true
-#        serviceAccountEmail: ${gcp.serviceAccount}
-#        environmentVariables:
-#          CONFIG: gs://${configBucket}/BqTail/config.json
-#          LOGGING: true
-#        source:
-#          URL: ${appPath}/
+      monitor:
+        action: gcp/cloudfunctions:deploy
+        '@name': BqMonitor
+        timeout: 540s
+        public: true
+        availableMemoryMb: 256
+        entryPoint: Monitor
+        runtime: go111
+        retry: true
+        serviceAccountEmail: ${gcp.serviceAccount}
+        environmentVariables:
+          CONFIG: gs://${configBucket}/BqTail/config.json
+          LOGGING: true
+        source:
+          URL: ${appPath}/
 #
 #      scheduleMonitor:
 #        action: gcp/cloudscheduler:deploy
