@@ -227,6 +227,10 @@ Note that actual data ingestion with load and copy BigQuery operations are free 
 
 The following [link](deployment/README.md) details generic deployment.
 
+## Monitoring
+
+The following [link](mon/README.md) details bqtail monitoring.
+
 
 ## End to end testing
 
