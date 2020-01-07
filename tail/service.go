@@ -235,7 +235,7 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	if len(job.Load.SourceUris) == 0 {
 		return nil, errors.Errorf("sourceUris was empty")
 	}
-	info := s.newInfo(job, rule, job.Load)
+	info := s.newInfo(ctx, job, rule, job.Load)
 	response.Info = info
 	info.LoadURIs = job.Load.SourceUris
 	load, err := s.buildLoadRequest(ctx, job, rule)
@@ -243,7 +243,7 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 		return nil, err
 	}
 
-	info = s.newInfo(job, rule, load.JobConfigurationLoad)
+	info = s.newInfo(ctx, job, rule, load.JobConfigurationLoad)
 	response.Info = info
 	actions := rule.Actions.Expand(info)
 	load.Actions = *actions
@@ -288,10 +288,18 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 	return job, err
 }
 
-func (s *service) newInfo(job *Job, rule *config.Rule, load *bigquery.JobConfigurationLoad) *stage.Info {
+func (s *service) newInfo(ctx context.Context, job *Job, rule *config.Rule, load *bigquery.JobConfigurationLoad) *stage.Info {
 	info := stage.New(job.GetSourceURI(), job.Dest(), job.EventID, "load", job.IDSuffix(), rule.Async, 0, rule.Info.URL)
 	info.LoadURIs = job.Load.SourceUris
 	info.TempTable = load.DestinationTable.DatasetId + "." + load.DestinationTable.TableId
+	if rule.CounterURL != "" {
+		counterURL := url.Join(rule.CounterURL, info.DestTable + base.CounterExt)
+		counter, err := s.getCounterAndIncrease(ctx, counterURL)
+		if err == nil {
+			info.Counter = counter
+		}
+	}
+
 	return info
 }
 

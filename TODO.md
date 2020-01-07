@@ -1,3 +1,3 @@
 - Update documentation/examples
 - Add conditional tasks
-- Add optional ingestion per destination table global counter
+
