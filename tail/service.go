@@ -244,7 +244,7 @@ func (s *service) submitJob(ctx context.Context, job *Job, rule *config.Rule, re
 
 	info = s.newInfo(ctx, job, rule, load.JobConfigurationLoad)
 	response.Info = info
-	actions := rule.Actions.Expand(info)
+	actions := rule.Actions().Expand(info)
 	load.Actions = *actions
 	if err = appendBatchAction(job.Window, &load.Actions); err != nil {
 		return nil, err
@@ -348,7 +348,7 @@ func (s *service) addTransientDatasetActions(ctx context.Context, parent stage.I
 		return actions, nil
 	}
 	job.Load.WriteDisposition = "WRITE_TRUNCATE"
-	var result = task.NewActions(actions.Async, parent, nil, nil)
+	var result = task.NewActions(parent, nil, nil)
 	var onFailureAction *task.Actions
 	if actions != nil {
 		result.SourceURI = job.GetSourceURI()
@@ -462,7 +462,7 @@ func (s *service) addSchemaPatchAction(actions *task.Actions, dest *config.Desti
 	if err != nil {
 		return nil, err
 	}
-	group := task.NewActions(actions.Async, actions.Info, nil, nil)
+	group := task.NewActions(actions.Info, nil, nil)
 	group.AddOnSuccess(patch)
 	return group, nil
 }
@@ -471,7 +471,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parent 
 	split := rule.Dest.Schema.Split
 	next := onDone
 	if next == nil {
-		next = task.NewActions(rule.Async, parent, nil, nil)
+		next = task.NewActions(parent, nil, nil)
 	}
 	for i := range split.Mapping {
 		mapping := split.Mapping[i]
@@ -483,7 +483,7 @@ func (s *service) addSplitActions(ctx context.Context, selectAll string, parent 
 		if err != nil {
 			return err
 		}
-		group := task.NewActions(rule.Async, parent, nil, nil)
+		group := task.NewActions(parent, nil, nil)
 		group.AddOnSuccess(queryAction)
 		next = group
 	}
@@ -555,8 +555,9 @@ func (s *service) tailIndividually(ctx context.Context, source store.Object, rul
 		EventID:       request.EventID,
 		SourceCreated: object.ModTime(),
 		DestTable:     rule.DestTable(source.URL(), source.ModTime()),
-		Actions:       &rule.Actions,
+		Actions:       rule.Actions(),
 	}
+
 	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), request.SourceURL); err != nil {
 		return nil, err
 	}
@@ -856,7 +857,7 @@ func (s *service) moveAssets(ctx context.Context, URLs []string, baseDestURL str
 
 func (s *service) handlerProcessError(ctx context.Context, err error, request *contract.Request, response *contract.Response) error {
 	info := response.Info
-	if info == nil {
+	if info == nil || err == nil {
 		return err
 	}
 	activeURL := s.config.BuildActiveLoadURL(info)

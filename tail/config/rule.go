@@ -3,7 +3,9 @@ package config
 import (
 	"bqtail/base"
 	"bqtail/task"
+	"context"
 	"fmt"
+	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/url"
@@ -13,17 +15,32 @@ import (
 
 //Rule represent matching resource route
 type Rule struct {
-	Disabled              bool          `json:",omitempty"`
-	Dest                  *Destination  `json:",omitempty"`
-	When                  matcher.Basic `json:",omitempty"`
-	Batch                 *Batch        `json:",omitempty"`
-	task.Actions          `json:",omitempty"`
+	Disabled  bool           `json:",omitempty"`
+	Dest      *Destination   `json:",omitempty"`
+	When      matcher.Basic  `json:",omitempty"`
+	Batch     *Batch         `json:",omitempty"`
+	OnSuccess []*task.Action `json:",omitempty"`
+	OnFailure []*task.Action `json:",omitempty"`
+	Async     bool           `json:",omitempty"`
 	Info                  base.Info `json:",omitempty"`
 	Group                 string    `json:",omitempty"`
 	StalledThresholdInSec int       `description:"duration after which unprocess file will be flag as error"`
 	CorruptedFileURL      string    `json:",omitempty"`
 	InvalidSchemaURL      string    `json:",omitempty"`
 	CounterURL            string    `json:",omitempty"`
+}
+
+//Actions returns a rule actions
+func (r *Rule) Actions() *task.Actions {
+	result := &task.Actions{
+		OnFailure: r.OnFailure,
+		OnSuccess: r.OnSuccess,
+	}
+	result.Async = r.Async
+	if r.Info.URL != "" {
+		result.RuleURL = r.Info.URL
+	}
+	return result
 }
 
 //IsAppend returns true if appends
@@ -59,4 +76,9 @@ func (r Rule) Validate() error {
 		return fmt.Errorf("dest was empty")
 	}
 	return r.Dest.Validate()
+}
+
+func (r *Rule) Init(ctx context.Context, fs afs.Service) error {
+	actions := r.Actions()
+	return actions.Init(ctx, fs)
 }

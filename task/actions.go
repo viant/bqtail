@@ -147,13 +147,14 @@ func (a Actions) IsSyncMode() bool {
 //Expand creates clone actions with expanded sources URLs
 func (a *Actions) Expand(info *stage.Info) *Actions {
 	a.SetInfo(info)
+
 	result := &Actions{
 		Info:      a.Info,
 		OnSuccess: make([]*Action, 0),
 		OnFailure: make([]*Action, 0),
 	}
-	appendSourceURLinfoActions(a.OnSuccess, &result.OnSuccess, info)
-	appendSourceURLinfoActions(a.OnFailure, &result.OnFailure, info)
+	appendSourceURLInfoActions(a.OnSuccess, &result.OnSuccess, info)
+	appendSourceURLInfoActions(a.OnFailure, &result.OnFailure, info)
 	appendSourceURLNoninfoActions(a.OnSuccess, &result.OnSuccess, info)
 	appendSourceURLNoninfoActions(a.OnFailure, &result.OnFailure, info)
 	expandSource(result.OnSuccess, info)
@@ -193,7 +194,7 @@ func (a *Actions) AddOnFailure(actions ...*Action) {
 }
 
 //NewActions creates an actions
-func NewActions(async bool, info stage.Info, onSuccess, onFailure []*Action) *Actions {
+func NewActions(info stage.Info, onSuccess, onFailure []*Action) *Actions {
 	if len(onSuccess) == 0 {
 		onSuccess = make([]*Action, 0)
 	}
@@ -207,7 +208,7 @@ func NewActions(async bool, info stage.Info, onSuccess, onFailure []*Action) *Ac
 	}
 }
 
-func appendSourceURLinfoActions(source []*Action, dest *[]*Action, info *stage.Info) {
+func appendSourceURLInfoActions(source []*Action, dest *[]*Action, info *stage.Info) {
 	if len(source) == 0 {
 		return
 	}

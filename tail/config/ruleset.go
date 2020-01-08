@@ -118,7 +118,7 @@ func (r Ruleset) UsesBatchInSyncMode() bool {
 		return false
 	}
 	for i := range r.Rules {
-		if r.Rules[i].Batch != nil && r.Rules[i].IsSyncMode() {
+		if r.Rules[i].Batch != nil && ! r.Rules[i].Async {
 			return true
 		}
 	}
@@ -189,7 +189,7 @@ func (r *Ruleset) loadRule(ctx context.Context, fs afs.Service, URL string) ([]*
 		if err := rules[i].Dest.Init(); err != nil {
 			return nil, err
 		}
-		if err := rules[i].Actions.Init(ctx, fs); err != nil {
+		if err := rules[i].Init(ctx, fs); err != nil {
 			return nil, errors.Wrap(err, "failed to initialises pose action")
 		}
 
