@@ -68,7 +68,7 @@ pipeline:
 
   wait:
     action: nop
-    sleepTineMs: 5000
+    sleepTineMs: 10000
 
   validate:
     action: http/runner:send
