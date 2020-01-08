@@ -86,9 +86,9 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
 	timeoutDuration := s.config.TimeToLive()
-	if timeoutDuration > remainingDuration {
+	//if timeoutDuration > remainingDuration {
 		timeoutDuration = remainingDuration
-	}
+	//}
 	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
 	defer cancelFunc()
 
@@ -179,11 +179,14 @@ func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Ob
 			continue
 		}
 
+
 		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
+
 		var state string
 		listJob := jobsByID.get(jobID)
 		if listJob != nil {
 			state = listJob.State
+
 		} else {
 			response.GetCount++
 			job, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
@@ -194,22 +197,24 @@ func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Ob
 			if job.Status != nil {
 				state = job.Status.State
 			}
-			perf.AddEvent(state, job.JobReference.JobId)
 		}
-
+		perf.AddEvent(state, jobID)
 		switch strings.ToUpper(state) {
 		case base.DoneState:
 			break
 		default:
 			continue
 		}
+
 		stageInfo := perf.AddDispatch(jobID)
 		if !s.canNotify(stageInfo, perf) {
 			perf.AddThrottled(jobID)
 			continue
 		}
+
 		job := contract.NewJob(jobID, object.URL(), state)
 		waitGroup.Add(1)
+
 		go func(job *contract.Job) {
 			defer waitGroup.Done()
 			err = s.notify(ctx, job)
@@ -261,8 +266,7 @@ func (s *service) listBQJobs(ctx context.Context, modifiedAfter time.Time, objec
 	if err != nil || len(objects) == 0 {
 		return err
 	}
-	for i, job := range jobs {
-		perf.AddEvent(job.State, job.JobReference.JobId)
+	for i, _ := range jobs {
 		jobsByID.put(jobs[i])
 	}
 	return err
