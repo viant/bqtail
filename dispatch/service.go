@@ -95,13 +95,16 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	running := int32(1)
 	timeoutDuration = timeoutDuration - thinkTime
 	cycleStartTime := time.Now()
+
+	var perf *contract.Performance
 	for atomic.LoadInt32(&running) == 1 {
 		response.Reset()
 		waitGroup := &sync.WaitGroup{}
 		waitGroup.Add(2)
 		objects, err := s.fs.List(ctx, s.config.AsyncTaskURL)
-
-		fmt.Printf("pending events: %v, pending: {load:%v, copy: %v,  query: %v}, running: {load : %v, copy: %v, query: %v}, batched: %v\n", len(objects), response.Pending.LoadProcesss, response.Pending.CopyJobs, response.Pending.QueryJobs, response.Running.LoadProcesss, response.Running.CopyJobs, response.Running.QueryJobs, len(response.Batched))
+		if perf != nil {
+			fmt.Printf("processed: %v, dispatched: {load: %v, copy:%v, query: %v}, pending: {load:%v, copy: %v,  query: %v}, running: {load : %v, copy: %v, query: %v}, batched: %v\n", len(objects), perf.Dispatched.LoadJobs, perf.Dispatched.CopyJobs, perf.Dispatched.QueryJobs, perf.Pending.LoadJobs, perf.Pending.CopyJobs, perf.Pending.QueryJobs, perf.Running.LoadJobs, perf.Running.CopyJobs, perf.Running.QueryJobs, len(response.Batched))
+		}
 		if err != nil {
 			if IsContextError(err) || IsNotFound(err) {
 				err = nil
@@ -121,7 +124,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 
 		go func(objects []astorage.Object) {
 			defer waitGroup.Done()
-			perf, err := s.dispatchBqEvents(ctx, response, objects)
+			perf, err = s.dispatchBqEvents(ctx, response, objects)
 			if IsContextError(err) || IsNotFound(err) || err == nil {
 				response.Performance.Merge(perf)
 				return
@@ -178,7 +181,6 @@ func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Ob
 		if response.Jobs.Has(object.URL()) {
 			continue
 		}
-
 
 		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
 
@@ -266,7 +268,7 @@ func (s *service) listBQJobs(ctx context.Context, modifiedAfter time.Time, objec
 	if err != nil || len(objects) == 0 {
 		return err
 	}
-	for i, _ := range jobs {
+	for i := range jobs {
 		jobsByID.put(jobs[i])
 	}
 	return err

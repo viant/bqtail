@@ -30,9 +30,9 @@ func (p *Performance) Merge(perf *Performance) {
 
 //ActiveJobCount returns active jobs (load, copy)
 func (p Performance) ActiveJobCount() int {
-	return p.Dispatched.LoadProcesss + p.Dispatched.CopyJobs +
-		p.Pending.LoadProcesss + p.Pending.CopyJobs +
-		p.Running.LoadProcesss + p.Running.CopyJobs
+	return p.Dispatched.LoadJobs + p.Dispatched.CopyJobs +
+		p.Pending.LoadJobs + p.Pending.CopyJobs +
+		p.Running.LoadJobs + p.Running.CopyJobs
 }
 
 //ActiveQueryCount returns active query count
