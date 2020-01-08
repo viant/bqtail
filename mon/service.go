@@ -4,6 +4,7 @@ import (
 	"bqtail/base"
 	"bqtail/mon/info"
 	"bqtail/service/bq"
+	"bqtail/sortable"
 	"bqtail/stage"
 	"bqtail/tail"
 	"bqtail/task"
@@ -19,12 +20,12 @@ import (
 	"github.com/viant/afs/url"
 	"github.com/viant/toolbox"
 	"io/ioutil"
+	"sort"
 	"strings"
 
 	//add gcs storage API
 	_ "github.com/viant/afsc/gs"
 	"path"
-	"sort"
 	"sync"
 	"time"
 )
@@ -127,14 +128,14 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 
 		if inf.Error != nil && len(inf.Error.DataURLs) > 0 {
 			if response.Status == base.StatusOK {
-				if permissionError = inf.Error.IsPermission; ! permissionError {
+				if permissionError = inf.Error.IsPermission; !permissionError {
 					response.Status = base.StatusError
 				}
 			}
 			if inf.Error.IsPermission {
 				response.PermissionError = inf.Error.Message
 			}
-			if inf.Error.IsSchema{
+			if inf.Error.IsSchema {
 				response.SchemaError = inf.Error.Message
 			}
 			if inf.Error.IsCorrupted {
@@ -185,7 +186,6 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 
 		baseURL := fmt.Sprintf("gs://%v/%v", request.DestBucket, strings.Trim(request.DestPath, "/"))
 		destURL := url.Join(baseURL, fmt.Sprintf("%v.json", time.Now().UnixNano()))
-		fmt.Printf("uploading %v\n", destURL)
 		if err = s.fs.Upload(ctx, destURL, file.DefaultFileOsMode, bytes.NewReader(data)); err != nil {
 			response.UploadError = err.Error()
 		}
@@ -308,7 +308,7 @@ func (s *service) getError(ctx context.Context, dest string, files []storage.Obj
 	if len(files) == 0 {
 		return nil, nil
 	}
-	sortedFiles := NewObjects(files[1:], byModTime)
+	sortedFiles := sortable.NewObjects(files[1:], sortable.ByModTime)
 	result := newError(dest, sortedFiles)
 	if result == nil {
 		return nil, nil
@@ -348,7 +348,7 @@ func (s *service) getError(ctx context.Context, dest string, files []storage.Obj
 }
 
 //newError create a en error object
-func newError(dest string, sortedFiles *Objects) *info.Error {
+func newError(dest string, sortedFiles *sortable.Objects) *info.Error {
 	eventID := ""
 	errorEventID := ""
 	count := len(sortedFiles.Elements)
@@ -456,8 +456,7 @@ func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *act
 		return err
 	}
 	var destLocations = make(map[string]storage.Object)
-	sortedTables := NewObjects(objects[1:], byModTime)
-	sort.Sort(sortedTables)
+	sortedTables := sortable.NewObjects(objects[1:], sortable.ByModTime)
 
 	for i, destObject := range sortedTables.Elements {
 		key := destObject.Name()
@@ -478,8 +477,7 @@ func (s *service) listDoneLoads(ctx context.Context, baseURL string, result *act
 		if len(hourDone) == 0 {
 			continue
 		}
-		sortedHours := NewObjects(hourDone[1:], byModTime)
-		sort.Sort(sortedHours)
+		sortedHours := sortable.NewObjects(hourDone[1:], sortable.ByModTime)
 		if len(sortedHours.Elements) == 0 {
 			continue
 		}

@@ -128,9 +128,9 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 
 	defer s.OnDone(ctx, request, response)
 	var err error
+
 	if request.HasURLPrefix(s.config.LoadProcessPrefix) {
 		err = s.runLoadProcess(ctx, request, response)
-
 	} else if request.HasURLPrefix(s.config.BqJobPrefix) {
 		err = s.runPostLoadActions(ctx, request, response)
 	} else if request.HasURLPrefix(s.config.BatchPrefix) {
@@ -138,14 +138,13 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 
 	} else {
 		err = s.tail(ctx, request, response)
-		if err != nil {
-			if base.IsNotFoundError(err) {
-				response.NotFoundError = err.Error()
-				err = nil
-			}
-		}
 	}
+
 	if err != nil {
+		if base.IsNotFoundError(err) {
+			response.NotFoundError = err.Error()
+			err = nil
+		}
 		response.SetIfError(err)
 		if !response.Retriable {
 			err = s.handlerProcessError(ctx, err, request, response)

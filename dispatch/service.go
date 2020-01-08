@@ -7,6 +7,7 @@ import (
 	"bqtail/service/secret"
 	"bqtail/service/slack"
 	"bqtail/service/storage"
+	"bqtail/sortable"
 	"bqtail/stage"
 	"bqtail/task"
 	"context"
@@ -100,7 +101,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		waitGroup.Add(2)
 		objects, err := s.fs.List(ctx, s.config.AsyncTaskURL)
 
-		fmt.Printf("pending events: %v, pending: {load:%v, copy: %v,  query: %v}, running: {load : %v, copy: %v, query: %v}, batched: %v\n", len(objects), response.Pending.LoadProcesss, response.Pending.CopyJobs,  response.Pending.QueryJobs,response.Running.LoadProcesss, response.Running.CopyJobs, response.Running.QueryJobs, len(response.Batched))
+		fmt.Printf("pending events: %v, pending: {load:%v, copy: %v,  query: %v}, running: {load : %v, copy: %v, query: %v}, batched: %v\n", len(objects), response.Pending.LoadProcesss, response.Pending.CopyJobs, response.Pending.QueryJobs, response.Running.LoadProcesss, response.Running.CopyJobs, response.Running.QueryJobs, len(response.Batched))
 		if err != nil {
 			if IsContextError(err) || IsNotFound(err) {
 				err = nil
@@ -161,13 +162,14 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	return nil
 }
 
-func (s *service) notifyDoneProcesss(ctx context.Context, objects []astorage.Object, response *contract.Response, jobsByID map[string]*bigquery.JobListJobs, perf *contract.Performance) (err error) {
+func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Object, response *contract.Response, jobsByID *jobs, perf *contract.Performance) (err error) {
 	waitGroup := &sync.WaitGroup{}
 
 	for i, object := range objects {
 		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
 			continue
 		}
+
 		age := time.Now().Sub(objects[i].ModTime())
 		//if just create skip to next
 		if age < thinkTime {
@@ -179,8 +181,8 @@ func (s *service) notifyDoneProcesss(ctx context.Context, objects []astorage.Obj
 
 		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
 		var state string
-		listJob, ok := jobsByID[jobID]
-		if ok {
+		listJob := jobsByID.get(jobID)
+		if listJob != nil {
 			state = listJob.State
 		} else {
 			response.GetCount++
@@ -201,13 +203,11 @@ func (s *service) notifyDoneProcesss(ctx context.Context, objects []astorage.Obj
 		default:
 			continue
 		}
-
 		stageInfo := perf.AddDispatch(jobID)
 		if !s.canNotify(stageInfo, perf) {
 			perf.AddThrottled(jobID)
 			continue
 		}
-
 		job := contract.NewJob(jobID, object.URL(), state)
 		waitGroup.Add(1)
 		go func(job *contract.Job) {
@@ -232,21 +232,40 @@ func (s *service) canNotify(info *stage.Info, perf *contract.Performance) bool {
 }
 
 func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Response, objects []astorage.Object) (*contract.Performance, error) {
+	var jobsByID = newJobs()
+
 	startTime := time.Now()
 	perf := contract.NewPerformance()
-	modifiedAfter := startTime.Add(-(time.Minute * time.Duration(s.config.MaxJobLoopbackInMin)))
-	jobs, err := s.bq.ListJob(ctx, s.config.ProjectID, modifiedAfter, "done", "pending", "running")
-	if err != nil {
-		return perf, err
+	listLoopback := time.Minute * time.Duration(s.config.MaxJobLoopbackInMin)
+	modifiedAfter := startTime.Add(-listLoopback)
+
+	if err := s.listBQJobs(ctx, modifiedAfter, objects, perf, jobsByID); err != nil {
+		return perf, nil
+	}
+
+	sorted := sortable.NewObjects(objects, sortable.ByModTime)
+	modified := sorted.Elements[len(sorted.Elements)-1].ModTime()
+	maxLoopback := time.Now().Sub(modified)
+	if maxLoopback > listLoopback {
+		go func() {
+			modifiedAfter := startTime.Add(-maxLoopback)
+			_ = s.listBQJobs(ctx, modifiedAfter, objects, perf, jobsByID)
+		}()
 	}
 	response.ListTime = fmt.Sprintf("%s", time.Now().Sub(startTime))
-	var jobsByID = make(map[string]*bigquery.JobListJobs)
+	return perf, s.notifyDoneProcesses(ctx, sorted.Elements, response, jobsByID, perf)
+}
+
+func (s *service) listBQJobs(ctx context.Context, modifiedAfter time.Time, objects []astorage.Object, perf *contract.Performance, jobsByID *jobs) error {
+	jobs, err := s.bq.ListJob(ctx, s.config.ProjectID, modifiedAfter, "done", "pending", "running")
+	if err != nil || len(objects) == 0 {
+		return err
+	}
 	for i, job := range jobs {
 		perf.AddEvent(job.State, job.JobReference.JobId)
-		jobsByID[jobs[i].JobReference.JobId] = jobs[i]
+		jobsByID.put(jobs[i])
 	}
-	return perf, s.notifyDoneProcesss(ctx, objects, response, jobsByID, perf)
-
+	return err
 }
 
 //notify notify bqtail

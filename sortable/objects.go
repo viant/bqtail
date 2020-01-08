@@ -1,7 +1,8 @@
-package mon
+package sortable
 
 import (
 	"github.com/viant/afs/storage"
+	"sort"
 )
 
 //Objects represents sorting container
@@ -28,7 +29,7 @@ func (o Objects) Less(i, j int) bool {
 	return o.By(o.Elements[i], o.Elements[j])
 }
 
-func byModTime(o1, o2 storage.Object) bool {
+func ByModTime(o1, o2 storage.Object) bool {
 	if o1.ModTime().Equal(o2.ModTime()) {
 		return o1.Name() < o2.Name()
 	}
@@ -37,8 +38,13 @@ func byModTime(o1, o2 storage.Object) bool {
 
 //NewObjects creates a new objects
 func NewObjects(objects []storage.Object, by func(o1, o2 storage.Object) bool) *Objects {
-	return &Objects{
+	if by == nil {
+		by = ByModTime
+	}
+	result := &Objects{
 		Elements: objects,
 		By:       by,
 	}
+	sort.Sort(result)
+	return result
 }
