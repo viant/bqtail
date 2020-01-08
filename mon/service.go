@@ -154,7 +154,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 
 		if inf.Activity != nil {
 			if inf.Activity.Running != nil {
-				stalledDuration := time.Hour
+				stalledDuration := 90 * time.Minute
 				if rule != nil && rule.StalledThresholdInSec > 0 {
 					stalledDuration = time.Duration(rule.StalledThresholdInSec) * time.Second
 				}
