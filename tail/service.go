@@ -145,7 +145,7 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 		if !response.Retriable {
 			err = s.handlerProcessError(ctx, err, request, response)
 		}
-		if base.IsNotFoundError(err) {
+		if base.IsNotFoundError(err) && ! strings.Contains(err.Error(), base.TableFragment)  {
 			response.NotFoundError = err.Error()
 			err = nil
 		}
@@ -730,7 +730,7 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	response.Window = window
 	response.BatchRunner = true
 	if rule == nil {
-		return nil, fmt.Errorf("rule was empyt for %v", window.RuleURL)
+		return nil, fmt.Errorf("rule was empty for %v", window.RuleURL)
 	}
 	batchingDistributionDelay := time.Duration(getRandom(base.StorageListVisibilityDelay, rule.Batch.MaxDelayMs(base.StorageListVisibilityDelay))) * time.Millisecond
 	remainingDuration := window.End.Sub(time.Now()) + batchingDistributionDelay
