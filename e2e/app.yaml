@@ -66,6 +66,7 @@ pipeline:
 
       echo:
         action: gcp/cloudfunctions:deploy
+        comments: echo CF is used by one of e2e test calling HTTP API
         '@name': Echo
         timeout: 30s
         availableMemoryMb: 128
@@ -77,6 +78,7 @@ pipeline:
 
       monitor:
         action: gcp/cloudfunctions:deploy
+        comments: minitor service is used by error cases
         '@name': BqMonitor
         timeout: 540s
         public: true
@@ -90,15 +92,3 @@ pipeline:
           LOGGING: true
         source:
           URL: ${appPath}/
-#
-#      scheduleMonitor:
-#        action: gcp/cloudscheduler:deploy
-#        credentials: $gcpCredentials
-#        name: BqMonitor
-#        schedule: '*/1 * * * *'
-#        timeZone: GMT
-#        httpTarget:
-#          headers:
-#            User-Agent: Google-Cloud-Scheduler
-#          httpMethod: GET
-#          uri: https://${region}-${gcp.ProjectID}.cloudfunctions.net/BqMonitor?IncludeDone=true&DestBucket=${tirggerBucket}&DestPath=bqmon
