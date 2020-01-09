@@ -43,7 +43,7 @@ func (i *Info) ID() string {
 	return path.Join(i.DestTable, fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action)+PathElementSeparator+i.Suffix)
 }
 
-//JobFilename returns job filename
+//JobFilename returns job filename	
 func (i *Info) JobFilename() string {
 	dest := i.DestTable
 	if dest != "" {

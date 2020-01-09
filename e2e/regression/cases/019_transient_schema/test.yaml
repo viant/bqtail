@@ -26,9 +26,9 @@ pipeline:
     action: storage:remove
     sleepTimeMs: 1000
     assets:
-      - URL: 'gs://${configBucket}/BqTail/_.cache'
-        credentials: $gcpCredentials
       - URL: 'gs://${configBucket}/BqTail/Rules/case_${parent.index}/'
+        credentials: $gcpCredentials
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
         credentials: $gcpCredentials
       - URL: 'gs://${opsBucket}/BqTail/Journal/Done'
         credentials: $gcpCredentials
