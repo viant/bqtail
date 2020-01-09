@@ -56,34 +56,37 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source s
 	}
 	batch := rule.Batch
 	windowURL := batch.WindowURL(windowDest, source.ModTime())
-	window, _ := GetWindow(ctx, windowURL, s.fs)
-	if window != nil {
+	exists, _ := s.fs.Exists(ctx, windowURL, option.NewObjectKind(true))
+
+	endTime := batch.WindowEndTime(source.ModTime())
+	startTime := endTime.Add(-batch.Window.Duration)
+
+	var window *Window
+	if exists {
+		window = NewWindow(fmt.Sprintf("%v", endTime), dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
 		if rule.Batch.MultiPath {
 			err = s.addLocationFile(ctx, window, parentURL)
 		}
 		return &Info{OwnerEventID: window.EventID}, err
 	}
-	endTime := batch.WindowEndTime(source.ModTime())
-	startTime := endTime.Add(-batch.Window.Duration)
 
 	if batch.RollOver && !batch.IsWithinFirstHalf(source.ModTime()) {
-		windowURL := batch.WindowURL(dest, source.ModTime().Add(-(1 + batch.Window.Duration)))
-		if previouWindow, _ := GetWindow(ctx, windowURL, s.fs); previouWindow == nil {
+		prevWindowURL := batch.WindowURL(dest, source.ModTime().Add(-(1 + batch.Window.Duration)))
+		if exists, _ := s.fs.Exists(ctx, prevWindowURL, option.NewObjectKind(true)); !exists {
 			startTime = startTime.Add(-batch.Window.Duration)
 		}
 	}
+
 	window = NewWindow(eventID, dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
 	windowData, _ := json.Marshal(window)
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
 
 	if isPreConditionError(err) || isRateError(err) {
-		window := &Window{EventID: fmt.Sprintf("%v", endTime), URL: windowURL}
-		//if err != nil {
-		//	return nil, errors.Wrapf(err, "failed to load window: %v", windowURL)
-		//}
-		err = nil
+		window := NewWindow(fmt.Sprintf("%v", endTime), dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
 		if rule.Batch.MultiPath {
-			err = s.addLocationFile(ctx, window, parentURL)
+			if err = s.addLocationFile(ctx, window, parentURL); err != nil {
+				return nil, err
+			}
 		}
 		return &Info{OwnerEventID: window.EventID}, err
 	}

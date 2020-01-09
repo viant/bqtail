@@ -141,13 +141,13 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	}
 
 	if err != nil {
-		if base.IsNotFoundError(err) {
-			response.NotFoundError = err.Error()
-			err = nil
-		}
 		response.SetIfError(err)
 		if !response.Retriable {
 			err = s.handlerProcessError(ctx, err, request, response)
+		}
+		if base.IsNotFoundError(err) {
+			response.NotFoundError = err.Error()
+			err = nil
 		}
 	}
 	return response

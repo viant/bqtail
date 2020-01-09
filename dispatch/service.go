@@ -86,9 +86,9 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
 	timeoutDuration := s.config.TimeToLive()
-	if timeoutDuration > remainingDuration {
-		timeoutDuration = remainingDuration
-	}
+	//if timeoutDuration > remainingDuration {
+	timeoutDuration = remainingDuration
+	//}
 	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
 	defer cancelFunc()
 
