@@ -145,6 +145,7 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 		if !response.Retriable {
 			err = s.handlerProcessError(ctx, err, request, response)
 		}
+		//if storage event is duplicated, you some asset being already removed, that said do not clear table no found error
 		if base.IsNotFoundError(err) && ! strings.Contains(err.Error(), base.TableFragment)  {
 			response.NotFoundError = err.Error()
 			err = nil
