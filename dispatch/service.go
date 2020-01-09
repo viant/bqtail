@@ -86,9 +86,9 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
 	timeoutDuration := s.config.TimeToLive()
-	//if timeoutDuration > remainingDuration {
-	timeoutDuration = remainingDuration
-	//}
+	if timeoutDuration > remainingDuration {
+		timeoutDuration = remainingDuration
+	}
 	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
 	defer cancelFunc()
 
@@ -165,6 +165,34 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	return nil
 }
 
+func (s *service) filterCandidate(response *contract.Response, objects []astorage.Object, action string) map[string][]astorage.Object {
+	var result = make(map[string][]astorage.Object, 0)
+	for i, object := range objects {
+		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
+			continue
+		}
+		if response.Jobs.Has(object.URL()) {
+			continue
+		}
+
+		age := time.Now().Sub(objects[i].ModTime())
+		//if just create skip to next
+		if age < thinkTime {
+			continue
+		}
+		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
+		stageInfo := stage.Parse(jobID)
+		if stageInfo.Action != action {
+			continue
+		}
+		if _, ok := result[stageInfo.DestTable]; !ok {
+			result[stageInfo.DestTable] = []astorage.Object{}
+		}
+		result[stageInfo.DestTable] = append(result[stageInfo.DestTable], objects[i])
+	}
+	return result
+}
+
 func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Object, response *contract.Response, jobsByID *jobs, perf *contract.Performance) (err error) {
 	waitGroup := &sync.WaitGroup{}
 
@@ -181,8 +209,8 @@ func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Ob
 		if response.Jobs.Has(object.URL()) {
 			continue
 		}
-
 		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
+		stageInfo := perf.AddDispatch(jobID)
 
 		var state string
 		listJob := jobsByID.get(jobID)
@@ -208,7 +236,6 @@ func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Ob
 			continue
 		}
 
-		stageInfo := perf.AddDispatch(jobID)
 		if !s.canNotify(stageInfo, perf) {
 			perf.AddThrottled(jobID)
 			continue
@@ -241,37 +268,44 @@ func (s *service) canNotify(info *stage.Info, perf *contract.Performance) bool {
 func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Response, objects []astorage.Object) (*contract.Performance, error) {
 	var jobsByID = newJobs()
 
-	startTime := time.Now()
 	perf := contract.NewPerformance()
-	listLoopback := time.Minute * time.Duration(s.config.MaxJobLoopbackInMin)
-	modifiedAfter := startTime.Add(-listLoopback)
-
-	if err := s.listBQJobs(ctx, modifiedAfter, objects, perf, jobsByID); err != nil {
-		return perf, nil
-	}
+	stepDuration := 10 * time.Minute
+	maxCreated := time.Now()
+	minCreated := maxCreated.Add(-stepDuration)
 
 	sorted := sortable.NewObjects(objects, sortable.ByModTime)
-	modified := sorted.Elements[len(sorted.Elements)-1].ModTime()
-	maxLoopback := time.Now().Sub(modified)
-	if maxLoopback > listLoopback {
-		go func() {
-			modifiedAfter := startTime.Add(-maxLoopback)
-			_ = s.listBQJobs(ctx, modifiedAfter, objects, perf, jobsByID)
-		}()
+	minListTime := sorted.Elements[len(sorted.Elements)-1].ModTime()
+	startTime := time.Now()
+	waitGroup := &sync.WaitGroup{}
+	for ; ; {
+		waitGroup.Add(1)
+		go func(minCreated, maxCreated time.Time) {
+			defer waitGroup.Done()
+			s.listBQJobs(ctx, minCreated, maxCreated, perf, jobsByID)
+		}(minCreated, maxCreated)
+		maxCreated = maxCreated.Add(-stepDuration)
+		minCreated = minCreated.Add(-stepDuration)
+		candidate := minCreated.Add(-stepDuration)
+		if candidate.Before(minListTime) {
+			break
+		}
 	}
-	response.ListTime = fmt.Sprintf("%s", time.Now().Sub(startTime))
-	return perf, s.notifyDoneProcesses(ctx, sorted.Elements, response, jobsByID, perf)
+	go func() {
+		waitGroup.Wait()
+		response.ListTime = fmt.Sprintf("%s", time.Now().Sub(startTime))
+	}()
+	err := s.notifyDoneProcesses(ctx, sorted.Elements, response, jobsByID, perf)
+	return perf, err
 }
 
-func (s *service) listBQJobs(ctx context.Context, modifiedAfter time.Time, objects []astorage.Object, perf *contract.Performance, jobsByID *jobs) error {
-	jobs, err := s.bq.ListJob(ctx, s.config.ProjectID, modifiedAfter, "done", "pending", "running")
-	if err != nil || len(objects) == 0 {
-		return err
+func (s *service) listBQJobs(ctx context.Context, minCreated, maxCreated time.Time, perf *contract.Performance, jobsByID *jobs) {
+	jobs, err := s.bq.ListJob(ctx, s.config.ProjectID, minCreated, maxCreated, "done", "pending", "running")
+	if err != nil {
+		return
 	}
 	for i := range jobs {
 		jobsByID.put(jobs[i])
 	}
-	return err
 }
 
 //notify notify bqtail

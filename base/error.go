@@ -12,7 +12,7 @@ const backendError = "backendError"
 const internalError = "internal error"
 const noFound = "Not found"
 const accessDenied = "Error 403"
-const tableFragment = "Table"
+const TableFragment = "Table"
 
 //IsRetryError returns true if backend error
 func IsRetryError(err error) bool {
@@ -56,10 +56,6 @@ func IsNotFoundError(err error) bool {
 		return false
 	}
 	message := err.Error()
-	//exclude BigQuery table not found error
-	if strings.Contains(message, tableFragment) {
-		return false
-	}
 	if apiError, ok := err.(*googleapi.Error); ok {
 		if apiError.Code == http.StatusNotFound {
 			return true

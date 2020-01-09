@@ -13,7 +13,6 @@ import (
 	"github.com/viant/afs/url"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
-	"path"
 	"strings"
 	"time"
 )
@@ -39,9 +38,6 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 		return errors.Wrapf(err, "failed to encode actions: %v", actions)
 	}
 	filename := actions.Info.JobFilename()
-	if path.Ext(filename) == "" {
-		filename += base.JSONExt
-	}
 	URL := url.Join(s.Config.AsyncTaskURL, filename)
 	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }

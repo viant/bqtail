@@ -15,6 +15,7 @@ type Response struct {
 	ListTime   string
 	GetCount   int
 	Errors     []string
+	MaxPending *time.Time
 	*Performance
 }
 

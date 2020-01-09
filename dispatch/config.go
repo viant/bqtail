@@ -19,7 +19,6 @@ type Config struct {
 	base.Config
 	config.Ruleset
 	TimeToLiveInMin     int
-	MaxJobLoopbackInMin int
 	MaxConcurrentSQL    int
 	MaxConcurrentJobs   int
 }
@@ -40,9 +39,6 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	}
 	if c.TimeToLiveInMin == 0 {
 		c.TimeToLiveInMin = 1
-	}
-	if c.MaxJobLoopbackInMin == 0 {
-		c.MaxJobLoopbackInMin = 10
 	}
 	return c.Ruleset.Init(ctx, fs, c.ProjectID)
 }
