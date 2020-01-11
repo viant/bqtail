@@ -25,8 +25,9 @@ func IsRetryError(err error) bool {
 		}
 	}
 	message := err.Error()
-	return strings.Contains(message, fmt.Sprintf("%v", http.StatusServiceUnavailable))
+	return strings.Contains(message, fmt.Sprintf(" %v ", http.StatusServiceUnavailable))
 }
+
 
 func IsBackendError(err error) bool {
 	if err == nil {
