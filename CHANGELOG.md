@@ -1,4 +1,4 @@
-## Jan 8 2019 1.1.0
+## Jan 15 2019 1.1.0
 
   * Added HTTP API call
   * Added YAML rule format support
