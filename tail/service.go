@@ -77,7 +77,7 @@ func (s *service) OnDone(ctx context.Context, request *contract.Request, respons
 	if err != nil {
 		response.CounterError = err.Error()
 	}
-	if counter > s.config.MaxRetries {
+	if err != nil && counter > s.config.MaxRetries {
 		response.RetryError = response.Error
 		response.Status = base.StatusOK
 		location := url.Path(request.SourceURL)
