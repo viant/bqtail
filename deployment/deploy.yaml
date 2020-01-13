@@ -1,4 +1,22 @@
 pipeline:
+
+  set_sdk:
+    action: sdk.set
+    target: $target
+    sdk: go:1.12
+
+  package:
+    action: exec:run
+    target: $target
+    checkError: true
+    commands:
+      - cd $appPath
+      - export GIT_TERMINAL_PROMPT=1
+      - export GO111MODULE=on
+      - unset GOPATH
+      - go mod vendor
+      - go build
+
   bqtail:
     action: gcp/cloudfunctions:deploy
     credentials: $gcpCredentials

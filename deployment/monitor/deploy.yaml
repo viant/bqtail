@@ -13,6 +13,12 @@ init:
 
 pipeline:
 
+  set_sdk:
+    action: sdk.set
+    target: $target
+    sdk: go:1.12
+
+
   deploy:
     checkOut:
       action: vc/git:checkout
