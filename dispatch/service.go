@@ -156,7 +156,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		}
 
 		select {
-		case <-time.After(thinkTime):
+		case <-time.After(2 * thinkTime):
 		case <-ctx.Done():
 			atomic.StoreInt32(&running, 0)
 			return nil
