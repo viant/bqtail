@@ -15,6 +15,7 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/afs/cache"
 	"github.com/viant/afs/file"
+	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
@@ -74,7 +75,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	go func() {
 		defer waitGroup.Done()
 		var e error
-		if errors, e = s.getErrors(ctx); e != nil {
+		if errors, e = s.getErrors(ctx, request.Recency); e != nil {
 			err = e
 		}
 	}()
@@ -259,7 +260,7 @@ func (s *service) updateStages(stages []*stage.Info, infoDest map[string]*Info) 
 
 }
 
-func (s *service) getErrors(ctx context.Context) ([]*info.Error, error) {
+func (s *service) getErrors(ctx context.Context, recencyExpr string) ([]*info.Error, error) {
 	destFolders, err := s.fs.List(ctx, s.Config.ErrorURL)
 	if err != nil {
 		return nil, err
@@ -271,17 +272,31 @@ func (s *service) getErrors(ctx context.Context) ([]*info.Error, error) {
 			continue
 		}
 		dest := folder.Name()
-		files, err := s.fs.List(ctx, folder.URL(), option.NewPage(0, maxErrors))
+		modifiedAfter := getErrorLoopback(recencyExpr)
+		files, err := s.fs.List(ctx, folder.URL(), option.NewPage(0, maxErrors), matcher.NewModification(nil, &modifiedAfter))
 		if err != nil {
 			return nil, err
 		}
-		inofErr, err := s.getError(ctx, dest, files)
-		if err != nil || inofErr == nil {
+		infoError, err := s.getError(ctx, dest, files)
+		if err != nil || infoError == nil {
 			continue
 		}
-		result = append(result, inofErr)
+		result = append(result, infoError)
 	}
 	return result, nil
+}
+
+func getErrorLoopback(recencyExpr string) time.Time {
+	modifiedAfter := time.Now().Add(-time.Hour)
+	if recencyExpr != "" {
+		if ! strings.Contains(strings.ToLower(recencyExpr), "ago") {
+			recencyExpr += "Ago"
+		}
+		if inThePast, err := toolbox.TimeAt(recencyExpr); err == nil {
+			modifiedAfter = *inThePast
+		}
+	}
+	return modifiedAfter
 }
 
 func (s *service) getInfo(destKey string, infoDest map[string]*Info) *Info {
