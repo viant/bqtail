@@ -72,23 +72,25 @@ func (s *service) OnDone(ctx context.Context, request *contract.Request, respons
 	response.StorageRetries = gs.GetRetryCodes(true)
 	response.SetTimeTaken(response.Started)
 
-	errorCounterURL := url.Join(s.config.JournalURL, base.RetryCounterSubpath, request.EventID+base.CounterExt)
-	counter, err := s.getCounterAndIncrease(ctx, errorCounterURL)
-	if err != nil {
-		response.CounterError = err.Error()
-	}
-	if response.Error != "" && counter > s.config.MaxRetries {
-		response.RetryError = response.Error
-		response.Status = base.StatusOK
-		location := url.Path(request.SourceURL)
-		retryDataURL := url.Join(s.config.JournalURL, base.RetryDataSubpath, request.EventID, location)
-		if err := s.fs.Move(ctx, request.SourceURL, retryDataURL); err != nil {
-			response.MoveError = err.Error()
+	if response.Error != "" {
+		errorCounterURL := url.Join(s.config.JournalURL, base.RetryCounterSubpath, request.EventID+base.CounterExt)
+		counter, err := s.getCounterAndIncrease(ctx, errorCounterURL)
+		if err != nil {
+			response.CounterError = err.Error()
 		}
-		return
+		if counter > s.config.MaxRetries {
+			response.RetryError = response.Error
+			response.Status = base.StatusOK
+			location := url.Path(request.SourceURL)
+			retryDataURL := url.Join(s.config.JournalURL, base.RetryDataSubpath, request.EventID, location)
+			if err := s.fs.Move(ctx, request.SourceURL, retryDataURL); err != nil {
+				response.MoveError = err.Error()
+			}
+			return
+		}
 	}
 
-	if response.Retriable {
+	if response.Retriable  {
 		response.RetryError = response.Error
 		response.Error = ""
 		return
@@ -146,7 +148,7 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 			err = s.handlerProcessError(ctx, err, request, response)
 		}
 		//if storage event is duplicated, you some asset being already removed, that said do not clear table no found error
-		if base.IsNotFoundError(err) && ! strings.Contains(err.Error(), base.TableFragment)  {
+		if base.IsNotFoundError(err) && ! strings.Contains(err.Error(), base.TableFragment) {
 			response.NotFoundError = err.Error()
 			err = nil
 		}
