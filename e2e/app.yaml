@@ -2,12 +2,14 @@ defaults:
   credentials: $gcpCredentials
 
 pipeline:
-  set_sdk:
-    action: sdk.set
-    target: $target
-    sdk: go:1.12
+
 
   deploy:
+    set_sdk:
+      action: sdk.set
+      target: $target
+      sdk: go:1.12
+
     package:
       action: exec:run
       comments: vendor build for deployment speedup
