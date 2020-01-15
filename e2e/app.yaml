@@ -2,6 +2,10 @@ defaults:
   credentials: $gcpCredentials
 
 pipeline:
+  set_sdk:
+    action: sdk.set
+    target: $target
+    sdk: go:1.12
 
   deploy:
     package:
