@@ -1,13 +1,12 @@
 package bqtail
 
 import (
+	"bqtail/base"
 	"bqtail/tail"
 	"bqtail/tail/contract"
 	"cloud.google.com/go/functions/metadata"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 )
 
 const maxStackDriver = 265 * 1024
@@ -37,12 +36,7 @@ func handleTailEvent(ctx context.Context, request *contract.Request) (*contract.
 		return nil, err
 	}
 	response := service.Tail(ctx, request)
-	if data, err := json.Marshal(response); err == nil {
-		if len(data)+1 > maxStackDriver { //max stack driver
-			data = data[:maxStackDriver-2]
-		}
-		fmt.Printf("%v\n", string(data))
-	}
+	base.Log(response)
 	if response.Error != "" {
 		return response, errors.New(response.Error)
 	}

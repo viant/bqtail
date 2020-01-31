@@ -6,10 +6,15 @@ init:
   appPath: $WorkingDirectory(..)
 
   gcpCredentials: gcp-e2e
-  gcp: ${secrets.$gcpCredentials}
-  projectID: $gcp.ProjectID
+  bqCredentials: bq-e2e
+
+  gcpSecrets: ${secrets.$gcpCredentials}
+  bqSecrets: ${secrets.$bqCredentials}
+  projectID: ${gcpSecrets.ProjectID}
+  bqProjectID: ${bqSecrets.ProjectID}
+
   prefix: $Replace($projectID,'-','_')
-  serviceAccount: $gcp.ClientEmail
+  serviceAccount: ${gcpSecrets.ClientEmail}
 
   configBucket: ${prefix}_config
   triggerBucket: ${prefix}_bqtail

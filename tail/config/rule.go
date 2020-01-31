@@ -15,19 +15,19 @@ import (
 
 //Rule represent matching resource route
 type Rule struct {
-	Disabled  bool           `json:",omitempty"`
-	Dest      *Destination   `json:",omitempty"`
-	When      matcher.Basic  `json:",omitempty"`
-	Batch     *Batch         `json:",omitempty"`
-	OnSuccess []*task.Action `json:",omitempty"`
-	OnFailure []*task.Action `json:",omitempty"`
-	Async     bool           `json:",omitempty"`
-	Info                  base.Info `json:",omitempty"`
-	Group                 string    `json:",omitempty"`
-	StalledThresholdInSec int       `description:"duration after which unprocess file will be flag as error"`
-	CorruptedFileURL      string    `json:",omitempty"`
-	InvalidSchemaURL      string    `json:",omitempty"`
-	CounterURL            string    `json:",omitempty"`
+	Disabled              bool           `json:",omitempty"`
+	Dest                  *Destination   `json:",omitempty"`
+	When                  matcher.Basic  `json:",omitempty"`
+	Batch                 *Batch         `json:",omitempty"`
+	OnSuccess             []*task.Action `json:",omitempty"`
+	OnFailure             []*task.Action `json:",omitempty"`
+	Async                 bool           `json:",omitempty"`
+	Info                  base.Info      `json:",omitempty"`
+	Group                 string         `json:",omitempty"`
+	StalledThresholdInSec int            `description:"duration after which unprocess file will be flag as error"`
+	CorruptedFileURL      string         `json:",omitempty"`
+	InvalidSchemaURL      string         `json:",omitempty"`
+	CounterURL            string         `json:",omitempty"`
 }
 
 //Actions returns a rule actions

@@ -118,7 +118,7 @@ func (r Ruleset) UsesBatchInSyncMode() bool {
 		return false
 	}
 	for i := range r.Rules {
-		if r.Rules[i].Batch != nil && ! r.Rules[i].Async {
+		if r.Rules[i].Batch != nil && !r.Rules[i].Async {
 			return true
 		}
 	}
@@ -172,15 +172,11 @@ func (r *Ruleset) loadRule(ctx context.Context, fs afs.Service, URL string) ([]*
 		return nil, errors.Wrapf(err, "failed to decode: %v", URL)
 	}
 	transientRoutes := Ruleset{Rules: rules}
-	if err := transientRoutes.Validate(); err != nil {
-		return nil, errors.Wrapf(err, "invalid rule: %v", URL)
-	}
 	_, name := url.Split(URL, "")
 	ext := path.Ext(name)
 	if ext != "" {
 		name = string(name[:len(name)-len(ext)])
 	}
-
 	for i := range rules {
 		rules[i].Info.URL = URL
 		if rules[i].Info.Workflow == "" {
@@ -192,8 +188,12 @@ func (r *Ruleset) loadRule(ctx context.Context, fs afs.Service, URL string) ([]*
 		if err := rules[i].Init(ctx, fs); err != nil {
 			return nil, errors.Wrap(err, "failed to initialises pose action")
 		}
-
 	}
+
+	if err := transientRoutes.Validate(); err != nil {
+		return nil, errors.Wrapf(err, "invalid rule: %v", URL)
+	}
+
 	return rules, nil
 }
 

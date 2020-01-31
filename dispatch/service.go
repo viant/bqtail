@@ -3,6 +3,7 @@ package dispatch
 import (
 	"bqtail/base"
 	"bqtail/dispatch/contract"
+	"bqtail/dispatch/project"
 	"bqtail/service/bq"
 	"bqtail/service/secret"
 	"bqtail/service/slack"
@@ -10,9 +11,12 @@ import (
 	"bqtail/sortable"
 	"bqtail/stage"
 	"bqtail/task"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/viant/afs"
+	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	astorage "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
@@ -82,7 +86,6 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 
 //Dispatch dispatched BigQuery event
 func (s *service) dispatch(ctx context.Context, response *contract.Response) error {
-
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
 	timeoutDuration := s.config.TimeToLive()
@@ -94,75 +97,114 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 
 	running := int32(1)
 	timeoutDuration = timeoutDuration - thinkTime
-	cycleStartTime := time.Now()
 
-	var perf *contract.Performance
 	for atomic.LoadInt32(&running) == 1 {
-		response.Reset()
+		cycleStartTime := time.Now()
 		waitGroup := &sync.WaitGroup{}
-		waitGroup.Add(2)
-		objects, err := s.fs.List(ctx, s.config.AsyncTaskURL)
-		if perf != nil {
-			fmt.Printf("processed: %v, dispatched: {load: %v, copy:%v, query: %v}, pending: {load:%v, copy: %v,  query: %v}, running: {load : %v, copy: %v, query: %v}, batched: %v\n", len(objects), perf.Dispatched.LoadJobs, perf.Dispatched.CopyJobs, perf.Dispatched.QueryJobs, perf.Pending.LoadJobs, perf.Pending.CopyJobs, perf.Pending.QueryJobs, perf.Running.LoadJobs, perf.Running.CopyJobs, perf.Running.QueryJobs, len(response.Batched))
-		}
-		if err != nil {
-			if IsContextError(err) || IsNotFound(err) {
-				err = nil
-			}
+		projectEvents, err := s.listProjectEvents(ctx)
+
+		if isProcessingError(err) {
 			return err
 		}
-		go func(objects []astorage.Object) {
-			defer waitGroup.Done()
-			e := s.dispatchBatchEvents(ctx, response, objects)
-			if IsContextError(e) || IsNotFound(e) {
-				return
-			}
-			if e != nil {
-				response.SetIfError(e)
-			}
-		}(objects)
-
-		go func(objects []astorage.Object) {
-			defer waitGroup.Done()
-			perf, err = s.dispatchBqEvents(ctx, response, objects)
-			if IsContextError(err) || IsNotFound(err) || err == nil {
-				response.Performance.Merge(perf)
-				return
-			}
-			response.SetIfError(err)
-		}(objects)
-		response.Cycles++
-		select {
-		case <-time.After(timeoutDuration):
-			continue
-		case <-ctx.Done():
-			atomic.StoreInt32(&running, 0)
-			return nil
-
-		case <-func() chan bool {
-			boolChannel := make(chan bool, 1)
-			go func() {
-				waitGroup.Wait()
-				boolChannel <- true
-			}()
-			return boolChannel
-		}():
-
-			timeoutDuration -= time.Now().Sub(cycleStartTime)
-			cycleStartTime = time.Now()
-			if timeoutDuration < 0 {
-				return nil
-			}
+		for i := range projectEvents {
+			waitGroup.Add(1)
+			go s.dispatchEvents(ctx, waitGroup, response, projectEvents[i])
 		}
-
-		select {
-		case <-time.After(2 * thinkTime):
-		case <-ctx.Done():
-			atomic.StoreInt32(&running, 0)
-			return nil
+		response.Cycles++
+		if err = s.logPerformance(ctx, response); err != nil {
+			fmt.Printf("%v\n", err)
+		}
+		if !s.wait(ctx, cycleStartTime, waitGroup, &running, &timeoutDuration) {
+			break
+		}
+		for i := range projectEvents {
+			fmt.Printf("%v\n", projectEvents[i].Performance)
 		}
 	}
 	return nil
+}
+
+func (s *service) listProjectEvents(ctx context.Context) ([]*project.Events, error) {
+	registry := project.NewRegistry()
+	events, err := s.fs.List(ctx, s.config.AsyncTaskURL)
+	if err != nil {
+		return nil, err
+	}
+
+	addEvents(s.config.ProjectID, events, registry)
+	for _, obj := range events {
+		if obj.IsDir() && strings.HasPrefix(obj.Name(), base.TempProjectPrefix) {
+			projectID := string(obj.Name()[len(base.TempProjectPrefix):])
+			projectEvents, err := s.fs.List(ctx, obj.URL())
+			if err != nil {
+				return nil, err
+			}
+			addEvents(projectID, projectEvents, registry)
+		}
+	}
+	return registry.Events(), nil
+}
+
+func addEvents(projectID string, events []astorage.Object, registry *project.Registry) {
+	for i, event := range events {
+		if event.IsDir() {
+			continue
+		}
+		registry.Add(projectID, events[i])
+	}
+}
+
+func (s *service) wait(ctx context.Context, startTime time.Time, waitGroup *sync.WaitGroup, running *int32, remaining *time.Duration) bool {
+	select {
+	case <-time.After(*remaining):
+		return false
+	case <-ctx.Done():
+		atomic.StoreInt32(running, 0)
+		return false
+	case <-func() chan bool {
+		boolChannel := make(chan bool, 1)
+		go func() {
+			waitGroup.Wait()
+			boolChannel <- true
+		}()
+		return boolChannel
+	}():
+		*remaining -= time.Now().Sub(startTime)
+		if *remaining <= 0 {
+			return false
+		}
+	}
+
+	select {
+	case <-time.After(2 * thinkTime):
+	case <-ctx.Done():
+		atomic.StoreInt32(running, 0)
+		return false
+	}
+	return true
+}
+
+func (s *service) dispatchEvents(ctx context.Context, waitGroup *sync.WaitGroup, response *contract.Response, projectEvents *project.Events) {
+	defer waitGroup.Done()
+	err := s.dispatchBqEvents(ctx, response, projectEvents)
+	if err == nil || IsNotFound(err) {
+		err = s.dispatchBatchEvents(ctx, response, projectEvents)
+	}
+	if IsContextError(err) || IsNotFound(err) || err == nil {
+		response.Merge(projectEvents.Performance)
+		return
+	}
+	response.SetIfError(err)
+}
+
+func (s *service) logPerformance(ctx context.Context, response *contract.Response) error {
+	URL := url.Join(s.config.JournalURL, base.PerformanceFile)
+	JSON, err := json.Marshal(response.Performance)
+	if err != nil {
+		return err
+	}
+	err = s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(JSON))
+	return err
 }
 
 func (s *service) filterCandidate(response *contract.Response, objects []astorage.Object, action string) map[string][]astorage.Object {
@@ -193,15 +235,15 @@ func (s *service) filterCandidate(response *contract.Response, objects []astorag
 	return result
 }
 
-func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Object, response *contract.Response, jobsByID *jobs, perf *contract.Performance) (err error) {
+func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Events, response *contract.Response, jobsByID *jobs) (err error) {
 	waitGroup := &sync.WaitGroup{}
 
-	for i, object := range objects {
+	for i, object := range events.Items {
 		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
 			continue
 		}
 
-		age := time.Now().Sub(objects[i].ModTime())
+		age := time.Now().Sub(events.Items[i].ModTime())
 		//if just create skip to next
 		if age < thinkTime {
 			continue
@@ -210,40 +252,36 @@ func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Ob
 			continue
 		}
 		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
-		stageInfo := perf.AddDispatch(jobID)
-
 		var state string
 		listJob := jobsByID.get(jobID)
 		if listJob != nil {
 			state = listJob.State
-
 		} else {
 			response.GetCount++
-			job, err := s.bq.GetJob(ctx, s.config.ProjectID, jobID)
+			job, err := s.bq.GetJob(ctx, events.ProjectID, jobID)
 			if err != nil || job == nil {
-				perf.MissingStatus++
+				events.NoFound++
 				continue
 			}
 			if job.Status != nil {
 				state = job.Status.State
 			}
 		}
-		perf.AddEvent(state, jobID)
+
 		switch strings.ToUpper(state) {
 		case base.DoneState:
 			break
 		default:
+			events.AddEvent(state, jobID)
 			continue
 		}
-
-		if !s.canNotify(stageInfo, perf) {
-			perf.AddThrottled(jobID)
+		stageInfo := events.AddDispatch(jobID)
+		if !s.canNotify(stageInfo.Action, events.Performance) {
+			events.AddThrottled(jobID)
 			continue
 		}
-
 		job := contract.NewJob(jobID, object.URL(), state)
 		waitGroup.Add(1)
-
 		go func(job *contract.Job) {
 			defer waitGroup.Done()
 			err = s.notify(ctx, job)
@@ -258,30 +296,35 @@ func (s *service) notifyDoneProcesses(ctx context.Context, objects []astorage.Ob
 	return err
 }
 
-func (s *service) canNotify(info *stage.Info, perf *contract.Performance) bool {
-	if info.Action == "query" {
+func (s *service) canNotify(action string, perf *contract.Performance) bool {
+	if action == base.ActionQuery {
 		return s.config.MaxConcurrentSQL == 0 || s.config.MaxConcurrentSQL > perf.ActiveQueryCount()+1
 	}
-	return s.config.MaxConcurrentJobs == 0 || s.config.MaxConcurrentJobs > perf.ActiveJobCount()+1
+	if action == base.ActionLoad {
+		return s.config.MaxConcurrentLoad == 0 || s.config.MaxConcurrentLoad > perf.ActiveLoadCount()+1
+	}
+	return true
 }
 
-func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Response, objects []astorage.Object) (*contract.Performance, error) {
+func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Response, events *project.Events) error {
 	var jobsByID = newJobs()
-
-	perf := contract.NewPerformance()
 	stepDuration := 10 * time.Minute
 	maxCreated := time.Now()
 	minCreated := maxCreated.Add(-stepDuration)
-
-	sorted := sortable.NewObjects(objects, sortable.ByModTime)
+	perf := events.Performance
+	if len(events.Items) == 0 {
+		return nil
+	}
+	sorted := sortable.NewObjects(events.Items, sortable.ByModTime)
+	events.Items = sorted.Elements
 	minListTime := sorted.Elements[len(sorted.Elements)-1].ModTime()
 	startTime := time.Now()
 	waitGroup := &sync.WaitGroup{}
-	for ; ; {
+	for {
 		waitGroup.Add(1)
 		go func(minCreated, maxCreated time.Time) {
 			defer waitGroup.Done()
-			s.listBQJobs(ctx, minCreated, maxCreated, perf, jobsByID)
+			s.listBQJobs(ctx, perf.ProjectID, minCreated, maxCreated, jobsByID)
 		}(minCreated, maxCreated)
 		maxCreated = maxCreated.Add(-stepDuration)
 		minCreated = minCreated.Add(-stepDuration)
@@ -294,12 +337,12 @@ func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Respo
 		waitGroup.Wait()
 		response.ListTime = fmt.Sprintf("%s", time.Now().Sub(startTime))
 	}()
-	err := s.notifyDoneProcesses(ctx, sorted.Elements, response, jobsByID, perf)
-	return perf, err
+	err := s.notifyDoneProcesses(ctx, events, response, jobsByID)
+	return err
 }
 
-func (s *service) listBQJobs(ctx context.Context, minCreated, maxCreated time.Time, perf *contract.Performance, jobsByID *jobs) {
-	jobs, err := s.bq.ListJob(ctx, s.config.ProjectID, minCreated, maxCreated, "done", "pending", "running")
+func (s *service) listBQJobs(ctx context.Context, projectID string, minCreated, maxCreated time.Time, jobsByID *jobs) {
+	jobs, err := s.bq.ListJob(ctx, projectID, minCreated, maxCreated, "done", "pending", "running")
 	if err != nil {
 		return
 	}
@@ -315,7 +358,9 @@ func (s *service) notify(ctx context.Context, job *contract.Job) error {
 	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
 }
 
-func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Response, objects []astorage.Object) (err error) {
+func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Response, projectObjects *project.Events) (err error) {
+	objects := projectObjects.Items
+	perf := projectObjects.Performance
 	if len(objects) == 0 {
 		return nil
 	}
@@ -332,8 +377,12 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 			err = e
 			continue
 		}
-
 		if time.Now().After(dueTime.Add(base.StorageListVisibilityDelay * time.Millisecond)) {
+			if !s.canNotify(base.ActionLoad, perf) {
+				continue
+			}
+			perf.Metric(base.RunningState).BatchJobs++
+			perf.Metric(base.RunningState).LoadJobs++
 			response.AddBatch(obj.URL(), *dueTime)
 			baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
 			destURL := url.Join(baseURL, obj.Name())
@@ -352,6 +401,11 @@ func JobID(baseURL string, URL string) string {
 	}
 	encoded := strings.Trim(string(URL[len(baseURL):]), "/")
 	encoded = strings.Replace(encoded, ".json", "", 1)
+	if strings.HasPrefix(encoded, base.TempProjectPrefix) {
+		if index := strings.Index(encoded, "/"); index != -1 {
+			encoded = string(encoded[index+1:])
+		}
+	}
 	jobID := stage.Decode(encoded)
 	return jobID
 }

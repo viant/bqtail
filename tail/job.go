@@ -66,11 +66,17 @@ func (j Job) Info() *stage.Info {
 		async = j.Rule.Async
 		ruleURL = j.Rule.Info.URL
 	}
+	projectID := ""
 	if j.Window != nil {
 		source = j.Window.SourceURL
+		projectID = j.Window.ProjectID
 	}
-	return stage.New(source, dest, j.EventID, "load", j.IDSuffix(), async, 0, ruleURL)
-
+	if projectID == "" {
+		if j.Load != nil && j.Load.DestinationTable != nil {
+			projectID = j.Load.DestinationTable.ProjectId
+		}
+	}
+	return stage.New(projectID, source, dest, j.EventID, "load", j.IDSuffix(), async, 0, ruleURL)
 }
 
 //IsSyncMode returns true if in sync mode

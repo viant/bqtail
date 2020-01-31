@@ -22,7 +22,7 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 		destURL = request.DestURL
 	}
 	if base.IsLoggingEnabled() {
-		fmt.Printf("moving: %v -> %v\n", request.SourceURL, destURL)
+		base.Log(fmt.Sprintf("moving: %v -> %v\n", request.SourceURL, destURL))
 	}
 	err = s.fs.Move(ctx, request.SourceURL, destURL)
 	if err != nil {

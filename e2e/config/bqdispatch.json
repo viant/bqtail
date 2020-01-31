@@ -1,6 +1,6 @@
 {
   "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
-  "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
+  "JournalURL": "gs://${opsBucket}/BqTail/Journal/",
   "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",

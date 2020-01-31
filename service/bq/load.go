@@ -18,7 +18,11 @@ const maxJobLoadURIs = 10000
 
 //Load loads data into BigQuery
 func (s *service) Load(ctx context.Context, request *LoadRequest) (job *bigquery.Job, err error) {
-	request.Init(s.projectID)
+	projectID := request.ProjectID
+	if projectID == "" {
+		projectID = s.ProjectID
+	}
+	request.Init(projectID)
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -75,7 +79,6 @@ func (r *LoadRequest) Init(projectID string) {
 	if table == nil {
 		return
 	}
-
 	if r.ProjectID != "" {
 		projectID = r.ProjectID
 	}

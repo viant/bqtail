@@ -11,24 +11,23 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
-	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
 	"time"
 )
 
-func (s *service) setJobID(ctx context.Context, actions *task.Actions) (*bigquery.JobReference, error) {
+func (s *service) setJobID(ctx context.Context, projectID string, actions *task.Actions) (*bigquery.JobReference, error) {
 	var ID string
 	if actions != nil {
 		ID = actions.Info.GetJobID()
 	}
 	return &bigquery.JobReference{
 		JobId:     ID,
-		ProjectId: s.Config.ProjectID,
+		ProjectId: projectID,
 	}, nil
 }
 
-func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actions *task.Actions) error {
+func (s *service) schedulePostTask(ctx context.Context, projectID string, job *bigquery.Job, actions *task.Actions) error {
 	if actions == nil || actions.IsEmpty() || actions.IsSyncMode() {
 		return nil
 	}
@@ -38,7 +37,7 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 		return errors.Wrapf(err, "failed to encode actions: %v", actions)
 	}
 	filename := actions.Info.JobFilename()
-	URL := url.Join(s.Config.AsyncTaskURL, filename)
+	URL := url.Join(s.Config.AsyncTaskURL, base.TempProjectPrefix+projectID, filename)
 	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
@@ -58,10 +57,8 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 		callerJob.Id = job.Id
 	}
 	if base.IsLoggingEnabled() {
-		fmt.Printf("Job status: %v %v\n", callerJob.Id, err)
-		toolbox.Dump(job)
+		base.Log(job)
 	}
-
 	if onDoneActions != nil && onDoneActions.IsSyncMode() {
 		err = base.JobError(job)
 		if err == nil {
@@ -86,17 +83,16 @@ func (s *service) Post(ctx context.Context, projectID string, callerJob *bigquer
 
 func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job, onDoneActions *task.Actions) (*bigquery.Job, error) {
 	var err error
-	if job.JobReference, err = s.setJobID(ctx, onDoneActions); err != nil {
+	if job.JobReference, err = s.setJobID(ctx, projectID, onDoneActions); err != nil {
 		return nil, err
 	}
-	err = s.schedulePostTask(ctx, job, onDoneActions)
+	err = s.schedulePostTask(ctx, projectID, job, onDoneActions)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to schedule bqJob %v", job.JobReference.JobId)
 	}
+
 	if base.IsLoggingEnabled() {
-		toolbox.Dump(job)
-		fmt.Printf("OnDone: ")
-		toolbox.Dump(onDoneActions)
+		base.Log(job)
 	}
 
 	jobService := bigquery.NewJobsService(s.Service)

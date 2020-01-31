@@ -32,6 +32,7 @@ type Response struct {
 	RetryCount     int         `json:",omitempty"`
 	MoveError      string      `json:",omitempty"`
 	CounterError   string      `json:",omitempty"`
+	DownloadError  string      `json:",omitempty"`
 }
 
 //NewResponse creates a new response

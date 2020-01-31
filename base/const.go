@@ -94,10 +94,14 @@ const (
 	//ResponseErrorExt
 	ResponseErrorExt = ".rsp"
 
+	//TempProjectPrefix represents temp project prefix
+	TempProjectPrefix = "proj:"
+
 	//LoadPrefix - load job default prefix
 	LoadPrefix = "/_load_/"
-	//BqJobPrefix bg job default prefix
-	BqJobPrefix = "/_bqjob_/"
+	//PostJobPrefix bg job default prefix
+	PostJobPrefix = "/_bqjob_/"
+
 	//BatchPrefix batch task default prefix
 	BatchPrefix = "/_batch_/"
 	//InvalidSchemaLocation invalid schema
@@ -113,6 +117,16 @@ const (
 	//RetryDataSubpath retry data subpath
 	RetryDataSubpath = "retry/data"
 )
+
+const (
+	//BalancerStrategyRand randomly select project
+	BalancerStrategyRand = "rand"
+	//BalancerStrategyFallback select next project from the list if previous project hit limits
+	BalancerStrategyFallback = "fallback"
+)
+
+//PerformanceFile defines job performance file
+const PerformanceFile = "performance.json"
 
 //DateLayout represents a date layout
 const DateLayout = "2006-01-02_15"

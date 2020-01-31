@@ -28,3 +28,11 @@ func IsNotFound(err error) bool {
 	}
 	return strings.Contains(err.Error(), notFoundFragment)
 }
+
+//isProcessingError returns true if processing error
+func isProcessingError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return !(IsContextError(err) || IsContextError(err))
+}

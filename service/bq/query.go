@@ -90,11 +90,12 @@ func (r *QueryRequest) Validate() error {
 }
 
 //NewQueryRequest creates a new query request
-func NewQueryRequest(SQL string, dest *bigquery.TableReference, finally *task.Actions) *QueryRequest {
+func NewQueryRequest(projectID, SQL string, dest *bigquery.TableReference, finally *task.Actions) *QueryRequest {
 	result := &QueryRequest{
 		SQL:              SQL,
 		destinationTable: dest,
 	}
+	result.ProjectID = projectID
 	if dest != nil {
 		result.Dest = base.EncodeTableReference(dest)
 	}

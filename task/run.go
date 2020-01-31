@@ -55,8 +55,7 @@ func RunWithService(ctx context.Context, registry Registry, serviceName string, 
 		return nil, err
 	}
 	if base.IsLoggingEnabled() {
-		fmt.Printf("running %T.%T\n", service, request)
-		toolbox.Dump(request)
+		base.Log(request)
 	}
 	var response Response
 	response, err = service.Run(ctx, request)

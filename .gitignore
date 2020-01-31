@@ -11,3 +11,4 @@ local3_test.go
 /aws/cron/smirrorcron
 /aws/sns/smirrorsns
 /aws/sqs/smirrorsqs
+scratchpad

@@ -2,7 +2,6 @@
 
 Monitoring service uses Google Storage BqTail operation files to determine current processing status.
 
-
 - Running load processes can be found in $config.ActiveLoadProcessURL
 - Done load processes can be found in $config.DoneLoadProcessURL
 - All processing stages file can be found in $config.AsyncTaskURL 
@@ -33,10 +32,10 @@ where:
 
 Store response of monitoring request in BigQuery with simple bqtail rule:
 
-[@rule.yaml](../deployment/monitor/rule.yaml)
+[@rule.yaml](../deployment/monitor/rule/bqmon.yaml)
 ```yaml
 When:
-  Prefix: "/bqmon/"
+  Prefix: "/sys/bqmon/"
   Suffix: ".json"
 Async: true
 Dest:
@@ -48,12 +47,11 @@ OnSuccess:
   - Action: delete
 
 ```
- 
+
 Make sure that destination table uses the following schema:
 
 [@schema.sql](schema/schema.sql)
  
-
 Once all is in place you can build query base monitoring with the following:
 
 ```sql
@@ -73,7 +71,6 @@ WHERE DATE(timestamp) = CURRENT_DATE()
 ORDER BY timestamp DESC
 LIMIT 1
 ``` 
-
 
 
 ### Deployment 

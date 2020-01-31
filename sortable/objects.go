@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-//Objects represents sorting container
+//Events represents sorting container
 type Objects struct {
 	Elements []storage.Object
 	By       func(o1, o2 storage.Object) bool

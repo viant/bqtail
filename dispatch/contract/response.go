@@ -2,26 +2,35 @@ package contract
 
 import (
 	"bqtail/base"
+	"sync"
 	"time"
 )
 
 //Response represents response
 type Response struct {
 	base.Response
-	Jobs       *Jobs
-	Batched    map[string]time.Time
-	BatchCount int
-	Cycles     int
-	ListTime   string
-	GetCount   int
-	Errors     []string
-	MaxPending *time.Time
-	*Performance
+	Jobs        *Jobs
+	Batched     map[string]time.Time
+	BatchCount  int
+	Cycles      int
+	ListTime    string
+	GetCount    int
+	Errors      []string
+	MaxPending  *time.Time
+	Performance ProjectPerformance
+	mux         *sync.Mutex
 }
 
 //Reset reset response
-func (r *Response) Reset() {
-
+func (r *Response) Merge(performance *Performance) {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+	_, ok := r.Performance[performance.ProjectID]
+	if !ok {
+		r.Performance[performance.ProjectID] = performance
+		return
+	}
+	r.Performance[performance.ProjectID].Merge(performance)
 }
 
 //HasBatch returns true if it has a bach
@@ -41,6 +50,8 @@ func (r *Response) AddBatch(URL string, ts time.Time) {
 
 //AddError adds an error
 func (r *Response) AddError(err error) {
+	r.mux.Lock()
+	defer r.mux.Unlock()
 	if err == nil {
 		return
 	}
@@ -54,9 +65,10 @@ func (r *Response) AddError(err error) {
 func NewResponse() *Response {
 	return &Response{
 		Jobs:        NewJobs(),
-		Performance: NewPerformance(),
+		Performance: make(map[string]*Performance),
 		Batched:     make(map[string]time.Time),
 		Errors:      make([]string, 0),
 		Response:    *base.NewResponse(""),
+		mux:         &sync.Mutex{},
 	}
 }

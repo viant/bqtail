@@ -21,7 +21,7 @@ pipeline:
       assets:
         - URL: 'gs://${configBucket}/BqTail/_.cache'
           credentials: $gcpCredentials
-        - URL: 'gs://${configBucket}/BqTail/Rules/bqmon/'
+        - URL: 'gs://${configBucket}/BqTail/Rules/sys/'
           credentials: $gcpCredentials
 
   setupRule:
@@ -31,4 +31,4 @@ pipeline:
       URL: rule
     dest:
       credentials: $gcpCredentials
-      URL: gs://${configBucket}/BqTail/Rules/bqmon
+      URL: gs://${configBucket}/BqTail/Rules/sys

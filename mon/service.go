@@ -289,7 +289,7 @@ func (s *service) getErrors(ctx context.Context, recencyExpr string) ([]*info.Er
 func getErrorLoopback(recencyExpr string) time.Time {
 	modifiedAfter := time.Now().Add(-time.Hour)
 	if recencyExpr != "" {
-		if ! strings.Contains(strings.ToLower(recencyExpr), "ago") {
+		if !strings.Contains(strings.ToLower(recencyExpr), "ago") {
 			recencyExpr += "Ago"
 		}
 		if inThePast, err := toolbox.TimeAt(recencyExpr); err == nil {

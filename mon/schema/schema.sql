@@ -1,3 +1,26 @@
+CREATE OR REPLACE TABLE bqtail.bqjob (
+ProjectID STRING,
+JobType STRING,
+JobID STRING,
+DestinationTable STRING,
+Error STRING,
+TempTable STRING,
+CreateTime TIMESTAMP,
+StartTime TIMESTAMP,
+EndTime TIMESTAMP,
+ReservationName STRING,
+TotalBytesProcessed INT64,
+InputFileBytes INT64,
+InputFiles INT64,
+OutputBytes INT64,
+OutputRows  INT64,
+BadRecords INT64,
+ExecutionTimeMs INT64,
+TotalSlotMs INT64,
+TimeTakenMs INT64
+) PARTITION BY DATE(CreateTime);
+
+
 CREATE OR REPLACE  TABLE bqtail.bqmon (
     Timestamp TIMESTAMP,
     Status STRING,

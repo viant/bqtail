@@ -3,47 +3,62 @@ package contract
 import (
 	"bqtail/base"
 	"bqtail/stage"
+	"fmt"
 	"strings"
+	"sync/atomic"
 )
+
+//ProjectPerformance represents project performance
+type ProjectPerformance map[string]*Performance
 
 //Performance performance
 type Performance struct {
-	Running       *Metrics `json:",omitempty"`
-	Pending       *Metrics `json:",omitempty"`
-	Dispatched    *Metrics `json:",omitempty"`
-	Throttled     *Metrics `json:",omitempty"`
-	MissingStatus int      `json:",omitempty"`
+	ProjectID  string   `json:",omitempty"`
+	Count      uint32   `json:",omitempty"`
+	Running    *Metrics `json:",omitempty"`
+	Pending    *Metrics `json:",omitempty"`
+	Dispatched *Metrics `json:",omitempty"`
+	Throttled  *Metrics `json:",omitempty"`
+	NoFound    int      `json:",omitempty"`
 }
 
 //Merge merges performance
 func (p *Performance) Merge(perf *Performance) {
-	p.MissingStatus = perf.MissingStatus
 	if perf.Running.Count() > 0 {
 		p.Running = perf.Running
 	}
 	if perf.Pending.Count() > 0 {
 		p.Pending = perf.Pending
 	}
+	p.NoFound += perf.NoFound
+	p.Count += perf.Count
 	p.Dispatched.Merge(perf.Dispatched)
 	p.Throttled.Merge(perf.Throttled)
 }
 
-//ActiveJobCount returns active jobs (load, copy)
-func (p Performance) ActiveJobCount() int {
-	return p.Dispatched.LoadJobs + p.Dispatched.CopyJobs +
-		p.Pending.LoadJobs + p.Pending.CopyJobs +
-		p.Running.LoadJobs + p.Running.CopyJobs
+//ActiveQueryCount returns active query count
+func (p Performance) ActiveQueryCount() int {
+	return p.Pending.QueryJobs +
+		p.Running.QueryJobs
 }
 
 //ActiveQueryCount returns active query count
-func (p Performance) ActiveQueryCount() int {
-	return p.Dispatched.QueryJobs + p.Dispatched.QueryJobs +
-		p.Pending.QueryJobs + p.Pending.QueryJobs +
-		p.Running.QueryJobs + p.Running.QueryJobs
+func (p Performance) ActiveLoadCount() int {
+	return p.Pending.LoadJobs +
+		p.Running.LoadJobs
 }
 
 //AddEvent adds running, pending metrics
 func (p *Performance) AddEvent(state string, jobID string) {
+	atomic.AddUint32(&p.Count, 1)
+	metrics := p.Metric(state)
+	if metrics != nil {
+		metrics.Update(jobID)
+	}
+}
+
+//Metric returns a metric
+func (p *Performance) Metric(state string) *Metrics {
 	var metrics *Metrics
 	switch strings.ToUpper(state) {
 	case base.RunningState:
@@ -51,9 +66,7 @@ func (p *Performance) AddEvent(state string, jobID string) {
 	case base.PendingState:
 		metrics = p.Pending
 	}
-	if metrics != nil {
-		metrics.Update(jobID)
-	}
+	return metrics
 }
 
 //AddDispatch add dispatched metrics
@@ -65,6 +78,11 @@ func (p *Performance) AddDispatch(jobID string) *stage.Info {
 func (p *Performance) AddThrottled(jobID string) {
 	stageInfo := p.Throttled.Update(jobID)
 	p.Dispatched.Add(stageInfo, -1)
+}
+
+//String return performance string
+func (p *Performance) String() string {
+	return fmt.Sprintf("%v: events: %v, dipatched: {batched: %v, load: %v, copy:%v, query: %v}, pending: {load:%v, copy: %v,  query: %v}, running: {load : %v, copy: %v, query: %v}, noFound: %v\n", p.ProjectID, p.Count, p.Dispatched.BatchJobs, p.Dispatched.LoadJobs, p.Dispatched.CopyJobs, p.Dispatched.QueryJobs, p.Pending.LoadJobs, p.Pending.CopyJobs, p.Pending.QueryJobs, p.Running.LoadJobs, p.Running.CopyJobs, p.Running.QueryJobs, p.NoFound)
 }
 
 //NewPerformance create a performance

@@ -1,7 +1,7 @@
 {
   "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "ErrorURL": "gs://${opsBucket}/BqDispatch/errors/",
-  "JournalURL": "gs://${opsBucket}/BqDispatch/Journal/",
+  "JournalURL": "gs://${opsBucket}/BqTail/Journal/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "TriggerBucket": "${triggerBucket}",
@@ -10,5 +10,6 @@
     "URL": "gs://${configBucket}/Secrets/slack.json.enc",
     "Key": "${prefix}_ring/${prefix}_key"
   },
-  "MaxConcurrentSQL": 80
+  "MaxConcurrentSQL": 80,
+  "MaxConcurrentLoad": 200
 }

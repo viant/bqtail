@@ -1,0 +1,11 @@
+When:
+  Prefix: "/sys/bqjob/"
+  Suffix: ".json"
+Async: true
+Dest:
+  Table: bqtail.bqjob
+Batch:
+  Window:
+    DurationInSec: 120
+OnSuccess:
+  - Action: delete

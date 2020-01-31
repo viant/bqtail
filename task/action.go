@@ -3,7 +3,6 @@ package task
 import (
 	"bqtail/base"
 	"bqtail/stage"
-	"fmt"
 	"github.com/viant/toolbox"
 	"reflect"
 	"strings"
@@ -76,8 +75,7 @@ func (a Action) New(root *stage.Info, request map[string]interface{}) *Action {
 	}
 
 	if base.IsLoggingEnabled() {
-		fmt.Printf("new action: %v\n", result.Action)
-		toolbox.Dump(result)
+		base.Log(result)
 	}
 
 	return result

@@ -20,10 +20,12 @@ import (
 	"strings"
 )
 
+type ProjectSelector func() string
+
 //Service representa a batch service
 type Service interface {
 	//Try to acquire batch window
-	TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule) (*Info, error)
+	TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule, projectSelector ProjectSelector) (*Info, error)
 
 	//MatchWindowDataURLs returns matching data URLs
 	MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) error
@@ -43,7 +45,7 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 }
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
-func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule) (*Info, error) {
+func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule, projectSelector ProjectSelector) (*Info, error) {
 	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, source.ModTime(), source.URL())
 	if err != nil {
 		return nil, err
@@ -78,6 +80,8 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source s
 	}
 
 	window = NewWindow(eventID, dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
+	window.ProjectID = projectSelector()
+
 	windowData, _ := json.Marshal(window)
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
 
@@ -88,9 +92,8 @@ func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source s
 				return nil, err
 			}
 		}
-		return &Info{OwnerEventID: window.EventID}, err
+		return &Info{OwnerEventID: window.EventID}, nil
 	}
-
 	if rule.Batch.MultiPath {
 		err = s.addLocationFile(ctx, window, parentURL)
 	}
@@ -153,7 +156,7 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 	}
 	var result = make([]string, 0)
 	for _, baseURL := range baseURLS {
-		if err := s.matchcData(ctx, window, rule, baseURL, modFilter, &result); err != nil {
+		if err := s.matchData(ctx, window, rule, baseURL, modFilter, &result); err != nil {
 			return err
 		}
 	}
@@ -161,7 +164,7 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 	return nil
 }
 
-func (s *service) matchcData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, matcher option.Matcher, result *[]string) error {
+func (s *service) matchData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, matcher option.Matcher, result *[]string) error {
 	objects, err := s.fs.List(ctx, baseURL, matcher)
 	if err != nil {
 		return errors.Wrapf(err, "failed to list batch %v data files", baseURL)

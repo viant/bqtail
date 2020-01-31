@@ -21,7 +21,7 @@ If you do not have slack testing token just create a file with dummy data.
  
 6. Checkout the this project:
 ```bash
-git clone https://bqtail.git
+git clone https://github.com/viant/bqtail.git
 cd bqtail/e2e
 ```
 6. Update Bucket name in config file (it has to be globally unique)

@@ -38,32 +38,32 @@ pipeline:
     source:
       URL: ${appPath}
 
-  bqdisaptch:
-    action: gcp/cloudfunctions:deploy
-    credentials: $gcpCredentials
-    '@name': BqDispatch
-    timeout: 59s
-    public: true
-    serviceAccountEmail: ${gcp.serviceAccount}
-    availableMemoryMb: 128
-    entryPoint: BqDispatch
-    runtime: go111
-    environmentVariables:
-      CONFIG: gs://${configBucket}/BqDispatch/config.json
-      LOGGING: false
-      GS_MAX_RETRIES: 20
-    source:
-      URL: ${appPath}
-
-  schedule:
-    action: gcp/cloudscheduler:deploy
-    credentials: $gcpCredentials
-    name: BqDispatch
-    schedule: '*/1 * * * *'
-    body: {}
-    timeZone: GMT
-    httpTarget:
-      headers:
-        User-Agent: Google-Cloud-Scheduler
-      httpMethod: POST
-      uri: https://${region}-${gcp.ProjectID}.cloudfunctions.net/BqDispatch
+#  bqdisaptch:
+#    action: gcp/cloudfunctions:deploy
+#    credentials: $gcpCredentials
+#    '@name': BqDispatch
+#    timeout: 59s
+#    public: true
+#    serviceAccountEmail: ${gcp.serviceAccount}
+#    availableMemoryMb: 128
+#    entryPoint: BqDispatch
+#    runtime: go111
+#    environmentVariables:
+#      CONFIG: gs://${configBucket}/BqDispatch/config.json
+#      LOGGING: false
+#      GS_MAX_RETRIES: 20
+#    source:
+#      URL: ${appPath}
+#
+#  schedule:
+#    action: gcp/cloudscheduler:deploy
+#    credentials: $gcpCredentials
+#    name: BqDispatch
+#    schedule: '*/1 * * * *'
+#    body: {}
+#    timeZone: GMT
+#    httpTarget:
+#      headers:
+#        User-Agent: Google-Cloud-Scheduler
+#      httpMethod: POST
+#      uri: https://${region}-${gcp.ProjectID}.cloudfunctions.net/BqDispatch

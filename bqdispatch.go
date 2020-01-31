@@ -1,12 +1,11 @@
 package bqtail
 
 import (
+	"bqtail/base"
 	"bqtail/dispatch"
 	"bqtail/dispatch/contract"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 )
 
@@ -24,12 +23,9 @@ func handleDispatchEvent(ctx context.Context) (*contract.Response, error) {
 		return nil, err
 	}
 	response := service.Dispatch(ctx)
-	if data, err := json.Marshal(response); err == nil {
-		fmt.Printf("%v\n", string(data))
-	}
+	base.Log(response)
 	if response.Error != "" {
 		return response, errors.New(response.Error)
 	}
-
 	return response, nil
 }

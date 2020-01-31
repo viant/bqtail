@@ -31,7 +31,7 @@ type Destination struct {
 	pattern          *regexp.Regexp
 	Schema           Schema            `json:",omitempty"`
 	TransientDataset string            `json:",omitempty"`
-	TransientAlias   string            `json:",omitempty"`
+	Transient        *Transient        `json:",omitempty"`
 	UniqueColumns    []string          `json:",omitempty"`
 	Transform        map[string]string `json:",omitempty"`
 	SideInputs       []*SideInput      `json:",omitempty"`
@@ -51,7 +51,7 @@ func (d Destination) Clone() *Destination {
 		pattern:          d.pattern,
 		Schema:           d.Schema,
 		TransientDataset: d.TransientDataset,
-		TransientAlias:   d.TransientAlias,
+		Transient:        d.Transient,
 		UniqueColumns:    d.UniqueColumns,
 		SideInputs:       d.SideInputs,
 	}
@@ -63,25 +63,39 @@ func (d Destination) Validate() error {
 		return fmt.Errorf("dest.Table was empty")
 	}
 	if d.Schema.Split != nil {
-		if d.TransientDataset == "" {
-			return fmt.Errorf("dest.Schema.Split requires dest.TransientDataset")
+		if d.Transient == nil || d.Transient.Dataset == "" {
+			return fmt.Errorf("dest.Schema.Split requires dest.Transient.Dataset")
 		}
 		return d.Schema.Split.Validate()
 	}
 	if len(d.SideInputs) > 0 {
+		if d.Transient == nil || d.Transient.Dataset == "" {
+			return errors.Errorf("sideInput %v requires transient.dataset", d.SideInputs[0].Table)
+		}
 		for _, sideInput := range d.SideInputs {
-			if err := sideInput.Validate(d.TransientAlias); err != nil {
+			if err := sideInput.Validate(d.Transient.Alias); err != nil {
 				return err
 			}
 		}
+	}
+	if d.Transient != nil {
+		return d.Transient.Validate()
 	}
 	return nil
 }
 
 //Validate checks if destination is valid
 func (d *Destination) Init() error {
-	if d.TransientDataset != "" && d.TransientAlias == "" {
-		d.TransientAlias = "t"
+	if d.TransientDataset != "" {
+		if d.Transient == nil {
+			d.Transient = &Transient{Dataset: d.TransientDataset}
+		}
+		if d.Transient.Dataset == "" {
+			d.Transient.Dataset = d.TransientDataset
+		}
+	}
+	if d.Transient != nil && d.Transient.Alias == "" {
+		d.Transient.Alias = "t"
 	}
 	return nil
 }

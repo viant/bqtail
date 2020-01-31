@@ -19,6 +19,7 @@ type Info struct {
 
 //Window represent batching window
 type Window struct {
+	ProjectID  string         `json:",omitempty"`
 	EventID    string         `json:",omitempty"`
 	URL        string         `json:",omitempty"`
 	Filter     *matcher.Basic `json:",omitempty"`

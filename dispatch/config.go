@@ -18,9 +18,9 @@ import (
 type Config struct {
 	base.Config
 	config.Ruleset
-	TimeToLiveInMin     int
-	MaxConcurrentSQL    int
-	MaxConcurrentJobs   int
+	TimeToLiveInMin   int
+	MaxConcurrentSQL  int
+	MaxConcurrentLoad int
 }
 
 //TimeToLive returns time to live

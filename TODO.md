@@ -1,3 +1,4 @@
 - Update documentation/examples
 - Add conditional tasks
-- Multi transient project support (to distribute load, quotas accross various project)
+- Add push pubsub custom message
+- Add transient project balancer e2e test

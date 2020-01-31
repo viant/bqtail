@@ -24,6 +24,7 @@ const (
 
 //Info represents processing stage
 type Info struct {
+	ProjectID  string    `json:",omitempty"`
 	SourceURI  string    `json:",omitempty"`
 	Counter    int       `json:",omitempty"`
 	LoadURIs   []string  `json:",omitempty"`
@@ -43,7 +44,7 @@ func (i *Info) ID() string {
 	return path.Join(i.DestTable, fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action)+PathElementSeparator+i.Suffix)
 }
 
-//JobFilename returns job filename	
+//JobFilename returns job filename
 func (i *Info) JobFilename() string {
 	dest := i.DestTable
 	if dest != "" {
@@ -69,6 +70,7 @@ func (i *Info) ChildInfo(action string, step int) *Info {
 		suffix = nopAction
 	}
 	result := &Info{
+		ProjectID: i.ProjectID,
 		SourceURI: i.SourceURI,
 		RuleURL:   i.RuleURL,
 		DestTable: i.DestTable,
@@ -97,6 +99,7 @@ func (i *Info) Wrap(action string) *Info {
 	return &Info{
 		SourceURI: i.SourceURI,
 		RuleURL:   i.RuleURL,
+		ProjectID: i.ProjectID,
 		DestTable: i.DestTable,
 		Suffix:    suffix,
 		EventID:   i.EventID,
@@ -186,8 +189,9 @@ func (i Info) AsMap() map[string]interface{} {
 }
 
 //New create a processing stage info
-func New(source, dest, eventID, action, suffix string, async bool, step int, ruleURL string) *Info {
+func New(projectID, source, dest, eventID, action, suffix string, async bool, step int, ruleURL string) *Info {
 	return &Info{
+		ProjectID: projectID,
 		SourceURI: source,
 		DestTable: dest,
 		EventID:   eventID,

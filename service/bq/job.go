@@ -13,7 +13,8 @@ func (s *service) GetJob(ctx context.Context, projectID, jobID string) (job *big
 	call := jobService.Get(projectID, jobID)
 	call.Context(ctx)
 	for i := 0; i < base.MaxRetries; i++ {
-		if job, err = call.Do(); err == nil {
+		job, err = call.Do()
+		if err == nil {
 			break
 		}
 		if base.IsRetryError(err) {

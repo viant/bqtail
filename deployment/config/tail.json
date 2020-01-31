@@ -8,6 +8,7 @@
   "CorruptedFileURL": "gs://${mirrorBucket}/bqtail/corrupted/",
   "InvalidSchemaURL": "gs://${opsBucket}/BqTail/invalid_schema/",
   "RulesURL": "gs://${configBucket}/BqTail/Rules/",
+  "BqJobInfoPath": "/sys/bqjob/",
   "TriggerBucket": "${triggerBucket}",
   "CheckInMs": 15000,
   "SlackCredentials": {

@@ -8,6 +8,7 @@ type Metrics struct {
 	QueryJobs int `json:",omitempty"`
 	LoadJobs  int `json:",omitempty"`
 	OtherJobs int `json:",omitempty"`
+	BatchJobs int `json:",omitempty"`
 }
 
 //Count returns total metrics count

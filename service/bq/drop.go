@@ -60,10 +60,11 @@ func (r *DropRequest) Validate() error {
 }
 
 //NewDropRequest creates a new drop request
-func NewDropRequest(table string, finally *task.Actions) *DropRequest {
+func NewDropRequest(projectID, table string, finally *task.Actions) *DropRequest {
 	result := &DropRequest{
 		Table: table,
 	}
+	result.ProjectID = projectID
 	if table != "" {
 		result.dropTable, _ = base.NewTableReference(table)
 	}
