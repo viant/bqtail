@@ -25,7 +25,7 @@ where:
   "Async": true,
   "Dest": {
     "Table": "bqtail.dummy_v20",
-    "TransientDataset": "temp",
+    "Transient":{"Dataset": "temp"},
     "UniqueColumns": [
       "id"
     ]

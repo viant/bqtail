@@ -4,6 +4,7 @@
   * Updated dispatcher to work across projects
   * Completed jobs logging with basic info i.e bytes, slots usage, time taken
   * Added transient projects load balancer (rand/fallback)
+  * Deprecated TransientDataset - please user Transient.Dataset (currently both supported)
 
 ## Jan 14 2020 1.1.0
 

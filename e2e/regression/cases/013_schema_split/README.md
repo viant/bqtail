@@ -14,7 +14,8 @@ When:
 Async: true
 Dest:
   Table: bqtail.dummy_v${parentIndex}
-  TransientDataset: temp
+  Transient:
+    Dataset: temp
   Schema:
     Template: bqtail.dummy_v${parentIndex}
     Split:

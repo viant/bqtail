@@ -17,7 +17,8 @@ When:
   Suffix: .json
 Dest:
   Table: bqtail.dummy_v${parentIndex}
-  TransientDataset: temp
+  Transient:
+    Dataset: temp
 OnSuccess:
   - Action: delete
 ```

@@ -12,7 +12,8 @@ When:
   Suffix: ".json"
 Dest:
   Table: bqtail.dummy_v26
-  TransientDataset: temp
+  Transient:
+    Dataset: temp
   UniqueColumns:
     - id
   Transform:

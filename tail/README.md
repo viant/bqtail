@@ -144,7 +144,11 @@ It extends bigquery.JobConfigurationLoad load job configuration.
 - **Override** dest table override flag (append by default)
 - **Partition** dest table partition.
 - **Schema** defines dest table schem
-- **TransientDataset** transient dataset. (It is recommended to always used transient dataset)
+- **Transient** transient settings (for dedicated ingesting project settings)
+   * **Dataset** transient dataset. (It is recommended to always used transient dataset)
+   * **ProjectID** transient project
+   * **Balancer** multi projects balancer settings
+    
 - **UniqueColumns** deduplication unique columns
 - **Transform** map of dest table column with transformation expression
 - **SideInputs** transformation left join tables.
@@ -168,7 +172,7 @@ For daily data ingestion you can use the following rule to override individual p
       "Override": true,
       "Table": "myproject:mydataset.mytable",
       "Partition": "$Date",
-      "TransientDataset": "temp",
+      "Transient": {"Dataset": "temp"},
       "SkipLeadingRows": 1,
       "MaxBadRecords": 3,
       "FieldDelimiter": ",",
@@ -244,7 +248,7 @@ The following configuration specify transient dataset.
       },
       "Dest": {
         "Table": "mydataset.mytable",
-        "TransientDataset": "temp"
+        "Transient": {"Dataset": "temp"},
       },
       "OnSuccess": [
         {
@@ -273,7 +277,7 @@ When using transient table you can specify unique columns to deduplicate data wh
       },
       "Dest": {
         "Table": "mydataset.mytable",
-        "TransientDataset": "temp",
+        "Transient": {"Dataset": "temp"},
         "UniqueColumns": [
           "id"
         ]
@@ -311,7 +315,7 @@ To dynamically rule data based on source data values you can use the following r
     "Async": true,
     "Dest": {
       "Table": "bqtail.dummy",
-      "TransientDataset": "temp",
+      "Transient": {"Dataset": "temp"},
       "Schema": {
         "Template": "bqtail.dummy",
         "Split": {
@@ -350,7 +354,7 @@ To dynamically rule data based on source data values you can use the following r
     "Async": true,
     "Dest": {
       "Table": "bqtail.dummy",
-      "TransientDataset": "temp",
+      "Transient": {"Dataset": "temp"},
       "Transform": {
         "event_type": "et.name"
       },

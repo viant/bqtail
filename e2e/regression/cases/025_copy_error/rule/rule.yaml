@@ -3,7 +3,8 @@ When:
   Suffix: ".csv"
 Dest:
   Table: bqtail.dummy_v${parentIndex}
-  TransientDataset: temp
+  Transient:
+    Dataset: temp
   AllowJaggedRows: true
   Schema:
     TransientTemplate: bqtail.dummy_v${parentIndex}_temp

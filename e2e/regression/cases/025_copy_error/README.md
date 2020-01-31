@@ -13,7 +13,8 @@ When:
   Suffix: ".csv"
 Dest:
   Table: bqtail.dummy_v25
-  TransientDataset: temp
+  Transient:
+    Dataset: temp
   Schema:
     TransientTemplate: bqtail.dummy_v25_temp
 Batch:

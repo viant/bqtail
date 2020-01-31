@@ -9,7 +9,7 @@
       "Override": true,
       "Table": "${gcp.ProjectID}:test.dummy_v1",
       "Partition": "$Date",
-      "TransientDataset": "temp",
+      "Transient":{"Dataset": "temp"},
       "SkipLeadingRows": 1,
       "MaxBadRecords": 3,
       "FieldDelimiter": ",",

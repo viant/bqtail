@@ -9,7 +9,7 @@
       "Override": true,
       "Table": "myproject:mydataset.mytable",
       "Partition": "$Date",
-      "TransientDataset": "temp",
+      "Transient": {"Dataset": "temp"},
       "SkipLeadingRows": 1,
       "MaxBadRecords": 3,
       "FieldDelimiter": ",",

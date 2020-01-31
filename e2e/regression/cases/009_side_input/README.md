@@ -12,7 +12,8 @@ When:
   Suffix: .json
 Dest:
   Table: bqtail.dummy_v${parentIndex}
-  TransientDataset: temp
+  Transient:
+    Dataset: temp
   TransientAlias: t
   Transform:
     event_type: et.name

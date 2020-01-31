@@ -30,7 +30,7 @@ It matches the the following rule to submit load Job to BiqQuery.
     },
     "Dest": {
       "Table": "bqtail.dummy",
-      "TransientDataset": "temp",
+      "Transient":{"Dataset": "temp"},
       "UniqueColumns": ["id"],
       "Transform": {
         "event_id": "$EventID"

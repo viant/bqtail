@@ -8,7 +8,8 @@ Dest:
   Pattern: "/mylogs/.+/.+/(\\d{4})/(\\d{2})/(\\d{2})/.+"
   Table: myproject:mydataset.mytable_$1$2$3
   SourceFormat: NEWLINE_DELIMITED_JSON
-  TransientDataset: temp
+  Transient:
+    Dataset: temp
   Schema:
     Template: myproject:mydataset.mytempate
     Split:

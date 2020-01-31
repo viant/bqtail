@@ -7,7 +7,7 @@
     },
     "Dest": {
       "Table": "mydataset.mytable",
-      "TransientDataset": "temp",
+      "Transient": {"Dataset": "temp"},
       "UniqueColumns": [
         "id"
       ]

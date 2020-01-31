@@ -7,7 +7,9 @@
     "Async": true,
     "Dest": {
       "Table": "${gcp.ProjectID}:test.dummy",
-      "TransientDataset": "temp"
+      "Transient":{
+          "Dataset": "temp"
+      }
     },
     "Batch": {
       "Window": {

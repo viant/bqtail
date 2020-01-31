@@ -7,7 +7,7 @@
     "Async": true,
     "Dest": {
       "Table": "bqtail.dummy",
-      "TransientDataset": "temp",
+      "Transient": {"Dataset": "temp"},
       "Transform": {
         "event_type": "et.name"
       },

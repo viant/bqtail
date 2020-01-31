@@ -123,7 +123,8 @@ Dest:
   Pattern: "/mylogs/.+/(\\d{4})/(\\d{2})/(\\d{2})/.+"
   Table: myproject:mydataset.mytable_$1$2$3
   SourceFormat: NEWLINE_DELIMITED_JSON
-  TransientDataset: temp
+  Transient:
+    Dataset: temp
   Schema:
     Template: myproject:mydataset.mytempate
     Split:
@@ -169,7 +170,9 @@ Info:
       "Override": true,
       "Table": "myproject:mydataset.mytable",
       "Partition": "$Date",
-      "TransientDataset": "temp",
+      "Transient":{
+         "Dataset":"temp" 
+      }, 
       "SkipLeadingRows": 1,
       "MaxBadRecords": 3,
       "FieldDelimiter": ",",
@@ -199,7 +202,8 @@ Batch:
     DurationInSec: 10
 Dest:
   Table: bqtail.transactions
-  TransientDataset: temp
+  Transient:
+    Dataset: temp
   TransientAlias: t
   Transform:
     charge: (CASE WHEN type_id = 1 THEN t.payment + f.value WHEN type_id = 2 THEN t.payment * (1 + f.value) END)

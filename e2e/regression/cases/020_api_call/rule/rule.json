@@ -6,7 +6,7 @@
   "Async": true,
   "Dest": {
     "Table": "bqtail.dummy_v${parentIndex}",
-    "TransientDataset": "temp",
+    "Transient":{"Dataset": "temp"},
     "UniqueColumns": [
       "id"
     ]

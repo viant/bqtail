@@ -20,7 +20,7 @@ It matches the the following rule to submit load Job to BiqQuery.
     "Async": true,
     "Dest": {
       "Table": "bqtail.dummy",
-      "TransientDataset": "temp",
+      "Transient":{"Dataset": "temp"},
       "UniqueColumns": ["id"]
     },
     "Batch": {

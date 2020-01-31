@@ -17,7 +17,8 @@ It uses the following rule:
       DurationInSec: 10
   Dest:
     Table: bqtail.transactions
-    TransientDataset: temp
+    Transient:
+        Dataset: temp
     TransientAlias: t
     Transform:
       charge: (CASE WHEN type_id = 1 THEN t.payment + f.value WHEN type_id = 2 THEN t.payment * (1 + f.value) END)
