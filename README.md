@@ -22,7 +22,7 @@ In addition it also provides data transformation enrichment and deduplication ca
 A single point means that there is only one deployment instance of bqtai/dispatch/monitor to ingest data to various BigQuery projects, where each ingestion process can use a dedicated one or more transient projects to control billing, reservation, or default-pipeline workload.
 The transient project function is to load data to a temp table, run the optional transformation, and copy data to a destination table.
 
-Having a dedicated project only for loading data, allowed us to identify intermittent loading capacity limitations on default-pipeline, with BqTail monitor 
+Having a dedicated project only for loading data, allowed us to identify intermittent loading capacity reduction on default-pipeline, with BqTail monitor 
  reporting every ingestion process in real-time with the worst-case scenario end to end process ingestion time.
 In some cases, we've seen delays up to a few hours from average under minute baseline load completion time. BqTail addresses loading capacity issue by either using a transient BigQuery project with slot reservation, or by load balancing
 data ingestion across various regions/projects.
