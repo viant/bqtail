@@ -15,7 +15,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 ## Motivation
 
-The goal of this project is to provide a single point of robust and cost-effective events driven, data ingestion to Big Query.
+The goal of this project is to provide a single point of robust and cost-effective event driven, data ingestion to Big Query.
 BqTail elegantly addresses  BigQuery limitations/restriction/quotas (load jobs per table, project, corrupted data files) with batching and transient project(s)/dataset approach.
 In addition it also provides data transformation enrichment and deduplication capabilities.
 
