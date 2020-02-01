@@ -44,9 +44,16 @@ func (p Performance) ActiveQueryCount() int {
 
 //ActiveQueryCount returns active query count
 func (p Performance) ActiveLoadCount() int {
-	return p.Pending.LoadJobs +
-		p.Running.LoadJobs
+	result := 0
+	if p.Pending != nil {
+		result += p.Pending.LoadJobs
+	}
+	if p.Running != nil {
+		result += p.Running.LoadJobs
+	}
+	return result
 }
+
 
 //AddEvent adds running, pending metrics
 func (p *Performance) AddEvent(state string, jobID string) {

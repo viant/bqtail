@@ -28,17 +28,20 @@ func (t Balancer) ProjectID(performance contract.ProjectPerformance) string {
 	}
 	switch t.Strategy {
 	case base.BalancerStrategyFallback:
-		if len(performance) > 0 {
-			for _, projectID := range t.ProjectIDs {
-				perf, ok := performance[projectID]
-				if !ok {
-					return projectID
-				}
-				if perf.ActiveLoadCount() > t.MaxLoadJobs {
-					return projectID
-				}
+		if len(performance) == 0 {
+			return t.ProjectIDs[0]
+		}
+
+		for _, projectID := range t.ProjectIDs {
+			perf, ok := performance[projectID]
+			if !ok {
+				return projectID
+			}
+			if perf.ActiveLoadCount() < t.MaxLoadJobs {
+				return projectID
 			}
 		}
+
 	}
 	index := int(uint(rand.NewSource(time.Now().UnixNano()).Int63()) % uint(len(t.ProjectIDs)))
 	return t.ProjectIDs[index]
