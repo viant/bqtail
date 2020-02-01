@@ -1,4 +1,3 @@
 - Update documentation/examples
-- Add conditional tasks
-- Add push pubsub custom message
-- Add transient project balancer e2e test
+- Add conditional task
+- Add push pubsub task
