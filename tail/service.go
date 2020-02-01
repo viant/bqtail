@@ -217,6 +217,7 @@ func (s *service) buildLoadRequest(ctx context.Context, projectID string, job *J
 		Append:               rule.IsAppend(),
 		JobConfigurationLoad: job.Load,
 	}
+
 	if dest.Transient != nil {
 		tableReference.ProjectId = projectID
 		tableReference.DatasetId = dest.Transient.Dataset
