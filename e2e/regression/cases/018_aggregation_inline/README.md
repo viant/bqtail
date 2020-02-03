@@ -19,7 +19,7 @@ It uses the following rule:
     Table: bqtail.transactions
     Transient:
         Dataset: temp
-    TransientAlias: t
+        tAlias: t
     Transform:
       charge: (CASE WHEN type_id = 1 THEN t.payment + f.value WHEN type_id = 2 THEN t.payment * (1 + f.value) END)
     SideInputs:

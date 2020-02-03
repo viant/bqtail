@@ -9,7 +9,7 @@ Dest:
   Table: bqtail.transactions_v${parentIndex}
   Transient:
     Dataset: temp
-  TransientAlias: t
+    Alias: t
   Transform:
     charge: "(CASE WHEN type_id = 1 THEN t.payment + f.value WHEN type_id = 2 THEN
       t.payment * (1 + f.value) END)"

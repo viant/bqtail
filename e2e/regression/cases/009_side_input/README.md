@@ -14,7 +14,7 @@ Dest:
   Table: bqtail.dummy_v${parentIndex}
   Transient:
     Dataset: temp
-  TransientAlias: t
+    Alias: t
   Transform:
     event_type: et.name
   SideInputs:
