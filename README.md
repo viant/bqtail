@@ -32,7 +32,7 @@ To guarantee ingestion speed for critical data it is recommended to use project 
 
 
 
-This project is used by Viant to ingest **70+ billions** transactions _daily_, **1.4 million files** to 100+ tables, all under $15, as viable alternative
+_BqTail_ is used by Viant to ingest **70+ billions** transactions _daily_, **1.4 million files** to 100+ tables, all under $15, as viable alternative
 for Big Query Streaming API, BigQuery Transfer Service, Cloud Dataflow. 
 
 
