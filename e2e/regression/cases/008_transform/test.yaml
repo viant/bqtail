@@ -77,7 +77,7 @@ pipeline:
 
     checkDone:
       action: goto
-      when: $Len(${listDone.Assets}) = 0 && $doneCounter < 10
+      when: $Len(${listDone.Assets}) = 0 && $doneCounter < 15
       task: waitForDone
 
 
