@@ -89,7 +89,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
 	timeoutDuration := s.config.TimeToLive()
-	if timeoutDuration > remainingDuration {
+	if timeoutDuration > remainingDuration && remainingDuration > 0 {
 		timeoutDuration = remainingDuration
 	}
 	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
@@ -102,7 +102,9 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		cycleStartTime := time.Now()
 		waitGroup := &sync.WaitGroup{}
 		projectEvents, err := s.listProjectEvents(ctx)
-
+		for i := range projectEvents {
+			fmt.Printf("Processing: %v %v\n", projectEvents[i].ProjectID, len(projectEvents[i].Items))
+		}
 		if isProcessingError(err) {
 			return err
 		}
@@ -237,7 +239,6 @@ func (s *service) filterCandidate(response *contract.Response, objects []astorag
 
 func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Events, response *contract.Response, jobsByID *jobs) (err error) {
 	waitGroup := &sync.WaitGroup{}
-
 	for i, object := range events.Items {
 		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
 			continue
@@ -260,6 +261,10 @@ func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Event
 			response.GetCount++
 			job, err := s.bq.GetJob(ctx, events.ProjectID, jobID)
 			if err != nil || job == nil {
+				if time.Now().Sub(object.ModTime()) > 5*time.Minute {
+					//If not job has been found for 5 min - delete file otherwise checking too many non existing jobs can clog dispatcher
+					s.fs.Delete(ctx, object.URL())
+				}
 				events.NoFound++
 				continue
 			}

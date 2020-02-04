@@ -454,7 +454,6 @@ func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobCo
 	return extendedSchema, nil
 }
 
-
 func (s *service) addSplitActions(ctx context.Context, projectID, selectAll string, parent stage.Info, job *Job, rule *config.Rule, result, onDone *task.Actions) error {
 	split := rule.Dest.Schema.Split
 	next := onDone

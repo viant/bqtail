@@ -1,0 +1,1 @@
+make sure that bqCredentials are setup with another e2e test project (difference from default CF) - then remove this file

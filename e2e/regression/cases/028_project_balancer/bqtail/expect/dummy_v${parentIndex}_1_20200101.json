@@ -1,0 +1,8 @@
+[
+  {
+    "@fromQuery@": "SELECT COUNT(1) AS cnt  FROM bqtail.dummy_v${parentIndex}_0_20200101"
+  },
+  {
+    "cnt": 500
+  }
+]

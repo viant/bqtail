@@ -4,6 +4,8 @@
 
 This project uses [endly](https://github.com/viant/endly/) end to end test runner.
 
+Min required endly version: 0.47.1
+
 1. Install latest [runner](https://github.com/viant/endly/releases) or use [endly docker image](https://github.com/viant/endly/tree/master/docker)
 2. Create dedicated GCP project for  end to end testing.
 3. Create e2e service account with admin permission on e2e test project

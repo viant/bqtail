@@ -48,7 +48,7 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule, projectSelector ProjectSelector) (*Info, error) {
 	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, source.ModTime(), source.URL())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to expand table: %v", rule.Dest.Table)
 	}
 	parentURL, _ := url.Split(source.URL(), gs.Scheme)
 	windowDest := dest
@@ -173,7 +173,7 @@ func (s *service) matchData(ctx context.Context, window *Window, rule *config.Ru
 		if rule.HasMatch(object.URL()) {
 			table, err := rule.Dest.ExpandTable(rule.Dest.Table, object.ModTime(), object.URL())
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "failed to expand table: %v", rule.Dest.Table)
 			}
 			if table != window.Table {
 				continue

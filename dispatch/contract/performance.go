@@ -54,7 +54,6 @@ func (p Performance) ActiveLoadCount() int {
 	return result
 }
 
-
 //AddEvent adds running, pending metrics
 func (p *Performance) AddEvent(state string, jobID string) {
 	atomic.AddUint32(&p.Count, 1)

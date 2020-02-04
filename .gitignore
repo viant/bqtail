@@ -12,3 +12,4 @@ local3_test.go
 /aws/sns/smirrorsns
 /aws/sqs/smirrorsqs
 scratchpad
+scratchpad/

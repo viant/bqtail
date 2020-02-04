@@ -1,0 +1,26 @@
+When:
+  Prefix: "/data/case${parentIndex}"
+  Suffix: ".json"
+Async: true
+Dest:
+  Pattern: /data/case${parentIndex}/(\d{4})/(\d{2})/(\d{2})/.+
+  Transient:
+    Dataset: temp
+    Balancer:
+      Strategy: rand
+      MaxLoadJobs: 2
+      ProjectIDs:
+        - ${bqProjectID}
+        - ${projectID}
+  Table: ${projectID}:bqtail.dummy_v${parentIndex}_$Mod(2)_$1$2$3
+
+Batch:
+  Window:
+    MultiPath: true
+    DurationInSec: 10
+OnSuccess:
+  - Action: delete
+Info:
+  Workflow: Test logs
+  ProjectURL: JIRA/WIKi or any link referece
+  LeadEngineer: Lead enginerr here

@@ -5,6 +5,9 @@
   * Completed jobs logging with basic info i.e bytes, slots usage, time taken
   * Added transient projects load balancer (rand/fallback)
   * Deprecated TransientDataset - please use Transient.Dataset (currently both supported)
+  * Patch pattern setting with yaml format
+  * Added seamless rule transition (more than one rule matching the same path but only one enabled) 
+  
 
 ## Jan 14 2020 1.1.0
 
