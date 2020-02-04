@@ -82,6 +82,21 @@ func (r Ruleset) Match(URL string) []*Rule {
 			matched = append(matched, r.Rules[i])
 		}
 	}
+	//to migrate rule for the same path, 2 rules matching the same URL can exist but only one has to be enabled
+	if len(matched) > 1 {
+		temp := matched
+		matched = make([]*Rule, 0)
+		for i := range temp {
+			if temp[i].Disabled {
+				continue
+			}
+			matched = append(matched, temp[i])
+		}
+		if len(matched) == 0 {
+			matched = append(matched, temp[0])
+		}
+	}
+
 	return matched
 }
 

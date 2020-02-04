@@ -28,21 +28,49 @@ func (t Balancer) ProjectID(performance contract.ProjectPerformance) string {
 	}
 	switch t.Strategy {
 	case base.BalancerStrategyFallback:
-		if len(performance) == 0 {
-			return t.ProjectIDs[0]
+		if projectID := t.selectPrioritizedProject(performance);projectID != "" {
+			return projectID
 		}
-
-		for _, projectID := range t.ProjectIDs {
-			perf, ok := performance[projectID]
-			if !ok {
-				return projectID
-			}
-			if perf.ActiveLoadCount() < t.MaxLoadJobs {
-				return projectID
-			}
-		}
+		return t.selectRandomProject()
 
 	}
+
+	projectID := t.selectRandomProject()
+	if t.MaxLoadJobs == 0 || len(performance) == 0 {
+		return projectID
+	}
+	perf, ok := performance[projectID]
+	if !ok {
+		return projectID
+	}
+	if perf.ActiveLoadCount() < t.MaxLoadJobs {
+		return projectID
+	}
+	if underLoadProjectID := t.selectPrioritizedProject(performance); underLoadProjectID != "" {
+		projectID = underLoadProjectID
+	}
+	return projectID
+}
+
+
+func (t Balancer) selectRandomProject() string {
 	index := int(uint(rand.NewSource(time.Now().UnixNano()).Int63()) % uint(len(t.ProjectIDs)))
-	return t.ProjectIDs[index]
+	projectID := t.ProjectIDs[index]
+	return projectID
+}
+
+func (t Balancer) selectPrioritizedProject(performance contract.ProjectPerformance) string {
+	if len(performance) == 0 {
+		return t.ProjectIDs[0]
+	}
+	for _, projectID := range t.ProjectIDs {
+		perf, ok := performance[projectID]
+		if !ok {
+			return projectID
+		}
+		if perf.ActiveLoadCount() < t.MaxLoadJobs {
+			return projectID
+		}
+	}
+	return ""
 }

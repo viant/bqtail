@@ -88,53 +88,68 @@ func TestRoutes_HasMatch(t *testing.T) {
 		URL         string
 		expextTable string
 	}{
+		//{
+		//	description: "suffix match",
+		//	Ruleset: []*Rule{
+		//		{
+		//			When: matcher.Basic{
+		//				Suffix: ".tsv",
+		//			},
+		//			Dest: &Destination{
+		//				Table: "project:dataset:table1",
+		//			},
+		//		},
+		//		{
+		//			When: matcher.Basic{
+		//				Suffix: ".csv",
+		//			},
+		//			Dest: &Destination{
+		//				Table: "project:dataset:table2",
+		//			},
+		//		},
+		//	},
+		//
+		//	URL:         "ssh://zz/folder/a.csv",
+		//	expextTable: "project:dataset:table2",
+		//},
+		//{
+		//	description: "prefix with long file",
+		//	Ruleset: []*Rule{
+		//		{
+		//			When: matcher.Basic{
+		//				Prefix: "/s",
+		//			},
+		//			Dest: &Destination{
+		//				Table: "project:dataset:table3",
+		//			},
+		//		},
+		//		{
+		//			When: matcher.Basic{
+		//				Prefix: "/g",
+		//			},
+		//			Dest: &Destination{
+		//				Table: "project:dataset:table4",
+		//			},
+		//		},
+		//	},
+		//
+		//	URL:         "ssh://zz/folder/a.csv",
+		//	expextTable: "",
+		//},
 		{
-			description: "suffix match",
+			description: "pattern match",
 			Ruleset: []*Rule{
 				{
 					When: matcher.Basic{
-						Suffix: ".tsv",
-					},
-					Dest: &Destination{
-						Table: "project:dataset:table1",
-					},
-				},
-				{
-					When: matcher.Basic{
-						Suffix: ".csv",
-					},
-					Dest: &Destination{
-						Table: "project:dataset:table2",
-					},
-				},
-			},
-
-			URL:         "ssh://zz/folder/a.csv",
-			expextTable: "project:dataset:table2",
-		},
-		{
-			description: "prefix with long file",
-			Ruleset: []*Rule{
-				{
-					When: matcher.Basic{
-						Prefix: "/s",
-					},
-					Dest: &Destination{
-						Table: "project:dataset:table3",
-					},
-				},
-				{
-					When: matcher.Basic{
-						Prefix: "/g",
+						Filter: "/data/case028/(\\d{4})/(\\d{2})/(\\d{2})/.+",
 					},
 					Dest: &Destination{
 						Table: "project:dataset:table4",
 					},
 				},
 			},
-
-			URL:         "ssh://zz/folder/a.csv",
-			expextTable: "",
+			expextTable: "project:dataset:table4",
+			URL:         "gs://viant_e2e_bqtail/data/case028/2020/01/01/dummy_5132008211853229192_0_0001.json",
 		},
 	}
 
@@ -149,7 +164,7 @@ func TestRoutes_HasMatch(t *testing.T) {
 			continue
 		}
 
-		if !assert.NotNil(t, actual, useCase.description) {
+		if !assert.True(t, len(actual) > 0, useCase.description) {
 			continue
 		}
 
