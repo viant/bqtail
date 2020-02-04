@@ -10,7 +10,6 @@ import (
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/url"
 	"path"
-	"regexp"
 	"time"
 )
 
@@ -68,18 +67,7 @@ func (r *Rule) DestTable(URL string, modTime time.Time) string {
 func (r *Rule) HasMatch(URL string) bool {
 	location := url.Path(URL)
 	parent, name := path.Split(location)
-
-	filer := r.When.Filter
-
-	if filer != "" {
-		compiled, _ := regexp.Compile(filer)
-		location := path.Join(parent, name)
-		fmt.Printf("matches %v %v !%v!\n", location, compiled.MatchString(location), filer)
-	}
-
 	match := r.When.Match(parent, file.NewInfo(name, 0, 0644, time.Now(), false))
-
-	fmt.Printf("%+v %v %v\n ", r.When, URL, match)
 	return match
 }
 
