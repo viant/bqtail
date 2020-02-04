@@ -3,7 +3,7 @@
 ### Scenario:
 
 This scenario tests data ingestion with explicit transient projects that are load balanced.
- Make sure that you have setup separate e2e project with credentials (run.yaml -> bqCredentials)
+Make sure that you have setup separate e2e project with credentials (run.yaml -> bqCredentials), remove skip.txt
 
 [@rule.yaml](rule/rule.yaml)
 ```yaml

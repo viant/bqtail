@@ -3,7 +3,8 @@
 ### Scenario:
 
 This scenario tests data ingestion with explicit transient project ProjectID, that is difference from CF default project.
-Make sure that you have setup separate e2e project with credentials (run.yaml -> bqCredentials)
+Make sure that you have setup separate e2e project with credentials (run.yaml -> bqCredentials), remove skip.txt
+
 
 [@rule.yaml](rule/rule.yaml)
 ```yaml

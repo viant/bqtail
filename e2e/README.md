@@ -212,7 +212,22 @@ endly -t=init
 - [Post query job error](regression/cases/026_post_query_error)
 
 ```bash
-    
     endly -t=test -i=post_query_error
+```
+
+
+
+- [Explicit Transient Project](regression/cases/027_transient_project)
+
+```bash
+    endly -t=test -i=transient_project
+```
+
+
+- [Explicit Projects Loadbalancer](regression/cases/028_project_balancer)
+
+```bash
+    
+    endly -t=test -i=project_balancer
 ```
 
