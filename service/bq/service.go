@@ -13,7 +13,7 @@ import (
 type Service interface {
 	task.Service
 
-	GetJob(ctx context.Context, projectID, jobID string) (*bigquery.Job, error)
+	GetJob(ctx context.Context, location, projectID, jobID string) (*bigquery.Job, error)
 
 	ListJob(ctx context.Context, projectID string, minCreateTime, maxCreateTime time.Time, stateFilter ...string) ([]*bigquery.JobListJobs, error)
 

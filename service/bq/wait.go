@@ -12,7 +12,7 @@ func (s *service) Wait(ctx context.Context, ref *bigquery.JobReference) (*bigque
 	var err error
 	var statusJob *bigquery.Job
 	for {
-		if statusJob, err = s.GetJob(ctx, ref.ProjectId, ref.JobId); err != nil {
+		if statusJob, err = s.GetJob(ctx, ref.Location, ref.ProjectId, ref.JobId); err != nil {
 			return nil, err
 		}
 		if statusJob.Status.State == base.DoneState {
@@ -29,7 +29,7 @@ func (s *service) waitWithTimeout(ctx context.Context, ref *bigquery.JobReferenc
 	started := time.Now()
 	var statusJob *bigquery.Job
 	for {
-		if statusJob, err = s.GetJob(ctx, ref.ProjectId, ref.JobId); err != nil {
+		if statusJob, err = s.GetJob(ctx, ref.Location, ref.ProjectId, ref.JobId); err != nil {
 			return nil, err
 		}
 		if statusJob.Status.State == base.DoneState {

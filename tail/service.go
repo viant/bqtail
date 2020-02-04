@@ -30,6 +30,7 @@ import (
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 )
@@ -667,11 +668,10 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 			projectID = s.config.ProjectID
 		}
 	}
-
-	bqJob, err := s.bq.GetJob(ctx, projectID, actions.Job.JobReference.JobId)
+	bqJob, err := s.bq.GetJob(ctx, s.config.Region, projectID, actions.Job.JobReference.JobId)
 	if err != nil {
 		response.Retriable = base.IsRetryError(err)
-		return errors.Wrapf(err, "failed to fetch job [%v]%v, %v", projectID, actions.Job.JobReference.JobId, actions)
+		return errors.Wrapf(err, "failed to fetch job %v, (check bigquery.jobs.get permission on %v for %v)", actions.Job.JobReference.JobId, projectID, os.Getenv("FUNCTION_IDENTITY"))
 	}
 
 	if err := s.logJobInfo(ctx, bqJob); err != nil {

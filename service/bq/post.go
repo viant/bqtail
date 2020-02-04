@@ -21,6 +21,7 @@ func (s *service) setJobID(ctx context.Context, projectID string, actions *task.
 	if actions != nil {
 		ID = actions.Info.GetJobID()
 	}
+
 	return &bigquery.JobReference{
 		JobId:     ID,
 		ProjectId: projectID,
@@ -118,5 +119,5 @@ func (s *service) post(ctx context.Context, projectID string, job *bigquery.Job,
 	if err != nil || (callJob != nil && base.JobError(callJob) != nil) {
 		return callJob, err
 	}
-	return s.GetJob(ctx, projectID, job.JobReference.JobId)
+	return s.GetJob(ctx, job.JobReference.Location, projectID, job.JobReference.JobId)
 }
