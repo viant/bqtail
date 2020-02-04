@@ -660,18 +660,20 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		}
 	}
 	response.Info = &actions.Info
-	projectID := actions.Job.JobReference.ProjectId
+	projectID := actions.ProjectID
 	if projectID == "" {
-		projectID = actions.ProjectID
+		projectID = actions.Job.JobReference.ProjectId
 		if projectID == "" {
 			projectID = s.config.ProjectID
 		}
 	}
+
 	bqJob, err := s.bq.GetJob(ctx, projectID, actions.Job.JobReference.JobId)
 	if err != nil {
 		response.Retriable = base.IsRetryError(err)
-		return errors.Wrapf(err, "failed to fetch job %v", actions.Job.JobReference.JobId)
+		return errors.Wrapf(err, "failed to fetch job [%v]%v, %v", projectID, actions.Job.JobReference.JobId, actions)
 	}
+
 	if err := s.logJobInfo(ctx, bqJob); err != nil {
 		response.UploadError = fmt.Sprintf("failed to log job info: %v", err.Error())
 	}
