@@ -81,7 +81,7 @@ func (r Rule) Validate() error {
 
 func (r *Rule) Init(ctx context.Context, fs afs.Service) error {
 	actions := r.Actions()
-	if r.Dest.Pattern != "" {
+	if r.Dest.Pattern != "" && r.When.Filter == "" {
 		r.When.Filter = r.Dest.Pattern
 	}
 	return actions.Init(ctx, fs)

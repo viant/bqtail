@@ -117,10 +117,8 @@ func (d *Destination) Expand(dest string, created time.Time, source string) (str
 		dest = expandDate(dest, created, count)
 	}
 	if d.Pattern != "" {
-		fmt.Printf("compiled: %v\n", d.Pattern)
 		if d.compiled == nil {
 			d.compiled, err = regexp.Compile(d.Pattern)
-			fmt.Printf("compiled: %v %+v\n", err, d.compiled)
 			if err != nil {
 				return "", err
 			}
