@@ -152,5 +152,3 @@ func TestDestination_TableReference(t *testing.T) {
 	}
 
 }
-
-

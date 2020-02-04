@@ -28,7 +28,7 @@ type Destination struct {
 	//Pattern uses URI relative path (without leading backslash)
 	bigquery.JobConfigurationLoad
 	Pattern          string `json:",omitempty"`
-	pattern          *regexp.Regexp
+	compiled         *regexp.Regexp
 	Schema           Schema            `json:",omitempty"`
 	TransientDataset string            `json:",omitempty"`
 	Transient        *Transient        `json:",omitempty"`
@@ -48,7 +48,7 @@ func (d Destination) Clone() *Destination {
 	return &Destination{
 		Table:            d.Table,
 		Pattern:          d.Pattern,
-		pattern:          d.pattern,
+		compiled:         d.compiled,
 		Schema:           d.Schema,
 		TransientDataset: d.TransientDataset,
 		Transient:        d.Transient,
@@ -117,14 +117,15 @@ func (d *Destination) Expand(dest string, created time.Time, source string) (str
 		dest = expandDate(dest, created, count)
 	}
 	if d.Pattern != "" {
-		if d.pattern == nil {
-			d.pattern, err = regexp.Compile(d.Pattern)
+		fmt.Printf("compiled: %v\n", d.Pattern)
+		if d.compiled == nil {
+			d.compiled, err = regexp.Compile(d.Pattern)
+			fmt.Printf("compiled: %v %+v\n", err, d.compiled)
 			if err != nil {
 				return "", err
 			}
 		}
-
-		dest = expandWithPattern(d.pattern, source, dest)
+		dest = expandWithPattern(d.compiled, source, dest)
 	}
 	return dest, err
 }
