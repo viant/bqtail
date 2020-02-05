@@ -661,7 +661,10 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	response.Info = &actions.Info
 	actions.Region = actions.Job.JobReference.Location
 	actions.ProjectID = actions.Job.JobReference.ProjectId
-	bqJob, err := s.bq.GetJob(ctx, actions.Job.JobReference.Location, actions.Job.JobReference.ProjectId, actions.Job.JobReference.JobId)
+	if actions.ProjectID == "" {
+		actions.ProjectID = s.config.ProjectID
+	}
+	bqJob, err := s.bq.GetJob(ctx, actions.Job.JobReference.Location, actions.ProjectID, actions.Job.JobReference.JobId)
 	if err != nil {
 		response.Retriable = base.IsRetryError(err)
 		return errors.Wrapf(err, "failed to fetch aJob %v,", actions.Job.JobReference.JobId)

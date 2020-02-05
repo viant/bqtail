@@ -20,7 +20,7 @@ const maxJobLoadURIs = 10000
 func (s *service) Load(ctx context.Context, request *LoadRequest) (job *bigquery.Job, err error) {
 	projectID := request.ProjectID
 	if projectID == "" {
-		projectID = s.ProjectID
+		projectID = s.Config.ProjectID
 	}
 	request.Init(projectID)
 	if err := request.Validate(); err != nil {

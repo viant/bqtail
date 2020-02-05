@@ -5,7 +5,7 @@
   "SyncTaskURL": "gs://${opsBucket}/BqTail/Tasks/",
   "ErrorURL": "gs://${opsBucket}/BqTail/errors/",
   "JournalURL": "gs://${opsBucket}/BqTail/Journal/",
-  "CorruptedFileURL": "gs://${mirrorBucket}/bqtail/corrupted/",
+  "CorruptedFileURL": "gs://${opsBucket}/BqTail/corrupted/",
   "InvalidSchemaURL": "gs://${opsBucket}/BqTail/invalid_schema/",
   "RulesURL": "gs://${configBucket}/BqTail/Rules/",
   "BqJobInfoPath": "/sys/bqjob/",

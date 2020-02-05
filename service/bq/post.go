@@ -18,10 +18,14 @@ import (
 
 func (s *service) setJobID(request *Request) (*bigquery.JobReference, error) {
 	ID := request.Info.GetJobID()
+	projectID := request.ProjectID
+	if projectID == "" {
+		projectID = s.Config.ProjectID
+	}
 	return &bigquery.JobReference{
 		Location:  request.Region,
 		JobId:     ID,
-		ProjectId: request.ProjectID,
+		ProjectId: projectID,
 	}, nil
 }
 
@@ -90,9 +94,12 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, request *Request)
 	if base.IsLoggingEnabled() {
 		base.Log(job)
 	}
-
+	projectID := request.ProjectID
+	if projectID == "" {
+		projectID = s.Config.ProjectID
+	}
 	jobService := bigquery.NewJobsService(s.Service)
-	call := jobService.Insert(request.ProjectID, job)
+	call := jobService.Insert(projectID, job)
 	call.Context(ctx)
 	var callJob *bigquery.Job
 	for i := 0; i < shared.MaxRetries; i++ {
