@@ -83,6 +83,7 @@ func (s *service) OnDone(ctx context.Context, request *contract.Request, respons
 		if counter > s.config.MaxRetries {
 			response.RetryError = response.Error
 			response.Status = shared.StatusOK
+			response.Error = ""
 			location := url.Path(request.SourceURL)
 			retryDataURL := url.Join(s.config.JournalURL, shared.RetryDataSubpath, request.EventID, location)
 			if err := s.fs.Move(ctx, request.SourceURL, retryDataURL); err != nil {
