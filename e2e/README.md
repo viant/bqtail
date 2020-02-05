@@ -188,7 +188,6 @@ endly -t=init
 ```bash
     
     #remove skip.txt then run:
-    
     endly -t=test -i=permission_error
 ```
 
@@ -196,7 +195,6 @@ endly -t=init
 - [Batch corruption](regression/cases/024_batch_corruption)
 
 ```bash
-    
     endly -t=test -i=batch_corruption
 ```
 
@@ -204,7 +202,6 @@ endly -t=init
 - [Copy job error](regression/cases/025_copy_error)
 
 ```bash
-    
     endly -t=test -i=copy_error
 ```
 
@@ -227,7 +224,12 @@ endly -t=init
 - [Explicit Projects Loadbalancer](regression/cases/028_project_balancer)
 
 ```bash
-    
     endly -t=test -i=project_balancer
+```
+
+- [Copy job with explicit Project](regression/cases/029_transient_copy)
+
+```bash
+    endly -t=test -i=transient_copy
 ```
 
