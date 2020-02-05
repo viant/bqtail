@@ -1,4 +1,4 @@
-## Feb 3 2020 2.0.0
+## Feb 6 2020 2.0.0
   * Added custom transient project(s) on rule level support (reservation/billing project, distributing load)
   * Added batch job throttling
   * Updated dispatcher to work across projects
