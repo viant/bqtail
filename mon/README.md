@@ -20,7 +20,7 @@ If something goes wrong in between the process run file can:
 ## Usage
 
  ```bash
-curl/wget  https://${region}-${ProjectID}.cloudfunctions.net/BqMonitor?IncludeDone=true&DestBucket=${bqTailTirggerBucket}&DestPath=bqmon
+curl/wget  https://${region}-${ProjectID}.cloudfunctions.net/BqMonitor?IncludeDone=true&DestBucket=${bqTailTirggerBucket}&DestPath=sys/bqmon
 ```
 where:
  - IncludeDone: optional flag to include recently done task (may increase execution time) 
