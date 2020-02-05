@@ -1,0 +1,101 @@
+defaults:
+  credentials: $gcpCredentials
+
+pipeline:
+
+
+  deploy:
+    set_sdk:
+      action: sdk.set
+      target: $target
+      sdk: go:1.12
+
+    package:
+      action: exec:run
+      comments: vendor build for deployment speedup
+      target: $target
+      checkError: true
+      commands:
+        - export GIT_TERMINAL_PROMPT=1
+        - export GO111MODULE=on
+        - unset GOPATH
+        - cd ${appPath}/
+        - go mod vendor
+        - go build
+
+    deploay:
+      bqtail:
+        action: gcp/cloudfunctions:deploy
+        '@name': BqTail
+        timeout: 540s
+        public: true
+        availableMemoryMb: 128
+        entryPoint: BqTail
+        runtime: go111
+        retry: true
+        serviceAccountEmail: ${gcp.serviceAccount}
+        environmentVariables:
+          CONFIG: gs://${configBucket}/BqTail/config.json
+          LOGGING: true
+        eventTrigger:
+          eventType: google.storage.object.finalize
+          resource: projects/_/buckets/${triggerBucket}
+        source:
+          URL: ${appPath}/
+
+      bqdisaptch:
+        action: gcp/cloudfunctions:deploy
+        '@name': BqDispatch
+        timeout: 58s
+        public: true
+        serviceAccountEmail: ${gcp.serviceAccount}
+        availableMemoryMb: 128
+        entryPoint: BqDispatch
+        runtime: go111
+        environmentVariables:
+          CONFIG: gs://${configBucket}/BqDispatch/config.json
+          LOGGING: true
+        source:
+          URL: ${appPath}/
+
+      scheduleDispatcher:
+        action: gcp/cloudscheduler:deploy
+        credentials: $gcpCredentials
+        name: BqDispatch
+        schedule: '*/1 * * * *'
+        timeZone: GMT
+        httpTarget:
+          headers:
+            User-Agent: Google-Cloud-Scheduler
+          httpMethod: GET
+          uri: https://${region}-${gcp.ProjectID}.cloudfunctions.net/BqDispatch
+
+      echo:
+        action: gcp/cloudfunctions:deploy
+        comments: echo CF is used by one of e2e test calling HTTP API
+        '@name': Echo
+        timeout: 30s
+        availableMemoryMb: 128
+        entryPoint: Echo
+        runtime: go111
+        serviceAccountEmail: ${gcp.serviceAccount}
+        source:
+          URL: ${appPath}/e2e/echo
+
+
+      monitor:
+        action: gcp/cloudfunctions:deploy
+        comments: minitor service is used by error cases
+        '@name': BqMonitor
+        timeout: 540s
+        public: true
+        availableMemoryMb: 256
+        entryPoint: Monitor
+        runtime: go111
+        retry: true
+        serviceAccountEmail: ${gcp.serviceAccount}
+        environmentVariables:
+          CONFIG: gs://${configBucket}/BqTail/config.json
+          LOGGING: true
+        source:
+          URL: ${appPath}/
