@@ -100,7 +100,7 @@ func buildJoins(sideInputs []*config.SideInput) string {
 //buildSelect returns select SQL statement for specified parameter, if uniqueColumns SQL de-duplicates data
 func buildSelect(source *bigquery.TableReference, tableScheme *bigquery.TableSchema, uniqueColumns []string, transform map[string]string, tableAlias string) string {
 	tableID := base.TableID(source.TableId)
-	sourceTable := source.DatasetId + "." + tableID
+	sourceTable := "`" +source.ProjectId + "." +source.DatasetId + "." + tableID + "`"
 	schema := Schema(*tableScheme)
 	if len(uniqueColumns) == 0 {
 		return buildSelectAll(sourceTable, schema, transform, tableAlias)

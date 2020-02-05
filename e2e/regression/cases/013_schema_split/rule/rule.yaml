@@ -3,19 +3,19 @@ When:
   Suffix: .json
 Async: true
 Dest:
-  Table: bqtail.dummy_v${parentIndex}
+  Table: ${projectID}:bqtail.dummy_v${parentIndex}
   Transient:
     Dataset: temp
   Schema:
-    Template: bqtail.dummy_v${parentIndex}
+    Template: ${projectID}:bqtail.dummy_v${parentIndex}
     Split:
       ClusterColumns:
         - id
         - info.key
       Mapping:
         - When: MOD(id, 2) = 0
-          Then: bqtail.dummy_v${parentIndex}_0
+          Then: ${projectID}:bqtail.dummy_v${parentIndex}_0
         - When: MOD(id, 2) = 1
-          Then: bqtail.dummy_v${parentIndex}_1
+          Then: ${projectID}:bqtail.dummy_v${parentIndex}_1
 OnSuccess:
   - Action: delete
