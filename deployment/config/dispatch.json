@@ -11,5 +11,5 @@
     "Key": "${prefix}_ring/${prefix}_key"
   },
   "MaxConcurrentSQL": 80,
-  "MaxConcurrentLoad": 200
+  "MaxConcurrentLoad": 150
 }
