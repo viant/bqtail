@@ -123,6 +123,7 @@ func (a Actions) ToRun(err error, job *base.Job) []*Action {
 		for k, v := range childInfo.AsMap() {
 			toRun[i].Request[k] = v
 		}
+
 		if bodyAppendable[toRun[i].Action] {
 			if responseJSON, err := json.Marshal(a); err == nil {
 				toRun[i].Request[shared.ResponseKey] = string(responseJSON)

@@ -45,7 +45,7 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 		}
 	}
 	job.JobReference = request.jobReference()
-	return s.Post(ctx,  job, &request.Request)
+	return s.Post(ctx, job, &request.Request)
 }
 
 //QueryRequest represents Query request

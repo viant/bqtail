@@ -14,7 +14,7 @@ type Events struct {
 
 //New creates project events
 func New(regionProject string) *Events {
-	result :=  &Events{
+	result := &Events{
 		Performance: contract.NewPerformance(),
 		Items:       make([]storage.Object, 0),
 	}

@@ -5,7 +5,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
-func (s *service) adjustRegion(ctx  context.Context, request *Request, ref *bigquery.TableReference) {
+func (s *service) adjustRegion(ctx context.Context, request *Request, ref *bigquery.TableReference) {
 	if request.Region != "" {
 		return
 	}

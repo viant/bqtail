@@ -36,7 +36,6 @@ type service struct {
 	fs afs.Service
 }
 
-
 func (s *service) addLocationFile(ctx context.Context, window *Window, location string) error {
 	locationFile := fmt.Sprintf("%v%v", base.Hash(location), shared.LocationExt)
 	URL := strings.Replace(window.URL, shared.WindowExt, "/"+locationFile, 1)
@@ -45,7 +44,6 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 	}
 	return s.fs.Upload(ctx, URL, file.DefaultDirOsMode, strings.NewReader(location))
 }
-
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule, projectSelector ProjectSelector) (*Info, error) {

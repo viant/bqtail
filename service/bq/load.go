@@ -41,7 +41,6 @@ func (s *service) Load(ctx context.Context, request *LoadRequest) (job *bigquery
 	return s.loadInParts(ctx, job, request)
 }
 
-
 func (s *service) getUniqueURIs(ctx context.Context, candidates []string) []string {
 	var result = make([]string, 0)
 	var unique = map[string]bool{}
@@ -69,7 +68,7 @@ func (s *service) loadInParts(ctx context.Context, job *bigquery.Job, request *L
 
 		job.Configuration.Load.SourceUris = URIs[offset:limit]
 		job.JobReference.JobId = fmt.Sprintf("j%03d_%v", i, jobID)
-		if postJob, err = s.Post(ctx,  job, &request.Request); err != nil {
+		if postJob, err = s.Post(ctx, job, &request.Request); err != nil {
 			return nil, err
 		}
 	}

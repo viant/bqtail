@@ -354,7 +354,10 @@ func (s *service) addTransientDatasetActions(ctx context.Context, projectID stri
 		onFailureAction = actions.CloneOnFailure()
 		result.AddOnFailure(actions.OnFailure...)
 	}
-	tableID := job.Load.DestinationTable.DatasetId + "." + job.Load.DestinationTable.TableId
+	if job.Load.DestinationTable.ProjectId == "" {
+		job.Load.DestinationTable.ProjectId = s.config.ProjectID
+	}
+	tableID := "`" + job.Load.DestinationTable.ProjectId + "." + job.Load.DestinationTable.DatasetId + "." + job.Load.DestinationTable.TableId + "`"
 	dropAction, err := task.NewAction(shared.ActionDrop, &result.Info, bq.NewDropRequest(projectID, tableID, onFailureAction))
 	if err != nil {
 		return nil, err
