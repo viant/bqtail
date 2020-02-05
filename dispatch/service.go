@@ -104,7 +104,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		waitGroup := &sync.WaitGroup{}
 		projectEvents, err := s.listProjectEvents(ctx)
 		for i := range projectEvents {
-			fmt.Printf("Processing: %v %v\n", projectEvents[i].ProjectID, len(projectEvents[i].Items))
+			fmt.Printf("Processing: %v:%v %v\n", projectEvents[i].Region, projectEvents[i].ProjectID, len(projectEvents[i].Items))
 		}
 		if isProcessingError(err) {
 			return err
