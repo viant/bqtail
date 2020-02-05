@@ -1,6 +1,7 @@
 package base
 
 import (
+	"bqtail/shared"
 	"context"
 	"github.com/viant/afs"
 	"github.com/viant/afs/option"
@@ -92,7 +93,7 @@ func indexRules(rules []storage.Object) map[string]time.Time {
 			continue
 		}
 		ext := path.Ext(rule.Name())
-		if ext == JSONExt || ext == YAMLExt {
+		if ext == shared.JSONExt || ext == shared.YAMLExt {
 			indexed[rule.URL()] = rule.ModTime()
 		}
 	}

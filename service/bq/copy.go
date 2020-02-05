@@ -30,8 +30,9 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest) (*bigquery.Job
 		job.Configuration.Copy.WriteDisposition = "WRITE_TRUNCATE"
 	}
 	job.Configuration.Copy.CreateDisposition = "CREATE_IF_NEEDED"
+	s.adjustRegion(ctx, &request.Request, job.Configuration.Copy.DestinationTable)
 	job.JobReference = request.jobReference()
-	return s.Post(ctx, request.ProjectID, job, &request.Actions)
+	return s.Post(ctx, job, &request.Request)
 }
 
 //CopyRequest represents a copy request

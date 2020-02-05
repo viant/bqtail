@@ -3,6 +3,7 @@ package tail
 import (
 	"bqtail/base"
 	disp "bqtail/dispatch/contract"
+	"bqtail/shared"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
@@ -12,7 +13,7 @@ import (
 
 //LoadProjectPerformance loads project performance
 func LoadProjectPerformance(ctx context.Context, fs afs.Service, config *base.Config) (disp.ProjectPerformance, error) {
-	URL := url.Join(config.JournalURL, base.PerformanceFile)
+	URL := url.Join(config.JournalURL, shared.PerformanceFile)
 	if ok, _ := fs.Exists(ctx, URL); !ok {
 		return nil, nil
 	}

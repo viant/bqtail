@@ -25,7 +25,7 @@ The transient project function is to load data to a temp table, run the optional
 Having a dedicated project only for loading data, allowed us to identify occasional intermittent loading capacity reduction on default-pipeline, with BqTail monitor 
  reporting every ingestion process in real-time with the worst-case scenario end to end process ingestion time.
 In some cases, we've seen delays up to a few hours from average under minute baseline load completion time. BqTail addresses loading capacity issue by either using a transient BigQuery project with slot reservation, or by load balancing
-data ingestion across various regions/projects.
+data ingestion across various projects.
 
 Note that free of charge data ingestion takes place on default-pipeline reservation which is govern by [fair scheduler](https://cloud.google.com/bigquery/docs/slots#fair_scheduling_in_bigquery) allocating resources among competing load job across various projects.
 To guarantee ingestion speed for critical data it is recommended to use project with [slot reservation](https://cloud.google.com/bigquery/docs/slots)
@@ -101,7 +101,6 @@ OnFailure:
     Title: bqtail.wrong_dummy ingestion
     Message: "$Error"
     Token: SlackToken
-
 ```
 
 ##### **Data ingestion with URL date extraction and destnation mapping**

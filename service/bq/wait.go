@@ -1,7 +1,7 @@
 package bq
 
 import (
-	"bqtail/base"
+	"bqtail/shared"
 	"context"
 	"google.golang.org/api/bigquery/v2"
 	"time"
@@ -15,7 +15,7 @@ func (s *service) Wait(ctx context.Context, ref *bigquery.JobReference) (*bigque
 		if statusJob, err = s.GetJob(ctx, ref.Location, ref.ProjectId, ref.JobId); err != nil {
 			return nil, err
 		}
-		if statusJob.Status.State == base.DoneState {
+		if statusJob.Status.State == shared.DoneState {
 			break
 		}
 		time.Sleep(time.Second)
@@ -32,7 +32,7 @@ func (s *service) waitWithTimeout(ctx context.Context, ref *bigquery.JobReferenc
 		if statusJob, err = s.GetJob(ctx, ref.Location, ref.ProjectId, ref.JobId); err != nil {
 			return nil, err
 		}
-		if statusJob.Status.State == base.DoneState {
+		if statusJob.Status.State == shared.DoneState {
 			break
 		}
 		if time.Now().Sub(started) > timeout {

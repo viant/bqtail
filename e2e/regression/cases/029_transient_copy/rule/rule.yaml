@@ -1,0 +1,11 @@
+When:
+  Prefix: "/data/case${parentIndex}/"
+  Suffix: ".json"
+Dest:
+  Table: ${projectID}:bqtail.dummy_v${parentIndex}
+  Transient:
+    Dataset: temp
+    ProjectID: '${bqProjectID}'
+Async: true
+OnSuccess:
+ - Action: delete

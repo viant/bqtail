@@ -2,6 +2,7 @@ package task
 
 import (
 	"bqtail/base"
+	"bqtail/shared"
 	"bqtail/stage"
 	"context"
 	"encoding/json"
@@ -41,13 +42,13 @@ func (a *Actions) init(ctx context.Context, fs afs.Service, actions []*Action) e
 		if len(action.Request) == 0 {
 			continue
 		}
-		if action.Action == base.ActionCall {
+		if action.Action == shared.ActionCall {
 			if err := loadResource(actions[i], ctx, fs, "Body", "BodyURL"); err != nil {
 				return err
 			}
 			continue
 		}
-		if action.Action == base.ActionQuery {
+		if action.Action == shared.ActionQuery {
 			if err := loadResource(actions[i], ctx, fs, "SQL", "SQLURL"); err != nil {
 				return err
 			}
@@ -112,23 +113,23 @@ func (a Actions) ToRun(err error, job *base.Job) []*Action {
 		toRun = append([]*Action{}, a.OnFailure...)
 		e := err.Error()
 		for i := range toRun {
-			toRun[i].Request[base.ErrorKey] = e
+			toRun[i].Request[shared.ErrorKey] = e
 		}
 	}
 
 	for i := range toRun {
 		childInfo := a.Info.ChildInfo(toRun[i].Action, i+1)
-		toRun[i].Request[base.JobIDKey] = childInfo.GetJobID()
+		toRun[i].Request[shared.JobIDKey] = childInfo.GetJobID()
 		for k, v := range childInfo.AsMap() {
 			toRun[i].Request[k] = v
 		}
 		if bodyAppendable[toRun[i].Action] {
 			if responseJSON, err := json.Marshal(a); err == nil {
-				toRun[i].Request[base.ResponseKey] = string(responseJSON)
+				toRun[i].Request[shared.ResponseKey] = string(responseJSON)
 			}
 		}
-		if _, ok := toRun[i].Request[base.JobSourceKey]; !ok {
-			toRun[i].Request[base.JobSourceKey] = job.Source()
+		if _, ok := toRun[i].Request[shared.JobSourceKey]; !ok {
+			toRun[i].Request[shared.JobSourceKey] = job.Source()
 		}
 	}
 	return toRun
@@ -167,8 +168,8 @@ func expandSource(actions []*Action, info *stage.Info) {
 		return
 	}
 	for i := range actions {
-		if _, has := actions[i].Request[base.JobSourceKey]; !has {
-			actions[i].Request[base.JobSourceKey] = info.TempTable
+		if _, has := actions[i].Request[shared.JobSourceKey]; !has {
+			actions[i].Request[shared.JobSourceKey] = info.TempTable
 		}
 	}
 }
@@ -212,9 +213,9 @@ func appendSourceURLInfoActions(source []*Action, dest *[]*Action, info *stage.I
 	if len(source) == 0 {
 		return
 	}
-	if len(source) == 1 && source[0].Action == base.ActionDelete {
+	if len(source) == 1 && source[0].Action == shared.ActionDelete {
 		*dest = append(*dest, source[0].New(info, map[string]interface{}{
-			base.URLsKey: info.LoadURIs,
+			shared.URLsKey: info.LoadURIs,
 		}))
 		return
 	}
@@ -226,7 +227,7 @@ func appendSourceURLInfoActions(source []*Action, dest *[]*Action, info *stage.I
 					continue
 				}
 				*dest = append(*dest, action.New(info, map[string]interface{}{
-					base.URLsKey: []string{info.LoadURIs[i]},
+					shared.URLsKey: []string{info.LoadURIs[i]},
 				}))
 			}
 		}

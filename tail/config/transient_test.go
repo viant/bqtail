@@ -1,8 +1,8 @@
 package config
 
 import (
-	"bqtail/base"
 	"bqtail/dispatch/contract"
+	"bqtail/shared"
 	"bqtail/tail/config/transient"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -31,7 +31,7 @@ func TestTransient_JobProjectID(t *testing.T) {
 		{
 			description: "random strategy project",
 			transient: &Transient{ProjectID: "blah", Balancer: &transient.Balancer{
-				Strategy:    base.BalancerStrategyRand,
+				Strategy:    shared.BalancerStrategyRand,
 				ProjectIDs:  []string{"p1", "p2"},
 				MaxLoadJobs: 0,
 			}},
@@ -43,7 +43,7 @@ func TestTransient_JobProjectID(t *testing.T) {
 		{
 			description: "fallback strategy first project",
 			transient: &Transient{ProjectID: "blah", Balancer: &transient.Balancer{
-				Strategy:    base.BalancerStrategyFallback,
+				Strategy:    shared.BalancerStrategyFallback,
 				ProjectIDs:  []string{"p1", "p2"},
 				MaxLoadJobs: 0,
 			}},
@@ -57,7 +57,7 @@ func TestTransient_JobProjectID(t *testing.T) {
 			},
 			transient: &Transient{ProjectID: "blah", Balancer: &transient.Balancer{
 
-				Strategy:    base.BalancerStrategyFallback,
+				Strategy:    shared.BalancerStrategyFallback,
 				ProjectIDs:  []string{"p1", "p2"},
 				MaxLoadJobs: 20,
 			}},
@@ -72,7 +72,7 @@ func TestTransient_JobProjectID(t *testing.T) {
 			},
 			transient: &Transient{ProjectID: "blah", Balancer: &transient.Balancer{
 
-				Strategy:    base.BalancerStrategyFallback,
+				Strategy:    shared.BalancerStrategyFallback,
 				ProjectIDs:  []string{"p1", "p2", "p3"},
 				MaxLoadJobs: 10,
 			}},

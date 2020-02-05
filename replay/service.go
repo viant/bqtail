@@ -1,7 +1,7 @@
 package replay
 
 import (
-	"bqtail/base"
+	"bqtail/shared"
 	"context"
 	"fmt"
 	"github.com/viant/afs"
@@ -25,11 +25,11 @@ type service struct {
 func (s *service) Replay(ctx context.Context, request *Request) *Response {
 	response := &Response{
 		Replayed: make([]string, 0),
-		Status:   base.StatusOK,
+		Status:   shared.StatusOK,
 	}
 	err := s.replay(ctx, request, response)
 	if err != nil {
-		response.Status = base.StatusError
+		response.Status = shared.StatusError
 		response.Error = err.Error()
 	}
 	return response

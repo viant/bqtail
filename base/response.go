@@ -1,6 +1,7 @@
 package base
 
 import (
+	"bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
@@ -31,7 +32,7 @@ func (r *Response) SetIfError(err error) {
 	if err == nil {
 		return
 	}
-	r.Status = StatusError
+	r.Status = shared.StatusError
 	r.Error = err.Error()
 }
 
@@ -39,7 +40,7 @@ func (r *Response) SetIfError(err error) {
 func NewResponse(eventID string) *Response {
 	return &Response{
 		EventID: eventID,
-		Status:  StatusOK,
+		Status:  shared.StatusOK,
 		Started: time.Now(),
 	}
 }

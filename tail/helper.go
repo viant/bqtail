@@ -1,16 +1,12 @@
 package tail
 
 import (
-	"bqtail/base"
+	"bqtail/shared"
 	"bqtail/stage"
 	"bqtail/task"
 	"github.com/viant/toolbox"
 	"math/rand"
 	"time"
-)
-
-const (
-	recoverJobPrefix = "recover"
 )
 
 func getRandom(min, max int) int {
@@ -30,12 +26,12 @@ func updateJobID(eventID, jobID string) string {
 func buildJobIDReplacementMap(eventID string, actions []*task.Action) map[string]interface{} {
 	var result = make(map[string]interface{})
 	for i, action := range actions {
-		jobID, ok := action.Request[base.JobIDKey]
+		jobID, ok := action.Request[shared.JobIDKey]
 		if ok {
 			info := stage.Parse(toolbox.AsString(jobID))
 			info.EventID = eventID
 			info.Step = i + 1
-			result[base.JobIDKey] = info.GetJobID()
+			result[shared.JobIDKey] = info.GetJobID()
 			break
 		}
 	}

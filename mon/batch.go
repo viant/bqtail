@@ -3,6 +3,7 @@ package mon
 import (
 	"bqtail/base"
 	"bqtail/mon/info"
+	"bqtail/shared"
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
@@ -29,7 +30,7 @@ type batch struct {
 }
 
 func parseBatch(encoded string) *batch {
-	encoded = strings.Replace(encoded, base.WindowExt, "", 1)
+	encoded = strings.Replace(encoded, shared.WindowExt, "", 1)
 	elements := strings.Split(encoded, "_")
 	tableLimit := len(elements) - 1
 	dueRunUnixTs := elements[tableLimit]

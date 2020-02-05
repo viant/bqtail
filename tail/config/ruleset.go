@@ -2,6 +2,7 @@ package config
 
 import (
 	"bqtail/base"
+	"bqtail/shared"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
@@ -215,7 +216,7 @@ func (r *Ruleset) loadRule(ctx context.Context, fs afs.Service, URL string) ([]*
 func loadRules(data []byte, ext string) ([]*Rule, error) {
 	var rules = make([]*Rule, 0)
 	switch ext {
-	case base.YAMLExt:
+	case shared.YAMLExt:
 		ruleMap := map[string]interface{}{}
 		if err := yaml.Unmarshal(data, &ruleMap); err != nil {
 			rulesMap := []map[string]interface{}{}

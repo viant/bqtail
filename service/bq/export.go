@@ -30,7 +30,7 @@ func (s *service) Export(ctx context.Context, request *ExportRequest) (*bigquery
 		},
 	}
 	job.JobReference = request.jobReference()
-	return s.Post(ctx, request.ProjectID, job, &request.Actions)
+	return s.Post(ctx, job, &request.Request)
 }
 
 //ExportRequest represents an export request

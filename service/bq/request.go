@@ -8,11 +8,11 @@ import (
 //Request represents base request
 type Request struct {
 	task.Actions
-	ProjectID string
 }
 
 func (r Request) jobReference() *bigquery.JobReference {
 	return &bigquery.JobReference{
+		Location:r.Region,
 		JobId:     r.Info.GetJobID(),
 		ProjectId: r.ProjectID,
 	}

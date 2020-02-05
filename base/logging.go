@@ -28,7 +28,7 @@ func Log(message interface{}) {
 	if !ok {
 		JSON, err := json.Marshal(message)
 		if err == nil {
-			text = "." + string(JSON) + "."
+			text = "." + string(JSON)
 		} else {
 			aMap := map[string]interface{}{}
 			_ = toolbox.DefaultConverter.AssignConverted(&aMap, message)
@@ -40,5 +40,5 @@ func Log(message interface{}) {
 			}
 		}
 	}
-	fmt.Print(text)
+	fmt.Println(text)
 }

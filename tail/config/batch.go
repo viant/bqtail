@@ -1,7 +1,7 @@
 package config
 
 import (
-	"bqtail/base"
+	"bqtail/shared"
 	"fmt"
 	"github.com/viant/afs/url"
 	"time"
@@ -68,7 +68,7 @@ func (b *Batch) WindowEndTime(sourceTime time.Time) time.Time {
 //WindowURL returns windowURL
 func (b *Batch) WindowURL(dest string, sourceTime time.Time) string {
 	endTime := b.WindowEndTime(sourceTime)
-	return url.Join(b.BaseURL, fmt.Sprintf("%v_%v%v", dest, endTime.Unix(), base.WindowExt))
+	return url.Join(b.BaseURL, fmt.Sprintf("%v_%v%v", dest, endTime.Unix(), shared.WindowExt))
 }
 
 //NewBatch creates a batch

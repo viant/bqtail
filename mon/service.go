@@ -4,6 +4,7 @@ import (
 	"bqtail/base"
 	"bqtail/mon/info"
 	"bqtail/service/bq"
+	"bqtail/shared"
 	"bqtail/sortable"
 	"bqtail/stage"
 	"bqtail/tail"
@@ -50,7 +51,7 @@ func (s *service) Check(ctx context.Context, request *Request) *Response {
 	err := s.check(ctx, request, response)
 	if err != nil {
 		response.Error = err.Error()
-		response.Status = base.StatusError
+		response.Status = shared.StatusError
 	}
 	return response
 }
@@ -128,9 +129,9 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 		response.Info.Add(inf)
 
 		if inf.Error != nil && len(inf.Error.DataURLs) > 0 {
-			if response.Status == base.StatusOK {
+			if response.Status == shared.StatusOK {
 				if permissionError = inf.Error.IsPermission; !permissionError {
-					response.Status = base.StatusError
+					response.Status = shared.StatusError
 				}
 			}
 			if inf.Error.IsPermission {
@@ -162,8 +163,8 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 
 				if time.Now().Sub(*inf.Activity.Running.Min) > stalledDuration {
 					metric := response.Stalled.GetOrCreate(inf.Destination.Table)
-					if response.Status == base.StatusOK && !permissionError {
-						response.Status = base.StatusStalled
+					if response.Status == shared.StatusOK && !permissionError {
+						response.Status = shared.StatusStalled
 					}
 					metric.AddEvent(*inf.Activity.Running.Min)
 				}
@@ -329,8 +330,8 @@ func (s *service) getError(ctx context.Context, dest string, files []storage.Obj
 		return nil, nil
 	}
 
-	errName := fmt.Sprintf("%v%v", result.EventID, base.ErrorExt)
-	processName := fmt.Sprintf("%v%v", result.EventID, base.ProcessExt)
+	errName := fmt.Sprintf("%v%v", result.EventID, shared.ErrorExt)
+	processName := fmt.Sprintf("%v%v", result.EventID, shared.ProcessExt)
 	errorURL := url.Join(files[0].URL(), errName)
 
 	reader, err := s.fs.DownloadWithURL(ctx, errorURL)
@@ -375,12 +376,12 @@ func newError(dest string, sortedFiles *sortable.Objects) *info.Error {
 		object := sortedFiles.Elements[i]
 		ext := path.Ext(object.Name())
 
-		if ext == base.ProcessExt {
+		if ext == shared.ProcessExt {
 			eventID = strings.Replace(object.Name(), ext, "", 1)
 			result.ModTime = object.ModTime()
 			break
 		}
-		if ext == base.ErrorExt {
+		if ext == shared.ErrorExt {
 			errorEventID = strings.Replace(object.Name(), ext, "", 1)
 			result.ModTime = object.ModTime()
 		}
@@ -405,7 +406,7 @@ func (s *service) listLoadStages(ctx context.Context, result *[]*stage.Info) err
 		return err
 	}
 	for _, object := range objects {
-		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
+		if object.IsDir() || path.Ext(object.Name()) == shared.WindowExt {
 			continue
 		}
 
@@ -423,7 +424,7 @@ func (s *service) getScheduledBatches(ctx context.Context) (batches, error) {
 		return nil, err
 	}
 	for _, object := range objects {
-		if object.IsDir() || path.Ext(object.Name()) != base.WindowExt {
+		if object.IsDir() || path.Ext(object.Name()) != shared.WindowExt {
 			continue
 		}
 		result = append(result, parseBatch(object.Name()))

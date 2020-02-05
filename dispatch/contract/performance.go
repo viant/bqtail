@@ -1,7 +1,7 @@
 package contract
 
 import (
-	"bqtail/base"
+	"bqtail/shared"
 	"bqtail/stage"
 	"fmt"
 	"strings"
@@ -14,6 +14,7 @@ type ProjectPerformance map[string]*Performance
 //Performance performance
 type Performance struct {
 	ProjectID  string   `json:",omitempty"`
+	Region     string   `json:",omitempty"`
 	Count      uint32   `json:",omitempty"`
 	Running    *Metrics `json:",omitempty"`
 	Pending    *Metrics `json:",omitempty"`
@@ -67,9 +68,9 @@ func (p *Performance) AddEvent(state string, jobID string) {
 func (p *Performance) Metric(state string) *Metrics {
 	var metrics *Metrics
 	switch strings.ToUpper(state) {
-	case base.RunningState:
+	case shared.RunningState:
 		metrics = p.Running
-	case base.PendingState:
+	case shared.PendingState:
 		metrics = p.Pending
 	}
 	return metrics

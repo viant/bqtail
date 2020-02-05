@@ -1,8 +1,8 @@
 package bqtail
 
 import (
-	"bqtail/base"
 	"bqtail/mon"
+	"bqtail/shared"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -54,7 +54,7 @@ func checkBqTailPerformance(writer http.ResponseWriter, httpRequest *http.Reques
 		request.Recency = "1hour"
 	}
 	ctx := context.Background()
-	service, err := mon.Singleton(ctx, base.ConfigEnvKey)
+	service, err := mon.Singleton(ctx, shared.ConfigEnvKey)
 	if err != nil {
 		return err
 	}

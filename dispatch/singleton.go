@@ -1,7 +1,7 @@
 package dispatch
 
 import (
-	"bqtail/base"
+	"bqtail/shared"
 	"context"
 	//load google fs connector
 	_ "github.com/viant/afsc/gs"
@@ -14,7 +14,7 @@ func Singleton(ctx context.Context) (Service, error) {
 	if srv != nil {
 		return srv, nil
 	}
-	config, err := NewConfig(ctx, base.ConfigEnvKey)
+	config, err := NewConfig(ctx, shared.ConfigEnvKey)
 	if err != nil {
 		return nil, err
 	}

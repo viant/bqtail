@@ -8,6 +8,7 @@ import (
 	"bqtail/service/secret"
 	"bqtail/service/slack"
 	"bqtail/service/storage"
+	"bqtail/shared"
 	"bqtail/sortable"
 	"bqtail/stage"
 	"bqtail/task"
@@ -135,13 +136,13 @@ func (s *service) listProjectEvents(ctx context.Context) ([]*project.Events, err
 
 	addEvents(s.config.ProjectID, events, registry)
 	for _, obj := range events {
-		if obj.IsDir() && strings.HasPrefix(obj.Name(), base.TempProjectPrefix) {
-			projectID := string(obj.Name()[len(base.TempProjectPrefix):])
+		if obj.IsDir() && strings.HasPrefix(obj.Name(), shared.TempProjectPrefix) {
+			projectRegion := string(obj.Name()[len(shared.TempProjectPrefix):])
 			projectEvents, err := s.fs.List(ctx, obj.URL())
 			if err != nil {
 				return nil, err
 			}
-			addEvents(projectID, projectEvents, registry)
+			addEvents(projectRegion, projectEvents, registry)
 		}
 	}
 	return registry.Events(), nil
@@ -200,7 +201,7 @@ func (s *service) dispatchEvents(ctx context.Context, waitGroup *sync.WaitGroup,
 }
 
 func (s *service) logPerformance(ctx context.Context, response *contract.Response) error {
-	URL := url.Join(s.config.JournalURL, base.PerformanceFile)
+	URL := url.Join(s.config.JournalURL, shared.PerformanceFile)
 	JSON, err := json.Marshal(response.Performance)
 	if err != nil {
 		return err
@@ -212,7 +213,7 @@ func (s *service) logPerformance(ctx context.Context, response *contract.Respons
 func (s *service) filterCandidate(response *contract.Response, objects []astorage.Object, action string) map[string][]astorage.Object {
 	var result = make(map[string][]astorage.Object, 0)
 	for i, object := range objects {
-		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
+		if object.IsDir() || path.Ext(object.Name()) == shared.WindowExt {
 			continue
 		}
 		if response.Jobs.Has(object.URL()) {
@@ -240,7 +241,7 @@ func (s *service) filterCandidate(response *contract.Response, objects []astorag
 func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Events, response *contract.Response, jobsByID *jobs) (err error) {
 	waitGroup := &sync.WaitGroup{}
 	for i, object := range events.Items {
-		if object.IsDir() || path.Ext(object.Name()) == base.WindowExt {
+		if object.IsDir() || path.Ext(object.Name()) == shared.WindowExt {
 			continue
 		}
 
@@ -259,9 +260,10 @@ func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Event
 			state = listJob.State
 		} else {
 			response.GetCount++
-			job, err := s.bq.GetJob(ctx, s.config.Region, events.ProjectID, jobID)
+			job, err := s.bq.GetJob(ctx, events.Region, events.ProjectID, jobID)
 			if err != nil || job == nil {
 				if time.Now().Sub(object.ModTime()) > 5*time.Minute {
+					fmt.Printf("removing: %v %v %v due to not found\n", events.Region, events.ProjectID, jobID)
 					//If not job has been found for 5 min - delete file otherwise checking too many non existing jobs can clog dispatcher
 					s.fs.Delete(ctx, object.URL())
 				}
@@ -274,7 +276,7 @@ func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Event
 		}
 
 		switch strings.ToUpper(state) {
-		case base.DoneState:
+		case shared.DoneState:
 			break
 		default:
 			events.AddEvent(state, jobID)
@@ -286,10 +288,11 @@ func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Event
 			continue
 		}
 		job := contract.NewJob(jobID, object.URL(), state)
+
 		waitGroup.Add(1)
 		go func(job *contract.Job) {
 			defer waitGroup.Done()
-			err = s.notify(ctx, job)
+			err = s.notify(ctx, job, events)
 			if err == nil {
 				response.Jobs.Add(job)
 			} else {
@@ -302,10 +305,10 @@ func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Event
 }
 
 func (s *service) canNotify(action string, perf *contract.Performance) bool {
-	if action == base.ActionQuery {
+	if action == shared.ActionQuery {
 		return s.config.MaxConcurrentSQL == 0 || s.config.MaxConcurrentSQL > perf.ActiveQueryCount()+1
 	}
-	if action == base.ActionLoad {
+	if action == shared.ActionLoad {
 		return s.config.MaxConcurrentLoad == 0 || s.config.MaxConcurrentLoad > perf.ActiveLoadCount()+1
 	}
 	return true
@@ -357,9 +360,14 @@ func (s *service) listBQJobs(ctx context.Context, projectID string, minCreated, 
 }
 
 //notify notify bqtail
-func (s *service) notify(ctx context.Context, job *contract.Job) error {
+func (s *service) notify(ctx context.Context, job *contract.Job, events *project.Events) error {
 	info := stage.Parse(job.ID)
-	taskURL := s.config.BuildTaskURL(info)
+	info.Region = events.Region
+	info.ProjectID = events.ProjectID
+	taskURL := s.config.BuildTaskURL(info) + shared.JSONExt
+	if base.IsLoggingEnabled() {
+		fmt.Printf("notyfying: %v -> %v\n", job.URL, taskURL)
+	}
 	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
 }
 
@@ -371,7 +379,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 	}
 	response.BatchCount = len(objects)
 	for _, obj := range objects {
-		if obj.IsDir() || path.Ext(obj.Name()) != base.WindowExt {
+		if obj.IsDir() || path.Ext(obj.Name()) != shared.WindowExt {
 			continue
 		}
 		if response.HasBatch(obj.URL()) {
@@ -382,12 +390,12 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 			err = e
 			continue
 		}
-		if time.Now().After(dueTime.Add(base.StorageListVisibilityDelay * time.Millisecond)) {
-			if !s.canNotify(base.ActionLoad, perf) {
+		if time.Now().After(dueTime.Add(shared.StorageListVisibilityDelay * time.Millisecond)) {
+			if !s.canNotify(shared.ActionLoad, perf) {
 				continue
 			}
-			perf.Metric(base.RunningState).BatchJobs++
-			perf.Metric(base.RunningState).LoadJobs++
+			perf.Metric(shared.RunningState).BatchJobs++
+			perf.Metric(shared.RunningState).LoadJobs++
 			response.AddBatch(obj.URL(), *dueTime)
 			baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
 			destURL := url.Join(baseURL, obj.Name())
@@ -406,7 +414,7 @@ func JobID(baseURL string, URL string) string {
 	}
 	encoded := strings.Trim(string(URL[len(baseURL):]), "/")
 	encoded = strings.Replace(encoded, ".json", "", 1)
-	if strings.HasPrefix(encoded, base.TempProjectPrefix) {
+	if strings.HasPrefix(encoded, shared.TempProjectPrefix) {
 		if index := strings.Index(encoded, "/"); index != -1 {
 			encoded = string(encoded[index+1:])
 		}

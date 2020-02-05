@@ -1,8 +1,8 @@
 package transient
 
 import (
-	"bqtail/base"
 	"bqtail/dispatch/contract"
+	"bqtail/shared"
 	"math/rand"
 	"time"
 )
@@ -27,7 +27,7 @@ func (t Balancer) ProjectID(performance contract.ProjectPerformance) string {
 		return t.ProjectIDs[0]
 	}
 	switch t.Strategy {
-	case base.BalancerStrategyFallback:
+	case shared.BalancerStrategyFallback:
 		if projectID := t.selectPrioritizedProject(performance);projectID != "" {
 			return projectID
 		}

@@ -2,6 +2,7 @@ package batch
 
 import (
 	"bqtail/base"
+	"bqtail/shared"
 	"bqtail/tail/config"
 	"bytes"
 	"context"
@@ -35,14 +36,16 @@ type service struct {
 	fs afs.Service
 }
 
+
 func (s *service) addLocationFile(ctx context.Context, window *Window, location string) error {
-	locationFile := fmt.Sprintf("%v%v", base.Hash(location), base.LocationExt)
-	URL := strings.Replace(window.URL, base.WindowExt, "/"+locationFile, 1)
+	locationFile := fmt.Sprintf("%v%v", base.Hash(location), shared.LocationExt)
+	URL := strings.Replace(window.URL, shared.WindowExt, "/"+locationFile, 1)
 	if ok, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true)); ok {
 		return nil
 	}
 	return s.fs.Upload(ctx, URL, file.DefaultDirOsMode, strings.NewReader(location))
 }
+
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule, projectSelector ProjectSelector) (*Info, error) {
@@ -121,13 +124,13 @@ func (s *service) getBaseURLS(ctx context.Context, rule *config.Rule, window *Wi
 	baseURLs[baseURL] = true
 	if rule.Batch.MultiPath {
 		window.Locations = make([]string, 0)
-		URL := strings.Replace(window.URL, base.WindowExt, "/", 1)
+		URL := strings.Replace(window.URL, shared.WindowExt, "/", 1)
 		objects, err := s.fs.List(ctx, URL)
 		if err != nil {
 			return nil, err
 		}
 		for _, object := range objects {
-			if object.IsDir() || path.Ext(object.Name()) != base.LocationExt {
+			if object.IsDir() || path.Ext(object.Name()) != shared.LocationExt {
 				continue
 			}
 			location, err := s.readLocation(ctx, object.URL())

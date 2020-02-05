@@ -1,7 +1,7 @@
 package mon
 
 import (
-	"bqtail/base"
+	"bqtail/shared"
 	"time"
 )
 
@@ -31,7 +31,7 @@ func NewResponse() *Response {
 	return &Response{
 		Timestamp: time.Now(),
 		Dest:      make([]*Info, 0),
-		Status:    base.StatusOK,
+		Status:    shared.StatusOK,
 		Info:      NewInfo(),
 	}
 }

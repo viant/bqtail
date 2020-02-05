@@ -2,6 +2,7 @@ package bq
 
 import (
 	"bqtail/base"
+	"bqtail/shared"
 	"bqtail/task"
 	"context"
 	"fmt"
@@ -38,14 +39,14 @@ func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.T
 	call.Context(ctx)
 
 	var table *bigquery.Table
-	for i := 0; i < base.MaxRetries; i++ {
+	for i := 0; i < shared.MaxRetries; i++ {
 		call.Context(ctx)
 		if table, err = call.Do(); err == nil {
 			return nil, err
 		}
 		if base.IsRetryError(err) {
 			//do extra sleep before retrying
-			time.Sleep(base.RetrySleepInSec * time.Second)
+			time.Sleep(shared.RetrySleepInSec * time.Second)
 			continue
 		}
 		break

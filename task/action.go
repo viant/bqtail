@@ -2,6 +2,7 @@ package task
 
 import (
 	"bqtail/base"
+	"bqtail/shared"
 	"bqtail/stage"
 	"github.com/viant/toolbox"
 	"reflect"
@@ -86,7 +87,7 @@ func NewAction(action string, root *stage.Info, req interface{}) (*Action, error
 	result := &Action{Action: action}
 	err := result.SetRequest(req)
 	if rootContextActions[action] {
-		result.Request[base.RootKey] = root.AsMap()
+		result.Request[shared.RootKey] = root.AsMap()
 	}
 	return result, err
 }

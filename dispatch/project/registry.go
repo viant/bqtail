@@ -19,13 +19,12 @@ func (r *Registry) Events() []*Events {
 }
 
 //Add adds project objects
-func (r *Registry) Add(projectID string, event storage.Object) {
-	_, ok := r.registry[projectID]
+func (r *Registry) Add(regionedProject string, event storage.Object) {
+	_, ok := r.registry[regionedProject]
 	if !ok {
-		r.registry[projectID] = New(projectID)
-		r.registry[projectID].ProjectID = projectID
+		r.registry[regionedProject] = New(regionedProject)
 	}
-	r.registry[projectID].Items = append(r.registry[projectID].Items, event)
+	r.registry[regionedProject].Items = append(r.registry[regionedProject].Items, event)
 }
 
 //NewRegistry create a registry

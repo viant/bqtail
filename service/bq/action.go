@@ -2,6 +2,7 @@ package bq
 
 import (
 	"bqtail/base"
+	"bqtail/shared"
 	"bqtail/task"
 	"context"
 	"fmt"
@@ -23,7 +24,7 @@ func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Jo
 	}
 	if err != nil && onDone.SourceURI != "" {
 		sourcePath := url.Path(onDone.SourceURI)
-		errorURL := url.Join(s.Config.ErrorURL, sourcePath+base.ActionErrorExt)
+		errorURL := url.Join(s.Config.ErrorURL, sourcePath+shared.ActionErrorExt)
 		if e := s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(err.Error())); e != nil {
 			return errors.Wrapf(err, "failed to write error file: %v %v", errorURL, e)
 		}

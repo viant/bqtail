@@ -32,8 +32,8 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 		} else {
 			job.Configuration.Query.WriteDisposition = "WRITE_TRUNCATE"
 		}
+		s.adjustRegion(ctx, &request.Request, job.Configuration.Query.DestinationTable)
 	}
-
 	if request.UseLegacy {
 		job.Configuration.Query.AllowLargeResults = true
 	}
@@ -45,7 +45,7 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 		}
 	}
 	job.JobReference = request.jobReference()
-	return s.Post(ctx, request.ProjectID, job, &request.Actions)
+	return s.Post(ctx,  job, &request.Request)
 }
 
 //QueryRequest represents Query request

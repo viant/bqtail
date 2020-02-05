@@ -1,4 +1,4 @@
-package base
+package shared
 
 //Process status
 const (

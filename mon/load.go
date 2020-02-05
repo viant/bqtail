@@ -1,8 +1,8 @@
 package mon
 
 import (
-	"bqtail/base"
 	"bqtail/mon/info"
+	"bqtail/shared"
 	"bqtail/stage"
 	"strings"
 	"time"
@@ -39,7 +39,7 @@ func parseLoad(baseURL string, URL string, modTime time.Time) *load {
 		elements = []string{elements[0], elements[2]}
 	}
 	encoded := elements[len(elements)-1]
-	eventID := strings.Replace(encoded, base.ProcessExt, "", 1)
+	eventID := strings.Replace(encoded, shared.ProcessExt, "", 1)
 	dest := strings.Trim(elements[len(elements)-2], "/")
 	return &load{
 		started: modTime,

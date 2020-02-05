@@ -1,6 +1,7 @@
 package base
 
 import (
+	"bqtail/shared"
 	"bqtail/stage"
 	"context"
 	"fmt"
@@ -44,18 +45,18 @@ type Config struct {
 
 //BuildActiveLoadURL returns active action URL for supplied event id
 func (c *Config) BuildActiveLoadURL(info *stage.Info) string {
-	return url.Join(c.ActiveLoadProcessURL, info.DestTable+stage.PathElementSeparator+info.EventID+ProcessExt)
+	return url.Join(c.ActiveLoadProcessURL, info.DestTable+stage.PathElementSeparator+info.EventID+shared.ProcessExt)
 }
 
 //BuildDoneLoadURL returns done action URL for supplied event id
 func (c *Config) BuildDoneLoadURL(info *stage.Info) string {
-	date := time.Now().Format(DateLayout)
-	return url.Join(c.DoneLoadProcessURL, path.Join(info.DestTable, date, info.EventID+ProcessExt))
+	date := time.Now().Format(shared.DateLayout)
+	return url.Join(c.DoneLoadProcessURL, path.Join(info.DestTable, date, info.EventID+shared.ProcessExt))
 }
 
 //BuildTaskURL returns an action url for supplied event ID
 func (c *Config) BuildTaskURL(info *stage.Info) string {
-	date := time.Now().Format(DateLayout)
+	date := time.Now().Format(shared.DateLayout)
 	return fmt.Sprintf("gs://%v%v%v/%v", c.TriggerBucket, c.PostJobPrefix, date, info.JobFilename())
 }
 
@@ -91,25 +92,25 @@ func (c *Config) Init(ctx context.Context) error {
 	}
 
 	if c.LoadProcessPrefix == "" {
-		c.LoadProcessPrefix = LoadPrefix
+		c.LoadProcessPrefix = shared.LoadPrefix
 	}
 	if c.PostJobPrefix == "" {
-		c.PostJobPrefix = PostJobPrefix
+		c.PostJobPrefix = shared.PostJobPrefix
 	}
 	if c.BatchPrefix == "" {
-		c.BatchPrefix = BatchPrefix
+		c.BatchPrefix = shared.BatchPrefix
 	}
 	if c.MaxRetries == 0 {
-		c.MaxRetries = MaxRetries
+		c.MaxRetries = shared.MaxRetries
 	}
 	if c.ActiveLoadProcessURL == "" {
-		c.ActiveLoadProcessURL = url.Join(c.JournalURL, ActiveLoadSuffix)
+		c.ActiveLoadProcessURL = url.Join(c.JournalURL, shared.ActiveLoadSuffix)
 	}
 	if c.DoneLoadProcessURL == "" {
-		c.DoneLoadProcessURL = url.Join(c.JournalURL, DoneLoadSuffix)
+		c.DoneLoadProcessURL = url.Join(c.JournalURL, shared.DoneLoadSuffix)
 	}
 	if c.InvalidSchemaURL == "" {
-		c.InvalidSchemaURL = url.Join(c.JournalURL, InvalidSchemaLocation)
+		c.InvalidSchemaURL = url.Join(c.JournalURL, shared.InvalidSchemaLocation)
 	}
 	return nil
 }

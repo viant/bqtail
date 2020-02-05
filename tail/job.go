@@ -2,6 +2,7 @@ package tail
 
 import (
 	"bqtail/base"
+	"bqtail/shared"
 	"bqtail/stage"
 	"bqtail/tail/batch"
 	"bqtail/tail/config"
@@ -100,6 +101,6 @@ func (j *Job) SetIfError(err error) {
 	if err == nil {
 		return
 	}
-	j.Status = base.StatusError
+	j.Status = shared.StatusError
 	j.Error = err.Error()
 }

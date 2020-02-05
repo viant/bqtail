@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"bqtail/shared"
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -25,6 +26,7 @@ const (
 //Info represents processing stage
 type Info struct {
 	ProjectID  string    `json:",omitempty"`
+	Region     string    `json:",omitempty"`
 	SourceURI  string    `json:",omitempty"`
 	Counter    int       `json:",omitempty"`
 	LoadURIs   []string  `json:",omitempty"`
@@ -50,7 +52,11 @@ func (i *Info) JobFilename() string {
 	if dest != "" {
 		dest += PathElementSeparator
 	}
-	return dest + fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action) + PathElementSeparator + i.Suffix
+	baseLocation := ""
+	if i.ProjectID != "" {
+		baseLocation = shared.TempProjectPrefix + i.ProjectID + ":" + i.Region + "/"
+	}
+	return baseLocation + dest + fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action) + PathElementSeparator + i.Suffix
 }
 
 //nopActions represents nop actions
@@ -71,6 +77,7 @@ func (i *Info) ChildInfo(action string, step int) *Info {
 	}
 	result := &Info{
 		ProjectID: i.ProjectID,
+		Region:    i.Region,
 		SourceURI: i.SourceURI,
 		RuleURL:   i.RuleURL,
 		DestTable: i.DestTable,
@@ -98,6 +105,7 @@ func (i *Info) Wrap(action string) *Info {
 	}
 	return &Info{
 		SourceURI: i.SourceURI,
+		Region:    i.Region,
 		RuleURL:   i.RuleURL,
 		ProjectID: i.ProjectID,
 		DestTable: i.DestTable,
@@ -112,6 +120,11 @@ func (i *Info) Wrap(action string) *Info {
 //GetJobID returns  a job ID
 func (i *Info) GetJobID() string {
 	ID := i.JobFilename()
+	if strings.Contains(ID, shared.TempProjectPrefix) {
+		if index := strings.Index(ID, "/"); index != -1 {
+			ID = string(ID[index+1:])
+		}
+	}
 	return Decode(ID)
 }
 
@@ -134,6 +147,7 @@ func Decode(jobID string) string {
 
 //Parse parse encoded job ID
 func Parse(encoded string) *Info {
+
 	encoded = strings.Replace(encoded, ".json", "", 1)
 	encoded = strings.Replace(encoded, PathElementSeparator, "/", strings.Count(encoded, PathElementSeparator))
 	result := &Info{

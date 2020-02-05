@@ -2,6 +2,7 @@ package bq
 
 import (
 	"bqtail/base"
+	"bqtail/shared"
 	"context"
 	"google.golang.org/api/bigquery/v2"
 	"time"
@@ -10,21 +11,17 @@ import (
 //GetJob returns a job ID
 func (s *service) GetJob(ctx context.Context, location, projectID, jobID string) (job *bigquery.Job, err error) {
 	jobService := bigquery.NewJobsService(s.Service)
-
 	call := jobService.Get(projectID, jobID)
+	call.Location(location)
 	call.Context(ctx)
-	for i := 0; i < base.MaxRetries; i++ {
+	for i := 0; i < shared.MaxRetries; i++ {
 		job, err = call.Do()
-		if base.IsNotFoundError(err) && location != "" {
-			call.Location(location)
-			job, err = call.Do()
-		}
 		if err == nil {
 			break
 		}
 		if base.IsRetryError(err) {
 			//do extra sleep before retrying
-			time.Sleep(base.RetrySleepInSec * time.Second)
+			time.Sleep(shared.RetrySleepInSec * time.Second)
 			continue
 		}
 	}

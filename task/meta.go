@@ -1,20 +1,22 @@
 package task
 
-import "bqtail/base"
+import (
+	"bqtail/shared"
+)
 
 var sourceURLExpandable = map[string]bool{
-	base.ActionMove:   true,
-	base.ActionDelete: true,
+	shared.ActionMove:   true,
+	shared.ActionDelete: true,
 }
 
 //bodyAppendable job appendable task
 var bodyAppendable = map[string]bool{
-	base.ActionNotify: true,
+	shared.ActionNotify: true,
 }
 
 //rootContextActions represents nop actions
 var rootContextActions = map[string]bool{
-	base.ActionQuery:  true,
-	base.ActionNotify: true,
-	base.ActionCall:   true,
+	shared.ActionQuery:  true,
+	shared.ActionNotify: true,
+	shared.ActionCall:   true,
 }
