@@ -66,7 +66,7 @@ SELECT
     PermissionError,
     SchemaError, 
     CorruptedError
-FROM `viant-dataflow.bqtail.bqmon`
+FROM `bqtail.bqmon`
 WHERE DATE(timestamp) = CURRENT_DATE()
 ORDER BY timestamp DESC
 LIMIT 1
