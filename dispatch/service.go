@@ -262,11 +262,6 @@ func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Event
 			response.GetCount++
 			job, err := s.bq.GetJob(ctx, events.Region, events.ProjectID, jobID)
 			if err != nil || job == nil {
-				//if time.Now().Sub(object.ModTime()) > 30*time.Minute {
-				//	fmt.Printf("removing: %v %v %v due to not found\n", events.Region, events.ProjectID, jobID)
-				//	//If not job has been found for 5 min - delete file otherwise checking too many non existing jobs can clog dispatcher
-				//	s.fs.Delete(ctx, object.URL())
-				//}
 				events.NoFound++
 				continue
 			}
