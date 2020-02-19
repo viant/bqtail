@@ -1,21 +1,6 @@
 package tail
 
 import (
-	"bqtail/base"
-	"bqtail/base/job"
-	"bqtail/service/bq"
-	"bqtail/service/http"
-	"bqtail/service/secret"
-	"bqtail/service/slack"
-	"bqtail/service/storage"
-	"bqtail/shared"
-	"bqtail/stage"
-	"bqtail/tail/batch"
-	"bqtail/tail/config"
-	"bqtail/tail/contract"
-	"bqtail/tail/sql"
-	"bqtail/tail/status"
-	"bqtail/task"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -25,9 +10,25 @@ import (
 	"github.com/viant/afs/cache"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
-	store "github.com/viant/afs/storage"
+	astorage "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/base/job"
+	"github.com/viant/bqtail/service/bq"
+	"github.com/viant/bqtail/service/http"
+	"github.com/viant/bqtail/service/secret"
+	"github.com/viant/bqtail/service/slack"
+	"github.com/viant/bqtail/service/storage"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/stage/activity"
+	"github.com/viant/bqtail/stage/load"
+	"github.com/viant/bqtail/tail/batch"
+	"github.com/viant/bqtail/tail/config"
+	"github.com/viant/bqtail/tail/contract"
+	"github.com/viant/bqtail/tail/status"
+	"github.com/viant/bqtail/task"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"io/ioutil"
@@ -37,7 +38,7 @@ import (
 
 //Service represents a tail service
 type Service interface {
-	//Tails appends data from source URL to matched BigQuery table
+	//Tails appends data from source SourceURL to matched BigQuery table
 	Tail(ctx context.Context, request *contract.Request) *contract.Response
 }
 
@@ -134,7 +135,6 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 
 	defer s.OnDone(ctx, request, response)
 	var err error
-
 	if request.HasURLPrefix(s.config.LoadProcessPrefix) {
 		err = s.runLoadProcess(ctx, request, response)
 	} else if request.HasURLPrefix(s.config.PostJobPrefix) {
@@ -165,27 +165,8 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 	if err := s.config.ReloadIfNeeded(ctx, s.cfs); err != nil {
 		return err
 	}
-	response.RuleCount = len(s.config.Rules)
-	var rule *config.Rule
-	matched := s.config.Match(request.SourceURL)
-	switch len(matched) {
-	case 0:
-	case 1:
-		rule = matched[0]
-	default:
-		JSON, _ := json.Marshal(matched)
-		response.Retriable = false
-		return errors.Errorf("multi rule match currently not supported: %s", JSON)
-	}
+	rule := s.matchSourceWithRule(response, request)
 	if rule == nil {
-		response.Status = shared.StatusNoMatch
-		return nil
-	}
-	response.Rule = rule
-	response.Matched = true
-	response.MatchedURL = request.SourceURL
-	if rule.Disabled {
-		response.Status = shared.StatusDisabled
 		return nil
 	}
 	source, err := s.fs.Object(ctx, request.SourceURL, option.NewObjectKind(true))
@@ -194,316 +175,62 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 		response.Status = shared.StatusNotFound
 		return nil
 	}
-	var job *Job
+	process, err := s.newProcess(ctx, source, rule, request, response)
+	if err != nil {
+		return err
+	}
+	var job *load.Job
 	if rule.Batch != nil {
-		job, err = s.tailInBatch(ctx, source, rule, request, response)
+		job, err = s.tailInBatch(ctx, process, rule, response)
 	} else {
-		_, err = s.tailIndividually(ctx, source, rule, request, response)
+		_, err = s.tailIndividually(ctx, process, rule, response)
 		return err
 	}
 	if err == nil || job == nil {
 		return err
 	}
-	return s.tryRecoverAndReport(ctx, rule, request, job.Actions, job.Job, response)
+	return s.tryRecoverAndReport(ctx, job, response)
 }
 
-func (s *service) buildLoadRequest(ctx context.Context, projectID string, job *Job, rule *config.Rule) (*bq.LoadRequest, error) {
-	dest := rule.Dest
-	sourceURL := job.Load.SourceUris[0]
-	tableReference, err := dest.TableReference(job.SourceCreated, sourceURL)
-	if err != nil {
-		return nil, err
+func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*stage.Process, error) {
+	result := stage.NewProcess(request.EventID, stage.NewSource(source.URL(), source.ModTime()), rule.Info.URL, rule.Async)
+	var err error
+	if result.DestTable, err = rule.Dest.ExpandTable(rule.Dest.Table, result.Source); err != nil {
+		return nil, errors.Wrapf(err, "failed to expand table :%v", rule.Dest.Table)
 	}
-	if err = s.updateSchemaIfNeeded(ctx, dest, tableReference, job); err != nil {
-		return nil, err
+	result.ProcessURL = s.config.BuildLoadURL(result)
+	result.DoneProcessURL = s.config.DoneLoadURL(result)
+	result.ProjectID = s.selectProjectID(ctx, rule, response)
+	result.Params, err = rule.Dest.Params(result.SourceURL)
+	if base.IsLoggingEnabled() {
+		fmt.Printf("process: ")
+		base.Log(result)
 	}
-	result := &bq.LoadRequest{
-		Append:               rule.IsAppend(),
-		JobConfigurationLoad: job.Load,
-	}
-	if dest.Transient != nil {
-		tableReference.ProjectId = projectID
-		tableReference.DatasetId = dest.Transient.Dataset
-		tableReference.TableId = base.TableID(tableReference.TableId) + "_" + job.EventID
-		result.WriteDisposition = "WRITE_TRUNCATE"
-	} else {
-		if rule.IsAppend() {
-			result.WriteDisposition = "WRITE_APPEND"
-		} else {
-			result.WriteDisposition = "WRITE_TRUNCATE"
-		}
-	}
-	result.DestinationTable = tableReference
-	return result, nil
+	return result, err
 }
 
-func (s *service) submitJob(ctx context.Context, projectID string, job *Job, rule *config.Rule, response *contract.Response) (*Job, error) {
+func (s *service) submitJob(ctx context.Context, job *load.Job, response *contract.Response) (*load.Job, error) {
 	if len(job.Load.SourceUris) == 0 {
 		return nil, errors.Errorf("sourceUris was empty")
 	}
-	info := s.newInfo(ctx, projectID, job, rule, job.Load)
-	response.Info = info
-	info.LoadURIs = job.Load.SourceUris
-	load, err := s.buildLoadRequest(ctx, projectID, job, rule)
-	if err != nil {
-		return nil, err
-	}
-	info = s.newInfo(ctx, projectID, job, rule, load.JobConfigurationLoad)
-	response.Info = info
-	actions := rule.Actions().Expand(info)
-	load.Actions = *actions
-	if err = appendBatchAction(job.Window, &load.Actions); err != nil {
-		return nil, err
-	}
-	activeURL := s.config.BuildActiveLoadURL(job.Info())
-	doneURL := s.config.BuildDoneLoadURL(job.Info())
-	s.appendLoadProcessFinalActions(activeURL, doneURL, load, info)
-	if actions, err = s.addTransientDatasetActions(ctx, projectID, *info, job, rule, &load.Actions); err != nil {
-		return nil, err
-	}
-	load.Actions = *actions
-	if rule.Dest.HasSplit() {
-		if _, err = s.updateTempTableScheme(ctx, load.JobConfigurationLoad, rule); err != nil {
-			return nil, errors.Wrapf(err, "failed to update temp schema")
-		}
-	}
-
-	if e := s.createLoadProcess(ctx, activeURL, load, info); e != nil {
-		return nil, errors.Wrapf(err, "failed to create load job actions: %v", activeURL)
+	loadRequest, action := job.NewLoadRequest()
+	if err := job.Persist(ctx, s.fs); err != nil {
+		response.UploadError = err.Error()
 	}
 	if base.IsLoggingEnabled() {
-		base.Log(load)
+		fmt.Printf("loadRequest: ")
+		base.Log(loadRequest)
 	}
-	bqJob, err := s.bq.Load(ctx, load)
+	bqJob, err := s.bq.Load(ctx, loadRequest, action)
 	if bqJob != nil {
 		job.JobStatus = bqJob.Status
 		job.Statistics = bqJob.Statistics
-		actions.Job = bqJob
 		response.JobRef = bqJob.JobReference
 		if err == nil {
 			err = base.JobError(bqJob)
 		}
 	}
-	job.Actions = actions
 	return job, err
-}
-
-func (s *service) newInfo(ctx context.Context, projectID string, job *Job, rule *config.Rule, load *bigquery.JobConfigurationLoad) *stage.Info {
-	info := stage.New(projectID, job.GetSourceURI(), job.Dest(), job.EventID, "load", job.IDSuffix(), rule.Async, 0, rule.Info.URL)
-	info.LoadURIs = job.Load.SourceUris
-	info.TempTable = "`" + projectID + "." + load.DestinationTable.DatasetId + "." + load.DestinationTable.TableId + "`"
-	if rule.CounterURL != "" {
-		counterURL := url.Join(rule.CounterURL, info.DestTable+shared.CounterExt)
-		counter, err := s.getCounterAndIncrease(ctx, counterURL)
-		if err == nil {
-			info.Counter = counter
-		}
-	}
-	return info
-}
-
-//appendLoadProcessFinalActions append track action
-func (s *service) appendLoadProcessFinalActions(activeURL, doneURL string, load *bq.LoadRequest, info *stage.Info) {
-	moveRequest := storage.MoveRequest{SourceURL: activeURL, DestURL: doneURL, IsDestAbsoluteURL: true}
-	moveAction, _ := task.NewAction(shared.ActionMove, info, moveRequest)
-	load.Actions.AddOnSuccess(moveAction)
-}
-
-func (s *service) createLoadProcess(ctx context.Context, URL string, loadJob *bq.LoadRequest, info *stage.Info) error {
-	loadTrace, err := task.NewAction(shared.ActionLoad, info, loadJob)
-	if err != nil {
-		return err
-	}
-	actions := []*task.Action{
-		loadTrace,
-	}
-	JSON, err := json.Marshal(actions)
-	if err != nil {
-		return errors.Wrapf(err, "failed to marshal: %v", loadTrace)
-	}
-	return s.fs.Upload(ctx, URL, 0644, bytes.NewReader(JSON))
-}
-
-func appendBatchAction(window *batch.Window, actions *task.Actions) error {
-	if window == nil {
-		return nil
-	}
-	URLsToDelete := make([]string, 0)
-	URLsToDelete = append(URLsToDelete, window.URL)
-	if len(window.Locations) > 0 {
-		URLsToDelete = append(URLsToDelete, window.Locations...)
-	}
-	deleteReq := storage.DeleteRequest{URLs: URLsToDelete}
-
-	deleteAction, err := task.NewAction(shared.ActionDelete, &actions.Info, deleteReq)
-	if err != nil {
-		return err
-	}
-	actions.AddOnSuccess(deleteAction)
-
-	return nil
-}
-
-func (s *service) addTransientDatasetActions(ctx context.Context, projectID string, parent stage.Info, job *Job, rule *config.Rule, actions *task.Actions) (*task.Actions, error) {
-	if rule.Dest.Transient == nil {
-		return actions, nil
-	}
-	job.Load.WriteDisposition = "WRITE_TRUNCATE"
-	var result = task.NewActions(parent, nil, nil)
-	var onFailureAction *task.Actions
-	if actions != nil {
-		result.SourceURI = job.GetSourceURI()
-		onFailureAction = actions.CloneOnFailure()
-		result.AddOnFailure(actions.OnFailure...)
-	}
-	if job.Load.DestinationTable.ProjectId == "" {
-		job.Load.DestinationTable.ProjectId = s.config.ProjectID
-	}
-	tableID :=  job.Load.DestinationTable.DatasetId + "." + job.Load.DestinationTable.TableId
-	dropAction, err := task.NewAction(shared.ActionDrop, &result.Info, bq.NewDropRequest(projectID, tableID, onFailureAction))
-	if err != nil {
-		return nil, err
-	}
-	actions.AddOnSuccess(dropAction)
-	selectAll := sql.BuildSelect(job.Load.DestinationTable, job.Load.Schema, rule.Dest.Transient.Alias, rule.Dest.UniqueColumns, rule.Dest.Transform, rule.Dest.SideInputs)
-	selectAll = result.Info.ExpandText(selectAll)
-	if rule.Dest.HasSplit() {
-		return result, s.addSplitActions(ctx, projectID, selectAll, parent, job, rule, result, actions)
-	}
-	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
-	destTable, _ := rule.Dest.TableReference(job.SourceCreated, job.Load.SourceUris[0])
-	partition := base.TablePartition(destTable.TableId)
-
-	if len(rule.Dest.UniqueColumns) > 0 || partition != "" || len(rule.Dest.Transform) > 0 {
-		query := bq.NewQueryRequest(projectID, selectAll, destTable, actions)
-		query.Append = rule.IsAppend()
-		queryAction, err := task.NewAction(shared.ActionQuery, &result.Info, query)
-		if err != nil {
-			return nil, err
-		}
-		result.AddOnSuccess(queryAction)
-	} else {
-		job.Load.DestinationTable.ProjectId = projectID
-		source := base.EncodeTableReference(job.Load.DestinationTable)
-		dest := base.EncodeTableReference(destTable)
-		copyRequest := bq.NewCopyRequest(source, dest, actions)
-		copyRequest.Append = rule.IsAppend()
-		copyAction, err := task.NewAction(shared.ActionCopy, &result.Info, copyRequest)
-		if err != nil {
-			return nil, err
-		}
-		result.AddOnSuccess(copyAction)
-	}
-	return result, nil
-}
-
-func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.TableFieldSchema {
-	column = strings.ToLower(column)
-	if index := strings.Index(column, "."); index != -1 {
-		parent := string(column[:index])
-		for i := range fields {
-			if parent == strings.ToLower(fields[i].Name) {
-				return getColumn(fields[i].Fields, column[index+1:])
-			}
-		}
-	}
-	for i := range fields {
-		if column == strings.ToLower(fields[i].Name) {
-			return fields[i]
-		}
-	}
-	return nil
-}
-
-func (s *service) updateTempTableScheme(ctx context.Context, job *bigquery.JobConfigurationLoad, rule *config.Rule) (bool, error) {
-	split := rule.Dest.Schema.Split
-	if job.Schema == nil {
-		return false, nil
-	}
-	extendedSchema := false
-	if len(split.ClusterColumns) > 0 {
-		if split.TimeColumn == "" {
-			split.TimeColumn = "ts"
-		}
-		field := getColumn(job.Schema.Fields, split.TimeColumn)
-		if field == nil {
-			job.Schema.Fields = append(job.Schema.Fields, &bigquery.TableFieldSchema{
-				Name: split.TimeColumn,
-				Type: "TIMESTAMP",
-			})
-			extendedSchema = true
-		}
-		job.TimePartitioning = &bigquery.TimePartitioning{
-			Field: split.TimeColumn,
-			Type:  "DAY",
-		}
-		var clusterdColumn = make([]string, 0)
-		for i, name := range split.ClusterColumns {
-			if strings.Contains(split.ClusterColumns[i], ".") {
-				column := getColumn(job.Schema.Fields, split.ClusterColumns[i])
-				if column == nil {
-					return false, errors.Errorf("failed to lookup cluster column: %v", name)
-				}
-				job.Schema.Fields = append(job.Schema.Fields, column)
-				clusterdColumn = append(clusterdColumn, column.Name)
-				continue
-			}
-			clusterdColumn = append(clusterdColumn, split.ClusterColumns[i])
-		}
-
-		job.Clustering = &bigquery.Clustering{
-			Fields: clusterdColumn,
-		}
-	}
-	return extendedSchema, nil
-}
-
-func (s *service) addSplitActions(ctx context.Context, projectID, selectAll string, parent stage.Info, job *Job, rule *config.Rule, result, onDone *task.Actions) error {
-	split := rule.Dest.Schema.Split
-	next := onDone
-	if next == nil {
-		next = task.NewActions(parent, nil, nil)
-	}
-	for i := range split.Mapping {
-		mapping := split.Mapping[i]
-		destTable, _ := rule.Dest.CustomTableReference(mapping.Then, job.SourceCreated, job.Load.SourceUris[0])
-		SQL := strings.Replace(selectAll, "$WHERE", " WHERE  "+mapping.When+" ", 1)
-		query := bq.NewQueryRequest(projectID, SQL, destTable, next)
-		query.Append = rule.IsAppend()
-		queryAction, err := task.NewAction(shared.ActionQuery, &onDone.Info, query)
-		if err != nil {
-			return err
-		}
-		group := task.NewActions(parent, nil, nil)
-		group.AddOnSuccess(queryAction)
-		next = group
-	}
-	if len(split.ClusterColumns) > 0 {
-		setColumns := []string{}
-		for i, column := range split.ClusterColumns {
-			if index := strings.LastIndex(split.ClusterColumns[i], "."); index != -1 {
-				setColumns = append(setColumns, fmt.Sprintf("%v = %v ", string(column[index+1:]), column))
-			}
-		}
-		if len(setColumns) > 0 {
-			refTable := job.Load.DestinationTable
-			destTable := fmt.Sprintf("`%v.%v.%v`", refTable.ProjectId, refTable.DatasetId, refTable.TableId)
-			DML := fmt.Sprintf("UPDATE %v SET %v WHERE 1=1", destTable, strings.Join(setColumns, ","))
-
-			query := bq.NewQueryRequest(projectID, DML, nil, next)
-			query.Append = rule.IsAppend()
-			queryAction, err := task.NewAction(shared.ActionQuery, &onDone.Info, query)
-			if err != nil {
-				return err
-			}
-			result.AddOnSuccess(queryAction)
-		}
-	} else {
-		result.AddOnSuccess(next.OnSuccess...)
-		result.AddOnSuccess(next.OnFailure...)
-	}
-
-	return nil
 }
 
 //runLoadProcess this method allows rerun Activity/Done job as long original data files are present
@@ -534,25 +261,16 @@ func (s *service) runLoadProcess(ctx context.Context, request *contract.Request,
 	return err
 }
 
-func (s *service) tailIndividually(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*Job, error) {
-	object, err := s.fs.Object(ctx, request.SourceURL, option.NewObjectKind(true))
+func (s *service) tailIndividually(ctx context.Context, process *stage.Process, rule *config.Rule, response *contract.Response) (*load.Job, error) {
+	job, err := load.NewJob(rule, process, nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "event source not found:%v", request.SourceURL)
-	}
-	job := &Job{
-		Rule:          rule,
-		Status:        shared.StatusOK,
-		EventID:       request.EventID,
-		SourceCreated: object.ModTime(),
-		DestTable:     rule.DestTable(source.URL(), source.ModTime()),
-		Actions:       rule.Actions(),
-	}
-
-	projectID := s.selectProjectID(ctx, rule, response)
-	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), request.SourceURL); err != nil {
 		return nil, err
 	}
-	return s.submitJob(ctx, projectID, job, rule, response)
+	err = job.Init(ctx, s.bq)
+	if err != nil {
+		return nil, err
+	}
+	return s.submitJob(ctx, job, response)
 }
 
 func (s *service) selectProjectID(ctx context.Context, rule *config.Rule, response *contract.Response) string {
@@ -567,72 +285,8 @@ func (s *service) selectProjectID(ctx context.Context, rule *config.Rule, respon
 	return projectID
 }
 
-func (s *service) updateSchemaIfNeeded(ctx context.Context, dest *config.Destination, tableReference *bigquery.TableReference, job *Job) error {
-	var err error
-	var table *bigquery.Table
-	if dest.Schema.TransientTemplate != "" {
-		templateReference, err := base.NewTableReference(dest.Schema.TransientTemplate)
-		if err != nil {
-			return errors.Wrapf(err, "failed to create table from TransientSchema: %v", dest.Schema.TransientTemplate)
-		}
-		if table, err = s.bq.Table(ctx, templateReference); err != nil {
-			return errors.Wrapf(err, "failed to get tempalte table: %v", templateReference)
-		}
-		job.TempSchema = table.Schema
-		updateLoadProcessSchema(table, job, dest)
-
-	}
-
-	if dest.Schema.Table != nil {
-		job.DestSchema = dest.Schema.Table
-		return nil
-	}
-
-	if dest.Schema.Template != "" {
-		templateReference, err := base.NewTableReference(dest.Schema.Template)
-		if err != nil {
-			return errors.Wrapf(err, "invalid schema.template table name: %v", dest.Schema.Template)
-		}
-		if table, err = s.bq.Table(ctx, templateReference); err != nil {
-			return errors.Wrapf(err, "failed to get tempalte table: %v", templateReference)
-		}
-	} else if dest.Transient != nil {
-		if table, err = s.bq.Table(ctx, tableReference); err != nil {
-			return err
-		}
-	}
-	if table != nil {
-		job.DestSchema = table.Schema
-	}
-	if dest.Schema.TransientTemplate == "" {
-		updateLoadProcessSchema(table, job, dest)
-	}
-	return nil
-}
-
-func updateLoadProcessSchema(table *bigquery.Table, job *Job, dest *config.Destination) {
-	if table != nil {
-		job.Load.Schema = table.Schema
-		if job.Load.Schema == nil && dest.Schema.Autodetect {
-			job.Load.Autodetect = dest.Schema.Autodetect
-		}
-		if table.TimePartitioning != nil {
-			job.Load.TimePartitioning = table.TimePartitioning
-			job.Load.TimePartitioning.RequirePartitionFilter = false
-		}
-		if table.RangePartitioning != nil {
-			job.Load.RangePartitioning = table.RangePartitioning
-		}
-		if table.Clustering != nil {
-			job.Load.Clustering = table.Clustering
-		}
-	}
-}
-
-func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*Job, error) {
-	batchWindow, err := s.batch.TryAcquireWindow(ctx, request.EventID, source, rule, func() string {
-		return s.selectProjectID(ctx, rule, response)
-	})
+func (s *service) tailInBatch(ctx context.Context, process *stage.Process, rule *config.Rule, response *contract.Response) (*load.Job, error) {
+	batchWindow, err := s.batch.TryAcquireWindow(ctx, process, rule)
 	if batchWindow == nil || err != nil {
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to acquire batch window")
@@ -652,38 +306,40 @@ func (s *service) tailInBatch(ctx context.Context, source store.Object, rule *co
 }
 
 func (s *service) runPostLoadActions(ctx context.Context, request *contract.Request, response *contract.Response) error {
-	actions, err := task.NewActionFromURL(ctx, s.fs, request.SourceURL)
+	action, err := task.NewActionFromURL(ctx, s.fs, request.SourceURL)
 	if err != nil {
 		object, _ := s.fs.Object(ctx, request.SourceURL, option.NewObjectKind(true))
 		if object == nil {
 			response.NotFoundError = err.Error()
 			return nil
 		}
-		if actions, err = task.NewActionFromURL(ctx, s.fs, request.SourceURL); err != nil {
-			return err
-		}
+		return err
 	}
-	response.Info = &actions.Info
-	actions.Region = actions.Job.JobReference.Location
-	actions.ProjectID = actions.Job.JobReference.ProjectId
-	if actions.ProjectID == "" {
-		actions.ProjectID = s.config.ProjectID
+
+
+	if base.IsLoggingEnabled() {
+		base.Log(action)
 	}
-	bqJob, err := s.bq.GetJob(ctx, actions.Job.JobReference.Location, actions.ProjectID, actions.Job.JobReference.JobId)
+	response.Process = &action.Meta.Process
+	action.Meta.Region = action.Job.JobReference.Location
+	action.Meta.ProjectID = action.Job.JobReference.ProjectId
+	projectID := action.Meta.GetOrSetProject(s.config.ProjectID)
+	bqJob, err := s.bq.GetJob(ctx, action.Job.JobReference.Location, projectID, action.Job.JobReference.JobId)
 	if err != nil {
 		response.Retriable = base.IsRetryError(err)
-		return errors.Wrapf(err, "failed to fetch aJob %v,", actions.Job.JobReference.JobId)
+		return errors.Wrapf(err, "failed to fetch aJob %v,", action.Job.JobReference.JobId)
 	}
 	if err := s.logJobInfo(ctx, bqJob); err != nil {
 		response.UploadError = fmt.Sprintf("failed to log aJob info: %v", err.Error())
 	}
-	aJob := base.Job(*bqJob)
-	bqJobError := aJob.Error()
-	if bqJobError != nil {
-		rule := s.config.Get(ctx, actions.RuleURL, nil)
-		if bqJobError = s.tryRecoverAndReport(ctx, rule, request, actions, bqJob, response); bqJobError == nil {
+	bqJobError := base.JobError(bqJob)
+	if bqJobError != nil && bqJob.Configuration != nil && bqJob.Configuration.Load != nil {
+		rule := s.config.Get(ctx, action.Meta.RuleURL)
+		processJob, err := load.NewJobFromURL(ctx, rule, &action.Meta.Process, s.fs)
+		if err != nil {
 			return bqJobError
 		}
+		return s.tryRecoverAndReport(ctx, processJob, response)
 	}
 
 	if base.IsRetryError(bqJobError) {
@@ -691,10 +347,11 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		return bqJobError
 	}
 
-	if err := actions.Init(ctx, s.cfs); err != nil {
+	if err := action.Init(ctx, s.cfs); err != nil {
 		return err
 	}
-	toRun := actions.ToRun(bqJobError, &aJob)
+	bqjob := base.Job(*bqJob)
+	toRun := action.ToRun(bqJobError, &bqjob)
 	retriable, err := task.RunAll(ctx, s.Registry, toRun)
 	if retriable {
 		response.Retriable = true
@@ -720,24 +377,19 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 			return err
 		}
 	}
-	rule := s.config.Get(ctx, window.RuleURL, window.Filter)
-	if rule == nil {
-		rule = s.config.Get(ctx, window.RuleURL, nil)
-	}
-	response.Rule = rule
 	request.EventID = window.EventID
-	job, err := s.runInBatch(ctx, rule, window, response)
-
-	if err == nil || job == nil {
-		if err != nil {
-			response.Retriable = base.IsRetryError(err)
+	rule := s.config.Get(ctx, window.RuleURL)
+	loadJob, batchErr := s.runInBatch(ctx, rule, window, response)
+	if batchErr == nil || loadJob == nil {
+		if batchErr != nil {
+			response.Retriable = base.IsRetryError(batchErr)
 		}
 		return err
 	}
-	return s.tryRecoverAndReport(ctx, rule, request, job.Actions, job.Job, response)
+	return s.tryRecoverAndReport(ctx, loadJob, response)
 }
 
-func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *batch.Window, response *contract.Response) (*Job, error) {
+func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *batch.Window, response *contract.Response) (*load.Job, error) {
 	response.Window = window
 	response.BatchRunner = true
 	if rule == nil {
@@ -752,52 +404,39 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	if err != nil || len(window.URIs) == 0 {
 		return nil, err
 	}
-	job := &Job{
-		Rule:      rule,
-		Status:    shared.StatusOK,
-		EventID:   window.EventID,
-		Window:    window,
-		DestTable: rule.DestTable(window.URIs[0], window.SourceTime),
+	loadJob, jobErr := load.NewJob(rule, window.Process, window)
+	if jobErr != nil {
+		return nil, jobErr
 	}
-	projectID := window.ProjectID
-	if projectID == "" {
-		projectID = s.config.ProjectID
-	}
-	if job.Load, err = rule.Dest.NewJobConfigurationLoad(time.Now(), window.URIs...); err != nil {
+	err = loadJob.Init(ctx, s.bq)
+	if err != nil {
 		return nil, err
 	}
-	job, err = s.submitJob(ctx, projectID, job, rule, response)
-	return job, err
+	loadJob, err = s.submitJob(ctx, loadJob, response)
+	return loadJob, err
 }
 
-func (s *service) tryRecoverAndReport(ctx context.Context, rule *config.Rule, request *contract.Request, actions *task.Actions, job *bigquery.Job, response *contract.Response) error {
-	err := base.JobError(job)
+func (s *service) tryRecoverAndReport(ctx context.Context, job *load.Job, response *contract.Response) error {
+	err := base.JobError(job.BqJob)
 	if err == nil {
 		return err
 	}
-	info := actions.Info
-	if info.DestTable != "" {
-		errorURL := url.Join(s.config.ErrorURL, info.DestTable, fmt.Sprintf("%v%v", request.EventID, shared.ErrorExt))
-		if e := s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(err.Error())); e != nil {
-			response.UploadError = e.Error()
-		}
-	}
-	return s.tryRecover(ctx, rule, request, actions, job, response)
+	//TODO report error
+	return s.tryRecover(ctx, job, response)
 }
 
-func (s *service) tryRecover(ctx context.Context, rule *config.Rule, request *contract.Request, actions *task.Actions, job *bigquery.Job, response *contract.Response) error {
-	configuration := actions.Job.Configuration
-	response.Info = &actions.Info
-
+func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contract.Response) error {
+	configuration := job.BqJob.Configuration
+	response.Process = job.Process
 	if configuration.Load == nil || len(configuration.Load.SourceUris) == 0 {
-		err := base.JobError(job)
+		err := base.JobError(job.BqJob)
 		response.Retriable = base.IsRetryError(err)
 		return err
 	}
+	response.LoadError = base.JobError(job.BqJob).Error()
 	uris := status.NewURIs()
-	response.URIs = *uris
-	uris.Classify(ctx, s.fs, job)
-	corruptedFileURL, invalidSchemaURL := s.getDataErrorsURLs(rule)
+	uris.Classify(ctx, s.fs, job.BqJob)
+	corruptedFileURL, invalidSchemaURL := s.getDataErrorsURLs(job.Rule)
 	if err := s.moveAssets(ctx, uris.Corrupted, corruptedFileURL); err != nil {
 		err = errors.Wrapf(err, "failed to move %v to %v", response.Corrupted, corruptedFileURL)
 		response.MoveError = err.Error()
@@ -809,24 +448,17 @@ func (s *service) tryRecover(ctx context.Context, rule *config.Rule, request *co
 
 	if len(uris.Valid) == 0 {
 		response.Retriable = false
-		return base.JobError(job)
+		return nil
 	}
-
 	response.Status = shared.StatusOK
 	response.Error = ""
-	load := &bq.LoadRequest{
-		JobConfigurationLoad: configuration.Load,
-	}
-	load.SourceUris = uris.Valid
-	if actions != nil {
-		load.Actions = *actions
-	}
-	bqJob := bigquery.Job(*job)
-	load.Job = &bqJob
-	load.Info = *load.Wrap(shared.ActionReload)
-	response.JobRef = bqJob.JobReference
-	load.ProjectID = s.config.ProjectID
-	loadJob, err := s.bq.Load(ctx, load)
+
+	job.Load.SourceUris = uris.Valid
+	loadRequest, action := job.NewLoadRequest()
+	meta := activity.Parse(job.BqJob.JobReference.JobId)
+	action.Meta.Step = meta.Step + 1
+	action.Meta = action.Meta.Wrap(shared.ActionReload)
+	loadJob, err := s.bq.Load(ctx, loadRequest, action)
 	if err == nil {
 		err = base.JobError(loadJob)
 	}
@@ -871,11 +503,11 @@ func (s *service) moveAssets(ctx context.Context, URLs []string, baseDestURL str
 }
 
 func (s *service) handlerProcessError(ctx context.Context, err error, request *contract.Request, response *contract.Response) error {
-	info := response.Info
+	info := response.Process
 	if info == nil || err == nil {
 		return err
 	}
-	activeURL := s.config.BuildActiveLoadURL(info)
+	activeURL := s.config.BuildLoadURL(info)
 
 	//Replay the whole load process - some individual BigQuery job can not be recovered
 	if base.IsInternalError(err) || base.IsBackendError(err) {
@@ -897,7 +529,7 @@ func (s *service) handlerProcessError(ctx context.Context, err error, request *c
 	}
 	processErrorURL := url.Join(s.config.ErrorURL, info.DestTable, fmt.Sprintf("%v%v", request.EventID, shared.ProcessExt))
 	_ = s.fs.Copy(ctx, activeURL, processErrorURL)
-	doneURL := s.config.BuildDoneLoadURL(info)
+	doneURL := s.config.DoneLoadURL(info)
 	_ = s.fs.Move(ctx, activeURL, doneURL)
 	return err
 }

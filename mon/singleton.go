@@ -1,7 +1,7 @@
 package mon
 
 import (
-	"bqtail/tail"
+	"github.com/viant/bqtail/tail"
 	"context"
 )
 

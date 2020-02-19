@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"bqtail/base"
+	"github.com/viant/bqtail/base"
 	"context"
 	"fmt"
 	"github.com/viant/afs/file"
@@ -15,19 +15,35 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 	if err != nil {
 		return err
 	}
-	_, sourceLocation := url.Base(request.SourceURL, file.Scheme)
-	destURL := url.Join(request.DestURL, sourceLocation)
 
-	if request.IsDestAbsoluteURL {
-		destURL = request.DestURL
+	if request.SourceURL != "" {
+		if moveErr := s.move(ctx, request.IsDestAbsoluteURL, request.SourceURL, request.DestURL); moveErr != nil {
+			err = moveErr
+		}
+	}
+	if len(request.SourceURLs) > 0 {
+		for _, sourceURL := range request.SourceURLs {
+			if moveErr := s.move(ctx, request.IsDestAbsoluteURL, sourceURL, request.DestURL); moveErr != nil {
+				err = moveErr
+			}
+		}
+	}
+	return err
+}
+
+func (s *service) move(ctx context.Context, isDestAbsoluteURL bool, sourceURL, destURL string) error {
+	_, sourceLocation := url.Base(sourceURL, file.Scheme)
+	if ! isDestAbsoluteURL {
+		destURL = url.Join(destURL, sourceLocation)
 	}
 	if base.IsLoggingEnabled() {
-		base.Log(fmt.Sprintf("moving: %v -> %v\n", request.SourceURL, destURL))
+		base.Log(fmt.Sprintf("moving: %v -> %v\n", sourceURL, destURL))
 	}
-	err = s.fs.Move(ctx, request.SourceURL, destURL)
+
+	err := s.fs.Move(ctx, sourceURL, destURL)
 	if err != nil {
-		if exists, err := s.fs.Exists(ctx, request.SourceURL, option.NewObjectKind(true)); !exists && err == nil {
-			return nil
+		if exists, existErr := s.fs.Exists(ctx, sourceURL, option.NewObjectKind(true)); !exists && existErr == nil {
+			err = nil
 		}
 	}
 	return err
@@ -36,6 +52,7 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 //MoveRequest represnets a move resource request
 type MoveRequest struct {
 	SourceURL         string
+	SourceURLs        []string
 	IsDestAbsoluteURL bool
 	DestURL           string
 }
@@ -45,7 +62,7 @@ func (r MoveRequest) Validate() error {
 	if r.DestURL == "" {
 		return fmt.Errorf("destURL was empty")
 	}
-	if r.SourceURL == "" {
+	if r.SourceURL == "" && len(r.SourceURLs) == 0 {
 		return fmt.Errorf("sourceURL was empty")
 	}
 	return nil

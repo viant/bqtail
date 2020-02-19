@@ -1,8 +1,8 @@
 package http
 
 import (
-	"bqtail/shared"
-	"bqtail/task"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/task"
 )
 
 const id = "http"

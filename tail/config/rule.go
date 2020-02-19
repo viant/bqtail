@@ -1,14 +1,15 @@
 package config
 
 import (
-	"bqtail/base"
-	"bqtail/task"
 	"context"
 	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/task"
 	"path"
 	"time"
 )
@@ -36,10 +37,6 @@ func (r *Rule) Actions() *task.Actions {
 		OnFailure: r.OnFailure,
 		OnSuccess: r.OnSuccess,
 	}
-	result.Async = r.Async
-	if r.Info.URL != "" {
-		result.RuleURL = r.Info.URL
-	}
 	return result
 }
 
@@ -56,14 +53,14 @@ func (r *Rule) IsAppend() bool {
 
 //DestTable returns dest table
 func (r *Rule) DestTable(URL string, modTime time.Time) string {
-	table, _ := r.Dest.ExpandTable(r.Dest.Table, modTime, URL)
+	table, _ := r.Dest.ExpandTable(r.Dest.Table, stage.NewSource(URL, modTime))
 	if table == "" {
 		table = r.Dest.Table
 	}
 	return table
 }
 
-//HasMatch returns true if URL matches prefix or suffix
+//HasMatch returns true if SourceURL matches prefix or suffix
 func (r *Rule) HasMatch(URL string) bool {
 	location := url.Path(URL)
 	parent, name := path.Split(location)
@@ -84,5 +81,6 @@ func (r *Rule) Init(ctx context.Context, fs afs.Service) error {
 	if r.Dest.Pattern != "" && r.When.Filter == "" {
 		r.When.Filter = r.Dest.Pattern
 	}
-	return actions.Init(ctx, fs)
+	err :=  actions.Init(ctx, fs)
+	return err
 }

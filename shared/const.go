@@ -42,8 +42,6 @@ const (
 	ActionCopy = "copy"
 	//ActionQuery query action
 	ActionQuery = "query"
-	//ActionPatch action patch
-	ActionPatch = "patch"
 	//ActionExport action export
 	ActionExport = "export"
 	//ActionMove move storage file
@@ -58,9 +56,33 @@ const (
 	ActionCall = "call"
 )
 
+//Request  action with post actions
+var Actionable = map[string]bool {
+	ActionLoad:true,
+	ActionReload: true,
+	ActionCopy: true,
+	ActionQuery: true,
+	ActionExport: true,
+	ActionDrop: true,
+	ActionCall: true,
+}
+
 const (
 	//URLsKey urls key
 	URLsKey = "URLs"
+
+	//URLKey urls key
+	URLKey = "SourceURL"
+
+
+
+	//LoadURIsVar load uris expression
+	LoadURIsVar = "$LoadURIs"
+	//LoadURIsKey load uris key
+	LoadURIsKey = "LoadURIs"
+
+
+
 	//ResponseKey response key
 	ResponseKey = "Response"
 	//RootKey
@@ -139,4 +161,24 @@ const (
 	RetrySleepInSec = 3
 	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
 	StorageListVisibilityDelay = 5000
+)
+
+const (
+	//PathElementSeparator path separator
+	PathElementSeparator = "--"
+	//StepModeDispach dispatch job name
+	StepModeDispach = "dispatch"
+	//StepModeTail tail job name
+	StepModeTail = "tail"
+	//StepModeNop - no post actions job
+	StepModeNop = "nop"
+
+)
+
+
+const (
+	//WriteDispositionTruncate remove then write all data
+	WriteDispositionTruncate =  "WRITE_TRUNCATE"
+	//WriteDispositionAppend append data
+	WriteDispositionAppend = "WRITE_APPEND"
 )

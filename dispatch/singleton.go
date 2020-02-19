@@ -1,7 +1,7 @@
 package dispatch
 
 import (
-	"bqtail/shared"
+	"github.com/viant/bqtail/shared"
 	"context"
 	//load google fs connector
 	_ "github.com/viant/afsc/gs"

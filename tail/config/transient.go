@@ -1,8 +1,8 @@
 package config
 
 import (
-	"bqtail/dispatch/contract"
-	"bqtail/tail/config/transient"
+	"github.com/viant/bqtail/dispatch/contract"
+	"github.com/viant/bqtail/tail/config/transient"
 	"errors"
 )
 
@@ -12,8 +12,10 @@ type Transient struct {
 	Dataset   string
 	ProjectID string
 	Alias     string
+	Template  string
 	Balancer  *transient.Balancer
 }
+
 
 func (t Transient) Validate() error {
 	if t.Dataset == "" {

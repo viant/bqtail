@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"bqtail/task"
+	"github.com/viant/bqtail/task"
 	"github.com/viant/afs"
 )
 

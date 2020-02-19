@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
-	"github.com/viant/toolbox"
+	"github.com/viant/bqtail/base"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -12,7 +12,7 @@ import (
 
 func (s *service) Call(ctx context.Context, request *CallRequest) (*CallResponse, error) {
 	if request.URL == "" {
-		return nil, errors.Errorf("request.URL was empty")
+		return nil, errors.Errorf("request.SourceURL was empty")
 	}
 	var err error
 	httpClient := http.DefaultClient
@@ -55,7 +55,9 @@ func (s *service) Call(ctx context.Context, request *CallRequest) (*CallResponse
 		}
 		_ = httpResponse.Body.Close()
 	}
-	toolbox.Dump(resp)
+	if base.IsLoggingEnabled() {
+		base.Log(resp)
+	}
 	return resp, nil
 }
 

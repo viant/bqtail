@@ -1,7 +1,7 @@
 package config
 
 import (
-	"bqtail/base"
+	"github.com/viant/bqtail/base"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"

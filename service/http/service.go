@@ -1,7 +1,7 @@
 package http
 
 import (
-	"bqtail/task"
+	"github.com/viant/bqtail/task"
 )
 
 //Service represents storage service

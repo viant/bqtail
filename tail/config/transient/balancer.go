@@ -1,8 +1,8 @@
 package transient
 
 import (
-	"bqtail/dispatch/contract"
-	"bqtail/shared"
+	"github.com/viant/bqtail/dispatch/contract"
+	"github.com/viant/bqtail/shared"
 	"math/rand"
 	"time"
 )

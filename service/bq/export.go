@@ -1,16 +1,17 @@
 package bq
 
 import (
-	"bqtail/base"
+	"github.com/viant/bqtail/base"
 	"context"
 	"fmt"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
 )
 
 //Export export table data to google fs
-func (s *service) Export(ctx context.Context, request *ExportRequest) (*bigquery.Job, error) {
-	if err := request.Init(s.projectID); err != nil {
+func (s *service) Export(ctx context.Context, request *ExportRequest, action *task.Action) (*bigquery.Job, error) {
+	if err := request.Init(s.projectID, action); err != nil {
 		return nil, err
 	}
 	if err := request.Validate(); err != nil {
@@ -29,8 +30,8 @@ func (s *service) Export(ctx context.Context, request *ExportRequest) (*bigquery
 			},
 		},
 	}
-	job.JobReference = request.jobReference()
-	return s.Post(ctx, job, &request.Request)
+	job.JobReference = action.JobReference()
+	return s.Post(ctx, job, action)
 }
 
 //ExportRequest represents an export request
@@ -42,17 +43,12 @@ type ExportRequest struct {
 	IncludeHeader  *bool
 	Compression    string
 	FieldDelimiter string
-	Request
 	Format string
 }
 
 //Init initialises request
-func (r *ExportRequest) Init(projectID string) (err error) {
-	if r.ProjectID != "" {
-		projectID = r.ProjectID
-	} else {
-		r.ProjectID = projectID
-	}
+func (r *ExportRequest) Init(projectID string, activity *task.Action) (err error) {
+	activity.Meta.GetOrSetProject(projectID)
 	if r.Source != "" {
 		if r.sourceTable, err = base.NewTableReference(r.Source); err != nil {
 			return err

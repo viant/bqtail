@@ -1,4 +1,5 @@
-## Feb 6 2020 2.0.0
+## Feb 19 2020 2.0.0
+  * Actions streamlining, introduced Process/Step (BREAKING CHANGE with Version 1.x.x) 
   * Added custom transient project(s) on rule level support (reservation/billing project, distributing load)
   * Added batch job throttling
   * Updated dispatcher to work across projects
@@ -7,7 +8,8 @@
   * Deprecated TransientDataset - please use Transient.Dataset (currently both supported)
   * Patch pattern setting with yaml format
   * Added seamless rule transition (more than one rule matching the same path but only one enabled) 
-  
+  * Dest.Schema.TransientTemplate move to Dest.Transient.Template
+
 
 ## Jan 14 2020 1.1.0
 

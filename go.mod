@@ -1,4 +1,4 @@
-module bqtail
+module github.com/viant/bqtail
 
 go 1.12
 

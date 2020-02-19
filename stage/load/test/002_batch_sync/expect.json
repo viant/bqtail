@@ -1,0 +1,55 @@
+{
+  "Meta": {
+    "Action": "load",
+    "DestTable": "bqtail.dummy_v002",
+    "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v002/2020-02-18_08/996615343761989.run",
+    "EventID": "996615343761989",
+    "Mode": "tail",
+    "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v002--996615343761989.run",
+    "ProjectID": "xx-e2e",
+    "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_002/rule.yaml",
+    "SourceTime": "2020-02-18T16:06:35Z",
+    "SourceURL": "gs://xx_e2e_bqtail/data/case002/dummy1.json",
+    "Step": 1,
+    "StepCount": 1
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": [
+          "gs://xx_e2e_bqtail/data/case002/dummy1.json",
+          "gs://xx_e2e_bqtail/data/case002/dummy2.json"
+        ]
+      }
+    },
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": [
+          "gs://xx_e2e_operation/BqTail/Tasks/bqtail.dummy_v002_1113915460922753545_1582042005.win"
+        ]
+      }
+    },
+    {
+      "Action": "move",
+      "Request": {
+        "DestURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v002/2020-02-18_08/996615343761989.run",
+        "IsDestAbsoluteURL": true,
+        "SourceURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v002--996615343761989.run"
+      }
+    }
+  ],
+  "Request": {
+    "Append": true,
+    "DestinationTable": {
+      "DatasetId": "bqtail",
+      "TableId": "dummy_v002"
+    },
+    "SourceUris": [
+      "gs://xx_e2e_bqtail/data/case002/dummy1.json",
+      "gs://xx_e2e_bqtail/data/case002/dummy2.json"
+    ],
+    "WriteDisposition": "WRITE_APPEND"
+  }
+}

@@ -1,17 +1,16 @@
 package batch
 
 import (
-	"bqtail/tail/config"
+	"github.com/viant/bqtail/stage"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
-	"github.com/viant/afs/matcher"
 	"io/ioutil"
 	"time"
 )
 
-//Info represents batch info, process can be owner of be owner by existing batch
+//Process represents batch info, process can be owner of be owner by existing batch
 type Info struct {
 	*Window
 	OwnerEventID string
@@ -19,32 +18,21 @@ type Info struct {
 
 //Window represent batching window
 type Window struct {
-	ProjectID  string         `json:",omitempty"`
-	EventID    string         `json:",omitempty"`
-	URL        string         `json:",omitempty"`
-	Filter     *matcher.Basic `json:",omitempty"`
-	RuleURL    string         `json:",omitempty"`
-	Table      string
-	SourceTime time.Time `json:",omitempty"`
-	SourceURL  string    `json:",omitempty"`
-	Start      time.Time `json:",omitempty"`
-	End        time.Time `json:",omitempty"`
-	URIs       []string  `json:",omitempty"`
-	Locations  []string
+	*stage.Process
+	URL       string `json:",omitempty"`
+	Start     time.Time `json:",omitempty"`
+	End       time.Time `json:",omitempty"`
+	URIs      []string  `json:",omitempty"`
+	Locations []string  `json:",omitempty"`
 }
 
 //NewWindow create a stage batch window
-func NewWindow(eventID string, dest string, startTime, endTime time.Time, sourceURL string, sourceTime time.Time, windowURL string, rule *config.Rule) *Window {
+func NewWindow(process *stage.Process, startTime, endTime time.Time,  windowURL string) *Window {
 	return &Window{
-		URL:        windowURL,
-		Table:      dest,
-		SourceURL:  sourceURL,
-		SourceTime: sourceTime,
-		Filter:     &rule.When,
-		RuleURL:    rule.Info.URL,
-		EventID:    eventID,
-		Start:      startTime,
-		End:        endTime,
+		Process: process,
+		URL:     windowURL,
+		Start:   startTime,
+		End:     endTime,
 	}
 }
 

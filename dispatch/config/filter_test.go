@@ -1,7 +1,7 @@
 package config
 
 import (
-	"bqtail/base"
+	"github.com/viant/bqtail/base"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/bigquery/v2"
 	"testing"

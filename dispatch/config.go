@@ -1,8 +1,8 @@
 package dispatch
 
 import (
-	"bqtail/base"
-	"bqtail/dispatch/config"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/dispatch/config"
 	"time"
 
 	"context"
@@ -70,7 +70,7 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 	return cfg, err
 }
 
-//NewConfigFromURL creates new config from URL
+//NewConfigFromURL creates new config from SourceURL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	storageService := afs.New()
 	reader, err := storageService.DownloadWithURL(ctx, URL)
@@ -89,7 +89,7 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	return cfg, err
 }
 
-//NewConfig creates a new config from env (json or URL)
+//NewConfig creates a new config from env (json or SourceURL)
 func NewConfig(ctx context.Context, key string) (*Config, error) {
 	if key == "" {
 		return nil, fmt.Errorf("config key was empty")

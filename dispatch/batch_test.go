@@ -14,13 +14,13 @@ func Test_URLToWindowEndTime(t *testing.T) {
 		expect      int
 	}{
 		{
-			description: "valid URL",
+			description: "valid SourceURL",
 			URL:         "mem://127.0.0.1/batch/mydata.mytable_40.win",
 			expect:      40,
 		},
 
 		{
-			description: "invalid URL",
+			description: "invalid SourceURL",
 			URL:         "mem://127.0.0.1/batch/mydata.mytable40.win",
 			hasError:    true,
 		},

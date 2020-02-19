@@ -1,8 +1,8 @@
 package bq
 
 import (
-	"bqtail/base"
-	"bqtail/shared"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"context"
 	"github.com/pkg/errors"
 	"google.golang.org/api/bigquery/v2"

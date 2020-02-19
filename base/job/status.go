@@ -1,13 +1,13 @@
 package job
 
 import (
-	"bqtail/stage"
+	"github.com/viant/bqtail/stage/activity"
 	"encoding/json"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
 
-//Info represents job info summary
+//Process represents job info summary
 type Info struct {
 	ProjectID           string
 	Error               string
@@ -32,7 +32,7 @@ type Info struct {
 
 //NewInfo creates new job info
 func NewInfo(job *bigquery.Job) *Info {
-	stageInfo := stage.Parse(job.JobReference.JobId)
+	stageInfo := activity.Parse(job.JobReference.JobId)
 	startTime := time.Unix(job.Statistics.StartTime/1000, 0)
 	endTime := time.Unix(job.Statistics.EndTime/1000, 0)
 	createTime := time.Unix(job.Statistics.CreationTime/1000, 0)

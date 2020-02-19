@@ -1,13 +1,12 @@
 package config
 
 import (
-	"bqtail/base"
-	"bqtail/shared"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
-	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/url"
 	"github.com/viant/toolbox"
 	"gopkg.in/yaml.v2"
@@ -54,19 +53,12 @@ func (r *Ruleset) remove(ctx context.Context, fs afs.Service, URL string) {
 	r.Rules = temp
 }
 
-//Get returns  a rule for URL
-func (r *Ruleset) Get(ctx context.Context, URL string, filter *matcher.Basic) *Rule {
+//Get returns  a rule for SourceURL
+func (r *Ruleset) Get(ctx context.Context, URL string) *Rule {
 	rules := r.Rules
-	for i, rule := range rules {
+	for _, rule := range rules {
 		if rule.Info.URL == URL {
-			if filter == nil {
-				return rule
-			}
-			if rule.When.Prefix == filter.Prefix &&
-				rule.When.Suffix == filter.Suffix &&
-				rule.When.Filter == filter.Filter {
-				return rules[i]
-			}
+			return rule
 		}
 	}
 	return nil
@@ -83,7 +75,7 @@ func (r Ruleset) Match(URL string) []*Rule {
 			matched = append(matched, r.Rules[i])
 		}
 	}
-	//to migrate rule for the same path, 2 rules matching the same URL can exist but only one has to be enabled
+	//to migrate rule for the same path, 2 rules matching the same SourceURL can exist but only one has to be enabled
 	if len(matched) > 1 {
 		temp := matched
 		matched = make([]*Rule, 0)

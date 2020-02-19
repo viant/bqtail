@@ -1,8 +1,8 @@
 package contract
 
 import (
-	"bqtail/shared"
-	"bqtail/stage"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage/activity"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -77,7 +77,7 @@ func (p *Performance) Metric(state string) *Metrics {
 }
 
 //AddDispatch add dispatched metrics
-func (p *Performance) AddDispatch(jobID string) *stage.Info {
+func (p *Performance) AddDispatch(jobID string) *activity.Meta {
 	return p.Dispatched.Update(jobID)
 }
 

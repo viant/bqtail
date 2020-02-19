@@ -1,0 +1,18 @@
+{
+  "SourceURL": "gs://xx_e2e_bqtail/data/case002/dummy1.json",
+  "SourceTime": "2020-02-18T16:06:35.729Z",
+  "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v002--996615343761989.run",
+  "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v002/2020-02-18_08/996615343761989.run",
+  "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_002/rule.yaml",
+  "EventID": "996615343761989",
+  "ProjectID": "xx-e2e",
+  "DestTable": "bqtail.dummy_v002",
+  "StepCount": 4,
+  "URL": "gs://xx_e2e_operation/BqTail/Tasks/bqtail.dummy_v002_1113915460922753545_1582042005.win",
+  "Start": "2020-02-18T08:06:30-08:00",
+  "End": "2020-02-18T08:06:45-08:00",
+  "URIs": [
+    "gs://xx_e2e_bqtail/data/case002/dummy1.json",
+    "gs://xx_e2e_bqtail/data/case002/dummy2.json"
+  ]
+}

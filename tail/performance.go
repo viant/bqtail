@@ -1,9 +1,9 @@
 package tail
 
 import (
-	"bqtail/base"
-	disp "bqtail/dispatch/contract"
-	"bqtail/shared"
+	"github.com/viant/bqtail/base"
+	disp "github.com/viant/bqtail/dispatch/contract"
+	"github.com/viant/bqtail/shared"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"

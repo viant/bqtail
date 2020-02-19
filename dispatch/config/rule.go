@@ -1,8 +1,8 @@
 package config
 
 import (
-	"bqtail/base"
-	"bqtail/task"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/task"
 )
 
 //Rule represents trigger route

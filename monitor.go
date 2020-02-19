@@ -1,8 +1,8 @@
 package bqtail
 
 import (
-	"bqtail/mon"
-	"bqtail/shared"
+	"github.com/viant/bqtail/mon"
+	"github.com/viant/bqtail/shared"
 	"context"
 	"encoding/json"
 	"fmt"

@@ -14,6 +14,8 @@ type Registry interface {
 	RegisterAction(name string, service *ServiceAction)
 
 	Action(name string) (*ServiceAction, error)
+
+	Actions(service string) []string
 }
 
 type registry struct {
@@ -44,6 +46,17 @@ func (r *registry) RegisterAction(name string, action *ServiceAction) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.actions[name] = action
+}
+
+
+func (r registry)  Actions(service string) []string {
+	var result = make([]string, 0)
+	for action, serviceAction:= range r.actions {
+		if serviceAction.Service == service{
+			result = append(result, action)
+		}
+	}
+	return result
 }
 
 func (r *registry) Action(name string) (*ServiceAction, error) {

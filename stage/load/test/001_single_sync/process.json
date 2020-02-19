@@ -1,0 +1,9 @@
+{
+  "ProjectID": "xx_e2e",
+  "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v001--994578378671228.run",
+  "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v001/2020-02-17_16/994578378671228.run",
+  "SourceURL": "gs://xx_e2e_bqtail/data/case001/dummy.json",
+  "SourceTime": "2020-02-17T08:57:59-08:00",
+  "EventID": "994578378671228",
+  "DestTable": "xx.bqtail.dummy_v001"
+}

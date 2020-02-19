@@ -1,7 +1,7 @@
 package kms
 
 import (
-	"bqtail/base"
+	"github.com/viant/bqtail/base"
 	"context"
 )
 

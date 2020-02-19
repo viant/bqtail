@@ -3,3 +3,5 @@ When:
   Suffix: ".json"
 Dest:
   Table: bqtail.dummy_v${parentIndex}
+OnSuccess:
+  - Action: delete

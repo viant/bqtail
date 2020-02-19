@@ -1,7 +1,7 @@
 package bqtail
 
 import (
-	"bqtail/replay"
+	"github.com/viant/bqtail/replay"
 	"context"
 	"encoding/json"
 	"fmt"

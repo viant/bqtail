@@ -1,8 +1,8 @@
 package gcp
 
 import (
-	"bqtail/base"
-	"bqtail/service/kms"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/service/kms"
 	"context"
 	"encoding/base64"
 	"fmt"

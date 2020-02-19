@@ -1,7 +1,7 @@
 package contract
 
 import (
-	"bqtail/base"
+	"github.com/viant/bqtail/base"
 	"sync"
 	"time"
 )

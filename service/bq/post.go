@@ -1,9 +1,6 @@
 package bq
 
 import (
-	"bqtail/base"
-	"bqtail/shared"
-	"bqtail/stage"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -11,46 +8,41 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
-	"strings"
 	"time"
 )
 
-func (s *service) setJobID(request *Request) (*bigquery.JobReference, error) {
-	ID := request.Info.GetJobID()
-	projectID := request.ProjectID
-	if projectID == "" {
-		projectID = s.Config.ProjectID
-	}
+func (s *service) setJobID(action *task.Action) (*bigquery.JobReference, error) {
+	ID := action.Meta.GetJobID()
+	projectID := action.Meta.GetOrSetProject(s.Config.ProjectID)
 	return &bigquery.JobReference{
-		Location:  request.Region,
+		Location:  action.Meta.Region,
 		JobId:     ID,
 		ProjectId: projectID,
 	}, nil
 }
 
-func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, request *Request) error {
-	if request.IsEmpty() || request.IsSyncMode() {
+func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, action *task.Action) error {
+	if action.IsEmpty() || action.Meta.IsSyncMode() {
 		return nil
 	}
-	request.Job = job
-	data, err := json.Marshal(request.Actions)
+	action.Job = job
+	data, err := json.Marshal(action)
 	if err != nil {
-		return errors.Wrapf(err, "failed to encode actions: %v", request.Actions)
+		return errors.Wrapf(err, "failed to encode actions: %v", action)
 	}
-	filename := request.Actions.Info.JobFilename()
+	filename := action.Meta.JobFilename()
 	URL := url.Join(s.Config.AsyncTaskURL, filename)
 	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
+
 //Post post big query job
-func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, req *Request) (*bigquery.Job, error) {
-	if req.JobID != "" && req.Info.Action == "" {
-		req.Info = *stage.Parse(req.JobID)
-		//Legacy transition
-		req.Info.Step = strings.Count(req.JobID, stage.PathElementSeparator)
-	}
-	job, err := s.post(ctx, callerJob, req)
+func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, actionable *task.Action) (*bigquery.Job, error) {
+	job, err := s.post(ctx, callerJob, actionable)
 	if job == nil {
 		job = callerJob
 	} else {
@@ -59,7 +51,7 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, req *Reques
 	if base.IsLoggingEnabled() {
 		base.Log(job)
 	}
-	if req.IsSyncMode() {
+	if actionable.Meta.IsSyncMode() {
 		err = base.JobError(job)
 		if err == nil {
 			job, err = s.Wait(ctx, job.JobReference)
@@ -70,7 +62,7 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, req *Reques
 		if job == nil {
 			job = callerJob
 		}
-		if e := s.runActions(ctx, err, job, &req.Actions); e != nil {
+		if e := s.runActions(ctx, err, job, actionable.Actions); e != nil {
 			if err == nil {
 				err = e
 			} else {
@@ -81,12 +73,12 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, req *Reques
 	return job, err
 }
 
-func (s *service) post(ctx context.Context, job *bigquery.Job, request *Request) (*bigquery.Job, error) {
+func (s *service) post(ctx context.Context, job *bigquery.Job, actionable *task.Action) (*bigquery.Job, error) {
 	var err error
-	if job.JobReference, err = s.setJobID(request); err != nil {
+	if job.JobReference, err = s.setJobID(actionable); err != nil {
 		return nil, err
 	}
-	err = s.schedulePostTask(ctx, job, request)
+	err = s.schedulePostTask(ctx, job, actionable)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to schedule bqJob %v", job.JobReference.JobId)
 	}
@@ -94,10 +86,7 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, request *Request)
 	if base.IsLoggingEnabled() {
 		base.Log(job)
 	}
-	projectID := request.ProjectID
-	if projectID == "" {
-		projectID = s.Config.ProjectID
-	}
+	projectID := actionable.Meta.GetOrSetProject(s.Config.ProjectID)
 	jobService := bigquery.NewJobsService(s.Service)
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)
@@ -125,5 +114,5 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, request *Request)
 	if err != nil || (callJob != nil && base.JobError(callJob) != nil) {
 		return callJob, err
 	}
-	return s.GetJob(ctx, job.JobReference.Location, request.ProjectID, job.JobReference.JobId)
+	return s.GetJob(ctx, job.JobReference.Location, actionable.Meta.ProjectID, job.JobReference.JobId)
 }

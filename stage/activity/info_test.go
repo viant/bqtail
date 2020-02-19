@@ -1,4 +1,4 @@
-package stage
+package activity
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -16,28 +16,28 @@ func TestParse(t *testing.T) {
 	}{
 		{
 			description: "legacy",
-			encoded:     "bqtail--dummy--869694905034386--dispatch",
-			expect:      `{"DestTable":"bqtail--dummy","EventID":"869694905034386","Action":"nop","Suffix":"dispatch","Step":0}`,
+			encoded:     "github.com/viant/bqtail--dummy--869694905034386--dispatch",
+			expect:      `{"DestTable":"github.com/viant/bqtail--dummy","EventID":"869694905034386","Action":"nop","Mode":"dispatch","Meta":0}`,
 		},
 		{
 			description: "info style",
-			encoded:     "bqtail_dummy--869694905034386_0004_load--dispatch",
-			expect:      `{"DestTable":"bqtail_dummy","EventID":"869694905034386","Action":"load","Suffix":"dispatch","Step":4}`,
+			encoded:     "github.com/viant/bqtail_dummy--869694905034386_0004_load--dispatch",
+			expect:      `{"DestTable":"github.com/viant/bqtail_dummy","EventID":"869694905034386","Action":"load","Mode":"dispatch","Meta":4}`,
 		},
 		{
 			description: "info style location",
-			encoded:     "bqtail:dummy/869694905034386_0004_load/dispatch",
-			expect:      `{"DestTable":"bqtail:dummy","EventID":"869694905034386","Action":"load","Suffix":"dispatch","Step":4}`,
+			encoded:     "github.com/viant/bqtail:dummy/869694905034386_0004_load/dispatch",
+			expect:      `{"DestTable":"github.com/viant/bqtail:dummy","EventID":"869694905034386","Action":"load","Mode":"dispatch","Meta":4}`,
 		},
 		{
 			description: "invalid",
-			encoded:     "bqtail869694905034386--tail",
-			expect:      `{"DestTable":"", "Action":"nop","Suffix":"tail","Step":0}`,
+			encoded:     "github.com/viant/bqtail869694905034386--tail",
+			expect:      `{"DestTable":"", "Action":"nop","Mode":"tail","Meta":0}`,
 		},
 		{
 			description: "legacy mixed",
 			encoded:     "temp--dummy_850558231030311/850558231030311/dispatch",
-			expect:      `{"DestTable":"temp--dummy_850558231030311","EventID":"850558231030311","Action":"nop","Suffix":"dispatch","Async":true}`,
+			expect:      `{"DestTable":"temp--dummy_850558231030311","EventID":"850558231030311","Action":"nop","Mode":"dispatch","Async":true}`,
 		},
 	}
 	for _, useCase := range useCases {
@@ -65,30 +65,30 @@ func TestInfo_ChildInfo(t *testing.T) {
 	}{
 		{
 			description: "top level",
-			encoded:     "bqtail_dummy--869694905034386_00001_query--dispatch",
+			encoded:     "github.com/viant/bqtail_dummy--869694905034386_00001_query--dispatch",
 			action:      "query",
 			step:        1,
-			expect:      "bqtail_dummy/869694905034386_01001_query--dispatch",
+			expect:      "github.com/viant/bqtail_dummy/869694905034386_01001_query--dispatch",
 		},
 		{
 			description: "leaf level 1",
 			action:      "query",
-			encoded:     "bqtail_dummy/869694905034386_01001_query--dispatch",
-			expect:      "bqtail_dummy/869694905034386_02001_query--dispatch",
+			encoded:     "github.com/viant/bqtail_dummy/869694905034386_01001_query--dispatch",
+			expect:      "github.com/viant/bqtail_dummy/869694905034386_02001_query--dispatch",
 			step:        1,
 		},
 		{
 			description: "leaf level 2",
 			action:      "query",
-			encoded:     "bqtail_dummy/869694905034386_02001_query--dispatch",
-			expect:      "bqtail_dummy/869694905034386_03001_query--dispatch",
+			encoded:     "github.com/viant/bqtail_dummy/869694905034386_02001_query--dispatch",
+			expect:      "github.com/viant/bqtail_dummy/869694905034386_03001_query--dispatch",
 			step:        1,
 		},
 		{
 			description: "leaf level 3",
 			action:      "query",
-			encoded:     "bqtail_dummy/869694905034386_02002_query--dispatch",
-			expect:      "bqtail_dummy/869694905034386_04003_query--dispatch",
+			encoded:     "github.com/viant/bqtail_dummy/869694905034386_02002_query--dispatch",
+			expect:      "github.com/viant/bqtail_dummy/869694905034386_04003_query--dispatch",
 			step:        3,
 		},
 		{

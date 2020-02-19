@@ -1,14 +1,14 @@
 package mon
 
 import (
-	"bqtail/base"
-	"bqtail/mon/info"
-	"bqtail/service/bq"
-	"bqtail/shared"
-	"bqtail/sortable"
-	"bqtail/stage"
-	"bqtail/tail"
-	"bqtail/task"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/mon/info"
+	"github.com/viant/bqtail/service/bq"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/sortable"
+	"github.com/viant/bqtail/stage/activity"
+	"github.com/viant/bqtail/tail"
+	"github.com/viant/bqtail/task"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -64,7 +64,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	var active, doneLoads activeLoads
 	var schedules batches
 	var errors []*info.Error
-	var stages []*stage.Info
+	var stages []*activity.Meta
 	go func() {
 		defer waitGroup.Done()
 		var e error
@@ -147,7 +147,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 		}
 		rule := inf.rule
 		if rule == nil {
-			rule = s.Config.Get(ctx, inf.RuleURL, nil)
+			rule = s.Config.Get(ctx, inf.RuleURL)
 		}
 		if rule != nil {
 			inf.Corrupted, _ = s.getURLMetrics(ctx, rule.CorruptedFileURL, inf, request.Recency)
@@ -251,7 +251,7 @@ func (s *service) updateBatches(batchSlice batches, infoDest map[string]*Info) {
 	}
 }
 
-func (s *service) updateStages(stages []*stage.Info, infoDest map[string]*Info) {
+func (s *service) updateStages(stages []*activity.Meta, infoDest map[string]*Info) {
 	for _, stageInfo := range stages {
 		inf := s.getInfo(stageInfo.DestTable, infoDest)
 		stageKey := fmt.Sprintf("%04d-%v", stageInfo.Sequence(), stageInfo.Action)
@@ -395,12 +395,12 @@ func newError(dest string, sortedFiles *sortable.Objects) *info.Error {
 	return result
 }
 
-func (s *service) getLoadStages(ctx context.Context) ([]*stage.Info, error) {
-	result := make([]*stage.Info, 0)
+func (s *service) getLoadStages(ctx context.Context) ([]*activity.Meta, error) {
+	result := make([]*activity.Meta, 0)
 	return result, s.listLoadStages(ctx, &result)
 }
 
-func (s *service) listLoadStages(ctx context.Context, result *[]*stage.Info) error {
+func (s *service) listLoadStages(ctx context.Context, result *[]*activity.Meta) error {
 	objects, err := s.fs.List(ctx, s.AsyncTaskURL)
 	if err != nil {
 		return err
@@ -410,7 +410,7 @@ func (s *service) listLoadStages(ctx context.Context, result *[]*stage.Info) err
 			continue
 		}
 
-		stageInfo := stage.Parse(object.Name())
+		stageInfo := activity.Parse(object.Name())
 		stageInfo.SourceTime = object.ModTime()
 		*result = append(*result, stageInfo)
 	}

@@ -13,3 +13,4 @@ local3_test.go
 /aws/sqs/smirrorsqs
 scratchpad
 scratchpad/
+local_test.go

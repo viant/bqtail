@@ -23,12 +23,12 @@ New event is used for data processing, and data is ingested as long original dat
         "Channels": [
           "#e2e"
         ],
-        "From": "BqTail",
+        "From": "bqtail",
         "Title": "bqtail.wrong_dummy ingestion",
         "Message": "$Error",
         "Secret": {
           "URL": "gs://${config.Bucket}/config/slack.json.enc",
-          "Key": "BqTailRing/BqTailKey"
+          "Key": "bqtailRing/BqTailKey"
         }
       }
     }

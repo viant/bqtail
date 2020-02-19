@@ -1,11 +1,14 @@
 package config
 
 import (
-	"bqtail/base"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/tail/config/pattern"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
+	"github.com/viant/toolbox/data"
 	"google.golang.org/api/bigquery/v2"
 	"regexp"
 	"strconv"
@@ -27,7 +30,8 @@ type Destination struct {
 	Partition string `json:"partition,omitempty"`
 	//Pattern uses URI relative path (without leading backslash)
 	bigquery.JobConfigurationLoad
-	Pattern          string `json:",omitempty"`
+	Pattern          string           `json:",omitempty"`
+	Parameters       []*pattern.Param `json:",omitempty"`
 	compiled         *regexp.Regexp
 	Schema           Schema            `json:",omitempty"`
 	TransientDataset string            `json:",omitempty"`
@@ -36,6 +40,25 @@ type Destination struct {
 	Transform        map[string]string `json:",omitempty"`
 	SideInputs       []*SideInput      `json:",omitempty"`
 	Override         *bool
+}
+
+//Params build pattern paramters
+func (d Destination) Params(source string) (map[string]interface{}, error) {
+	var result = make( map[string]interface{} )
+	if d.Pattern == "" || len(d.Parameters) == 0 {
+		return result, nil
+	}
+	var err error
+	if d.compiled == nil {
+		d.compiled, err = regexp.Compile(d.Pattern)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, param := range d.Parameters {
+		result[param.Name] = expandWithPattern(d.compiled, source, param.Expression)
+	}
+	return result, nil
 }
 
 //HasSplit returns true if dest has split
@@ -97,24 +120,27 @@ func (d *Destination) Init() error {
 	if d.Transient != nil && d.Transient.Alias == "" {
 		d.Transient.Alias = "t"
 	}
+	if len(d.Transform) == 0 {
+		d.Transform = make(map[string]string)
+	}
 	return nil
 }
 
 //ExpandTable returns expanded table
-func (d *Destination) ExpandTable(table string, created time.Time, source string) (string, error) {
-	return d.Expand(table, created, source)
+func (d *Destination) ExpandTable(table string, source*stage.Source) (string, error) {
+	return d.Expand(table, source)
 }
 
 //Expand returns sourced table
-func (d *Destination) Expand(dest string, created time.Time, source string) (string, error) {
+func (d *Destination) Expand(dest string, source*stage.Source) (string, error) {
 	var err error
 	if count := strings.Count(dest, ModExpr); count > 0 {
-		if dest, err = expandMod(dest, source, count); err != nil {
+		if dest, err = expandMod(dest, source.SourceURL, count); err != nil {
 			return dest, err
 		}
 	}
 	if count := strings.Count(dest, DateExpr); count > 0 {
-		dest = expandDate(dest, created, count)
+		dest = expandDate(dest, source.SourceTime, count)
 	}
 	if d.Pattern != "" {
 		if d.compiled == nil {
@@ -123,7 +149,16 @@ func (d *Destination) Expand(dest string, created time.Time, source string) (str
 				return "", err
 			}
 		}
-		dest = expandWithPattern(d.compiled, source, dest)
+		dest = expandWithPattern(d.compiled, source.SourceURL, dest)
+	}
+
+	params, err := d.Params(source.SourceURL)
+	if err != nil {
+		return "", err
+	}
+	if len(params) > 0 {
+		paramsMap := data.Map(params)
+		dest = paramsMap.ExpandAsText(dest)
 	}
 	return dest, err
 }
@@ -156,13 +191,13 @@ func (d *Destination) Match(candidate string) bool {
 }
 
 //TableReference returns table reference, source table syntax: project:dataset:table
-func (d *Destination) TableReference(created time.Time, source string) (*bigquery.TableReference, error) {
-	return d.CustomTableReference(d.Table, created, source)
+func (d *Destination) TableReference(source*stage.Source) (*bigquery.TableReference, error) {
+	return d.CustomTableReference(d.Table, source)
 }
 
 //CustomTableReference returns custom table reference
-func (d *Destination) CustomTableReference(table string, created time.Time, source string) (*bigquery.TableReference, error) {
-	table, err := d.ExpandTable(table, created, source)
+func (d *Destination) CustomTableReference(table string, source*stage.Source) (*bigquery.TableReference, error) {
+	table, err := d.ExpandTable(table, source)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +207,7 @@ func (d *Destination) CustomTableReference(table string, created time.Time, sour
 		return nil, errors.Wrapf(err, "failed to get table reference %v", table)
 	}
 	if d.Partition != "" {
-		partition, err := d.Expand(d.Partition, created, source)
+		partition, err := d.Expand(d.Partition, source)
 		if err != nil {
 			return nil, err
 		}
@@ -209,27 +244,27 @@ func expandDate(table string, created time.Time, count int) string {
 	return strings.Replace(table, DateExpr, date, count)
 }
 
-func expandWithPattern(expr *regexp.Regexp, sourceURL string, table string) string {
+func expandWithPattern(expr *regexp.Regexp, sourceURL string, expression string) string {
 	_, URLPath := url.Base(sourceURL, file.Scheme)
 	matched := expr.FindStringSubmatch(URLPath)
 	for i := 1; i < len(matched); i++ {
 		key := fmt.Sprintf("$%v", i)
-		count := strings.Count(table, key)
+		count := strings.Count(expression, key)
 		if count > 0 {
-			table = strings.Replace(table, key, matched[i], count)
+			expression = strings.Replace(expression, key, matched[i], count)
 		}
 	}
-	return table
+	return expression
 }
 
 //NewJobConfigurationLoad creates a new load request
-func (d *Destination) NewJobConfigurationLoad(created time.Time, URIs ...string) (*bigquery.JobConfigurationLoad, error) {
+func (d *Destination) NewJobConfigurationLoad(source *stage.Source, URIs ...string) (*bigquery.JobConfigurationLoad, error) {
 	if len(URIs) == 0 {
 		return nil, fmt.Errorf("URIs were empty")
 	}
 	var err error
 	result := d.JobConfigurationLoad
-	result.DestinationTable, err = d.TableReference(created, URIs[0])
+	result.DestinationTable, err = d.TableReference(source)
 	if err != nil {
 		return nil, err
 	}

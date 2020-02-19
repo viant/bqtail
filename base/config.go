@@ -1,8 +1,9 @@
 package base
 
 import (
-	"bqtail/shared"
-	"bqtail/stage"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/stage/activity"
 	"context"
 	"fmt"
 	"github.com/viant/afs/url"
@@ -43,19 +44,19 @@ type Config struct {
 	MaxRetries       int
 }
 
-//BuildActiveLoadURL returns active action URL for supplied event id
-func (c *Config) BuildActiveLoadURL(info *stage.Info) string {
-	return url.Join(c.ActiveLoadProcessURL, info.DestTable+stage.PathElementSeparator+info.EventID+shared.ProcessExt)
+//BuildLoadURL returns active action SourceURL for supplied event id
+func (c *Config) BuildLoadURL(info *stage.Process) string {
+	return url.Join(c.ActiveLoadProcessURL, info.DestTable+shared.PathElementSeparator+info.EventID+shared.ProcessExt)
 }
 
-//BuildDoneLoadURL returns done action URL for supplied event id
-func (c *Config) BuildDoneLoadURL(info *stage.Info) string {
+//DoneLoadURL returns done action SourceURL for supplied event id
+func (c *Config) DoneLoadURL(info *stage.Process) string {
 	date := time.Now().Format(shared.DateLayout)
 	return url.Join(c.DoneLoadProcessURL, path.Join(info.DestTable, date, info.EventID+shared.ProcessExt))
 }
 
 //BuildTaskURL returns an action url for supplied event ID
-func (c *Config) BuildTaskURL(info *stage.Info) string {
+func (c *Config) BuildTaskURL(info *activity.Meta) string {
 	date := time.Now().Format(shared.DateLayout)
 	return fmt.Sprintf("gs://%v%v%v/%v", c.TriggerBucket, c.PostJobPrefix, date, info.JobFilename())
 }

@@ -20,8 +20,18 @@ pipeline:
         - export GO111MODULE=on
         - unset GOPATH
         - cd ${appPath}/
+        - mkdir -p vendor/github.com/viant/bqtail
+        - rm -rf vendor
         - go mod vendor
         - go build
+        - mkdir -p vendor/github.com/viant/bqtail
+        - cp -rf base vendor/github.com/viant/bqtail
+        - cp -rf dispatch vendor/github.com/viant/bqtail
+        - cp -rf mon vendor/github.com/viant/bqtail
+        - cp -rf service vendor/github.com/viant/bqtail
+        - cp -rf s* vendor/github.com/viant/bqtail/
+        - cp -rf r* vendor/github.com/viant/bqtail/
+        - cp -rf t* vendor/github.com/viant/bqtail/
 
     deploay:
       bqtail:

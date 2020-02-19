@@ -1,7 +1,7 @@
 package config
 
 import (
-	"bqtail/shared"
+	"github.com/viant/bqtail/shared"
 	"fmt"
 	"github.com/viant/afs/url"
 	"time"
@@ -10,18 +10,18 @@ import (
 //Batch transfer config
 type Batch struct {
 	//Window batch time window
-	Window *Window
+	Window *Window `json:",omitempty"`
 	//RollOver if this flag is set, if the first event of the batch fall outside of the first half time, the window can be expanded if previous window had not existed.
-	RollOver bool
-	//Batch base URL
-	BaseURL string
+	RollOver bool `json:",omitempty"`
+	//Batch base SourceURL
+	BaseURL string `json:",omitempty"`
 
 	//MultiPath is one batch can collect files from various folder
-	MultiPath bool
+	MultiPath bool `json:",omitempty"`
 
 	//MaxDelayInSec delay before collecting batch file. to randomly distribute workload,
 	// when a table has 40 shards, 40 batches would start exactly at the same time unless this parameter is specified
-	MaxDelayInSec int
+	MaxDelayInSec int `json:",omitempty"`
 }
 
 //Init initialises batch mode

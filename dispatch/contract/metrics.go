@@ -1,6 +1,8 @@
 package contract
 
-import "bqtail/stage"
+import (
+	"github.com/viant/bqtail/stage/activity"
+)
 
 //Metrics represents BqQuery jobs metric
 type Metrics struct {
@@ -17,14 +19,14 @@ func (m Metrics) Count() int {
 }
 
 //Update updates a metrics with job ID
-func (m *Metrics) Update(jobID string) *stage.Info {
-	stageInfo := stage.Parse(jobID)
+func (m *Metrics) Update(jobID string) *activity.Meta {
+	stageInfo := activity.Parse(jobID)
 	m.Add(stageInfo, 1)
 	return stageInfo
 }
 
 //Add updates a metrics with supplied stage action and count
-func (m *Metrics) Add(stageInfo *stage.Info, count int) {
+func (m *Metrics) Add(stageInfo *activity.Meta, count int) {
 	switch stageInfo.Action {
 	case "query":
 		m.QueryJobs += count

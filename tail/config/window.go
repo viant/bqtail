@@ -14,8 +14,8 @@ const (
 
 //Window represents batching window
 type Window struct {
-	time.Duration
-	DurationInSec int
+	time.Duration `json:",omitempty"`
+	DurationInSec int `json:",omitempty"`
 }
 
 //Init initialises window

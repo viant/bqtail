@@ -69,7 +69,7 @@ pipeline:
       action: storage:list
       sleepTimeMs: 10000
       match:
-        Filter: '.+bqtail.dummy_v${parentIndex}\.+'
+        Filter: 'bqtail.dummy_v${parentIndex}'
       source:
         Credentials: $gcpCredentials
         URL: 'gs://${opsBucket}/BqTail/Journal/Done'

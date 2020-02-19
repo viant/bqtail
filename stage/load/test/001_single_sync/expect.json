@@ -1,0 +1,46 @@
+{
+  "Meta": {
+    "Action": "load",
+    "DestTable": "xx.bqtail.dummy_v001",
+    "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v001/2020-02-17_16/994578378671228.run",
+    "EventID": "994578378671228",
+    "Mode": "tail",
+    "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v001--994578378671228.run",
+    "ProjectID": "xx_e2e",
+    "SourceTime": "2020-02-17T08:57:59-08:00",
+    "SourceURL": "gs://xx_e2e_bqtail/data/case001/dummy.json",
+    "Step": 1,
+    "StepCount": 1
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": [
+          "gs://xx_e2e_bqtail/data/case001/dummy.json"
+        ]
+      }
+    },
+    {
+      "Action": "move",
+      "Request": {
+        "DestURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v001/2020-02-17_16/994578378671228.run",
+        "IsDestAbsoluteURL": true,
+        "SourceURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v001--994578378671228.run"
+      }
+    }
+  ],
+  "Request": {
+    "Append": true,
+    "DestinationTable": {
+      "DatasetId": "bqtail",
+      "ProjectId": "xx",
+      "TableId": "dummy_v001"
+    },
+    "IgnoreUnknownValues": false,
+    "SourceUris": [
+      "gs://xx_e2e_bqtail/data/case001/dummy.json"
+    ],
+    "WriteDisposition": "WRITE_APPEND"
+  }
+}

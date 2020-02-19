@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"bqtail/base"
+	"github.com/viant/bqtail/base"
 	"context"
 	"fmt"
 )
@@ -15,7 +15,6 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 	if err != nil {
 		return err
 	}
-
 	deleter := newDeleter(s.fs)
 	deleter.Run(ctx, deleteRoutines)
 
