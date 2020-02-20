@@ -1,11 +1,11 @@
 {
   "Source": {
-    "URL": "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy2.json",
+    "URL": "gs://${triggerBucket}/data/case${parentIndex}/dummy2.json",
     "Time": "2020-02-19T18:52:19.228Z"
   },
-  "ProcessURL": "gs://viant_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}--998006374311244.run",
-  "DoneProcessURL": "gs://viant_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-02-19_18/998006374311244.run",
-  "RuleURL": "gs://viant_e2e_config/BqTail/Rules/case_${parentIndex}/rule.yaml",
+  "ProcessURL": "gs://${opsBucket}/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}--998006374311244.run",
+  "DoneProcessURL": "gs://${opsBucket}/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-02-19_18/998006374311244.run",
+  "RuleURL": "gs://${configBucket}/BqTail/Rules/case_016/rule.yaml",
   "EventID": "998006374311244",
   "Async": true,
   "TempTable": "`temp.dummy_v${parentIndex}_998006374311244`",
@@ -14,23 +14,23 @@
   "Status": "ok",
   "Window": {
     "Source": {
-      "URL": "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy2.json",
+      "URL": "gs://${triggerBucket}/data/case${parentIndex}/dummy2.json",
       "Time": "2020-02-19T18:52:19.228Z"
     },
-    "ProcessURL": "gs://viant_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}--998006374311244.run",
-    "DoneProcessURL": "gs://viant_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-02-19_18/998006374311244.run",
-    "RuleURL": "gs://viant_e2e_config/BqTail/Rules/case_${parentIndex}/rule.yaml",
+    "ProcessURL": "gs://${opsBucket}/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}--998006374311244.run",
+    "DoneProcessURL": "gs://${opsBucket}/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-02-19_18/998006374311244.run",
+    "RuleURL": "gs://${configBucket}/BqTail/Rules/case_${parentIndex}/rule.yaml",
     "EventID": "998006374311244",
     "Async": true,
     "TempTable": "`temp.dummy_v${parentIndex}_998006374311244`",
     "DestTable": "bqtail.dummy_v${parentIndex}",
     "StepCount": 6,
-    "URL": "gs://viant_e2e_bqdispatch/BqDispatch/Tasks/bqtail.dummy_v${parentIndex}_1113915460922753548_1582138350.win",
+    "URL": "gs://${dispatchBucket}/BqDispatch/Tasks/bqtail.dummy_v${parentIndex}_1113915460922753548_1582138350.win",
     "Start": "2020-02-19T18:52:15Z",
     "End": "2020-02-19T18:52:30Z",
     "URIs": [
-      "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy1.json",
-      "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy2.json"
+      "gs://${triggerBucket}/data/case${parentIndex}/dummy1.json",
+      "gs://${triggerBucket}/data/case${parentIndex}/dummy2.json"
     ]
   },
   "load": {
@@ -57,8 +57,8 @@
       ]
     },
     "sourceUris": [
-      "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy1.json",
-      "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy2.json"
+      "gs://${triggerBucket}/data/case${parentIndex}/dummy1.json",
+      "gs://${triggerBucket}/data/case${parentIndex}/dummy2.json"
     ],
     "writeDisposition": "WRITE_TRUNCATE"
   },
@@ -105,16 +105,16 @@
             "Request": {
               "SourceURL": "",
               "URLs": [
-                "gs://viant_e2e_bqdispatch/BqDispatch/Tasks/bqtail.dummy_v${parentIndex}_1113915460922753548_1582138350.win"
+                "gs://${dispatchBucket}/BqDispatch/Tasks/bqtail.dummy_v${parentIndex}_1113915460922753548_1582138350.win"
               ]
             }
           },
           {
             "Action": "move",
             "Request": {
-              "DestURL": "gs://viant_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-02-19_18/998006374311244.run",
+              "DestURL": "gs://${opsBucket}/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-02-19_18/998006374311244.run",
               "IsDestAbsoluteURL": true,
-              "SourceURL": "gs://viant_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}--998006374311244.run"
+              "SourceURL": "gs://${opsBucket}/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}--998006374311244.run"
             }
           },
           {

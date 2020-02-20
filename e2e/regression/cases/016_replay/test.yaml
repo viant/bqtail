@@ -42,6 +42,14 @@ pipeline:
       credentials: $gcpCredentials
       URL: gs://${configBucket}/BqTail/Rules/case_${parent.index}
 
+  remvoveCache:
+    action: storage:remove
+    sleepTimeMs: 1000
+    assets:
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
+        credentials: $gcpCredentials
+
+
   upload:
     action: storage:copy
     source:

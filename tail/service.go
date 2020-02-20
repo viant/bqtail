@@ -258,7 +258,7 @@ func (s *service) runLoadProcess(ctx context.Context, request *contract.Request,
 		return errors.Errorf("rule URL was empty: %+v", processJob)
 	}
 	if processJob.Rule = s.config.Rule(ctx, processJob.RuleURL); processJob.Rule == nil {
-		return errors.Errorf("failed to lookup rule: %v", processJob.RuleURL)
+		return errors.Errorf("failed to lookup rule: '%v'", processJob.RuleURL)
 	}
 	if base.IsLoggingEnabled() {
 		fmt.Printf("replaying load process ...\n")
