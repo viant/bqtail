@@ -1,6 +1,5 @@
 {
-
-
+  "Async": true,
   "AsyncTaskURL": "gs://${dispatchBucket}/BqDispatch/Tasks/",
   "SyncTaskURL": "gs://${opsBucket}/BqTail/Tasks/",
   "ErrorURL": "gs://${opsBucket}/BqTail/errors/",

@@ -46,7 +46,7 @@ func (c Config) Match(URL string) []*config.Rule {
 				matched[i].Disabled = true
 			}
 			if c.Async != nil {
-				matched[i].Disabled = *c.Async
+				matched[i].Async = *c.Async
 			}
 		}
 
