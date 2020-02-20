@@ -17,6 +17,10 @@ import (
 type Config struct {
 	base.Config
 	config.Ruleset
+	//Disabled if set, it globally disables all rules for new data ingestion - option intended for bqtail major version migration
+	Disabled *bool
+	//Async if set it globally changes status for all rule
+	Async *bool
 }
 
 //Init initializes config
@@ -30,6 +34,24 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	}
 	c.initLoadedRules()
 	return nil
+}
+
+
+//Match matches rule
+func (c Config) Match(URL string) []*config.Rule {
+	matched := c.Ruleset.Match(URL)
+	if len(matched) > 0 {
+		for i := range matched {
+			if c.Disabled != nil && *c.Disabled {
+				matched[i].Disabled = true
+			}
+			if c.Async != nil {
+				matched[i].Disabled = *c.Async
+			}
+		}
+
+	}
+	return matched
 }
 
 func (c *Config) initLoadedRules() {
