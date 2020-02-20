@@ -24,8 +24,8 @@ type Job struct {
 	Statistics     *bigquery.JobStatistics        `json:"statistics,omitempty"`
 	JobStatus      *bigquery.JobStatus            `json:"jobStatus,omitempty"`
 	Load           *bigquery.JobConfigurationLoad `json:"load,ommittempty"`
-	TempSchema     *bigquery.TableSchema          `json:",omitempty"`
-	DestSchema     *bigquery.TableSchema          `json:",omitempty"`
+	TempSchema     *bigquery.Table                `json:",omitempty"`
+	DestSchema     *bigquery.Table                `json:",omitempty"`
 	Actions        *task.Actions                  `json:",omitempty"`
 	BqJob          *bigquery.Job                  `json:"-"`
 }

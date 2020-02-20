@@ -240,8 +240,14 @@ endly -t=init
 ```
 
 
-- [Ingestion with PubSub notification](regression/cases/031_pattern_params)
+- [Ingestion with URL pattern parameters](regression/cases/031_pattern_params)
 
 ```bash
     endly -t=test -i=pattern_params
+```
+
+- [Ingestion with tempaltes](regression/cases/032_template)
+
+```bash
+    endly -t=test -i=template
 ```

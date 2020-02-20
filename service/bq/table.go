@@ -5,7 +5,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
-	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
@@ -34,14 +33,22 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	return table, err
 }
 
-func (s *service) createTableIfNeeded(ctx context.Context, actionable *task.Action, ref *bigquery.TableReference) {
-	if actionable.Meta.Region != "" {
-		return
+//CreateTableIfNotExist creates a table if does not exist
+func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Table) error {
+	ref := table.TableReference
+	srv := bigquery.NewTablesService(s.Service)
+	if ref.ProjectId == "" {
+		ref.ProjectId = s.ProjectID
 	}
-	//read dest dataset location
-	datasetCall := s.Service.Datasets.Get(ref.ProjectId, ref.DatasetId)
-	datasetCall.Context(ctx)
-	if dataset, err := datasetCall.Do(); err == nil {
-		actionable.Meta.Region = dataset.Location
+	getTableCall := srv.Get(ref.ProjectId, ref.DatasetId, ref.TableId)
+	getTableCall.Context(ctx)
+	_, err := getTableCall.Do()
+	if ! base.IsNotFoundError(err) {
+		return nil
 	}
+	insertTableCall := srv.Insert(ref.ProjectId, ref.DatasetId, table)
+	insertTableCall.Context(ctx)
+	_, err = insertTableCall.Do()
+	return err
 }
+

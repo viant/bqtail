@@ -11,6 +11,7 @@ import (
 type Transient struct {
 	Dataset   string
 	ProjectID string
+	Region    string
 	Alias     string
 	Template  string
 	Balancer  *transient.Balancer

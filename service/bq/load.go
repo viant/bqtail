@@ -17,12 +17,12 @@ type LoadRequest struct {
 const maxJobLoadURIs = 10000
 
 //Load loads data into BigQuery
-func (s *service) Load(ctx context.Context, request *LoadRequest, Action *task.Action) (job *bigquery.Job, err error) {
-	projectID := Action.Meta.ProjectID
+func (s *service) Load(ctx context.Context, request *LoadRequest, action *task.Action) (job *bigquery.Job, err error) {
+	projectID := action.Meta.ProjectID
 	if projectID == "" {
 		projectID = s.Config.ProjectID
 	}
-	request.Init(projectID, Action)
+	request.Init(projectID, action)
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -31,13 +31,13 @@ func (s *service) Load(ctx context.Context, request *LoadRequest, Action *task.A
 			Load: request.JobConfigurationLoad,
 		},
 	}
-	job.JobReference = Action.JobReference()
+	job.JobReference = action.JobReference()
 	job.Configuration.Load.SourceUris = s.getUniqueURIs(ctx, job.Configuration.Load.SourceUris)
-	s.adjustRegion(ctx, Action, job.Configuration.Load.DestinationTable)
+	s.adjustRegion(ctx, action, job.Configuration.Load.DestinationTable)
 	if len(job.Configuration.Load.SourceUris) <= maxJobLoadURIs {
-		return s.Post(ctx, job, Action)
+		return s.Post(ctx, job, action)
 	}
-	return s.loadInParts(ctx, job, request, Action)
+	return s.loadInParts(ctx, job, request, action)
 }
 
 func (s *service) getUniqueURIs(ctx context.Context, candidates []string) []string {

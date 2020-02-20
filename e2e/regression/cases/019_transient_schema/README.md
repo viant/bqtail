@@ -18,9 +18,9 @@ transient template is used to load 3 columnar CSV, followed by final copy data f
     },
     "Dest": {
       "Table": "bqtail.dummy",
-      "Transient":{"Dataset": "temp"},
-      "Schema": {
-        "TransientTemplate" : "bqtail.dummy_temp"
+      "Transient":{
+         "Dataset": "temp",
+        "Template" : "bqtail.dummy_temp"
       }
     },
     "Batch": {

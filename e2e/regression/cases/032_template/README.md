@@ -1,8 +1,8 @@
-### Pattern parameters
+### Templates
 
 ### Scenario:
 
-This scenario test URL pattern parameters substitution
+This scenario test transient and destination table templates to manges schema incompatibility.
 
 
 [@rule.yaml](rule/rule.yaml)
@@ -13,6 +13,7 @@ When:
 Dest:
   Transient:
     Dataset: temp
+    Template: bqtail.dummy_v${parentIndex}_tmpl
   Schema:
     Template: bqtail.dummy_v${parentIndex}
   Pattern: /data/case(\d+)/(\d{4})/(\d{2})/(\d{2})/

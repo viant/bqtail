@@ -24,6 +24,11 @@ type Service interface {
 	Query(ctx context.Context, request *QueryRequest, Action *task.Action) (*bigquery.Job, error)
 
 	Wait(ctx context.Context, ref *bigquery.JobReference) (*bigquery.Job, error)
+
+	CreateDatasetIfNotExist(ctx context.Context, region string, dataset *bigquery.DatasetReference) error
+
+	CreateTableIfNotExist(ctx context.Context, table *bigquery.Table)  error
+
 }
 
 type service struct {

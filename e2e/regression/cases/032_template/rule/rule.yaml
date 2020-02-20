@@ -1,18 +1,10 @@
-### Pattern parameters
-
-### Scenario:
-
-This scenario test URL pattern parameters substitution
-
-
-[@rule.yaml](rule/rule.yaml)
-```yaml
 When:
   Prefix: "/data/case${parentIndex}/"
   Suffix: ".json"
 Dest:
   Transient:
     Dataset: temp
+    Template: bqtail.dummy_v${parentIndex}_tmpl
   Schema:
     Template: bqtail.dummy_v${parentIndex}
   Pattern: /data/case(\d+)/(\d{4})/(\d{2})/(\d{2})/
@@ -30,7 +22,3 @@ Dest:
 
 OnSuccess:
   - Action: delete
-
-
-```
-

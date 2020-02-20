@@ -1,4 +1,2 @@
 - Update documentation/examples
 - Client side executable
-- Add creata data set if does not exists
-- Add create table if does not exists

@@ -123,9 +123,6 @@ func (d *Destination) Init() error {
 	if len(d.Transform) == 0 {
 		d.Transform = make(map[string]string)
 	}
-	if d.Schema.TransientTemplate != "" {
-		d.Transient.Template = d.Schema.TransientTemplate
-	}
 	return nil
 }
 

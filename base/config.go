@@ -87,7 +87,6 @@ func (c *Config) Init(ctx context.Context) error {
 			}
 		}
 	}
-
 	if c.Region == "" {
 		c.Region = defaultRegion
 	}

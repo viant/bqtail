@@ -1,13 +1,9 @@
 package config
 
-import "google.golang.org/api/bigquery/v2"
-
 //Schema represents schema
 type Schema struct {
+	//Template destination table template, when specified destination table will be created if it does not exists
 	Template          string
-	TransientTemplate string
-	templateReference *bigquery.TableReference
-	Table             *bigquery.TableSchema
 	Autodetect        bool
 	Split             *Split
 }

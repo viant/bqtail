@@ -172,11 +172,14 @@ OnSuccess:
 ```    
 
 
-
-
 - **Override** dest table override flag (append by default)
 - **Partition** dest table partition.
 - **Schema** defines dest table schema
+  * **Template**: destination table template, when specified destination table will be created if it does not exists
+  * **Autodetect**: flag to autodetect schema during load 
+  * **Split**: dynamic destination split rules based on data content
+   
+
 - **Transient** transient settings (for dedicated ingesting project settings)
    * **Dataset** transient dataset. (It is recommended to always used transient dataset)
    * **ProjectID** transient project

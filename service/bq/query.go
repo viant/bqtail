@@ -10,8 +10,8 @@ import (
 )
 
 //Query run supplied SQL
-func (s *service) Query(ctx context.Context, request *QueryRequest, Action *task.Action) (*bigquery.Job, error) {
-	if err := request.Init(s.projectID, Action); err != nil {
+func (s *service) Query(ctx context.Context, request *QueryRequest, acion *task.Action) (*bigquery.Job, error) {
+	if err := request.Init(s.projectID, acion); err != nil {
 		return nil, err
 	}
 	if err := request.Validate(); err != nil {
@@ -33,8 +33,9 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, Action *task
 		} else {
 			job.Configuration.Query.WriteDisposition = "WRITE_TRUNCATE"
 		}
-		s.adjustRegion(ctx, Action, job.Configuration.Query.DestinationTable)
+		s.adjustRegion(ctx, acion, job.Configuration.Query.DestinationTable)
 	}
+
 	if request.UseLegacy {
 		job.Configuration.Query.AllowLargeResults = true
 	}
@@ -42,11 +43,11 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, Action *task
 	if request.DatasetID != "" {
 		job.Configuration.Query.DefaultDataset = &bigquery.DatasetReference{
 			DatasetId: request.DatasetID,
-			ProjectId: Action.Meta.ProjectID,
+			ProjectId: acion.Meta.ProjectID,
 		}
 	}
-	job.JobReference = Action.JobReference()
-	return s.Post(ctx, job, Action)
+	job.JobReference = acion.JobReference()
+	return s.Post(ctx, job, acion)
 }
 
 //QueryRequest represents Query request

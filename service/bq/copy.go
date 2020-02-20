@@ -10,8 +10,8 @@ import (
 )
 
 //Copy copy source to dest table
-func (s *service) Copy(ctx context.Context, request *CopyRequest, activity *task.Action) (*bigquery.Job, error) {
-	if err := request.Init(s.projectID, activity); err != nil {
+func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.Action) (*bigquery.Job, error) {
+	if err := request.Init(s.projectID, action); err != nil {
 		return nil, err
 	}
 	if err := request.Validate(); err != nil {
@@ -32,9 +32,9 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, activity *task
 	}
 	job.Configuration.Copy.CreateDisposition = "CREATE_IF_NEEDED"
 
-	s.adjustRegion(ctx, activity, job.Configuration.Copy.DestinationTable)
-	job.JobReference = activity.JobReference()
-	return s.Post(ctx, job, activity)
+	s.adjustRegion(ctx, action, job.Configuration.Copy.DestinationTable)
+	job.JobReference = action.JobReference()
+	return s.Post(ctx, job, action)
 }
 
 //CopyRequest represents a copy request
