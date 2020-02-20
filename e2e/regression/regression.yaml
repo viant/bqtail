@@ -4,12 +4,11 @@ pipeline:
     target: $target
     sdk: go:1.12
 
-
   test:
     tag: $pathMatch
     description: '@info'
     subPath: 'cases/${index}_*'
-    range: 1..029
+    range: 1..032
     template:
       setVars:
         action: nop
@@ -26,3 +25,4 @@ pipeline:
       action: nop
       sleepTimeMs: 1000
       comments: sleep for extra debuging
+

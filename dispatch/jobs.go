@@ -7,24 +7,24 @@ import (
 
 type jobs struct {
 	mutex *sync.Mutex
-	byId  map[string]*bigquery.JobListJobs
+	byID  map[string]*bigquery.JobListJobs
 }
 
 func (j *jobs) put(job *bigquery.JobListJobs) {
 	j.mutex.Lock()
 	defer j.mutex.Unlock()
-	j.byId[job.JobReference.JobId] = job
+	j.byID[job.JobReference.JobId] = job
 }
 
 func (j *jobs) get(id string) *bigquery.JobListJobs {
 	j.mutex.Lock()
 	defer j.mutex.Unlock()
-	return j.byId[id]
+	return j.byID[id]
 }
 
 func newJobs() *jobs {
 	return &jobs{
 		mutex: &sync.Mutex{},
-		byId:  make(map[string]*bigquery.JobListJobs),
+		byID:  make(map[string]*bigquery.JobListJobs),
 	}
 }

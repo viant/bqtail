@@ -1,9 +1,10 @@
 package task
 
 import (
-	"bqtail/base"
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
+	"github.com/viant/bqtail/base"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 )
@@ -40,16 +41,19 @@ func Run(ctx context.Context, registry Registry, action *Action) (Response, erro
 	if err != nil {
 		return nil, err
 	}
-	request, err := serviceAction.NewRequest(action)
+	err = serviceAction.SetServiceRequest(action)
 	if err != nil {
 		return nil, err
 	}
-
-	return RunWithService(ctx, registry, serviceAction.Service, request)
+	resp, err := RunWithService(ctx, registry, serviceAction.Service, action)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to run %v.%v", serviceAction.Service, action.Action)
+	}
+	return resp, err
 }
 
 //RunWithService handlers service request or error
-func RunWithService(ctx context.Context, registry Registry, serviceName string, request Request) (Response, error) {
+func RunWithService(ctx context.Context, registry Registry, serviceName string, request *Action) (Response, error) {
 	service, err := registry.Service(serviceName)
 	if err != nil {
 		return nil, err

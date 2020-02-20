@@ -42,8 +42,6 @@ const (
 	ActionCopy = "copy"
 	//ActionQuery query action
 	ActionQuery = "query"
-	//ActionPatch action patch
-	ActionPatch = "patch"
 	//ActionExport action export
 	ActionExport = "export"
 	//ActionMove move storage file
@@ -56,15 +54,37 @@ const (
 	ActionDrop = "drop"
 	//ActionCall http call action
 	ActionCall = "call"
+	//ActionPush action pubusb push
+	ActionPush = "push"
 )
+
+//Actionable  action with action meta
+var Actionable = map[string]bool{
+	ActionLoad:   true,
+	ActionReload: true,
+	ActionCopy:   true,
+	ActionQuery:  true,
+	ActionExport: true,
+	ActionDrop:   true,
+	ActionCall:   true,
+	ActionPush:   true,
+}
 
 const (
 	//URLsKey urls key
 	URLsKey = "URLs"
+
+	//URLKey urls key
+	URLKey = "URL"
+
+	//LoadURIsVar load uris expression
+	LoadURIsVar = "$LoadURIs"
+	//LoadURIsKey load uris key
+	LoadURIsKey = "LoadURIs"
+
 	//ResponseKey response key
 	ResponseKey = "Response"
-	//RootKey
-	RootKey = "Root"
+
 	//JobIDKey job id key
 	JobIDKey = "JobID"
 	//JobSourceKey source table/sql
@@ -89,8 +109,6 @@ const (
 const (
 	//ErrorExt error ext
 	ErrorExt = ".err"
-	//ActionErrorExt
-	ActionErrorExt = ".act"
 	//ResponseErrorExt
 	ResponseErrorExt = ".rsp"
 
@@ -131,6 +149,9 @@ const PerformanceFile = "performance.json"
 //DateLayout represents a date layout
 const DateLayout = "2006-01-02_15"
 
+//MaxReload default max load attempts (excluding corrupted files)
+var MaxReload = 15
+
 //Waits and retries
 const (
 	//MaxRetries defines max retries
@@ -139,4 +160,22 @@ const (
 	RetrySleepInSec = 3
 	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
 	StorageListVisibilityDelay = 5000
+)
+
+const (
+	//PathElementSeparator path separator
+	PathElementSeparator = "--"
+	//StepModeDispach dispatch job name
+	StepModeDispach = "dispatch"
+	//StepModeTail tail job name
+	StepModeTail = "tail"
+	//StepModeNop - no post actions job
+	StepModeNop = "nop"
+)
+
+const (
+	//WriteDispositionTruncate remove then write all data
+	WriteDispositionTruncate = "WRITE_TRUNCATE"
+	//WriteDispositionAppend append data
+	WriteDispositionAppend = "WRITE_APPEND"
 )

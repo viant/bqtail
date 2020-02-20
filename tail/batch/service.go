@@ -1,9 +1,6 @@
 package batch
 
 import (
-	"bqtail/base"
-	"bqtail/shared"
-	"bqtail/tail/config"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -13,20 +10,21 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/option"
-	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/tail/config"
 	"io/ioutil"
 	"path"
 	"strings"
 )
 
-type ProjectSelector func() string
-
 //Service representa a batch service
 type Service interface {
 	//Try to acquire batch window
-	TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule, projectSelector ProjectSelector) (*Info, error)
+	TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error)
 
 	//MatchWindowDataURLs returns matching data URLs
 	MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) error
@@ -46,48 +44,41 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 }
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
-func (s *service) TryAcquireWindow(ctx context.Context, eventID string, source storage.Object, rule *config.Rule, projectSelector ProjectSelector) (*Info, error) {
-	dest, err := rule.Dest.ExpandTable(rule.Dest.Table, source.ModTime(), source.URL())
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to expand table: %v", rule.Dest.Table)
-	}
-	parentURL, _ := url.Split(source.URL(), gs.Scheme)
-	windowDest := dest
+func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error) {
+	parentURL, _ := url.Split(process.Source.URL, gs.Scheme)
+	windowDest := process.DestTable
 	if !rule.Batch.MultiPath {
 		//one batch per folder location
-		windowDest = fmt.Sprintf("%v_%v", dest, base.Hash(parentURL))
+		windowDest = fmt.Sprintf("%v_%v", process.DestTable, base.Hash(parentURL))
 	}
 	batch := rule.Batch
-	windowURL := batch.WindowURL(windowDest, source.ModTime())
+	windowURL := batch.WindowURL(windowDest, process.Source.Time)
 	exists, _ := s.fs.Exists(ctx, windowURL, option.NewObjectKind(true))
 
-	endTime := batch.WindowEndTime(source.ModTime())
+	endTime := batch.WindowEndTime(process.Source.Time)
 	startTime := endTime.Add(-batch.Window.Duration)
-
+	var err error
 	var window *Window
 	if exists {
-		window = NewWindow(fmt.Sprintf("%v", endTime), dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
+		window = NewWindow(process, startTime, endTime, windowURL)
 		if rule.Batch.MultiPath {
 			err = s.addLocationFile(ctx, window, parentURL)
 		}
 		return &Info{OwnerEventID: window.EventID}, err
 	}
 
-	if batch.RollOver && !batch.IsWithinFirstHalf(source.ModTime()) {
-		prevWindowURL := batch.WindowURL(dest, source.ModTime().Add(-(1 + batch.Window.Duration)))
+	if batch.RollOver && !batch.IsWithinFirstHalf(process.Source.Time) {
+		prevWindowURL := batch.WindowURL(process.DestTable, process.Source.Time.Add(-(1 + batch.Window.Duration)))
 		if exists, _ := s.fs.Exists(ctx, prevWindowURL, option.NewObjectKind(true)); !exists {
 			startTime = startTime.Add(-batch.Window.Duration)
 		}
 	}
-
-	window = NewWindow(eventID, dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
-	window.ProjectID = projectSelector()
-
+	window = NewWindow(process, startTime, endTime, windowURL)
 	windowData, _ := json.Marshal(window)
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
 
 	if isPreConditionError(err) || isRateError(err) {
-		window := NewWindow(fmt.Sprintf("%v", endTime), dest, startTime, endTime, source.URL(), source.ModTime(), windowURL, rule)
+		window := NewWindow(process, startTime, endTime, windowURL)
 		if rule.Batch.MultiPath {
 			if err = s.addLocationFile(ctx, window, parentURL); err != nil {
 				return nil, err
@@ -118,8 +109,9 @@ func (s *service) readLocation(ctx context.Context, URL string) (string, error) 
 
 func (s *service) getBaseURLS(ctx context.Context, rule *config.Rule, window *Window) ([]string, error) {
 	var baseURLs = make(map[string]bool)
-	baseURL, _ := url.Split(window.SourceURL, gs.Scheme)
+	baseURL, _ := url.Split(window.Source.URL, gs.Scheme)
 	baseURLs[baseURL] = true
+
 	if rule.Batch.MultiPath {
 		window.Locations = make([]string, 0)
 		URL := strings.Replace(window.URL, shared.WindowExt, "/", 1)
@@ -166,17 +158,18 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 }
 
 func (s *service) matchData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, matcher option.Matcher, result *[]string) error {
-	objects, err := s.fs.List(ctx, baseURL, matcher)
+	objects, err := s.fs.List(ctx, baseURL)
 	if err != nil {
 		return errors.Wrapf(err, "failed to list batch %v data files", baseURL)
 	}
 	for _, object := range objects {
 		if rule.HasMatch(object.URL()) {
-			table, err := rule.Dest.ExpandTable(rule.Dest.Table, object.ModTime(), object.URL())
+			source := stage.NewSource(object.URL(), object.ModTime())
+			table, err := rule.Dest.ExpandTable(rule.Dest.Table, source)
 			if err != nil {
 				return errors.Wrapf(err, "failed to expand table: %v", rule.Dest.Table)
 			}
-			if table != window.Table {
+			if table != window.DestTable {
 				continue
 			}
 			if object.ModTime().After(window.End) || object.ModTime().Equal(window.End) {

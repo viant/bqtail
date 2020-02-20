@@ -1,13 +1,13 @@
 package gcp
 
 import (
-	"bqtail/base"
-	"bqtail/service/kms"
 	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/service/kms"
 	"google.golang.org/api/cloudkms/v1"
 	"google.golang.org/api/option"
 	"io/ioutil"

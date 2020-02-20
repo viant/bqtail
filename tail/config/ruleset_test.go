@@ -93,7 +93,7 @@ func TestRoutes_HasMatch(t *testing.T) {
 		//	Ruleset: []*Rule{
 		//		{
 		//			When: matcher.Basic{
-		//				Suffix: ".tsv",
+		//				Mode: ".tsv",
 		//			},
 		//			Dest: &Destination{
 		//				Table: "project:dataset:table1",
@@ -101,7 +101,7 @@ func TestRoutes_HasMatch(t *testing.T) {
 		//		},
 		//		{
 		//			When: matcher.Basic{
-		//				Suffix: ".csv",
+		//				Mode: ".csv",
 		//			},
 		//			Dest: &Destination{
 		//				Table: "project:dataset:table2",

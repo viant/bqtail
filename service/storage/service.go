@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"bqtail/task"
 	"github.com/viant/afs"
+	"github.com/viant/bqtail/task"
 )
 
 //Service represents fs service

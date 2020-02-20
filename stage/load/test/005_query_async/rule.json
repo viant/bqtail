@@ -1,0 +1,53 @@
+{
+  "Async": true,
+  "When": {
+    "Prefix": "/data/case005",
+    "Suffix": ".json"
+  },
+  "Batch": {
+    "BaseURL": "gs://xx_e2e_bqdispatch/BqDispatch/Tasks/",
+    "Window": {
+      "Duration": 10000000000,
+      "DurationInSec": 10
+    }
+  },
+  "Dest": {
+    "SideInputs": [
+      {
+        "Alias": "f",
+        "On": "t.fee_id = f.id",
+        "Table": "bqtail.fees"
+      }
+    ],
+    "Table": "bqtail.transactions",
+    "Transform": {
+      "charge": "(CASE WHEN type_id = 1 THEN t.payment + f.value WHEN type_id = 2 THEN t.payment * (1 + f.value) END)"
+    },
+    "Transient": {
+      "Alias": "t",
+      "Dataset": "temp"
+    }
+  },
+  "Info": {
+    "URL": "gs://xx_e2e_config/BqTail/Rules/case_005/rule.yaml",
+    "Workflow": "rule"
+  },
+  "OnSuccess": [
+    {
+      "Action": "query",
+      "Request": {
+        "Append": true,
+        "Dest": "bqtail.supply_performance",
+        "SQL": "SELECT DATE(timestamp) AS date, sku_id, supply_entity_id, MAX($EventID) AS batch_id, SUM( payment) payment, SUM((CASE WHEN type_id = 1 THEN t.payment + f.value WHEN type_id = 2 THEN t.payment * (1 + f.value) END)) charge, SUM(COALESCE(qty, 1.0)) AS qty FROM $TempTable t LEFT JOIN bqtail.fees f ON f.id = t.fee_id GROUP BY 1, 2, 3"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete",
+          "Request": {
+            "URLs": "$LoadURIs"
+          }
+        }
+      ]
+    }
+  ]
+}

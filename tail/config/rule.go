@@ -1,14 +1,16 @@
 package config
 
 import (
-	"bqtail/base"
-	"bqtail/task"
 	"context"
 	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/task"
 	"path"
 	"time"
 )
@@ -28,6 +30,15 @@ type Rule struct {
 	CorruptedFileURL      string         `json:",omitempty"`
 	InvalidSchemaURL      string         `json:",omitempty"`
 	CounterURL            string         `json:",omitempty"`
+	MaxReload             *int           `json:",omitempty"`
+}
+
+//MaxReloadAttempts returns max reload attempts
+func (r *Rule) MaxReloadAttempts() int {
+	if r.MaxReload == nil {
+		r.MaxReload = &shared.MaxReload
+	}
+	return *r.MaxReload
 }
 
 //Actions returns a rule actions
@@ -35,10 +46,6 @@ func (r *Rule) Actions() *task.Actions {
 	result := &task.Actions{
 		OnFailure: r.OnFailure,
 		OnSuccess: r.OnSuccess,
-	}
-	result.Async = r.Async
-	if r.Info.URL != "" {
-		result.RuleURL = r.Info.URL
 	}
 	return result
 }
@@ -56,7 +63,7 @@ func (r *Rule) IsAppend() bool {
 
 //DestTable returns dest table
 func (r *Rule) DestTable(URL string, modTime time.Time) string {
-	table, _ := r.Dest.ExpandTable(r.Dest.Table, modTime, URL)
+	table, _ := r.Dest.ExpandTable(r.Dest.Table, stage.NewSource(URL, modTime))
 	if table == "" {
 		table = r.Dest.Table
 	}
@@ -79,10 +86,12 @@ func (r Rule) Validate() error {
 	return r.Dest.Validate()
 }
 
+//Init initialises rule
 func (r *Rule) Init(ctx context.Context, fs afs.Service) error {
 	actions := r.Actions()
 	if r.Dest.Pattern != "" && r.When.Filter == "" {
 		r.When.Filter = r.Dest.Pattern
 	}
-	return actions.Init(ctx, fs)
+	err := actions.Init(ctx, fs)
+	return err
 }

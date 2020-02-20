@@ -31,7 +31,7 @@ func Test_parseLoad(t *testing.T) {
 			description: "run URL with date location element",
 			URL:         "gs://xx_operation/BqTail/Journal/Done/bqtail.dummy/2019-12-09_19/888423055310746.run",
 			baseURL:     "gs://xx_operation/BqTail/Journal/Done",
-			expect:      &load{dest: "bqtail.dummy", eventID: "888423055310746", started: now},
+			expect:      &load{dest: "github.com/viant/bqtail.dummy", eventID: "888423055310746", started: now},
 		},
 	}
 

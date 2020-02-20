@@ -1,16 +1,17 @@
 package bq
 
 import (
-	"bqtail/base"
-	"bqtail/task"
 	"context"
 	"fmt"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 )
 
 //Copy copy source to dest table
-func (s *service) Copy(ctx context.Context, request *CopyRequest) (*bigquery.Job, error) {
-	if err := request.Init(s.projectID); err != nil {
+func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.Action) (*bigquery.Job, error) {
+	if err := request.Init(s.projectID, action); err != nil {
 		return nil, err
 	}
 	if err := request.Validate(); err != nil {
@@ -30,14 +31,14 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest) (*bigquery.Job
 		job.Configuration.Copy.WriteDisposition = "WRITE_TRUNCATE"
 	}
 	job.Configuration.Copy.CreateDisposition = "CREATE_IF_NEEDED"
-	s.adjustRegion(ctx, &request.Request, job.Configuration.Copy.DestinationTable)
-	job.JobReference = request.jobReference()
-	return s.Post(ctx, job, &request.Request)
+
+	s.adjustRegion(ctx, action, job.Configuration.Copy.DestinationTable)
+	job.JobReference = action.JobReference()
+	return s.Post(ctx, job, action)
 }
 
 //CopyRequest represents a copy request
 type CopyRequest struct {
-	Request
 	Append           bool
 	Source           string
 	sourceTable      *bigquery.TableReference
@@ -46,12 +47,8 @@ type CopyRequest struct {
 }
 
 //Init initialises a copy request
-func (r *CopyRequest) Init(projectID string) (err error) {
-	if r.ProjectID != "" {
-		projectID = r.ProjectID
-	} else {
-		r.ProjectID = projectID
-	}
+func (r *CopyRequest) Init(projectID string, activity *task.Action) (err error) {
+	activity.Meta.GetOrSetProject(projectID)
 
 	if r.Source != "" {
 		if r.sourceTable, err = base.NewTableReference(r.Source); err != nil {
@@ -87,21 +84,23 @@ func (r *CopyRequest) Validate() error {
 	return nil
 }
 
-//NewCopyRequest creates a new copy request
-func NewCopyRequest(source, dest string, finally *task.Actions) *CopyRequest {
-	result := &CopyRequest{
+//NewCopyAction creates a new copy request
+func NewCopyAction(source, dest string, append bool, finally *task.Actions) *task.Action {
+	copyRequest := &CopyRequest{
 		Source: source,
 		Dest:   dest,
-		Append: true,
+		Append: append,
 	}
 	if source != "" {
-		result.sourceTable, _ = base.NewTableReference(source)
+		copyRequest.sourceTable, _ = base.NewTableReference(source)
 	}
 	if dest != "" {
-		result.destinationTable, _ = base.NewTableReference(dest)
+		copyRequest.destinationTable, _ = base.NewTableReference(dest)
 	}
-	if finally != nil {
-		result.Actions = *finally
+	result := &task.Action{
+		Action:  shared.ActionCopy,
+		Actions: finally,
 	}
+	_ = result.SetRequest(copyRequest)
 	return result
 }

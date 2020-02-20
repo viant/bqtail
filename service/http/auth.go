@@ -11,16 +11,22 @@ import (
 )
 
 const (
+	//UserAgent bqtail user agent
 	UserAgent              = "Viant/BqTail"
 	metadataServerTokenURL = "http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?audience="
 )
 
 const (
-	CloudPlatformScope         = "https://www.googleapis.com/auth/cloud-platform"
+	//CloudPlatformScope GCP platform scopes
+	CloudPlatformScope = "https://www.googleapis.com/auth/cloud-platform"
+	//DevstorageFullControlScope DevstorageFullControl scope
 	DevstorageFullControlScope = "https://www.googleapis.com/auth/devstorage.full_control"
-	ComputeCloudPlatformScope  = "https://www.googleapis.com/auth/compute"
-	BigQueryScope              = "https://www.googleapis.com/auth/bigquery"
-	BigQueryInsertScope        = "https://www.googleapis.com/auth/bigquery.insertdata"
+	//ComputeCloudPlatformScope GCP scope
+	ComputeCloudPlatformScope = "https://www.googleapis.com/auth/compute"
+	//BigQueryScope GCP scope
+	BigQueryScope = "https://www.googleapis.com/auth/bigquery"
+	//BigQueryInsertScope GCP scope
+	BigQueryInsertScope = "https://www.googleapis.com/auth/bigquery.insertdata"
 )
 
 func authRequest(ctx context.Context, httpRequest *http.Request) error {

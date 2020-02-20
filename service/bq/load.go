@@ -3,6 +3,7 @@ package bq
 import (
 	"context"
 	"fmt"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
 )
@@ -11,18 +12,17 @@ import (
 type LoadRequest struct {
 	*bigquery.JobConfigurationLoad
 	Append bool
-	Request
 }
 
 const maxJobLoadURIs = 10000
 
 //Load loads data into BigQuery
-func (s *service) Load(ctx context.Context, request *LoadRequest) (job *bigquery.Job, err error) {
-	projectID := request.ProjectID
+func (s *service) Load(ctx context.Context, request *LoadRequest, action *task.Action) (job *bigquery.Job, err error) {
+	projectID := action.Meta.ProjectID
 	if projectID == "" {
 		projectID = s.Config.ProjectID
 	}
-	request.Init(projectID)
+	request.Init(projectID, action)
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -31,14 +31,13 @@ func (s *service) Load(ctx context.Context, request *LoadRequest) (job *bigquery
 			Load: request.JobConfigurationLoad,
 		},
 	}
-
-	job.JobReference = request.jobReference()
+	job.JobReference = action.JobReference()
 	job.Configuration.Load.SourceUris = s.getUniqueURIs(ctx, job.Configuration.Load.SourceUris)
-	s.adjustRegion(ctx, &request.Request, job.Configuration.Load.DestinationTable)
+	s.adjustRegion(ctx, action, job.Configuration.Load.DestinationTable)
 	if len(job.Configuration.Load.SourceUris) <= maxJobLoadURIs {
-		return s.Post(ctx, job, &request.Request)
+		return s.Post(ctx, job, action)
 	}
-	return s.loadInParts(ctx, job, request)
+	return s.loadInParts(ctx, job, request, action)
 }
 
 func (s *service) getUniqueURIs(ctx context.Context, candidates []string) []string {
@@ -54,7 +53,7 @@ func (s *service) getUniqueURIs(ctx context.Context, candidates []string) []stri
 	return result
 }
 
-func (s *service) loadInParts(ctx context.Context, job *bigquery.Job, request *LoadRequest) (postJob *bigquery.Job, err error) {
+func (s *service) loadInParts(ctx context.Context, job *bigquery.Job, request *LoadRequest, Action *task.Action) (postJob *bigquery.Job, err error) {
 	URIs := job.Configuration.Load.SourceUris
 	parts := len(URIs) / maxJobLoadURIs
 	offset := 0
@@ -68,7 +67,7 @@ func (s *service) loadInParts(ctx context.Context, job *bigquery.Job, request *L
 
 		job.Configuration.Load.SourceUris = URIs[offset:limit]
 		job.JobReference.JobId = fmt.Sprintf("j%03d_%v", i, jobID)
-		if postJob, err = s.Post(ctx, job, &request.Request); err != nil {
+		if postJob, err = s.Post(ctx, job, Action); err != nil {
 			return nil, err
 		}
 	}
@@ -76,24 +75,22 @@ func (s *service) loadInParts(ctx context.Context, job *bigquery.Job, request *L
 }
 
 //Init initialises request
-func (r *LoadRequest) Init(projectID string) {
+func (r *LoadRequest) Init(projectID string, Action *task.Action) {
 	table := r.JobConfigurationLoad.DestinationTable
 	if table == nil {
 		return
 	}
-	if r.ProjectID != "" {
-		projectID = r.ProjectID
-	}
+	projectID = Action.Meta.GetOrSetProject(projectID)
 
 	if table.ProjectId == "" {
 		table.ProjectId = projectID
 	} else if table.ProjectId != "" {
 		projectID = table.ProjectId
 	}
-
-	if r.ProjectID == "" {
-		r.ProjectID = projectID
+	if Action.Meta.ProjectID == "" {
+		Action.Meta.ProjectID = projectID
 	}
+
 	if len(r.SourceUris) > 0 {
 		sourceURI := strings.ToLower(r.SourceUris[0])
 		if strings.Contains(sourceURI, ".csv") {

@@ -1,8 +1,8 @@
 package transient
 
 import (
-	"bqtail/dispatch/contract"
-	"bqtail/shared"
+	"github.com/viant/bqtail/dispatch/contract"
+	"github.com/viant/bqtail/shared"
 	"math/rand"
 	"time"
 )
@@ -19,6 +19,7 @@ type Balancer struct {
 	MaxLoadJobs int `json:",omitempty"`
 }
 
+//ProjectID returns project ID
 func (t Balancer) ProjectID(performance contract.ProjectPerformance) string {
 	switch len(t.ProjectIDs) {
 	case 0:
@@ -28,7 +29,7 @@ func (t Balancer) ProjectID(performance contract.ProjectPerformance) string {
 	}
 	switch t.Strategy {
 	case shared.BalancerStrategyFallback:
-		if projectID := t.selectPrioritizedProject(performance);projectID != "" {
+		if projectID := t.selectPrioritizedProject(performance); projectID != "" {
 			return projectID
 		}
 		return t.selectRandomProject()
@@ -51,7 +52,6 @@ func (t Balancer) ProjectID(performance contract.ProjectPerformance) string {
 	}
 	return projectID
 }
-
 
 func (t Balancer) selectRandomProject() string {
 	index := int(uint(rand.NewSource(time.Now().UnixNano()).Int63()) % uint(len(t.ProjectIDs)))

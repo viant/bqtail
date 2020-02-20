@@ -1,9 +1,8 @@
 package mon
 
 import (
-	"bqtail/mon/info"
-	"bqtail/shared"
-	"bqtail/stage"
+	"github.com/viant/bqtail/mon/info"
+	"github.com/viant/bqtail/shared"
 	"strings"
 	"time"
 )
@@ -31,7 +30,7 @@ type load struct {
 
 func parseLoad(baseURL string, URL string, modTime time.Time) *load {
 	relative := string(URL[len(baseURL):])
-	relative = strings.Replace(relative, stage.PathElementSeparator, "/", len(relative))
+	relative = strings.Replace(relative, shared.PathElementSeparator, "/", len(relative))
 	relative = strings.Trim(relative, "/")
 	elements := strings.Split(relative, "/")
 

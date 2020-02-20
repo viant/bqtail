@@ -1,0 +1,25 @@
+{
+  "When": {
+    "Prefix": "/data/case003/",
+    "Suffix": ".json"
+  },
+  "Dest": {
+    "Table": "bqtail.dummy_v003",
+    "Transient": {
+      "Alias": "t",
+      "Dataset": "temp"
+    }
+  },
+  "Info": {
+    "URL": "gs://xx_e2e_config/BqTail/Rules/case_003/rule.yaml",
+    "Workflow": "rule"
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": "$LoadURIs"
+      }
+    }
+  ]
+}

@@ -1,9 +1,9 @@
 package contract
 
 import (
-	"bqtail/shared"
-	"bqtail/stage"
 	"fmt"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage/activity"
 	"strings"
 	"sync/atomic"
 )
@@ -43,7 +43,7 @@ func (p Performance) ActiveQueryCount() int {
 		p.Running.QueryJobs
 }
 
-//ActiveQueryCount returns active query count
+//ActiveLoadCount returns active query count
 func (p Performance) ActiveLoadCount() int {
 	result := 0
 	if p.Pending != nil {
@@ -77,7 +77,7 @@ func (p *Performance) Metric(state string) *Metrics {
 }
 
 //AddDispatch add dispatched metrics
-func (p *Performance) AddDispatch(jobID string) *stage.Info {
+func (p *Performance) AddDispatch(jobID string) *activity.Meta {
 	return p.Dispatched.Update(jobID)
 }
 

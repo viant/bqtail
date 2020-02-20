@@ -1,0 +1,28 @@
+{
+  "Dest": {
+    "Table": "bqtail.dummy_v002"
+  },
+  "When": {
+    "Prefix": "/data/case002/",
+    "Suffix": ".json"
+  },
+  "Batch": {
+    "Window": {
+      "Duration": 15000000000,
+      "DurationInSec": 15
+    },
+    "RollOver": true,
+    "BaseURL": "gs://xx_e2e_operation/BqTail/Tasks/"
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": "$LoadURIs"
+      }
+    }
+  ],
+  "Info": {
+    "URL": "gs://xx_e2e_config/BqTail/Rules/case_002/rule.yaml"
+  }
+}

@@ -1,12 +1,12 @@
 package bqtail
 
 import (
-	"bqtail/base"
-	"bqtail/tail"
-	"bqtail/tail/contract"
 	"cloud.google.com/go/functions/metadata"
 	"context"
 	"errors"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/tail"
+	"github.com/viant/bqtail/tail/contract"
 )
 
 const maxStackDriver = 265 * 1024

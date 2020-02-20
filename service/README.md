@@ -11,6 +11,8 @@ The following services and actions are currently supported.
     - [notify](slack/README.md#notify)
 - [HTTP Servce](http)
     - [call](http/README.md#call)
+- [Pub/Sub Servce](pubsub)
+    - [push](pubsub/README.md#push)
     
 - [Biq Query service](bq)
     - [export](bq/README.md#export)

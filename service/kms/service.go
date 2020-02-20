@@ -1,8 +1,8 @@
 package kms
 
 import (
-	"bqtail/base"
 	"context"
+	"github.com/viant/bqtail/base"
 )
 
 //Service represents kms service

@@ -1,7 +1,6 @@
 package replay
 
 import (
-	"bqtail/shared"
 	"context"
 	"fmt"
 	"github.com/viant/afs"
@@ -9,6 +8,7 @@ import (
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/shared"
 	"strings"
 	"time"
 )

@@ -1,9 +1,9 @@
 package mon
 
 import (
-	"bqtail/base"
-	"bqtail/mon/info"
-	"bqtail/shared"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/mon/info"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/toolbox"
 	"strings"
 	"time"

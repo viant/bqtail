@@ -1,9 +1,9 @@
 package tail
 
 import (
-	"bqtail/shared"
-	"bqtail/stage"
-	"bqtail/task"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage/activity"
+	"github.com/viant/bqtail/task"
 	"github.com/viant/toolbox"
 	"math/rand"
 	"time"
@@ -18,7 +18,7 @@ func getRandom(min, max int) int {
 }
 
 func updateJobID(eventID, jobID string) string {
-	info := stage.Parse(jobID)
+	info := activity.Parse(jobID)
 	info.EventID = eventID
 	return info.GetJobID()
 }
@@ -28,7 +28,7 @@ func buildJobIDReplacementMap(eventID string, actions []*task.Action) map[string
 	for i, action := range actions {
 		jobID, ok := action.Request[shared.JobIDKey]
 		if ok {
-			info := stage.Parse(toolbox.AsString(jobID))
+			info := activity.Parse(toolbox.AsString(jobID))
 			info.EventID = eventID
 			info.Step = i + 1
 			result[shared.JobIDKey] = info.GetJobID()

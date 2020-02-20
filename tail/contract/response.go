@@ -1,38 +1,37 @@
 package contract
 
 import (
-	"bqtail/base"
-	"bqtail/stage"
-	"bqtail/tail/config"
-	"bqtail/tail/status"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/tail/status"
 )
 
 //Response represents a response
 type Response struct {
 	base.Response
 	status.URIs
-	Rule        *config.Rule `json:",omitempty"`
-	RuleCount   int
-	Destination string `json:",omitempty"`
-
+	RuleCount       int
+	Destination     string `json:",omitempty"`
+	IsDataFile      bool   `json:",omitempty"`
 	JobID           string `json:",omitempty"`
 	Batched         bool   `json:",omitempty"`
 	BatchRunner     bool   `json:",omitempty"`
 	BatchingEventID string `json:",omitempty"`
 
-	TriggerURL   string
-	ScheduledURL string      `json:",omitempty"`
-	Window       interface{} `json:",omitempty"`
-
-	Info           *stage.Info `json:",omitempty"`
-	ListOpCount    int         `json:",omitempty"`
-	StorageRetries map[int]int `json:",omitempty"`
-	Retriable      bool        `json:",omitempty"`
-	RetryError     string      `json:",omitempty"`
-	RetryCount     int         `json:",omitempty"`
-	MoveError      string      `json:",omitempty"`
-	CounterError   string      `json:",omitempty"`
-	DownloadError  string      `json:",omitempty"`
+	TriggerURL     string
+	ScheduledURL   string         `json:",omitempty"`
+	Window         interface{}    `json:",omitempty"`
+	Process        *stage.Process `json:",omitempty"`
+	ListOpCount    int            `json:",omitempty"`
+	StorageRetries map[int]int    `json:",omitempty"`
+	Retriable      bool           `json:",omitempty"`
+	RetryError     string         `json:",omitempty"`
+	RuleError      string         `json:",omitempty"`
+	LoadError      string         `json:",omitempty"`
+	RetryCount     int            `json:",omitempty"`
+	MoveError      string         `json:",omitempty"`
+	CounterError   string         `json:",omitempty"`
+	DownloadError  string         `json:",omitempty"`
 }
 
 //NewResponse creates a new response

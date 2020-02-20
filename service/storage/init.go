@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"bqtail/shared"
-	"bqtail/task"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/task"
 )
 
 const id = "fs"

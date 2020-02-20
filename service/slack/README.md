@@ -13,12 +13,12 @@ The following action are supported:
     "Channels": [
       "#e2e"
     ],
-    "From": "BqTail",
+    "From": "bqtail",
     "Title": "bqtail.wrong_dummy ingestion",
     "Message": "$Error",
     "Secret": {
       "URL": "gs://${config.Bucket}/config/slack.json.enc",
-      "Key": "BqTailRing/BqTailKey"
+      "Key": "bqtailRing/BqTailKey"
     }
   }
 }
@@ -33,7 +33,7 @@ The following action are supported:
     "Channels": [
       "#e2e"
     ],
-    "From": "BqTail",
+    "From": "bqtail",
     "Title": "bqtail.wrong_dummy ingestion",
     "Message": "$Error",
     "Token": "myslack token"

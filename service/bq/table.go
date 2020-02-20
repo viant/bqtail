@@ -1,10 +1,10 @@
 package bq
 
 import (
-	"bqtail/base"
-	"bqtail/shared"
 	"context"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
@@ -31,4 +31,23 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 		break
 	}
 	return table, err
+}
+
+//CreateTableIfNotExist creates a table if does not exist
+func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Table) error {
+	ref := table.TableReference
+	srv := bigquery.NewTablesService(s.Service)
+	if ref.ProjectId == "" {
+		ref.ProjectId = s.ProjectID
+	}
+	getTableCall := srv.Get(ref.ProjectId, ref.DatasetId, ref.TableId)
+	getTableCall.Context(ctx)
+	_, err := getTableCall.Do()
+	if !base.IsNotFoundError(err) {
+		return nil
+	}
+	insertTableCall := srv.Insert(ref.ProjectId, ref.DatasetId, table)
+	insertTableCall.Context(ctx)
+	_, err = insertTableCall.Do()
+	return err
 }

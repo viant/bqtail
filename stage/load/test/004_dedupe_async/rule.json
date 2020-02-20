@@ -1,0 +1,37 @@
+{
+  "When": {
+    "Prefix": "/data/case004/",
+    "Suffix": ".json"
+  },
+  "Async": true,
+  "Batch": {
+    "BaseURL": "gs://xx_e2e_bqdispatch/BqDispatch/Tasks/",
+    "RollOver": true,
+    "Window": {
+      "Duration": 15000000000,
+      "DurationInSec": 15
+    }
+  },
+  "Dest": {
+    "Table": "bqtail.dummy_v004",
+    "Transient": {
+      "Alias": "t",
+      "Dataset": "temp"
+    },
+    "UniqueColumns": [
+      "id"
+    ]
+  },
+  "Info": {
+    "URL": "gs://xx_e2e_config/BqTail/Rules/case_004/rule.yaml",
+    "Workflow": "rule"
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": "$LoadURIs"
+      }
+    }
+  ]
+}

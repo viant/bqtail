@@ -1,19 +1,19 @@
 package slack
 
 import (
-	"bqtail/base"
-	"bqtail/stage"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/nlopes/slack"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/stage/activity"
 	"strings"
 )
 
 //NotifyRequest represents a notify request
 type NotifyRequest struct {
-	Root        *stage.Info
+	Root        *activity.Meta
 	Channels    []string
 	From        string
 	Title       string

@@ -1,7 +1,7 @@
 .DS_Store
 .idea
 vendor
-go.sum
+cloudfunctions/go.sum
 logs
 1.json
 local_test.go
@@ -13,3 +13,4 @@ local3_test.go
 /aws/sqs/smirrorsqs
 scratchpad
 scratchpad/
+local_test.go

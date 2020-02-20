@@ -1,7 +1,7 @@
 package contract
 
 import (
-	"bqtail/base"
+	"github.com/viant/bqtail/base"
 	"sync"
 	"time"
 )
@@ -21,7 +21,7 @@ type Response struct {
 	mux         *sync.Mutex
 }
 
-//Reset reset response
+//Merge merge performance stats
 func (r *Response) Merge(performance *Performance) {
 	r.mux.Lock()
 	defer r.mux.Unlock()

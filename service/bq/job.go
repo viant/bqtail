@@ -1,9 +1,9 @@
 package bq
 
 import (
-	"bqtail/base"
-	"bqtail/shared"
 	"context"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )

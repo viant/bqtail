@@ -1,0 +1,22 @@
+{
+  "Dest": {
+    "Table": "bqtail.dummy_v001"
+  },
+  "When": {
+    "Prefix": "/data/case001/",
+    "Suffix": ".json"
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": "$LoadURIs"
+      }
+    }
+  ],
+  "Info": {
+    "Workflow": "rule",
+    "URL": "gs://xx_e2e_config/BqTail/Rules/case_001/rule.yaml"
+  },
+  "StalledThresholdInSec": 0
+}

@@ -1,8 +1,8 @@
 package tail
 
 import (
-	"bqtail/shared"
 	"context"
+	"github.com/viant/bqtail/shared"
 	//use google fs connector
 	_ "github.com/viant/afsc/gs"
 )

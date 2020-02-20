@@ -1,0 +1,39 @@
+{
+  "Async": true,
+  "When": {
+    "Prefix": "/data/case006/",
+    "Suffix": ".csv"
+  },
+  "Batch": {
+    "BaseURL": "gs://xx_e2e_bqdispatch/BqDispatch/Tasks/",
+    "Window": {
+      "Duration": 15000000000,
+      "DurationInSec": 15
+    }
+  },
+  "Dest": {
+    "Schema": {
+      "Autodetect": false
+    },
+    "SkipLeadingRows": 0,
+    "Table": "bqtail.dummy_v006",
+    "Transient": {
+      "Alias": "t",
+      "Dataset": "temp",
+      "Template": "bqtail.dummy_v006_temp"
+    },
+    "UseAvroLogicalTypes": false
+  },
+  "Info": {
+    "URL": "gs://xx_e2e_config/BqTail/Rules/case_006/rule.yaml",
+    "Workflow": "rule"
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": "$LoadURIs"
+      }
+    }
+  ]
+}

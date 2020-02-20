@@ -1,11 +1,11 @@
 package bqtail
 
 import (
-	"bqtail/base"
-	"bqtail/dispatch"
-	"bqtail/dispatch/contract"
 	"context"
 	"errors"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/dispatch"
+	"github.com/viant/bqtail/dispatch/contract"
 	"net/http"
 )
 

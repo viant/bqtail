@@ -31,11 +31,15 @@ func NewTableReference(table string) (*bigquery.TableReference, error) {
 }
 
 //EncodeTableReference encodes table reference
-func EncodeTableReference(table *bigquery.TableReference) string {
+func EncodeTableReference(table *bigquery.TableReference, standardSQL bool) string {
 	if table.ProjectId == "" {
 		return fmt.Sprintf("%v.%v", table.DatasetId, table.TableId)
 	}
-	return fmt.Sprintf("%v:%v.%v", table.ProjectId, table.DatasetId, table.TableId)
+	projectSeparator := ":"
+	if standardSQL {
+		projectSeparator = "."
+	}
+	return table.ProjectId + projectSeparator + table.DatasetId + "." + table.TableId
 }
 
 //TableID returns a table id

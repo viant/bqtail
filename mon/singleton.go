@@ -1,8 +1,8 @@
 package mon
 
 import (
-	"bqtail/tail"
 	"context"
+	"github.com/viant/bqtail/tail"
 )
 
 var singleton Service

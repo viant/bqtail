@@ -1,6 +1,6 @@
 package contract
 
-import "bqtail/base"
+import "github.com/viant/bqtail/base"
 
 //Request represents a request
 type Request struct {

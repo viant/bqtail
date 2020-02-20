@@ -1,14 +1,14 @@
 package tail
 
 import (
-	"bqtail/base"
-	"bqtail/tail/config"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/cache"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/tail/config"
 	"os"
 	"strings"
 )
@@ -79,6 +79,23 @@ func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {
 		c.initLoadedRules()
 	}
 	return err
+}
+
+//Match matches rule
+func (c Config) Match(URL string) []*config.Rule {
+	matched := c.Ruleset.Match(URL)
+	if len(matched) > 0 {
+		for i := range matched {
+			if c.Disabled != nil && *c.Disabled {
+				matched[i].Disabled = true
+			}
+			if c.Async != nil {
+				matched[i].Disabled = *c.Async
+			}
+		}
+
+	}
+	return matched
 }
 
 //Validate checks if config is valid

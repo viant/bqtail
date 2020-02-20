@@ -3,7 +3,6 @@ defaults:
 
 pipeline:
 
-
   deploy:
     set_sdk:
       action: sdk.set
@@ -22,6 +21,14 @@ pipeline:
         - cd ${appPath}/
         - go mod vendor
         - go build
+        - echo 'apply cloud functiion hack'
+        - mkdir -p vendor/github.com/viant/bqtail
+        - cp -rf base vendor/github.com/viant/bqtail
+        - cp -rf dispatch vendor/github.com/viant/bqtail
+        - cp -rf mon vendor/github.com/viant/bqtail
+        - cp -rf service vendor/github.com/viant/bqtail
+        - cp -rf s* vendor/github.com/viant/bqtail/
+        - cp -rf t* vendor/github.com/viant/bqtail/
 
     deploay:
       bqtail:
@@ -81,7 +88,6 @@ pipeline:
         serviceAccountEmail: ${gcp.serviceAccount}
         source:
           URL: ${appPath}/e2e/echo
-
 
       monitor:
         action: gcp/cloudfunctions:deploy

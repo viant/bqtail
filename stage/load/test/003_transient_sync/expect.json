@@ -1,0 +1,116 @@
+{
+  "Action": "load",
+  "Meta": {
+    "Action": "load",
+    "Async": false,
+    "DestTable": "bqtail.dummy_v003",
+    "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v003/2020-02-18_17/996757908711703.run",
+    "EventID": "996757908711703",
+    "Mode": "tail",
+    "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v003--996757908711703.run",
+    "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_003/rule.yaml",
+    "Source": {
+      "URL": "gs://xx_e2e_bqtail/data/case003/dummy.json",
+      "Time": "2020-02-18T17:22:52Z"
+    },
+    "Step": 1,
+    "StepCount": 1,
+    "TempTable": "`temp.dummy_v003_996757908711703`"
+  },
+  "OnSuccess": [
+    {
+      "Action": "copy",
+      "Meta": {
+        "Action": "copy",
+        "DestTable": "bqtail.dummy_v003",
+        "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v003/2020-02-18_17/996757908711703.run",
+        "EventID": "996757908711703",
+        "Mode": "tail",
+        "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v003--996757908711703.run",
+        "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_003/rule.yaml",
+        "Source": {
+          "URL": "gs://xx_e2e_bqtail/data/case003/dummy.json",
+          "Time": "2020-02-18T17:22:52Z"
+        },
+        "Step": 2,
+        "StepCount": 2,
+        "TempTable": "`temp.dummy_v003_996757908711703`"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete",
+          "Request": {
+            "URLs": [
+              "gs://xx_e2e_bqtail/data/case003/dummy.json"
+            ]
+          }
+        },
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v003/2020-02-18_17/996757908711703.run",
+            "IsDestAbsoluteURL": true,
+            "SourceURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v003--996757908711703.run"
+          }
+        },
+        {
+          "Action": "drop",
+          "Meta": {
+            "Action": "drop",
+            "DestTable": "bqtail.dummy_v003",
+            "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v003/2020-02-18_17/996757908711703.run",
+            "EventID": "996757908711703",
+            "Mode": "nop",
+            "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v003--996757908711703.run",
+            "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_003/rule.yaml",
+            "Source": {
+              "URL": "gs://xx_e2e_bqtail/data/case003/dummy.json",
+              "Time": "2020-02-18T17:22:52Z"
+            },
+            "Step": 5,
+            "StepCount": 5,
+            "TempTable": "`temp.dummy_v003_996757908711703`"
+          },
+          "Request": {
+            "Table": "temp.dummy_v003_996757908711703"
+          }
+        }
+      ],
+      "Request": {
+        "Append": true,
+        "Dest": "bqtail.dummy_v003",
+        "Source": "temp.dummy_v003_996757908711703"
+      }
+    }
+  ],
+  "Request": {
+    "Append": true,
+    "DestinationTable": {
+      "DatasetId": "temp",
+      "TableId": "dummy_v003_996757908711703"
+    },
+    "Schema": {
+      "Fields": [
+        {
+          "Mode": "REQUIRED",
+          "Name": "id",
+          "Type": "INTEGER"
+        },
+        {
+          "Mode": "REQUIRED",
+          "Name": "type_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "name",
+          "Type": "STRING"
+        }
+      ]
+    },
+    "SourceUris": [
+      "gs://xx_e2e_bqtail/data/case003/dummy.json"
+    ],
+    "UseAvroLogicalTypes": false,
+    "WriteDisposition": "WRITE_TRUNCATE"
+  }
+}

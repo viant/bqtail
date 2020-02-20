@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/viant/toolbox"
+	"log"
 	"os"
 	"strings"
 )
@@ -23,22 +24,23 @@ func IsFnLoggingEnabled(key string) bool {
 
 //Log logs message
 func Log(message interface{}) {
-
 	text, ok := message.(string)
 	if !ok {
-		JSON, err := json.Marshal(message)
-		if err == nil {
-			text = "." + string(JSON)
+		var aMap = map[string]interface{}{}
+		if err := toolbox.DefaultConverter.AssignConverted(&aMap, message); err != nil {
+			log.Println(err)
+		}
+		aMap = toolbox.DeleteEmptyKeys(aMap)
+		JSON, err := json.Marshal(aMap)
+		if err != nil {
+			text = "." + fmt.Sprintf("%+v", message)
 		} else {
-			aMap := map[string]interface{}{}
-			_ = toolbox.DefaultConverter.AssignConverted(&aMap, message)
-			JSON, err := json.Marshal(message)
-			if err == nil {
-				text = ". " + string(JSON)
-			} else {
-				text = fmt.Sprintf("%+v", message)
-			}
+			text = "." + string(JSON)
 		}
 	}
-	fmt.Println(text)
+
+	if !strings.HasSuffix(text, "\n") {
+		text += "\n"
+	}
+	fmt.Print(text)
 }

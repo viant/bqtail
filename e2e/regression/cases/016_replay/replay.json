@@ -1,139 +1,131 @@
-[
-  {
-    "Action": "load",
-    "Request": {
-      "AllowJaggedRows": false,
-      "AllowQuotedNewlines": false,
-      "Append": true,
-      "Async": true,
-      "Autodetect": false,
-      "Clustering": {},
-      "CreateDisposition": "",
-      "DestinationEncryptionConfiguration": {},
-      "DestinationTable": {
-        "DatasetId": "temp",
-        "ForceSendFields": null,
-        "NullFields": null,
-        "ProjectId": "viant-e2e",
-        "TableId": "dummy_850558231030311"
-      },
-      "DestinationTableProperties": {},
-      "Encoding": "",
-      "FieldDelimiter": "",
-      "ForceSendFields": null,
-      "HivePartitioningMode": "",
-      "HivePartitioningOptions": {},
-      "IgnoreUnknownValues": false,
-      "Job": {},
-      "JobID": "temp--dummy_850558231030311/850558231030311/dispatch",
-      "MaxBadRecords": 0,
-      "NullFields": null,
-      "NullMarker": "",
-      "OnFailure": null,
-      "OnSuccess": [
+{
+  "Source": {
+    "URL": "gs://${triggerBucket}/data/case${parentIndex}/dummy2.json",
+    "Time": "2020-02-19T18:52:19.228Z"
+  },
+  "ProcessURL": "gs://${opsBucket}/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}--998006374311244.run",
+  "DoneProcessURL": "gs://${opsBucket}/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-02-19_18/998006374311244.run",
+  "RuleURL": "gs://${configBucket}/BqTail/Rules/case_016/rule.yaml",
+  "EventID": "998006374311244",
+  "Async": true,
+  "TempTable": "`temp.dummy_v${parentIndex}_998006374311244`",
+  "DestTable": "bqtail.dummy_v${parentIndex}",
+  "StepCount": 6,
+  "Status": "ok",
+  "Window": {
+    "Source": {
+      "URL": "gs://${triggerBucket}/data/case${parentIndex}/dummy2.json",
+      "Time": "2020-02-19T18:52:19.228Z"
+    },
+    "ProcessURL": "gs://${opsBucket}/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}--998006374311244.run",
+    "DoneProcessURL": "gs://${opsBucket}/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-02-19_18/998006374311244.run",
+    "RuleURL": "gs://${configBucket}/BqTail/Rules/case_${parentIndex}/rule.yaml",
+    "EventID": "998006374311244",
+    "Async": true,
+    "TempTable": "`temp.dummy_v${parentIndex}_998006374311244`",
+    "DestTable": "bqtail.dummy_v${parentIndex}",
+    "StepCount": 6,
+    "URL": "gs://${dispatchBucket}/BqDispatch/Tasks/bqtail.dummy_v${parentIndex}_1113915460922753548_1582138350.win",
+    "Start": "2020-02-19T18:52:15Z",
+    "End": "2020-02-19T18:52:30Z",
+    "URIs": [
+      "gs://${triggerBucket}/data/case${parentIndex}/dummy1.json",
+      "gs://${triggerBucket}/data/case${parentIndex}/dummy2.json"
+    ]
+  },
+  "load": {
+    "destinationTable": {
+      "datasetId": "temp",
+      "tableId": "dummy_v${parentIndex}_998006374311244"
+    },
+    "schema": {
+      "fields": [
         {
-          "Action": "query",
-          "Request": {
-            "Append": true,
-            "Async": true,
-            "DatasetID": "",
-            "Dest": "bqtail.dummy_v${parentIndex}",
-            "Job": {},
-            "JobID": "temp--dummy_850558231030311/850558231030311/dispatch",
-            "OnFailure": null,
-            "OnSuccess": [
-              {
-                "Action": "delete",
-                "Request": {
-                  "URLs": [
-                    "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy1.json",
-                    "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy2.json"
-                  ]
-                }
-              },
-              {
-                "Action": "drop",
-                "Request": {
-                  "Async": true,
-                  "Job": {},
-                  "JobID": "temp--dummy_850558231030311/850558231030311/dispatch",
-                  "OnFailure": null,
-                  "OnSuccess": null,
-                  "ProjectID": "",
-                  "SourceURL": "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy1.json",
-                  "Table": "temp.dummy_850558231030311"
-                }
-              }
-            ],
-            "ProjectID": "",
-            "SQL": "SELECT id, MAX(type_id) AS type_id, MAX(name) AS name \nFROM temp.dummy_850558231030311 \n\nGROUP BY 1",
-            "SourceURL": "gs://viant_e2e_bqtail/data/case006/dummy1.json",
-            "Template": "",
-            "UseLegacy": false
-          }
+          "mode": "REQUIRED",
+          "name": "id",
+          "type": "INTEGER"
         },
         {
-          "Action": "move",
-          "Request": {
-            "DestURL": "gs://viant_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-01-03_00/917949814415512.run",
-            "IsDestAbsoluteURL": true,
-            "SourceURL": "gs://viant_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}-917949814415512.run"
-          }
+          "mode": "REQUIRED",
+          "name": "type_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "name",
+          "type": "STRING"
         }
-      ],
-      "ProjectID": "",
-      "ProjectionFields": null,
-      "Quote": null,
-      "RangePartitioning": {},
-      "Schema": {
-        "Fields": [
-          {
-            "Categories": {},
-            "Description": "",
-            "Fields": null,
-            "ForceSendFields": null,
-            "Mode": "REQUIRED",
-            "Name": "id",
-            "NullFields": null,
-            "Type": "INTEGER"
-          },
-          {
-            "Categories": {},
-            "Description": "",
-            "Fields": null,
-            "ForceSendFields": null,
-            "Mode": "REQUIRED",
-            "Name": "type_id",
-            "NullFields": null,
-            "Type": "INTEGER"
-          },
-          {
-            "Categories": {},
-            "Description": "",
-            "Fields": null,
-            "ForceSendFields": null,
-            "Mode": "",
-            "Name": "name",
-            "NullFields": null,
-            "Type": "STRING"
-          }
-        ],
-        "ForceSendFields": null,
-        "NullFields": null
+      ]
+    },
+    "sourceUris": [
+      "gs://${triggerBucket}/data/case${parentIndex}/dummy1.json",
+      "gs://${triggerBucket}/data/case${parentIndex}/dummy2.json"
+    ],
+    "writeDisposition": "WRITE_TRUNCATE"
+  },
+  "DestSchema": {
+    "fields": [
+      {
+        "mode": "REQUIRED",
+        "name": "id",
+        "type": "INTEGER"
       },
-      "SchemaInline": "",
-      "SchemaInlineFormat": "",
-      "SchemaUpdateOptions": null,
-      "SkipLeadingRows": 0,
-      "SourceFormat": "",
-      "SourceURL": "gs://viant_e2e_bqtail/data/case006/dummy1.json",
-      "SourceUris": [
-        "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy1.json",
-        "gs://viant_e2e_bqtail/data/case${parentIndex}/dummy2.json"
-      ],
-      "TimePartitioning": {},
-      "UseAvroLogicalTypes": false,
-      "WriteDisposition": "WRITE_TRUNCATE"
-    }
+      {
+        "mode": "REQUIRED",
+        "name": "type_id",
+        "type": "INTEGER"
+      },
+      {
+        "name": "name",
+        "type": "STRING"
+      }
+    ]
+  },
+  "Actions": {
+    "OnSuccess": [
+      {
+        "Action": "query",
+        "Request": {
+          "Append": true,
+          "DatasetID": "",
+          "Dest": "bqtail.dummy_v${parentIndex}",
+          "SQL": "SELECT id, MAX(t.type_id) AS type_id, MAX(t.name) AS name \nFROM `temp.dummy_v${parentIndex}_998006374311244` t \n\nGROUP BY 1",
+          "SQLURL": "",
+          "Template": "",
+          "UseLegacy": false
+        },
+        "OnSuccess": [
+          {
+            "Action": "delete",
+            "Request": {
+              "URLs": "$LoadURIs"
+            }
+          },
+          {
+            "Action": "delete",
+            "Request": {
+              "SourceURL": "",
+              "URLs": [
+                "gs://${dispatchBucket}/BqDispatch/Tasks/bqtail.dummy_v${parentIndex}_1113915460922753548_1582138350.win"
+              ]
+            }
+          },
+          {
+            "Action": "move",
+            "Request": {
+              "DestURL": "gs://${opsBucket}/BqTail/Journal/Done/bqtail.dummy_v${parentIndex}/2020-02-19_18/998006374311244.run",
+              "IsDestAbsoluteURL": true,
+              "SourceURL": "gs://${opsBucket}/BqTail/Journal/Running/bqtail.dummy_v${parentIndex}--998006374311244.run"
+            }
+          },
+          {
+            "Action": "drop",
+            "Request": {
+              "ProjectID": "",
+              "Table": "temp.dummy_v${parentIndex}_998006374311244"
+            }
+          }
+        ]
+      }
+    ]
   }
-]
+}

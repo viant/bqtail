@@ -1,16 +1,17 @@
 package bq
 
 import (
-	"bqtail/base"
-	"bqtail/task"
 	"context"
 	"fmt"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 )
 
 //Query run supplied SQL
-func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.Job, error) {
-	if err := request.Init(s.projectID); err != nil {
+func (s *service) Query(ctx context.Context, request *QueryRequest, acion *task.Action) (*bigquery.Job, error) {
+	if err := request.Init(s.projectID, acion); err != nil {
 		return nil, err
 	}
 	if err := request.Validate(); err != nil {
@@ -32,8 +33,9 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 		} else {
 			job.Configuration.Query.WriteDisposition = "WRITE_TRUNCATE"
 		}
-		s.adjustRegion(ctx, &request.Request, job.Configuration.Query.DestinationTable)
+		s.adjustRegion(ctx, acion, job.Configuration.Query.DestinationTable)
 	}
+
 	if request.UseLegacy {
 		job.Configuration.Query.AllowLargeResults = true
 	}
@@ -41,11 +43,11 @@ func (s *service) Query(ctx context.Context, request *QueryRequest) (*bigquery.J
 	if request.DatasetID != "" {
 		job.Configuration.Query.DefaultDataset = &bigquery.DatasetReference{
 			DatasetId: request.DatasetID,
-			ProjectId: request.ProjectID,
+			ProjectId: acion.Meta.ProjectID,
 		}
 	}
-	job.JobReference = request.jobReference()
-	return s.Post(ctx, job, &request.Request)
+	job.JobReference = acion.JobReference()
+	return s.Post(ctx, job, acion)
 }
 
 //QueryRequest represents Query request
@@ -58,16 +60,11 @@ type QueryRequest struct {
 	Dest             string
 	Template         string
 	destinationTable *bigquery.TableReference
-	Request
 }
 
 //Init initialises request
-func (r *QueryRequest) Init(projectID string) (err error) {
-	if r.ProjectID != "" {
-		projectID = r.ProjectID
-	} else {
-		r.ProjectID = projectID
-	}
+func (r *QueryRequest) Init(projectID string, Action *task.Action) (err error) {
+	Action.Meta.GetOrSetProject(projectID)
 	if r.Dest != "" {
 		if r.destinationTable, err = base.NewTableReference(r.Dest); err != nil {
 			return err
@@ -89,18 +86,21 @@ func (r *QueryRequest) Validate() error {
 	return nil
 }
 
-//NewQueryRequest creates a new query request
-func NewQueryRequest(projectID, SQL string, dest *bigquery.TableReference, finally *task.Actions) *QueryRequest {
-	result := &QueryRequest{
+//NewQueryAction creates a new query request
+func NewQueryAction(SQL string, dest *bigquery.TableReference, append bool, finally *task.Actions) *task.Action {
+	query := &QueryRequest{
 		SQL:              SQL,
 		destinationTable: dest,
+		Append:           append,
 	}
-	result.ProjectID = projectID
 	if dest != nil {
-		result.Dest = base.EncodeTableReference(dest)
+		query.Dest = base.EncodeTableReference(dest, false)
 	}
-	if finally != nil {
-		result.Actions = *finally
+	result := &task.Action{
+		Action:  shared.ActionQuery,
+		Actions: finally,
+		Meta:    nil,
 	}
+	_ = result.SetRequest(query)
 	return result
 }

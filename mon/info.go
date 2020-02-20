@@ -1,11 +1,11 @@
 package mon
 
 import (
-	"bqtail/mon/info"
-	"bqtail/tail/config"
+	"github.com/viant/bqtail/mon/info"
+	"github.com/viant/bqtail/tail/config"
 )
 
-//Info represents load info
+//Info represents monitoring info
 type Info struct {
 	*info.Destination
 	*info.Activity `json:",omitempty"`

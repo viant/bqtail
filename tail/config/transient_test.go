@@ -1,10 +1,10 @@
 package config
 
 import (
-	"bqtail/dispatch/contract"
-	"bqtail/shared"
-	"bqtail/tail/config/transient"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/bqtail/dispatch/contract"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/tail/config/transient"
 	"testing"
 )
 

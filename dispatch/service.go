@@ -1,17 +1,6 @@
 package dispatch
 
 import (
-	"bqtail/base"
-	"bqtail/dispatch/contract"
-	"bqtail/dispatch/project"
-	"bqtail/service/bq"
-	"bqtail/service/secret"
-	"bqtail/service/slack"
-	"bqtail/service/storage"
-	"bqtail/shared"
-	"bqtail/sortable"
-	"bqtail/stage"
-	"bqtail/task"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -21,6 +10,17 @@ import (
 	"github.com/viant/afs/option"
 	astorage "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/dispatch/contract"
+	"github.com/viant/bqtail/dispatch/project"
+	"github.com/viant/bqtail/service/bq"
+	"github.com/viant/bqtail/service/secret"
+	"github.com/viant/bqtail/service/slack"
+	"github.com/viant/bqtail/service/storage"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/sortable"
+	"github.com/viant/bqtail/stage/activity"
+	"github.com/viant/bqtail/task"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"os"
@@ -226,7 +226,7 @@ func (s *service) filterCandidate(response *contract.Response, objects []astorag
 			continue
 		}
 		jobID := JobID(s.Config().AsyncTaskURL, object.URL())
-		stageInfo := stage.Parse(jobID)
+		stageInfo := activity.Parse(jobID)
 		if stageInfo.Action != action {
 			continue
 		}
@@ -356,7 +356,7 @@ func (s *service) listBQJobs(ctx context.Context, projectID string, minCreated, 
 
 //notify notify bqtail
 func (s *service) notify(ctx context.Context, job *contract.Job, events *project.Events) error {
-	info := stage.Parse(job.ID)
+	info := activity.Parse(job.ID)
 	info.Region = events.Region
 	info.ProjectID = events.ProjectID
 	taskURL := s.config.BuildTaskURL(info) + shared.JSONExt
@@ -414,7 +414,7 @@ func JobID(baseURL string, URL string) string {
 			encoded = string(encoded[index+1:])
 		}
 	}
-	jobID := stage.Decode(encoded)
+	jobID := activity.Decode(encoded)
 	return jobID
 }
 

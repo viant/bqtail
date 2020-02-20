@@ -1,10 +1,10 @@
 package bq
 
 import (
-	"bqtail/base"
-	"bqtail/task"
 	"context"
 	"github.com/viant/afs"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
@@ -19,11 +19,15 @@ type Service interface {
 
 	Table(ctx context.Context, reference *bigquery.TableReference) (*bigquery.Table, error)
 
-	Load(ctx context.Context, request *LoadRequest) (*bigquery.Job, error)
+	Load(ctx context.Context, request *LoadRequest, Action *task.Action) (*bigquery.Job, error)
 
-	Query(ctx context.Context, request *QueryRequest) (*bigquery.Job, error)
+	Query(ctx context.Context, request *QueryRequest, Action *task.Action) (*bigquery.Job, error)
 
 	Wait(ctx context.Context, ref *bigquery.JobReference) (*bigquery.Job, error)
+
+	CreateDatasetIfNotExist(ctx context.Context, region string, dataset *bigquery.DatasetReference) error
+
+	CreateTableIfNotExist(ctx context.Context, table *bigquery.Table) error
 }
 
 type service struct {

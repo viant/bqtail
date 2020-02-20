@@ -1,12 +1,12 @@
 package config
 
 import (
-	"bqtail/base"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
 	"log"
 	"strings"
 	"sync/atomic"

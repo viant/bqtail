@@ -1,16 +1,11 @@
 package bq
 
 import (
-	"bqtail/base"
-	"bqtail/shared"
-	"bqtail/task"
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/viant/afs/file"
-	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
-	"strings"
 )
 
 func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Job, onDone *task.Actions) error {
@@ -21,13 +16,6 @@ func (s *service) runActions(ctx context.Context, err error, parent *bigquery.Jo
 	toRun := onDone.ToRun(err, &baseJob)
 	if len(toRun) == 0 {
 		return nil
-	}
-	if err != nil && onDone.SourceURI != "" {
-		sourcePath := url.Path(onDone.SourceURI)
-		errorURL := url.Join(s.Config.ErrorURL, sourcePath+shared.ActionErrorExt)
-		if e := s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(err.Error())); e != nil {
-			return errors.Wrapf(err, "failed to write error file: %v %v", errorURL, e)
-		}
 	}
 	_, err = task.RunAll(ctx, s.Registry, toRun)
 	return err

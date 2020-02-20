@@ -1,11 +1,11 @@
 package base
 
 import (
-	"bqtail/shared"
 	"context"
 	"github.com/viant/afs"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
+	"github.com/viant/bqtail/shared"
 	"path"
 	"time"
 )

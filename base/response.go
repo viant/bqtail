@@ -1,7 +1,7 @@
 package base
 
 import (
-	"bqtail/shared"
+	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )

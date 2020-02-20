@@ -1,10 +1,10 @@
 package slack
 
 import (
-	"bqtail/base"
-	"bqtail/service/secret"
-	"bqtail/task"
 	"github.com/viant/afs"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/service/secret"
+	"github.com/viant/bqtail/task"
 )
 
 //Service represents storage service

@@ -1,8 +1,8 @@
 package dispatch
 
 import (
-	"bqtail/base"
-	"bqtail/dispatch/config"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/dispatch/config"
 	"time"
 
 	"context"

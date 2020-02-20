@@ -233,3 +233,21 @@ endly -t=init
     endly -t=test -i=transient_copy
 ```
 
+- [Ingestion with PubSub notification](regression/cases/030_pubsub_push)
+
+```bash
+    endly -t=test -i=pubsub_push
+```
+
+
+- [Ingestion with URL pattern parameters](regression/cases/031_pattern_params)
+
+```bash
+    endly -t=test -i=pattern_params
+```
+
+- [Ingestion with tempaltes](regression/cases/032_template)
+
+```bash
+    endly -t=test -i=template
+```

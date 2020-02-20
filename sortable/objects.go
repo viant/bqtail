@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-//Events represents sorting container
+//Objects represents sorting container
 type Objects struct {
 	Elements []storage.Object
 	By       func(o1, o2 storage.Object) bool
@@ -29,6 +29,7 @@ func (o Objects) Less(i, j int) bool {
 	return o.By(o.Elements[i], o.Elements[j])
 }
 
+//ByModTime sort func by time
 func ByModTime(o1, o2 storage.Object) bool {
 	if o1.ModTime().Equal(o2.ModTime()) {
 		return o1.Name() < o2.Name()

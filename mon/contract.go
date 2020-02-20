@@ -1,7 +1,7 @@
 package mon
 
 import (
-	"bqtail/shared"
+	"github.com/viant/bqtail/shared"
 	"time"
 )
 

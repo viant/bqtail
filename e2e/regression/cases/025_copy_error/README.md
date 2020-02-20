@@ -15,8 +15,7 @@ Dest:
   Table: bqtail.dummy_v25
   Transient:
     Dataset: temp
-  Schema:
-    TransientTemplate: bqtail.dummy_v25_temp
+    Template: bqtail.dummy_v25_temp
 Batch:
   RollOver: true
   Window:
