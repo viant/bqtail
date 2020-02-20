@@ -9,7 +9,7 @@ import (
 
 //Process represent an injection process
 type Process struct {
-	Source *Source        `json:",omitempty"`
+	Source         *Source                `json:",omitempty"`
 	ProcessURL     string                 `json:",omitempty"`
 	DoneProcessURL string                 `json:",omitempty"`
 	RuleURL        string                 `json:",omitempty"`

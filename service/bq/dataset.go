@@ -25,13 +25,13 @@ func (s *service) CreateDatasetIfNotExist(ctx context.Context, region string, da
 	if region == "" {
 		region = defaultRegion
 	}
-	if dataset.ProjectId == ""{
+	if dataset.ProjectId == "" {
 		dataset.ProjectId = s.projectID
 	}
 	datasetCall := s.Service.Datasets.Get(dataset.ProjectId, dataset.DatasetId)
 	datasetCall.Context(ctx)
 	_, err := datasetCall.Do()
-	if ! base.IsNotFoundError(err) {
+	if !base.IsNotFoundError(err) {
 		return err
 	}
 	insertDatasetCall := s.Service.Datasets.Insert(dataset.ProjectId, &bigquery.Dataset{

@@ -43,7 +43,7 @@ func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Tab
 	getTableCall := srv.Get(ref.ProjectId, ref.DatasetId, ref.TableId)
 	getTableCall.Context(ctx)
 	_, err := getTableCall.Do()
-	if ! base.IsNotFoundError(err) {
+	if !base.IsNotFoundError(err) {
 		return nil
 	}
 	insertTableCall := srv.Insert(ref.ProjectId, ref.DatasetId, table)
@@ -51,4 +51,3 @@ func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Tab
 	_, err = insertTableCall.Do()
 	return err
 }
-

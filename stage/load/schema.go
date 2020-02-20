@@ -16,8 +16,8 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 	transient := j.Rule.Dest.Transient
 
 	if transient != nil {
-		datasetRef := &bigquery.DatasetReference{ProjectId:j.ProjectID, DatasetId:transient.Dataset}
-		if err := service.CreateDatasetIfNotExist(ctx, transient.Region, datasetRef);err != nil {
+		datasetRef := &bigquery.DatasetReference{ProjectId: j.ProjectID, DatasetId: transient.Dataset}
+		if err := service.CreateDatasetIfNotExist(ctx, transient.Region, datasetRef); err != nil {
 			return errors.Wrapf(err, "failed to create transient dataset: %v", transient.Dataset)
 		}
 		j.Load.WriteDisposition = shared.WriteDispositionTruncate
@@ -43,13 +43,13 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 			return errors.Wrapf(err, "fail to get template table: %v", j.Rule.Dest.Schema.Template)
 		}
 		table.TableReference, _ = base.NewTableReference(j.DestTable)
-		if err = service.CreateTableIfNotExist(ctx, table);err != nil {
+		if err = service.CreateTableIfNotExist(ctx, table); err != nil {
 			return errors.Wrapf(err, "failed to create table: %v", base.EncodeTableReference(tableReference, false))
 		}
 		j.DestSchema = table
 	}
 
-	if table == nil && ! hasTransientTemplate {
+	if table == nil && !hasTransientTemplate {
 		if table, err = service.Table(ctx, tableReference); err != nil {
 			return errors.Wrapf(err, "failed to get table: %+v", tableReference)
 		}
@@ -63,7 +63,6 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 	}
 	return nil
 }
-
 
 func (j *Job) updateSchema(table *bigquery.Table) {
 	if table != nil {
