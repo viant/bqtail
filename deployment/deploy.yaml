@@ -10,11 +10,19 @@ pipeline:
     target: $target
     checkError: true
     commands:
-      - cd $appPath
       - export GIT_TERMINAL_PROMPT=1
       - export GO111MODULE=on
       - unset GOPATH
+      - cd ${appPath}/
       - go mod vendor
+      - echo 'apply cloud functiion hack'
+      - mkdir -p vendor/github.com/viant/bqtail
+      - cp -rf base vendor/github.com/viant/bqtail
+      - cp -rf dispatch vendor/github.com/viant/bqtail
+      - cp -rf mon vendor/github.com/viant/bqtail
+      - cp -rf service vendor/github.com/viant/bqtail
+      - cp -rf s* vendor/github.com/viant/bqtail/
+      - cp -rf t* vendor/github.com/viant/bqtail/
       - go build
 
   bqtail:

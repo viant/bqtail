@@ -81,23 +81,6 @@ func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {
 	return err
 }
 
-//Match matches rule
-func (c Config) Match(URL string) []*config.Rule {
-	matched := c.Ruleset.Match(URL)
-	if len(matched) > 0 {
-		for i := range matched {
-			if c.Disabled != nil && *c.Disabled {
-				matched[i].Disabled = true
-			}
-			if c.Async != nil {
-				matched[i].Disabled = *c.Async
-			}
-		}
-
-	}
-	return matched
-}
-
 //Validate checks if config is valid
 func (c *Config) Validate() error {
 	err := c.Config.Validate()
