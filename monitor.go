@@ -1,12 +1,11 @@
 package bqtail
 
 import (
-	"github.com/viant/bqtail/mon"
-	"github.com/viant/bqtail/shared"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/toolbox"
 	"log"
 	"net/http"

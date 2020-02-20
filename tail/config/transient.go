@@ -1,9 +1,9 @@
 package config
 
 import (
+	"errors"
 	"github.com/viant/bqtail/dispatch/contract"
 	"github.com/viant/bqtail/tail/config/transient"
-	"errors"
 )
 
 //Transient represents transient project, dataset settings
@@ -16,7 +16,7 @@ type Transient struct {
 	Balancer  *transient.Balancer
 }
 
-
+//Validate checks if transient is valid
 func (t Transient) Validate() error {
 	if t.Dataset == "" {
 		return errors.New("Transient.Dataset was empty")
@@ -24,7 +24,7 @@ func (t Transient) Validate() error {
 	return nil
 }
 
-//ProjectID return job IDs
+//JobProjectID return job IDs
 func (t Transient) JobProjectID(performance contract.ProjectPerformance) string {
 	if t.Balancer == nil {
 		return t.ProjectID

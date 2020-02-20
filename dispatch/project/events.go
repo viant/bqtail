@@ -1,8 +1,8 @@
 package project
 
 import (
-	"github.com/viant/bqtail/dispatch/contract"
 	"github.com/viant/afs/storage"
+	"github.com/viant/bqtail/dispatch/contract"
 	"strings"
 )
 

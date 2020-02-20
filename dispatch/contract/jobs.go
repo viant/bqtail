@@ -15,7 +15,7 @@ func (j *Jobs) Add(job *Job) {
 	j.Jobs[job.URL] = job
 }
 
-//Has returns true if has job SourceURL
+//Has returns true if has job URL
 func (j *Jobs) Has(URL string) bool {
 	j.mux.Lock()
 	defer j.mux.Unlock()

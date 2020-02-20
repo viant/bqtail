@@ -1,6 +1,15 @@
 package dispatch
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/viant/afs"
+	"github.com/viant/afs/file"
+	"github.com/viant/afs/option"
+	astorage "github.com/viant/afs/storage"
+	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/dispatch/contract"
 	"github.com/viant/bqtail/dispatch/project"
@@ -12,15 +21,6 @@ import (
 	"github.com/viant/bqtail/sortable"
 	"github.com/viant/bqtail/stage/activity"
 	"github.com/viant/bqtail/task"
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"github.com/viant/afs"
-	"github.com/viant/afs/file"
-	"github.com/viant/afs/option"
-	astorage "github.com/viant/afs/storage"
-	"github.com/viant/afs/url"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"os"
@@ -402,7 +402,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 	return err
 }
 
-//JobID returns job ID for supplied SourceURL
+//JobID returns job ID for supplied URL
 func JobID(baseURL string, URL string) string {
 	if len(baseURL) > len(URL) {
 		return ""

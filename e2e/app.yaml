@@ -3,7 +3,6 @@ defaults:
 
 pipeline:
 
-
   deploy:
     set_sdk:
       action: sdk.set
@@ -19,7 +18,7 @@ pipeline:
         - export GIT_TERMINAL_PROMPT=1
         - export GO111MODULE=on
         - unset GOPATH
-        - cd ${appPath}/
+        - cd ${appPath}/cloudfunctions
         - mkdir -p vendor/github.com/viant/bqtail
         - rm -rf vendor
         - go mod vendor
@@ -51,7 +50,7 @@ pipeline:
           eventType: google.storage.object.finalize
           resource: projects/_/buckets/${triggerBucket}
         source:
-          URL: ${appPath}/
+          URL: ${appPath}/cloudfunctions
 
       bqdisaptch:
         action: gcp/cloudfunctions:deploy
@@ -66,7 +65,7 @@ pipeline:
           CONFIG: gs://${configBucket}/BqDispatch/config.json
           LOGGING: true
         source:
-          URL: ${appPath}/
+          URL: ${appPath}/cloudfunctions
 
       scheduleDispatcher:
         action: gcp/cloudscheduler:deploy
@@ -92,7 +91,6 @@ pipeline:
         source:
           URL: ${appPath}/e2e/echo
 
-
       monitor:
         action: gcp/cloudfunctions:deploy
         comments: minitor service is used by error cases
@@ -108,4 +106,4 @@ pipeline:
           CONFIG: gs://${configBucket}/BqTail/config.json
           LOGGING: true
         source:
-          URL: ${appPath}/
+          URL: ${appPath}/cloudfunctions

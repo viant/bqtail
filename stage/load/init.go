@@ -1,14 +1,15 @@
 package load
 
 import (
+	"context"
+	"github.com/pkg/errors"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/shared"
-	"context"
-	"github.com/pkg/errors"
 	"google.golang.org/api/bigquery/v2"
 )
 
+//Init initialises job
 func (j *Job) Init(ctx context.Context, service bq.Service) error {
 	tableReference, err := base.NewTableReference(j.DestTable)
 	if err != nil {
@@ -31,7 +32,7 @@ func (j *Job) Init(ctx context.Context, service bq.Service) error {
 	return nil
 }
 
-func (j *Job) setDestinationTable(tableReference *bigquery.TableReference)  {
+func (j *Job) setDestinationTable(tableReference *bigquery.TableReference) {
 	if j.Rule.Dest.Transient != nil {
 		tableReference.ProjectId = j.ProjectID
 		tableReference.DatasetId = j.Rule.Dest.Transient.Dataset

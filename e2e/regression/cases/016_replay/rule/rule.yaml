@@ -1,0 +1,16 @@
+When:
+  Prefix: /data/fake--case${parentIndex}/
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+  Transient:
+    Dataset: temp
+  UniqueColumns:
+    - id
+OnSuccess:
+  - Action: delete
+Batch:
+  RollOver: true
+  Window:
+    DurationInSec: 15
+Async: true

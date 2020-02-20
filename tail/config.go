@@ -1,14 +1,14 @@
 package tail
 
 import (
-	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/tail/config"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/cache"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/tail/config"
 	"os"
 	"strings"
 )
@@ -17,6 +17,10 @@ import (
 type Config struct {
 	base.Config
 	config.Ruleset
+	//Disabled if set, it globally disables all rules for new data ingestion - option intended for bqtail major version migration
+	Disabled *bool
+	//Async if set it globally changes status for all rule
+	Async *bool
 }
 
 //Init initializes config
@@ -59,6 +63,23 @@ func (c *Config) ReloadIfNeeded(ctx context.Context, fs afs.Service) error {
 	return err
 }
 
+//Match matches rule
+func (c Config) Match(URL string) []*config.Rule {
+	matched := c.Ruleset.Match(URL)
+	if len(matched) > 0 {
+		for i := range matched {
+			if c.Disabled != nil && *c.Disabled {
+				matched[i].Disabled = true
+			}
+			if c.Async != nil {
+				matched[i].Disabled = *c.Async
+			}
+		}
+
+	}
+	return matched
+}
+
 //Validate checks if config is valid
 func (c *Config) Validate() error {
 	err := c.Config.Validate()
@@ -96,7 +117,7 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 	return cfg, err
 }
 
-//NewConfigFromURL creates new config from SourceURL
+//NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	storageService := cache.Singleton(URL)
 	reader, err := storageService.DownloadWithURL(ctx, URL)
@@ -116,7 +137,7 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	return cfg, err
 }
 
-//NewConfig creates a new config from env (json or SourceURL)
+//NewConfig creates a new config from env (json or URL)
 func NewConfig(ctx context.Context, key string) (*Config, error) {
 	if key == "" {
 		return nil, fmt.Errorf("config key was empty")

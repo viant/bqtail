@@ -1,10 +1,12 @@
 package info
 
+//Metrics represents info metrics
 type Metrics struct {
 	index map[string]*Metric
 	Items []*Metric `json:",omitempty"`
 }
 
+//GetOrCreate returns metrics for supplied key
 func (m *Metrics) GetOrCreate(key string) *Metric {
 	if len(m.index) == 0 {
 		m.index = make(map[string]*Metric)

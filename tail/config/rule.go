@@ -8,6 +8,7 @@ import (
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
 	"github.com/viant/bqtail/task"
 	"path"
@@ -29,6 +30,15 @@ type Rule struct {
 	CorruptedFileURL      string         `json:",omitempty"`
 	InvalidSchemaURL      string         `json:",omitempty"`
 	CounterURL            string         `json:",omitempty"`
+	MaxReload             *int           `json:",omitempty"`
+}
+
+//MaxReloadAttempts returns max reload attempts
+func (r *Rule) MaxReloadAttempts() int {
+	if r.MaxReload == nil {
+		r.MaxReload = &shared.MaxReload
+	}
+	return *r.MaxReload
 }
 
 //Actions returns a rule actions
@@ -60,7 +70,7 @@ func (r *Rule) DestTable(URL string, modTime time.Time) string {
 	return table
 }
 
-//HasMatch returns true if SourceURL matches prefix or suffix
+//HasMatch returns true if URL matches prefix or suffix
 func (r *Rule) HasMatch(URL string) bool {
 	location := url.Path(URL)
 	parent, name := path.Split(location)
@@ -76,11 +86,12 @@ func (r Rule) Validate() error {
 	return r.Dest.Validate()
 }
 
+//Init initialises rule
 func (r *Rule) Init(ctx context.Context, fs afs.Service) error {
 	actions := r.Actions()
 	if r.Dest.Pattern != "" && r.When.Filter == "" {
 		r.When.Filter = r.Dest.Pattern
 	}
-	err :=  actions.Init(ctx, fs)
+	err := actions.Init(ctx, fs)
 	return err
 }

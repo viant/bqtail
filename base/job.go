@@ -3,6 +3,7 @@ package base
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
 )
@@ -135,4 +136,12 @@ func JobError(job *bigquery.Job) error {
 		return fmt.Errorf("failed to run job [%v]: %s, %s", job.Id, job.Status.ErrorResult.Message, JSON)
 	}
 	return nil
+}
+
+//IsJobDone returns true if job is done
+func IsJobDone(job *bigquery.Job) bool {
+	if job == nil || job.Status == nil {
+		return false
+	}
+	return job.Status.State == shared.DoneState
 }

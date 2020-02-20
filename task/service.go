@@ -6,14 +6,13 @@ import (
 	"reflect"
 )
 
+//Response represents generic response
 type Response interface{}
-
 
 //Service represents tasks service
 type Service interface {
 	Run(ctx context.Context, request *Action) (Response, error)
 }
-
 
 //ServiceAction represets service action
 type ServiceAction struct {
@@ -28,8 +27,6 @@ func NewServiceAction(service string, request interface{}) *ServiceAction {
 		RequestType: reflect.TypeOf(request),
 	}
 }
-
-
 
 //SetServiceRequest creates a new request
 func (a *ServiceAction) SetServiceRequest(action *Action) error {

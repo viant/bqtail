@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"github.com/viant/bqtail/base"
 	"context"
 	"fmt"
+	"github.com/viant/bqtail/base"
 )
 
 const deleteRoutines = 6

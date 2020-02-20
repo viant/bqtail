@@ -39,7 +39,7 @@ func Log(message interface{}) {
 		}
 	}
 
-	if ! strings.HasSuffix(text, "\n") {
+	if !strings.HasSuffix(text, "\n") {
 		text += "\n"
 	}
 	fmt.Print(text)

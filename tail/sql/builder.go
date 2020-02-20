@@ -1,9 +1,9 @@
 package sql
 
 import (
+	"fmt"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/tail/config"
-	"fmt"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
 )
@@ -99,7 +99,7 @@ func buildJoins(sideInputs []*config.SideInput) string {
 
 //buildSelect returns select SQL statement for specified parameter, if uniqueColumns SQL de-duplicates data
 func buildSelect(source *bigquery.TableReference, tableScheme *bigquery.TableSchema, dest *config.Destination) string {
-	sourceTable := "`" +base.EncodeTableReference(source, true) + "`"
+	sourceTable := "`" + base.EncodeTableReference(source, true) + "`"
 	schema := Schema(*tableScheme)
 	if len(dest.UniqueColumns) == 0 {
 		return buildSelectAll(sourceTable, schema, dest)

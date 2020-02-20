@@ -17,3 +17,15 @@ func (s *service) adjustRegion(ctx context.Context, actionable *task.Action, ref
 		actionable.Meta.Region = dataset.Location
 	}
 }
+
+func (s *service) createDatasetIfNeeded(ctx context.Context, actionable *task.Action, ref *bigquery.TableReference) {
+	if actionable.Meta.Region != "" {
+		return
+	}
+	//read dest dataset location
+	datasetCall := s.Service.Datasets.Get(ref.ProjectId, ref.DatasetId)
+	datasetCall.Context(ctx)
+	if dataset, err := datasetCall.Do(); err == nil {
+		actionable.Meta.Region = dataset.Location
+	}
+}

@@ -31,7 +31,7 @@ func (r *registry) RegisterService(name string, service Service) {
 	r.services[name] = service
 }
 
-//Get returns a service
+//Rule returns a service
 func (r *registry) Service(name string) (Service, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
@@ -48,11 +48,10 @@ func (r *registry) RegisterAction(name string, action *ServiceAction) {
 	r.actions[name] = action
 }
 
-
-func (r registry)  Actions(service string) []string {
+func (r registry) Actions(service string) []string {
 	var result = make([]string, 0)
-	for action, serviceAction:= range r.actions {
-		if serviceAction.Service == service{
+	for action, serviceAction := range r.actions {
+		if serviceAction.Service == service {
 			result = append(result, action)
 		}
 	}

@@ -233,3 +233,15 @@ endly -t=init
     endly -t=test -i=transient_copy
 ```
 
+- [Ingestion with PubSub notification](regression/cases/030_pubsub_push)
+
+```bash
+    endly -t=test -i=pubsub_push
+```
+
+
+- [Ingestion with PubSub notification](regression/cases/031_pattern_params)
+
+```bash
+    endly -t=test -i=pattern_params
+```

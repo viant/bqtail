@@ -1,10 +1,10 @@
 package bq
 
 import (
-	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/task"
 	"context"
 	"fmt"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 )
 

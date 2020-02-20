@@ -52,7 +52,6 @@ func Run(ctx context.Context, registry Registry, action *Action) (Response, erro
 	return resp, err
 }
 
-
 //RunWithService handlers service request or error
 func RunWithService(ctx context.Context, registry Registry, serviceName string, request *Action) (Response, error) {
 	service, err := registry.Service(serviceName)

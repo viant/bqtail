@@ -109,7 +109,7 @@ func TestRoutes_HasMatch(t *testing.T) {
 		//		},
 		//	},
 		//
-		//	SourceURL:         "ssh://zz/folder/a.csv",
+		//	URL:         "ssh://zz/folder/a.csv",
 		//	expextTable: "project:dataset:table2",
 		//},
 		//{
@@ -133,7 +133,7 @@ func TestRoutes_HasMatch(t *testing.T) {
 		//		},
 		//	},
 		//
-		//	SourceURL:         "ssh://zz/folder/a.csv",
+		//	URL:         "ssh://zz/folder/a.csv",
 		//	expextTable: "",
 		//},
 		{

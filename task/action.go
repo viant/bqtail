@@ -24,10 +24,56 @@ type Action struct {
 	*Actions       `json:",omitempty"`
 }
 
+//Init initialises action
+func (a *Action) Init(ctx context.Context, fs afs.Service) error {
+	if a.Request == nil {
+		a.Request = make(map[string]interface{})
+	}
+	isEmptyRequest := len(a.Request) == 0
+	if isEmptyRequest {
+		switch a.Action {
+		case shared.ActionDelete, shared.ActionMove:
+			_, hasURL := a.Request[shared.URLsKey]
+			_, hasURLs := a.Request[shared.URLKey]
+			if !(hasURL || hasURLs) {
+				a.Request[shared.URLsKey] = shared.LoadURIsVar
+			}
+		}
+	} else {
+		if request, err := toolbox.NormalizeKVPairs(a.Request); err == nil {
+			a.Request = toolbox.AsMap(request)
+		}
+	}
+	if a.Action == shared.ActionCall {
+		if err := loadResource(ctx, a, fs, "Body", "BodyURL"); err != nil {
+			return err
+		}
+	}
+	if a.Action == shared.ActionQuery {
+		if err := loadResource(ctx, a, fs, "SQL", "SQLURL"); err != nil {
+			return err
+		}
+	}
+	if shared.Actionable[a.Action] {
+		if a.Actions == nil {
+			a.Actions = &Actions{}
+		}
+	} else {
+		if a.Actions != nil && (len(a.Actions.OnSuccess) > 0 || len(a.Actions.OnFailure) > 0) {
+			return errors.Errorf("action %v does not support OnSuccess/OnFailure")
+		}
+		a.Actions = nil
+		return nil
+	}
+	return a.Actions.Init(ctx, fs)
+}
+
+//ServiceRequest returns a service request
 func (a Action) ServiceRequest() interface{} {
 	return a.serviceRequest
 }
 
+//RequestValue returns request value for supplied key
 func (a Action) RequestValue(key string) interface{} {
 	if len(a.Request) == 0 {
 		return nil
@@ -45,6 +91,7 @@ func (a Action) RequestValue(key string) interface{} {
 	return ""
 }
 
+//RequestStringValue returns request string value for supplied key
 func (a Action) RequestStringValue(key string) string {
 	value := a.RequestValue(key)
 	if value == nil {
@@ -66,18 +113,18 @@ func (a *Action) SetRequest(req interface{}) error {
 	return err
 }
 
-//New creates a new action
+//Expand creates a new expanded action with expander
 func (a Action) Expand(root *stage.Process, expander data.Map) *Action {
 	var step *activity.Meta
 	if root != nil {
-		step = activity.New(root, a.Action, root.ActionSuffix(a.Action), root.IncStepCount())
+		step = activity.New(root, a.Action, root.Mode(a.Action), root.IncStepCount())
 	}
 	var result = &Action{
 		Action: a.Action,
 	}
 	expanded := expander.Expand(a.Request)
 	result.Request = toolbox.AsMap(expanded)
-	if ! shared.Actionable[a.Action] {
+	if !shared.Actionable[a.Action] {
 		return result
 	}
 	result.Meta = step
@@ -91,6 +138,7 @@ func (a Action) Expand(root *stage.Process, expander data.Map) *Action {
 	return result
 }
 
+//JobReference returns a job reference
 func (a Action) JobReference() *bigquery.JobReference {
 	return &bigquery.JobReference{
 		Location:  a.Meta.Region,
@@ -106,7 +154,7 @@ func NewAction(action string, req interface{}) (*Action, error) {
 	return result, err
 }
 
-//NewActionFromURL create a new actions from SourceURL
+//NewActionFromURL create a new actions from URL
 func NewActionFromURL(ctx context.Context, fs afs.Service, URL string) (*Action, error) {
 	result := &Action{}
 	reader, err := fs.DownloadWithURL(ctx, URL)

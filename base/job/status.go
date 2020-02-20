@@ -1,13 +1,13 @@
 package job
 
 import (
-	"github.com/viant/bqtail/stage/activity"
 	"encoding/json"
+	"github.com/viant/bqtail/stage/activity"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
 
-//Process represents job info summary
+//Info represents job info summary
 type Info struct {
 	ProjectID           string
 	Error               string

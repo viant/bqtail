@@ -1,10 +1,11 @@
 package bq
 
 import (
-	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/shared"
 	"context"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
@@ -31,4 +32,16 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 		break
 	}
 	return table, err
+}
+
+func (s *service) createTableIfNeeded(ctx context.Context, actionable *task.Action, ref *bigquery.TableReference) {
+	if actionable.Meta.Region != "" {
+		return
+	}
+	//read dest dataset location
+	datasetCall := s.Service.Datasets.Get(ref.ProjectId, ref.DatasetId)
+	datasetCall.Context(ctx)
+	if dataset, err := datasetCall.Do(); err == nil {
+		actionable.Meta.Region = dataset.Location
+	}
 }

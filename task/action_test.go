@@ -1,8 +1,8 @@
 package task
 
 import (
-	"github.com/viant/bqtail/stage"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/bqtail/stage"
 	"github.com/viant/toolbox/data"
 	"testing"
 )

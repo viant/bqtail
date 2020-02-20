@@ -1,13 +1,13 @@
 package slack
 
 import (
-	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/stage/activity"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/nlopes/slack"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/stage/activity"
 	"strings"
 )
 

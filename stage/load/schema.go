@@ -1,11 +1,11 @@
 package load
 
 import (
+	"context"
+	"github.com/pkg/errors"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/shared"
-	"context"
-	"github.com/pkg/errors"
 	"google.golang.org/api/bigquery/v2"
 )
 

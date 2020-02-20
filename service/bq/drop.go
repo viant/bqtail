@@ -27,8 +27,6 @@ func (s *service) Drop(ctx context.Context, request *DropRequest, action *task.A
 	return err
 }
 
-
-
 //DropRequest represents a copy request
 type DropRequest struct {
 	ProjectID string
@@ -61,16 +59,16 @@ func (r *DropRequest) Validate() error {
 }
 
 //NewDropAction creates a new drop request
-func NewDropAction(projectId string, table string) *task.Action {
+func NewDropAction(projectID string, table string) *task.Action {
 	drop := &DropRequest{
-		ProjectID:projectId,
-		Table: table,
+		ProjectID: projectID,
+		Table:     table,
 	}
 	if table != "" {
 		drop.dropTable, _ = base.NewTableReference(table)
 	}
 	result := &task.Action{
-		Action:shared.ActionDrop,
+		Action: shared.ActionDrop,
 	}
 	_ = result.SetRequest(drop)
 	return result

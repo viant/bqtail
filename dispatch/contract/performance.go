@@ -1,9 +1,9 @@
 package contract
 
 import (
+	"fmt"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage/activity"
-	"fmt"
 	"strings"
 	"sync/atomic"
 )
@@ -43,7 +43,7 @@ func (p Performance) ActiveQueryCount() int {
 		p.Running.QueryJobs
 }
 
-//ActiveQueryCount returns active query count
+//ActiveLoadCount returns active query count
 func (p Performance) ActiveLoadCount() int {
 	result := 0
 	if p.Pending != nil {

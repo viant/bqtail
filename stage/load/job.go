@@ -1,23 +1,23 @@
 package load
 
 import (
-	"github.com/viant/bqtail/shared"
-	"github.com/viant/bqtail/stage"
-	"github.com/viant/bqtail/tail/batch"
-	"github.com/viant/bqtail/tail/config"
-	"github.com/viant/bqtail/task"
 	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/tail/batch"
+	"github.com/viant/bqtail/tail/config"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 )
 
 //Job represents a tail jobID
 type Job struct {
-	*stage.Process   `json:",omitempty"`
+	*stage.Process `json:",omitempty"`
 	Rule           *config.Rule                   `json:"-"`
 	Status         string                         `json:",omitempty"`
 	Window         *batch.Window                  `json:",omitempty"`
@@ -68,7 +68,7 @@ func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window) (*J
 	if window != nil {
 		job.Load, err = rule.Dest.NewJobConfigurationLoad(process.Source, window.URIs...)
 	} else {
-		job.Load, err = rule.Dest.NewJobConfigurationLoad(process.Source, process.Source.SourceURL)
+		job.Load, err = rule.Dest.NewJobConfigurationLoad(process.Source, process.Source.URL)
 	}
 	return job, err
 }

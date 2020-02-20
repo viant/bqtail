@@ -12,6 +12,8 @@ const backendError = "backendError"
 const internalError = "internal error"
 const noFound = "Not found"
 const accessDenied = "Error 403"
+
+//TableFragment table fragment
 const TableFragment = "Table"
 
 //IsRetryError returns true if backend error
@@ -28,6 +30,7 @@ func IsRetryError(err error) bool {
 	return strings.Contains(message, fmt.Sprintf(" %v ", http.StatusServiceUnavailable))
 }
 
+//IsBackendError returns true if backend errr
 func IsBackendError(err error) bool {
 	if err == nil {
 		return false

@@ -1,5 +1,5 @@
 ## Feb 19 2020 2.0.0
-  * Actions streamlining, introduced Process/Step (BREAKING CHANGE with Version 1.x.x) 
+  * Streamlined actions, introduced Process/Activity (BREAKING CHANGE - see [Migration](MIGRATION.md) 
   * Added custom transient project(s) on rule level support (reservation/billing project, distributing load)
   * Added batch job throttling
   * Updated dispatcher to work across projects
@@ -9,6 +9,10 @@
   * Patch pattern setting with yaml format
   * Added seamless rule transition (more than one rule matching the same path but only one enabled) 
   * Dest.Schema.TransientTemplate move to Dest.Transient.Template
+  * Added Rule.MaxReload option to control attempts to re run load job, each excluding corrupted location from batch load job.
+  * Added Config.Async - global setting for all rules
+  * Added URL pattern name substitution parameters
+  * Added pubsub push action
 
 
 ## Jan 14 2020 1.1.0

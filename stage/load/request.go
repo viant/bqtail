@@ -15,14 +15,13 @@ func (j *Job) NewLoadRequest() (*bq.LoadRequest, *task.Action) {
 		Append:               j.Rule.IsAppend(),
 		JobConfigurationLoad: &load,
 	}
-	meta := activity.New(root, shared.ActionLoad, root.ActionSuffix(shared.ActionLoad), root.IncStepCount())
+	meta := activity.New(root, shared.ActionLoad, root.Mode(shared.ActionLoad), root.IncStepCount())
 	actions := j.Actions.Expand(root, shared.ActionLoad, load.SourceUris)
 	action := &task.Action{
-		Action:shared.ActionLoad,
+		Action:  shared.ActionLoad,
 		Actions: actions,
-		Meta:meta,
+		Meta:    meta,
 	}
 	_ = action.SetRequest(loadRequest)
 	return loadRequest, action
 }
-

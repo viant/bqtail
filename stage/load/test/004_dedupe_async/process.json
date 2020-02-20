@@ -5,6 +5,8 @@
   "EventID": "997103877432306",
   "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v004--997103877432306.run",
   "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_004/rule.yaml",
-  "SourceTime": "2020-02-18T23:33:37Z",
-  "SourceURL": "gs://xx_e2e_bqtail/data/case004/dummy2.json"
+  "Source": {
+    "URL": "gs://xx_e2e_bqtail/data/case004/dummy2.json",
+    "Time": "2020-02-18T23:33:37Z"
+  }
 }

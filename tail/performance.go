@@ -1,14 +1,14 @@
 package tail
 
 import (
-	"github.com/viant/bqtail/base"
-	disp "github.com/viant/bqtail/dispatch/contract"
-	"github.com/viant/bqtail/shared"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
+	disp "github.com/viant/bqtail/dispatch/contract"
+	"github.com/viant/bqtail/shared"
 )
 
 //LoadProjectPerformance loads project performance

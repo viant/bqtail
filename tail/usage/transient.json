@@ -1,17 +1,17 @@
-[
-  {
-    "When": {
-      "Prefix": "/data/folder",
-      "Suffix": ".json"
-    },
-    "Dest": {
-      "Table": "mydataset.mytable",
-      "Transient": {"Dataset": "temp"}
-    },
-    "OnSuccess": [
-      {
-        "Action": "delete"
-      }
-    ]
-  }
-]
+{
+  "When": {
+    "Prefix": "/data/folder",
+    "Suffix": ".json"
+  },
+  "Dest": {
+    "Table": "mydataset.mytable",
+    "Transient": {
+      "Dataset": "temp"
+    }
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete"
+    }
+  ]
+}

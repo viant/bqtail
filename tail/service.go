@@ -17,6 +17,7 @@ import (
 	"github.com/viant/bqtail/base/job"
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/service/http"
+	"github.com/viant/bqtail/service/pubsub"
 	"github.com/viant/bqtail/service/secret"
 	"github.com/viant/bqtail/service/slack"
 	"github.com/viant/bqtail/service/storage"
@@ -38,7 +39,7 @@ import (
 
 //Service represents a tail service
 type Service interface {
-	//Tails appends data from source SourceURL to matched BigQuery table
+	//Tails appends data from source URL to matched BigQuery table
 	Tail(ctx context.Context, request *contract.Request) *contract.Response
 }
 
@@ -58,6 +59,12 @@ func (s *service) Init(ctx context.Context) error {
 	}
 	slackService := slack.New(s.config.Region, s.config.ProjectID, s.fs, secret.New(), s.config.SlackCredentials)
 	slack.InitRegistry(s.Registry, slackService)
+	pubsubService, err := pubsub.New(ctx, s.config.ProjectID)
+	if err == nil {
+		pubsub.InitRegistry(s.Registry, pubsubService)
+	} else {
+		fmt.Printf("failed to create pubsub service: %v", err)
+	}
 	bqService, err := bigquery.NewService(ctx)
 	if err != nil {
 		return err
@@ -98,6 +105,10 @@ func (s *service) OnDone(ctx context.Context, request *contract.Request, respons
 
 	if response.Retriable {
 		response.RetryError = response.Error
+		return
+	}
+
+	if response.IsDataFile {
 		return
 	}
 
@@ -143,6 +154,7 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 		err = s.runBatch(ctx, request, response)
 
 	} else {
+		response.IsDataFile = true
 		err = s.tail(ctx, request, response)
 	}
 
@@ -201,7 +213,7 @@ func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *
 	result.ProcessURL = s.config.BuildLoadURL(result)
 	result.DoneProcessURL = s.config.DoneLoadURL(result)
 	result.ProjectID = s.selectProjectID(ctx, rule, response)
-	result.Params, err = rule.Dest.Params(result.SourceURL)
+	result.Params, err = rule.Dest.Params(result.Source.URL)
 	if base.IsLoggingEnabled() {
 		fmt.Printf("process: ")
 		base.Log(result)
@@ -230,33 +242,32 @@ func (s *service) submitJob(ctx context.Context, job *load.Job, response *contra
 			err = base.JobError(bqJob)
 		}
 	}
+	job.BqJob = bqJob
 	return job, err
 }
 
 //runLoadProcess this method allows rerun Activity/Done job as long original data files are present
 func (s *service) runLoadProcess(ctx context.Context, request *contract.Request, response *contract.Response) error {
-	actions := []*task.Action{}
-	reader, err := s.fs.DownloadWithURL(ctx, request.SourceURL)
+	process := &stage.Process{ProcessURL: request.SourceURL}
+	processJob, err := load.NewJobFromURL(ctx, nil, process, s.fs)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = reader.Close()
-	}()
-
-	if err = json.NewDecoder(reader).Decode(&actions); err != nil {
-		return errors.Wrapf(err, "unable decode load action: %v", request.SourceURL)
+	processJob.EventID = request.EventID
+	if processJob.RuleURL == "" {
+		return errors.Errorf("rule URL was empty: %+v", processJob)
 	}
-	replacement := buildJobIDReplacementMap(request.EventID, actions)
-
-	for i, action := range actions {
-		actions[i].Request = toolbox.ReplaceMapKeys(action.Request, replacement, true)
+	if processJob.Rule = s.config.Rule(ctx, processJob.RuleURL); processJob.Rule == nil {
+		return errors.Errorf("failed to lookup rule: %v", processJob.RuleURL)
 	}
-	_, err = task.RunAll(ctx, s.Registry, actions)
-	_, sourcePath := url.Base(request.SourceURL, "")
-	journalURL := url.Join(s.config.JournalURL, sourcePath)
-	if e := s.fs.Move(ctx, request.SourceURL, journalURL, option.NewObjectKind(true)); e != nil {
-		response.NotFoundError = e.Error()
+	if base.IsLoggingEnabled() {
+		fmt.Printf("replaying load process ...\n")
+		base.Log(processJob)
+	}
+
+	_, err = s.submitJob(ctx, processJob, response)
+	if err == nil {
+		_ = s.fs.Delete(ctx, processJob.ProcessURL)
 	}
 	return err
 }
@@ -316,7 +327,6 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		return err
 	}
 
-
 	if base.IsLoggingEnabled() {
 		base.Log(action)
 	}
@@ -324,7 +334,19 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	action.Meta.Region = action.Job.JobReference.Location
 	action.Meta.ProjectID = action.Job.JobReference.ProjectId
 	projectID := action.Meta.GetOrSetProject(s.config.ProjectID)
+
 	bqJob, err := s.bq.GetJob(ctx, action.Job.JobReference.Location, projectID, action.Job.JobReference.JobId)
+
+	if bqErr := base.JobError(bqJob); bqErr != nil {
+		errorURL := url.Join(s.config.ErrorURL, action.Meta.DestTable, fmt.Sprintf("%v%v", action.Meta.EventID, shared.ErrorExt))
+		_ = s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(bqErr.Error()))
+	}
+	if base.IsLoggingEnabled() {
+		base.Log(request)
+		if bqJob != nil {
+			base.Log(bqJob.Status)
+		}
+	}
 	if err != nil {
 		response.Retriable = base.IsRetryError(err)
 		return errors.Wrapf(err, "failed to fetch aJob %v,", action.Job.JobReference.JobId)
@@ -332,16 +354,21 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	if err := s.logJobInfo(ctx, bqJob); err != nil {
 		response.UploadError = fmt.Sprintf("failed to log aJob info: %v", err.Error())
 	}
+
 	bqJobError := base.JobError(bqJob)
+
 	if bqJobError != nil && bqJob.Configuration != nil && bqJob.Configuration.Load != nil {
-		rule := s.config.Get(ctx, action.Meta.RuleURL)
+		if base.IsLoggingEnabled() {
+			fmt.Printf("load error - reloading ...\n")
+		}
+		rule := s.config.Rule(ctx, action.Meta.RuleURL)
 		processJob, err := load.NewJobFromURL(ctx, rule, &action.Meta.Process, s.fs)
 		if err != nil {
 			return bqJobError
 		}
+		processJob.BqJob = bqJob
 		return s.tryRecoverAndReport(ctx, processJob, response)
 	}
-
 	if base.IsRetryError(bqJobError) {
 		response.Retriable = true
 		return bqJobError
@@ -378,7 +405,7 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 		}
 	}
 	request.EventID = window.EventID
-	rule := s.config.Get(ctx, window.RuleURL)
+	rule := s.config.Rule(ctx, window.RuleURL)
 	loadJob, batchErr := s.runInBatch(ctx, rule, window, response)
 	if batchErr == nil || loadJob == nil {
 		if batchErr != nil {
@@ -386,6 +413,7 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 		}
 		return err
 	}
+
 	return s.tryRecoverAndReport(ctx, loadJob, response)
 }
 
@@ -452,15 +480,29 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 	}
 	response.Status = shared.StatusOK
 	response.Error = ""
-
 	job.Load.SourceUris = uris.Valid
 	loadRequest, action := job.NewLoadRequest()
 	meta := activity.Parse(job.BqJob.JobReference.JobId)
 	action.Meta.Step = meta.Step + 1
+	reloadCount := meta.Step - 1
+	if base.IsLoggingEnabled() {
+		fmt.Printf("reload attempt: %v\n", reloadCount)
+		base.Log(meta)
+	}
+	if reloadCount > job.Rule.MaxReloadAttempts() {
+		return base.JobError(job.BqJob)
+	}
 	action.Meta = action.Meta.Wrap(shared.ActionReload)
 	loadJob, err := s.bq.Load(ctx, loadRequest, action)
 	if err == nil {
 		err = base.JobError(loadJob)
+	}
+
+	if err != nil && loadJob != nil {
+		job.BqJob = loadJob
+
+		return s.tryRecover(ctx, job, response)
+
 	}
 	return err
 }

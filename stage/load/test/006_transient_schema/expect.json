@@ -1,0 +1,128 @@
+{
+  "Action": "load",
+  "Meta": {
+    "Action": "load",
+    "Async": true,
+    "DestTable": "bqtail.dummy_v006",
+    "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v006/2020-02-19_15/997788014280423.run",
+    "EventID": "997788014280423",
+    "Mode": "dispatch",
+    "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v006--997788014280423.run",
+    "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_006/rule.yaml",
+    "Source": {
+      "URL": "gs://xx_e2e_bqtail/data/case006/dummy.csv",
+      "Time": "2020-02-19T15:06:30Z"
+    },
+    "Step": 1,
+    "StepCount": 1,
+    "TempTable": "`temp.dummy_v006_997788014280423`"
+  },
+  "OnSuccess": [
+    {
+      "Action": "copy",
+      "Meta": {
+        "Action": "copy",
+        "Async": true,
+        "DestTable": "bqtail.dummy_v006",
+        "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v006/2020-02-19_15/997788014280423.run",
+        "EventID": "997788014280423",
+        "Mode": "dispatch",
+        "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v006--997788014280423.run",
+        "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_006/rule.yaml",
+        "Source": {
+          "URL": "gs://xx_e2e_bqtail/data/case006/dummy.csv",
+          "Time": "2020-02-19T15:06:30Z"
+        },
+        "Step": 2,
+        "StepCount": 2,
+        "TempTable": "`temp.dummy_v006_997788014280423`"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete",
+          "Request": {
+            "URLs": [
+              "gs://xx_e2e_bqtail/data/case006/dummy.csv"
+            ]
+          }
+        },
+        {
+          "Action": "delete",
+          "Request": {
+            "URLs": [
+              "gs://xx_e2e_bqdispatch/BqDispatch/Tasks/bqtail.dummy_v006_1113916560434381780_1582124805.win"
+            ]
+          }
+        },
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v006/2020-02-19_15/997788014280423.run",
+            "IsDestAbsoluteURL": true,
+            "SourceURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v006--997788014280423.run"
+          }
+        },
+        {
+          "Action": "drop",
+          "Meta": {
+            "Action": "drop",
+            "Async": true,
+            "DestTable": "bqtail.dummy_v006",
+            "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v006/2020-02-19_15/997788014280423.run",
+            "EventID": "997788014280423",
+            "Mode": "nop",
+            "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v006--997788014280423.run",
+            "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_006/rule.yaml",
+            "Source": {
+              "URL": "gs://xx_e2e_bqtail/data/case006/dummy.csv",
+              "Time": "2020-02-19T15:06:30Z"
+            },
+            "Step": 6,
+            "StepCount": 6,
+            "TempTable": "`temp.dummy_v006_997788014280423`"
+          },
+          "Request": {
+            "Table": "temp.dummy_v006_997788014280423"
+          }
+        }
+      ],
+      "Request": {
+        "Append": true,
+        "Dest": "bqtail.dummy_v006",
+        "Source": "temp.dummy_v006_997788014280423"
+      }
+    }
+  ],
+  "Request": {
+    "AllowJaggedRows": false,
+    "AllowQuotedNewlines": false,
+    "Append": true,
+    "Autodetect": false,
+    "DestinationTable": {
+      "DatasetId": "temp",
+      "TableId": "dummy_v006_997788014280423"
+    },
+    "Schema": {
+      "Fields": [
+        {
+          "Mode": "REQUIRED",
+          "Name": "id",
+          "Type": "INTEGER"
+        },
+        {
+          "Mode": "REQUIRED",
+          "Name": "type_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "name",
+          "Type": "STRING"
+        }
+      ]
+    },
+    "SourceUris": [
+      "gs://xx_e2e_bqtail/data/case006/dummy.csv"
+    ],
+    "WriteDisposition": "WRITE_TRUNCATE"
+  }
+}

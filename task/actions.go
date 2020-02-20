@@ -21,87 +21,33 @@ type Actions struct {
 
 //Init initialises actions
 func (a *Actions) Init(ctx context.Context, fs afs.Service) error {
-	err := a.init(ctx, fs, a.OnSuccess)
-	if err != nil {
+	if a == nil {
+		return nil
+	}
+	if err := initActions(ctx, fs, a.OnSuccess); err != nil {
 		return err
 	}
-	return a.init(ctx, fs, a.OnFailure)
+	return initActions(ctx, fs, a.OnFailure)
 }
 
-func (a *Actions) init(ctx context.Context, fs afs.Service, actions []*Action) (err error) {
+func initActions(ctx context.Context, fs afs.Service, actions []*Action) (err error) {
 	if len(actions) == 0 {
 		return nil
 	}
-	for i, action := range actions {
+	for _, action := range actions {
 		if action.Action == "" {
 			return errors.Errorf("action was empty: %+v", action)
 		}
-		if shared.Actionable[action.Action] {
-			if action.Actions == nil {
-				action.Actions = &Actions{}
-			}
-		} else {
-			if action.Actions != nil && (len(action.Actions.OnSuccess) > 0 || len(action.Actions.OnFailure) > 0) {
-				return errors.Errorf("action %v does not support OnSuccess/OnFailure")
-			}
-			action.Actions = nil
+
+		if err := action.Init(ctx, fs); err != nil {
+			return err
 		}
 
-		if action.Request == nil {
-			action.Request = make(map[string]interface{})
-		}
-
-		ok := len(action.Request) == 0
-		if ok {
-			switch action.Action {
-			case shared.ActionDelete, shared.ActionMove:
-				_, hasURL := action.Request[shared.URLsKey]
-				_, hasURLs := action.Request[shared.URLKey]
-				if ! (hasURL || hasURLs) {
-					action.Request[shared.URLsKey] = shared.LoadURIsVar
-				}
-			}
-		}
-
-		if action.Actions != nil {
-			if len(action.OnSuccess) > 0 {
-				for k := range action.OnSuccess {
-					onSuccess := actions[i].OnSuccess[k]
-					if onSuccess.Actions != nil {
-						if err = onSuccess.init(ctx, fs, onSuccess.OnSuccess); err != nil {
-							return err
-						}
-					}
-				}
-			}
-			if len(action.OnFailure) > 0 {
-				for k := range action.OnFailure {
-					onFailure := actions[i].OnFailure[k]
-					if onFailure.Actions != nil {
-						if err = onFailure.init(ctx, fs, onFailure.OnFailure); err != nil {
-							return err
-						}
-					}
-				}
-			}
-		}
-
-		if action.Action == shared.ActionCall {
-			if err := loadResource(actions[i], ctx, fs, "Body", "BodyURL"); err != nil {
-				return err
-			}
-			continue
-		}
-		if action.Action == shared.ActionQuery {
-			if err := loadResource(actions[i], ctx, fs, "SQL", "SQLURL"); err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }
 
-func loadResource(action *Action, ctx context.Context, fs afs.Service, dataKey, URLKey string) error {
+func loadResource(ctx context.Context, action *Action, fs afs.Service, dataKey, URLKey string) error {
 	body := action.RequestStringValue(dataKey)
 	if body != "" {
 		return nil

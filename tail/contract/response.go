@@ -10,9 +10,9 @@ import (
 type Response struct {
 	base.Response
 	status.URIs
-	RuleCount   int
-	Destination string `json:",omitempty"`
-
+	RuleCount       int
+	Destination     string `json:",omitempty"`
+	IsDataFile      bool   `json:",omitempty"`
 	JobID           string `json:",omitempty"`
 	Batched         bool   `json:",omitempty"`
 	BatchRunner     bool   `json:",omitempty"`

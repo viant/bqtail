@@ -1,13 +1,13 @@
 package config
 
 import (
-	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/stage"
-	"github.com/viant/bqtail/tail/config/pattern"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/tail/config/pattern"
 	"github.com/viant/toolbox/data"
 	"google.golang.org/api/bigquery/v2"
 	"regexp"
@@ -44,7 +44,7 @@ type Destination struct {
 
 //Params build pattern paramters
 func (d Destination) Params(source string) (map[string]interface{}, error) {
-	var result = make( map[string]interface{} )
+	var result = make(map[string]interface{})
 	if d.Pattern == "" || len(d.Parameters) == 0 {
 		return result, nil
 	}
@@ -107,7 +107,7 @@ func (d Destination) Validate() error {
 	return nil
 }
 
-//Validate checks if destination is valid
+//Init initialises destination
 func (d *Destination) Init() error {
 	if d.TransientDataset != "" {
 		if d.Transient == nil {
@@ -123,24 +123,27 @@ func (d *Destination) Init() error {
 	if len(d.Transform) == 0 {
 		d.Transform = make(map[string]string)
 	}
+	if d.Schema.TransientTemplate != "" {
+		d.Transient.Template = d.Schema.TransientTemplate
+	}
 	return nil
 }
 
 //ExpandTable returns expanded table
-func (d *Destination) ExpandTable(table string, source*stage.Source) (string, error) {
+func (d *Destination) ExpandTable(table string, source *stage.Source) (string, error) {
 	return d.Expand(table, source)
 }
 
 //Expand returns sourced table
-func (d *Destination) Expand(dest string, source*stage.Source) (string, error) {
+func (d *Destination) Expand(dest string, source *stage.Source) (string, error) {
 	var err error
 	if count := strings.Count(dest, ModExpr); count > 0 {
-		if dest, err = expandMod(dest, source.SourceURL, count); err != nil {
+		if dest, err = expandMod(dest, source.URL, count); err != nil {
 			return dest, err
 		}
 	}
 	if count := strings.Count(dest, DateExpr); count > 0 {
-		dest = expandDate(dest, source.SourceTime, count)
+		dest = expandDate(dest, source.Time, count)
 	}
 	if d.Pattern != "" {
 		if d.compiled == nil {
@@ -149,10 +152,10 @@ func (d *Destination) Expand(dest string, source*stage.Source) (string, error) {
 				return "", err
 			}
 		}
-		dest = expandWithPattern(d.compiled, source.SourceURL, dest)
+		dest = expandWithPattern(d.compiled, source.URL, dest)
 	}
 
-	params, err := d.Params(source.SourceURL)
+	params, err := d.Params(source.URL)
 	if err != nil {
 		return "", err
 	}
@@ -191,12 +194,12 @@ func (d *Destination) Match(candidate string) bool {
 }
 
 //TableReference returns table reference, source table syntax: project:dataset:table
-func (d *Destination) TableReference(source*stage.Source) (*bigquery.TableReference, error) {
+func (d *Destination) TableReference(source *stage.Source) (*bigquery.TableReference, error) {
 	return d.CustomTableReference(d.Table, source)
 }
 
 //CustomTableReference returns custom table reference
-func (d *Destination) CustomTableReference(table string, source*stage.Source) (*bigquery.TableReference, error) {
+func (d *Destination) CustomTableReference(table string, source *stage.Source) (*bigquery.TableReference, error) {
 	table, err := d.ExpandTable(table, source)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,8 @@
 {
+  "Action": "load",
   "Meta": {
     "Action": "load",
+    "Async": false,
     "DestTable": "bqtail.dummy_v002",
     "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v002/2020-02-18_08/996615343761989.run",
     "EventID": "996615343761989",
@@ -8,8 +10,10 @@
     "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v002--996615343761989.run",
     "ProjectID": "xx-e2e",
     "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_002/rule.yaml",
-    "SourceTime": "2020-02-18T16:06:35Z",
-    "SourceURL": "gs://xx_e2e_bqtail/data/case002/dummy1.json",
+    "Source": {
+      "Time": "2020-02-18T16:06:35Z",
+      "URL": "gs://xx_e2e_bqtail/data/case002/dummy1.json"
+    },
     "Step": 1,
     "StepCount": 1
   },
@@ -50,6 +54,7 @@
       "gs://xx_e2e_bqtail/data/case002/dummy1.json",
       "gs://xx_e2e_bqtail/data/case002/dummy2.json"
     ],
+
     "WriteDisposition": "WRITE_APPEND"
   }
 }

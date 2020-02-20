@@ -1,9 +1,9 @@
 package http
 
 import (
-	"github.com/viant/bqtail/task"
 	"context"
 	"fmt"
+	"github.com/viant/bqtail/task"
 )
 
 //Run runs slack action

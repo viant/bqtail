@@ -18,14 +18,14 @@ func (r *Resources) Add(URL string, modified time.Time) {
 	r.elements[URL] = modified
 }
 
-//Remove removes SourceURL from a elements
+//Remove removes URL from a elements
 func (r *Resources) Remove(URL string) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	delete(r.elements, URL)
 }
 
-//Has returns true if has SourceURL
+//Has returns true if has URL
 func (r *Resources) Has(URL string) bool {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
@@ -33,7 +33,7 @@ func (r *Resources) Has(URL string) bool {
 	return ok
 }
 
-//Get returns SourceURL last modified time
+//Get returns URL last modified time
 func (r *Resources) Get(URL string) *time.Time {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()

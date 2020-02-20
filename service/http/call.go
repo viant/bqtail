@@ -12,7 +12,7 @@ import (
 
 func (s *service) Call(ctx context.Context, request *CallRequest) (*CallResponse, error) {
 	if request.URL == "" {
-		return nil, errors.Errorf("request.SourceURL was empty")
+		return nil, errors.Errorf("request.URL was empty")
 	}
 	var err error
 	httpClient := http.DefaultClient

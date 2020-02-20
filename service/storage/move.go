@@ -1,12 +1,12 @@
 package storage
 
 import (
-	"github.com/viant/bqtail/base"
 	"context"
 	"fmt"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
 )
 
 //Move move source to destination
@@ -33,7 +33,7 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 
 func (s *service) move(ctx context.Context, isDestAbsoluteURL bool, sourceURL, destURL string) error {
 	_, sourceLocation := url.Base(sourceURL, file.Scheme)
-	if ! isDestAbsoluteURL {
+	if !isDestAbsoluteURL {
 		destURL = url.Join(destURL, sourceLocation)
 	}
 	if base.IsLoggingEnabled() {

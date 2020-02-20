@@ -39,7 +39,7 @@ func EncodeTableReference(table *bigquery.TableReference, standardSQL bool) stri
 	if standardSQL {
 		projectSeparator = "."
 	}
-	return  table.ProjectId +projectSeparator +  table.DatasetId +"." + table.TableId
+	return table.ProjectId + projectSeparator + table.DatasetId + "." + table.TableId
 }
 
 //TableID returns a table id

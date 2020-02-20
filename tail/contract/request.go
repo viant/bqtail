@@ -17,13 +17,13 @@ type Request struct {
 	source      *storage.Object
 }
 
-//HasURLPrefix returns true if source SourceURL has prefix
+//HasURLPrefix returns true if source URL has prefix
 func (r *Request) HasURLPrefix(prefix string) bool {
 	_, PathURL := url.Base(r.SourceURL, "")
 	return strings.HasPrefix(PathURL, prefix)
 }
 
-//SetServiceRequest creates a request
+//NewRequest creates a request
 func NewRequest(ID string, URL string, started time.Time) *Request {
 	return &Request{
 		EventID:   ID,

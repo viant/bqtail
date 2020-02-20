@@ -108,6 +108,7 @@ or
   - Suffix: path suffix or
   - Filter: path regexp
  
+- MaxReload: maximum load attemps, where each attempt excludes reported corrupted locations (15 default)  
 - Batch: specified batch window, when specifying window make sure that number of batches never exceed 1K per day.
 - OnSuccess: actions to run when job completed without errors
 - OnFailure: actions to run when job completed with errors
@@ -141,14 +142,47 @@ It extends bigquery.JobConfigurationLoad load job configuration.
     
     "/nobid/adlog.request/(\\d{4})/(\\d{2})/(\\d{2})/.+"
 
+- **Parameters** name pattern substitution parameters 
+ 
+The following rule shows example of 3 parameters scraped from URL     
+```yaml
+When:
+  Prefix: "/data/case${parentIndex}/"
+  Suffix: ".json"
+Dest:
+  Table: bqtail.dummy_v${parentIndex}_$MyTableSufix
+  Pattern: /data/case(\d+)/(\d{4})/(\d{2})/(\d{2})/
+  Parameters:
+    - Name: MyTableSufix
+      Expression: $2$3$4
+    - Name: MyDate
+      Expression: $2-$3-$4
+    - Name: CaseNo
+      Expression: '$1'
+
+  Transient:
+    Dataset: temp
+
+  Transform:
+    date: DATE('$MyDate')
+    use_case: "'$CaseNo'"
+
+OnSuccess:
+  - Action: delete
+```    
+
+
+
+
 - **Override** dest table override flag (append by default)
 - **Partition** dest table partition.
-- **Schema** defines dest table schem
+- **Schema** defines dest table schema
 - **Transient** transient settings (for dedicated ingesting project settings)
    * **Dataset** transient dataset. (It is recommended to always used transient dataset)
    * **ProjectID** transient project
    * **Balancer** multi projects balancer settings
-    
+   * **Template** transient table template
+
 - **UniqueColumns** deduplication unique columns
 - **Transform** map of dest table column with transformation expression
 - **SideInputs** transformation left join tables.
@@ -239,7 +273,6 @@ Temp table is constructed from destination table suffixed by event ID.
 The following configuration specify transient dataset.
 [@config/transient.json](usage/transient.json)
 ```json
-[
 
     {
       "When": {
@@ -248,7 +281,7 @@ The following configuration specify transient dataset.
       },
       "Dest": {
         "Table": "mydataset.mytable",
-        "Transient": {"Dataset": "temp"},
+        "Transient": {"Dataset": "temp"}
       },
       "OnSuccess": [
         {
@@ -256,7 +289,6 @@ The following configuration specify transient dataset.
         }
       ]
     }
-]
 ```
 
 
@@ -268,7 +300,7 @@ When using transient table you can specify unique columns to deduplicate data wh
 
 [@config/dedupe.json](usage/dedupe.json)
 ```json
-[
+
   {
       "Async": true,
       "When": {
@@ -293,7 +325,6 @@ When using transient table you can specify unique columns to deduplicate data wh
         }
       ]
   }
-]
 ```
 
 
@@ -306,7 +337,6 @@ To dynamically rule data based on source data values you can use the following r
 [@config/dynamic_dest.json](usage/dynamic_dest.json)
 
 ```json
-[
   {
     "When": {
       "Prefix": "/data/case013",
@@ -336,8 +366,7 @@ To dynamically rule data based on source data values you can use the following r
         }
       }
   }
-  }
-]
+ }
  ```
 
 
@@ -345,7 +374,6 @@ To dynamically rule data based on source data values you can use the following r
 
 [@rule.json](usage/side_input.json)
 ```json
-[
   {
     "When": {
       "Prefix": "/data/case009",
@@ -372,7 +400,6 @@ To dynamically rule data based on source data values you can use the following r
       }
     ]
   }
-]
 ```
 
 

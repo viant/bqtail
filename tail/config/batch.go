@@ -1,9 +1,9 @@
 package config
 
 import (
-	"github.com/viant/bqtail/shared"
 	"fmt"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/shared"
 	"time"
 )
 
@@ -13,7 +13,7 @@ type Batch struct {
 	Window *Window `json:",omitempty"`
 	//RollOver if this flag is set, if the first event of the batch fall outside of the first half time, the window can be expanded if previous window had not existed.
 	RollOver bool `json:",omitempty"`
-	//Batch base SourceURL
+	//Batch base URL
 	BaseURL string `json:",omitempty"`
 
 	//MultiPath is one batch can collect files from various folder

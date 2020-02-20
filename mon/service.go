@@ -1,14 +1,6 @@
 package mon
 
 import (
-	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/mon/info"
-	"github.com/viant/bqtail/service/bq"
-	"github.com/viant/bqtail/shared"
-	"github.com/viant/bqtail/sortable"
-	"github.com/viant/bqtail/stage/activity"
-	"github.com/viant/bqtail/tail"
-	"github.com/viant/bqtail/task"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -20,6 +12,14 @@ import (
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/mon/info"
+	"github.com/viant/bqtail/service/bq"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/sortable"
+	"github.com/viant/bqtail/stage/activity"
+	"github.com/viant/bqtail/tail"
+	"github.com/viant/bqtail/task"
 	"github.com/viant/toolbox"
 	"io/ioutil"
 	"sort"
@@ -147,7 +147,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 		}
 		rule := inf.rule
 		if rule == nil {
-			rule = s.Config.Get(ctx, inf.RuleURL)
+			rule = s.Config.Rule(ctx, inf.RuleURL)
 		}
 		if rule != nil {
 			inf.Corrupted, _ = s.getURLMetrics(ctx, rule.CorruptedFileURL, inf, request.Recency)
@@ -256,7 +256,7 @@ func (s *service) updateStages(stages []*activity.Meta, infoDest map[string]*Inf
 		inf := s.getInfo(stageInfo.DestTable, infoDest)
 		stageKey := fmt.Sprintf("%04d-%v", stageInfo.Sequence(), stageInfo.Action)
 		stageValue := inf.Activity.Stages.GetOrCreate(stageKey)
-		stageValue.AddEvent(stageInfo.SourceTime)
+		stageValue.AddEvent(stageInfo.Source.Time)
 	}
 
 }
@@ -411,7 +411,7 @@ func (s *service) listLoadStages(ctx context.Context, result *[]*activity.Meta) 
 		}
 
 		stageInfo := activity.Parse(object.Name())
-		stageInfo.SourceTime = object.ModTime()
+		stageInfo.Source.Time = object.ModTime()
 		*result = append(*result, stageInfo)
 	}
 	return nil

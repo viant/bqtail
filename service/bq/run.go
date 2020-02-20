@@ -1,10 +1,10 @@
 package bq
 
 import (
-	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/task"
 	"context"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 )
 
@@ -12,7 +12,7 @@ import (
 func (s *service) Run(ctx context.Context, request *task.Action) (task.Response, error) {
 	var job *bigquery.Job
 	var err error
-	serviceRequest :=  request.ServiceRequest()
+	serviceRequest := request.ServiceRequest()
 	switch req := serviceRequest.(type) {
 	case *CopyRequest:
 		job, err = s.Copy(ctx, req, request)

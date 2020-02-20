@@ -46,3 +46,4 @@ In addition call task can use the following variables
 - $URLs: coma separated list of load URIs
 - $SourceURI: one of load URI
 - $RuleURL: transfer rule URL
+- Pattern Parameters

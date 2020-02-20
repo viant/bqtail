@@ -1,6 +1,6 @@
 package base
 
-//Process represents meta route information
+//Info represents meta rule information
 type Info struct {
 	Workflow     string `json:",omitempty"`
 	Description  string `json:",omitempty"`

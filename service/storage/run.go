@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"github.com/viant/bqtail/task"
 	"context"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/task"
 )
 
 //Run handles fs request

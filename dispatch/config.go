@@ -70,7 +70,7 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 	return cfg, err
 }
 
-//NewConfigFromURL creates new config from SourceURL
+//NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	storageService := afs.New()
 	reader, err := storageService.DownloadWithURL(ctx, URL)
@@ -89,7 +89,7 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	return cfg, err
 }
 
-//NewConfig creates a new config from env (json or SourceURL)
+//NewConfig creates a new config from env (json or URL)
 func NewConfig(ctx context.Context, key string) (*Config, error) {
 	if key == "" {
 		return nil, fmt.Errorf("config key was empty")

@@ -7,11 +7,11 @@ import (
 	"time"
 )
 
-//URLToWindowEndTime converts SourceURL to batch window end time
+//URLToWindowEndTime converts URL to batch window end time
 func URLToWindowEndTime(URL string) (*time.Time, error) {
 	index := strings.LastIndex(URL, "_")
 	if index == -1 {
-		return nil, fmt.Errorf("invalid SourceURL: %v", URL)
+		return nil, fmt.Errorf("invalid URL: %v", URL)
 	}
 	unixFragment := string(URL[index+1 : len(URL)-4])
 	unixTimestamp, err := toolbox.ToInt(unixFragment)

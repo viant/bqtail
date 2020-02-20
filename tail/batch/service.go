@@ -1,10 +1,6 @@
 package batch
 
 import (
-	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/shared"
-	"github.com/viant/bqtail/stage"
-	"github.com/viant/bqtail/tail/config"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -16,12 +12,14 @@ import (
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/tail/config"
 	"io/ioutil"
 	"path"
 	"strings"
 )
-
-type ProjectSelector func() string
 
 //Service representa a batch service
 type Service interface {
@@ -47,17 +45,17 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error) {
-	parentURL, _ := url.Split(process.Source.SourceURL, gs.Scheme)
+	parentURL, _ := url.Split(process.Source.URL, gs.Scheme)
 	windowDest := process.DestTable
 	if !rule.Batch.MultiPath {
 		//one batch per folder location
 		windowDest = fmt.Sprintf("%v_%v", process.DestTable, base.Hash(parentURL))
 	}
 	batch := rule.Batch
-	windowURL := batch.WindowURL(windowDest, process.Source.SourceTime)
+	windowURL := batch.WindowURL(windowDest, process.Source.Time)
 	exists, _ := s.fs.Exists(ctx, windowURL, option.NewObjectKind(true))
 
-	endTime := batch.WindowEndTime(process.Source.SourceTime)
+	endTime := batch.WindowEndTime(process.Source.Time)
 	startTime := endTime.Add(-batch.Window.Duration)
 	var err error
 	var window *Window
@@ -69,8 +67,8 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 		return &Info{OwnerEventID: window.EventID}, err
 	}
 
-	if batch.RollOver && !batch.IsWithinFirstHalf(process.Source.SourceTime) {
-		prevWindowURL := batch.WindowURL(process.DestTable, process.Source.SourceTime.Add(-(1 + batch.Window.Duration)))
+	if batch.RollOver && !batch.IsWithinFirstHalf(process.Source.Time) {
+		prevWindowURL := batch.WindowURL(process.DestTable, process.Source.Time.Add(-(1 + batch.Window.Duration)))
 		if exists, _ := s.fs.Exists(ctx, prevWindowURL, option.NewObjectKind(true)); !exists {
 			startTime = startTime.Add(-batch.Window.Duration)
 		}
@@ -111,7 +109,7 @@ func (s *service) readLocation(ctx context.Context, URL string) (string, error) 
 
 func (s *service) getBaseURLS(ctx context.Context, rule *config.Rule, window *Window) ([]string, error) {
 	var baseURLs = make(map[string]bool)
-	baseURL, _ := url.Split(window.Source.SourceURL, gs.Scheme)
+	baseURL, _ := url.Split(window.Source.URL, gs.Scheme)
 	baseURLs[baseURL] = true
 
 	if rule.Batch.MultiPath {
@@ -158,7 +156,6 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 	window.URIs = result
 	return nil
 }
-
 
 func (s *service) matchData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, matcher option.Matcher, result *[]string) error {
 	objects, err := s.fs.List(ctx, baseURL)

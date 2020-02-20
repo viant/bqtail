@@ -1,13 +1,13 @@
 package config
 
 import (
-	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/shared"
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/toolbox"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -53,8 +53,8 @@ func (r *Ruleset) remove(ctx context.Context, fs afs.Service, URL string) {
 	r.Rules = temp
 }
 
-//Get returns  a rule for SourceURL
-func (r *Ruleset) Get(ctx context.Context, URL string) *Rule {
+//Rule returns  a rule for URL
+func (r *Ruleset) Rule(ctx context.Context, URL string) *Rule {
 	rules := r.Rules
 	for _, rule := range rules {
 		if rule.Info.URL == URL {
@@ -75,7 +75,7 @@ func (r Ruleset) Match(URL string) []*Rule {
 			matched = append(matched, r.Rules[i])
 		}
 	}
-	//to migrate rule for the same path, 2 rules matching the same SourceURL can exist but only one has to be enabled
+	//to migrate rule for the same path, 2 rules matching the same URL can exist but only one has to be enabled
 	if len(matched) > 1 {
 		temp := matched
 		matched = make([]*Rule, 0)
@@ -89,7 +89,6 @@ func (r Ruleset) Match(URL string) []*Rule {
 			matched = append(matched, temp[0])
 		}
 	}
-
 	return matched
 }
 

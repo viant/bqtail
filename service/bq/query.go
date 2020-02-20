@@ -1,11 +1,11 @@
 package bq
 
 import (
+	"context"
+	"fmt"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/task"
-	"context"
-	"fmt"
 	"google.golang.org/api/bigquery/v2"
 )
 
@@ -90,13 +90,13 @@ func NewQueryAction(SQL string, dest *bigquery.TableReference, append bool, fina
 	query := &QueryRequest{
 		SQL:              SQL,
 		destinationTable: dest,
-		Append:append,
+		Append:           append,
 	}
 	if dest != nil {
 		query.Dest = base.EncodeTableReference(dest, false)
 	}
 	result := &task.Action{
-		Action:shared.ActionQuery,
+		Action:  shared.ActionQuery,
 		Actions: finally,
 		Meta:    nil,
 	}

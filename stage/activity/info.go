@@ -1,9 +1,9 @@
 package activity
 
 import (
+	"fmt"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
-	"fmt"
 	"github.com/viant/toolbox"
 	"path"
 	"strings"
@@ -25,8 +25,6 @@ type Meta struct {
 	Step    int    `json:",omitempty"`
 }
 
-
-
 //ID returns stage ID
 func (i *Meta) ID() string {
 	return path.Join(i.DestTable, fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action)+shared.PathElementSeparator+i.Mode)
@@ -44,7 +42,6 @@ func (i *Meta) JobFilename() string {
 	}
 	return baseLocation + dest + fmt.Sprintf("%v_%05d_%v", i.EventID, i.Step%99999, i.Action) + shared.PathElementSeparator + i.Mode
 }
-
 
 //Sequence returns step sequence
 func (i *Meta) Sequence() int {
@@ -123,8 +120,6 @@ func Parse(encoded string) *Meta {
 	result.Async = strings.HasSuffix(result.Mode, shared.StepModeDispach)
 	return result
 }
-
-
 
 //New create a processing meta info
 func New(process *stage.Process, action, suffix string, step int) *Meta {

@@ -1,9 +1,9 @@
 package bq
 
 import (
-	"github.com/viant/bqtail/base"
 	"context"
 	"fmt"
+	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -43,7 +43,7 @@ type ExportRequest struct {
 	IncludeHeader  *bool
 	Compression    string
 	FieldDelimiter string
-	Format string
+	Format         string
 }
 
 //Init initialises request

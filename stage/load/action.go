@@ -22,5 +22,3 @@ func (j *Job) buildProcessActions(actions *task.Actions) {
 	moveAction, _ := task.NewAction(shared.ActionMove, moveRequest)
 	actions.AddOnSuccess(moveAction)
 }
-
-

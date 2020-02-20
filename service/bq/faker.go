@@ -1,9 +1,9 @@
 package bq
 
 import (
-	"github.com/viant/bqtail/base"
 	"context"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/base"
 	"google.golang.org/api/bigquery/v2"
 )
 
@@ -22,6 +22,5 @@ func (f *faker) Table(ctx context.Context, reference *bigquery.TableReference) (
 
 //NewFakerWithTables creates a faker with tables
 func NewFakerWithTables(tables map[string]*bigquery.Table) Service {
-	return &faker{tables:tables}
+	return &faker{tables: tables}
 }
-

@@ -53,8 +53,6 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 	return nil
 }
 
-
-
 func (j *Job) applySplitSchemaOptimization() error {
 	split := j.Rule.Dest.Schema.Split
 	if j.Load.Schema == nil {
@@ -95,7 +93,6 @@ func (j *Job) applySplitSchemaOptimization() error {
 	}
 	return nil
 }
-
 
 func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.TableFieldSchema {
 	column = strings.ToLower(column)

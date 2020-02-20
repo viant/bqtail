@@ -14,8 +14,5 @@ type Rule struct {
 
 //Init initialises rule
 func (r *Rule) Init() error {
-	if err := r.When.Init(); err != nil {
-		return err
-	}
-	return nil
+	return r.When.Init()
 }

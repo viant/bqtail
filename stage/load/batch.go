@@ -7,9 +7,8 @@ import (
 	"github.com/viant/bqtail/task"
 )
 
-
 //buildBatchActions add batch clean up action - to remove all batch meta data files.
-func buildBatchActions(window *batch.Window, actions *task.Actions)  {
+func buildBatchActions(window *batch.Window, actions *task.Actions) {
 	if window == nil {
 		return
 	}
@@ -22,4 +21,3 @@ func buildBatchActions(window *batch.Window, actions *task.Actions)  {
 	deleteAction, _ := task.NewAction(shared.ActionDelete, deleteReq)
 	actions.AddOnSuccess(deleteAction)
 }
-

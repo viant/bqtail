@@ -8,7 +8,7 @@ type GSEvent struct {
 	Name   string `json:"name"`
 }
 
-//SourceURL returns trigger storage resource SourceURL
+//URL returns trigger storage resource URL
 func (e *GSEvent) URL() string {
 	return fmt.Sprintf("gs://%v/%v", e.Bucket, e.Name)
 }

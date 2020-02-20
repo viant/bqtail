@@ -1,8 +1,4 @@
 - Update documentation/examples
-- Add conditional task
-- Add push pubsub task
-
- 
-- Optimize post action payload
-- Path extraction as variables
-    
+- Client side executable
+- Add creata data set if does not exists
+- Add create table if does not exists

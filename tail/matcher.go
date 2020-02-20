@@ -1,12 +1,12 @@
 package tail
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/bqtail/tail/contract"
-	"encoding/json"
-	"fmt"
 )
 
 func (s *service) matchSourceWithRule(response *contract.Response, request *contract.Request) *config.Rule {
@@ -39,4 +39,3 @@ func (s *service) matchSourceWithRule(response *contract.Response, request *cont
 	}
 	return rule
 }
-

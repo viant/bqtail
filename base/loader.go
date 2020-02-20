@@ -1,11 +1,11 @@
 package base
 
 import (
-	"github.com/viant/bqtail/shared"
 	"context"
 	"github.com/viant/afs"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
+	"github.com/viant/bqtail/shared"
 	"path"
 	"time"
 )
@@ -13,7 +13,7 @@ import (
 //Notify represent notify function
 type Notify func(ctx context.Context, fs afs.Service, URL string)
 
-//Loader represents SourceURL changes notifier
+//Loader represents URL changes notifier
 type Loader struct {
 	fs             afs.Service
 	baseURL        string

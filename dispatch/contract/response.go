@@ -21,7 +21,7 @@ type Response struct {
 	mux         *sync.Mutex
 }
 
-//Reset reset response
+//Merge merge performance stats
 func (r *Response) Merge(performance *Performance) {
 	r.mux.Lock()
 	defer r.mux.Unlock()

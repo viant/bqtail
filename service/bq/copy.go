@@ -1,11 +1,11 @@
 package bq
 
 import (
+	"context"
+	"fmt"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/task"
-	"context"
-	"fmt"
 	"google.golang.org/api/bigquery/v2"
 )
 
@@ -73,7 +73,6 @@ func (r *CopyRequest) Init(projectID string, activity *task.Action) (err error) 
 	return nil
 }
 
-
 //Validate checks if request is valid
 func (r *CopyRequest) Validate() error {
 	if r.sourceTable == nil {
@@ -99,7 +98,7 @@ func NewCopyAction(source, dest string, append bool, finally *task.Actions) *tas
 		copyRequest.destinationTable, _ = base.NewTableReference(dest)
 	}
 	result := &task.Action{
-		Action:shared.ActionCopy,
+		Action:  shared.ActionCopy,
 		Actions: finally,
 	}
 	_ = result.SetRequest(copyRequest)

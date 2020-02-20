@@ -70,6 +70,22 @@ pipeline:
         credentials: ${gcpCredentials}
       logging: false
 
+  pubsub:
+    action: msg:setupResource
+    resources:
+      - URL: ${prefix}_bqtailbus
+        type: topic
+        vendor: gcp
+        credentials: ${gcpCredentials}
+
+      - URL: ${prefix}_bqtailsub
+        type: subscription
+        vendor: gcp
+        credentials: ${gcpCredentials}
+        config:
+          topic:
+            URL: /projects/${projectID}/topics/${prefix}_bqtailbus
+
 
   cleanup:
     action: storage:remove
