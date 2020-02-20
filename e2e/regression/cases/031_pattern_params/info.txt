@@ -1,1 +1,1 @@
-individual sync data ingestion
+data ingestion with pattern based name parameters
