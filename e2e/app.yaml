@@ -48,7 +48,7 @@ pipeline:
           eventType: google.storage.object.finalize
           resource: projects/_/buckets/${triggerBucket}
         source:
-          URL: ${appPath}/cloudfunctions
+          URL: ${appPath}/
 
       bqdisaptch:
         action: gcp/cloudfunctions:deploy
@@ -63,7 +63,7 @@ pipeline:
           CONFIG: gs://${configBucket}/BqDispatch/config.json
           LOGGING: true
         source:
-          URL: ${appPath}/cloudfunctions
+          URL: ${appPath}/
 
       scheduleDispatcher:
         action: gcp/cloudscheduler:deploy
@@ -104,4 +104,4 @@ pipeline:
           CONFIG: gs://${configBucket}/BqTail/config.json
           LOGGING: true
         source:
-          URL: ${appPath}/cloudfunctions
+          URL: ${appPath}/
