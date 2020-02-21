@@ -1,0 +1,36 @@
+{
+  "Async": true,
+  "Batch": {
+    "BaseURL": "gs://xx_e2e_bqdispatch/BqDispatch/Tasks/",
+    "Window": {
+      "Duration": 10000000000,
+      "DurationInSec": 10
+    }
+  },
+  "Dest": {
+    "Override": true,
+    "Partition": "$Date",
+    "SkipLeadingRows": 0,
+    "Table": "bqtail.transactions_v007",
+    "Transient": {
+      "Alias": "t",
+      "Dataset": "temp"
+    }
+  },
+  "Info": {
+    "URL": "gs://xx_e2e_config/BqTail/Rules/case_007/rule.yaml",
+    "Workflow": "rule"
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": "$LoadURIs"
+      }
+    }
+  ],
+  "When": {
+    "Prefix": "/data/case007",
+    "Suffix": ".json"
+  }
+}

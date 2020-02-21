@@ -1,0 +1,155 @@
+{
+  "Action": "load",
+  "Meta": {
+    "Action": "load",
+    "Async": true,
+    "DestTable": "bqtail.transactions_v007",
+    "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions_v007/2020-02-21_13/1000112083248150.run",
+    "EventID": "1000112083248150",
+    "Mode": "dispatch",
+    "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions_v007--1000112083248150.run",
+    "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_007/rule.yaml",
+    "Source": {
+      "Time": "2020-02-21T13:24:06Z",
+      "URL": "gs://xx_e2e_bqtail/data/case007/transactions.json"
+    },
+    "Step": 1,
+    "StepCount": 1,
+    "TempTable": "`temp.transactions_v007_1000112083248150`"
+  },
+  "OnSuccess": [
+    {
+      "Action": "query",
+      "Meta": {
+        "Action": "query",
+        "Async": true,
+        "DestTable": "bqtail.transactions_v007",
+        "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions_v007/2020-02-21_13/1000112083248150.run",
+        "EventID": "1000112083248150",
+        "Mode": "dispatch",
+        "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions_v007--1000112083248150.run",
+        "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_007/rule.yaml",
+        "Source": {
+          "Time": "2020-02-21T13:24:06Z",
+          "URL": "gs://xx_e2e_bqtail/data/case007/transactions.json"
+        },
+        "Step": 2,
+        "StepCount": 2,
+        "TempTable": "`temp.transactions_v007_1000112083248150`"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete",
+          "Request": {
+            "URLs": [
+              "gs://xx_e2e_bqtail/data/case007/transactions.json"
+            ]
+          }
+        },
+        {
+          "Action": "delete",
+          "Request": {
+            "URLs": [
+              "gs://xx_e2e_bqdispatch/BqDispatch/Tasks/bqtail.transactions_v007_1113914361411125428_1582291450.win"
+            ]
+          }
+        },
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions_v007/2020-02-21_13/1000112083248150.run",
+            "IsDestAbsoluteURL": true,
+            "SourceURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions_v007--1000112083248150.run"
+          }
+        },
+        {
+          "Action": "drop",
+          "Meta": {
+            "Action": "drop",
+            "Async": true,
+            "DestTable": "bqtail.transactions_v007",
+            "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions_v007/2020-02-21_13/1000112083248150.run",
+            "EventID": "1000112083248150",
+            "Mode": "nop",
+            "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions_v007--1000112083248150.run",
+            "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_007/rule.yaml",
+            "Source": {
+              "Time": "2020-02-21T13:24:06Z",
+              "URL": "gs://xx_e2e_bqtail/data/case007/transactions.json"
+            },
+            "Step": 6,
+            "StepCount": 6,
+            "TempTable": "`temp.transactions_v007_1000112083248150`"
+          },
+          "Request": {
+            "Table": "temp.transactions_v007_1000112083248150"
+          }
+        }
+      ],
+      "Request": {
+        "Append": false,
+        "Dest": "bqtail.transactions_v007$20200221",
+        "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id \nFROM `temp.transactions_v007_1000112083248150` t  ",
+        "UseLegacy": false
+      }
+    }
+  ],
+  "Request": {
+    "DestinationTable": {
+      "DatasetId": "temp",
+      "TableId": "transactions_v007_1000112083248150"
+    },
+    "Schema": {
+      "Fields": [
+        {
+          "Name": "id",
+          "Type": "STRING"
+        },
+        {
+          "Name": "timestamp",
+          "Type": "TIMESTAMP"
+        },
+        {
+          "Name": "batch_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "event_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "sku_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "supply_entity_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "payment",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "demany_entity_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "charge",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "qty",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "fee_id",
+          "Type": "INTEGER"
+        }
+      ]
+    },
+    "SourceUris": [
+      "gs://xx_e2e_bqtail/data/case007/transactions.json"
+    ],
+    "WriteDisposition": "WRITE_TRUNCATE"
+  }
+}

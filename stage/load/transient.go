@@ -26,9 +26,9 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 		return result, j.addSplitActions(selectAll, result, actions)
 	}
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
-	destinationTable, _ := base.NewTableReference(j.DestTable)
-	partition := base.TablePartition(destinationTable.TableId)
 
+	destinationTable, _ := j.Rule.Dest.CustomTableReference(j.DestTable, j.Source)
+	partition := base.TablePartition(destinationTable.TableId)
 	if len(dest.UniqueColumns) > 0 || partition != "" || len(dest.Transform) > 0 {
 		query := bq.NewQueryAction(selectAll, destinationTable, j.Rule.IsAppend(), actions)
 		result.AddOnSuccess(query)

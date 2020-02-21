@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/afs"
 	"github.com/viant/assertly"
-	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/service/bq"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
 	"github.com/viant/bqtail/tail/batch"
 	"github.com/viant/bqtail/tail/config"
@@ -21,7 +21,7 @@ import (
 
 func TestJob_NewLoadRequest(t *testing.T) {
 
-	os.Setenv(base.LoggingEnvKey, "true")
+	os.Setenv(shared.LoggingEnvKey, "true")
 
 	baseURL := path.Join(toolbox.CallerDirectory(3), "test")
 
@@ -59,6 +59,12 @@ func TestJob_NewLoadRequest(t *testing.T) {
 			description: "transient ingestion with transient schema request",
 			caseURL:     path.Join(baseURL, "006_transient_schema"),
 		},
+		{
+			description: "transient ingestion with partition override request",
+			caseURL:     path.Join(baseURL, "007_partition_override"),
+		},
+
+		//
 	}
 
 	for _, useCase := range useCases {

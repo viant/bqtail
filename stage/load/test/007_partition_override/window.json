@@ -1,0 +1,16 @@
+{
+  "Async": true,
+  "DestTable": "bqtail.transactions_v007",
+  "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions_v007/2020-02-21_13/1000112083248150.run",
+  "End": "2020-02-21T13:24:10Z",
+  "EventID": "1000112083248150",
+  "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions_v007--1000112083248150.run",
+  "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_007/rule.yaml",
+  "Source": {
+    "Time": "2020-02-21T13:24:06Z",
+    "URL": "gs://xx_e2e_bqtail/data/case007/transactions.json"
+  },
+  "Start": "2020-02-21T13:24:00Z",
+  "URL": "gs://xx_e2e_bqdispatch/BqDispatch/Tasks/bqtail.transactions_v007_1113914361411125428_1582291450.win",
+  "URIs":["gs://xx_e2e_bqtail/data/case007/transactions.json"]
+}
