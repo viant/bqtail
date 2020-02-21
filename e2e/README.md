@@ -251,3 +251,9 @@ endly -t=init
 ```bash
     endly -t=test -i=template
 ```
+
+- [Ingestion with partition_override](regression/cases/033_partition_override)
+
+```bash
+    endly -t=test -i=partition_override
+```
