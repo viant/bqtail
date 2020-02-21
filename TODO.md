@@ -1,2 +1,3 @@
 - Update documentation/examples
 - Client side executable
+- Refactor info/debug logging

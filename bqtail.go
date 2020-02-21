@@ -4,7 +4,7 @@ import (
 	"cloud.google.com/go/functions/metadata"
 	"context"
 	"errors"
-	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail"
 	"github.com/viant/bqtail/tail/contract"
 )
@@ -36,7 +36,7 @@ func handleTailEvent(ctx context.Context, request *contract.Request) (*contract.
 		return nil, err
 	}
 	response := service.Tail(ctx, request)
-	base.Log(response)
+	shared.LogLn(response)
 	if response.Error != "" {
 		return response, errors.New(response.Error)
 	}

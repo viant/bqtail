@@ -3,7 +3,6 @@ package tail
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/bqtail/tail/contract"
@@ -33,9 +32,9 @@ func (s *service) matchSourceWithRule(response *contract.Response, request *cont
 		response.Status = shared.StatusDisabled
 		return nil
 	}
-	if base.IsLoggingEnabled() {
+	if shared.IsDebugLoggingLevel() {
 		fmt.Printf("rule: ")
-		base.Log(rule)
+		shared.LogLn(rule)
 	}
 	return rule
 }

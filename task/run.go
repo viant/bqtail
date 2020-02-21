@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 )
@@ -58,12 +59,12 @@ func RunWithService(ctx context.Context, registry Registry, serviceName string, 
 	if err != nil {
 		return nil, err
 	}
-	if base.IsLoggingEnabled() {
-		base.Log(request)
+	if shared.IsDebugLoggingLevel() {
+		shared.LogLn(request)
 	}
 	var response Response
 	response, err = service.Run(ctx, request)
-	if base.IsLoggingEnabled() && err != nil {
+	if shared.IsDebugLoggingLevel() && err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
 	return response, err

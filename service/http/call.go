@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/pkg/errors"
-	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -55,8 +55,8 @@ func (s *service) Call(ctx context.Context, request *CallRequest) (*CallResponse
 		}
 		_ = httpResponse.Body.Close()
 	}
-	if base.IsLoggingEnabled() {
-		base.Log(resp)
+	if shared.IsDebugLoggingLevel() {
+		shared.LogLn(resp)
 	}
 	return resp, nil
 }

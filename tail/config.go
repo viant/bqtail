@@ -36,7 +36,6 @@ func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	return nil
 }
 
-
 //Match matches rule
 func (c Config) Match(URL string) []*config.Rule {
 	matched := c.Ruleset.Match(URL)

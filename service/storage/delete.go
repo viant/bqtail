@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 )
 
 const deleteRoutines = 6
@@ -21,8 +21,8 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 	processed := map[string]bool{}
 	for i := range request.URLs {
 
-		if base.IsLoggingEnabled() {
-			base.Log(fmt.Sprintf("deleteing: %v\n", request.URLs[i]))
+		if shared.IsDebugLoggingLevel() {
+			shared.LogLn(fmt.Sprintf("deleteing: %v\n", request.URLs[i]))
 		}
 		if processed[request.URLs[i]] {
 			continue

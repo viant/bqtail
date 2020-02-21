@@ -7,11 +7,12 @@ import (
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
+	"strings"
 )
 
 //Query run supplied SQL
-func (s *service) Query(ctx context.Context, request *QueryRequest, acion *task.Action) (*bigquery.Job, error) {
-	if err := request.Init(s.projectID, acion); err != nil {
+func (s *service) Query(ctx context.Context, request *QueryRequest, action *task.Action) (*bigquery.Job, error) {
+	if err := request.Init(s.projectID, action); err != nil {
 		return nil, err
 	}
 	if err := request.Validate(); err != nil {
@@ -33,7 +34,7 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, acion *task.
 		} else {
 			job.Configuration.Query.WriteDisposition = "WRITE_TRUNCATE"
 		}
-		s.adjustRegion(ctx, acion, job.Configuration.Query.DestinationTable)
+		s.adjustRegion(ctx, action, job.Configuration.Query.DestinationTable)
 	}
 
 	if request.UseLegacy {
@@ -43,11 +44,21 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, acion *task.
 	if request.DatasetID != "" {
 		job.Configuration.Query.DefaultDataset = &bigquery.DatasetReference{
 			DatasetId: request.DatasetID,
-			ProjectId: acion.Meta.ProjectID,
+			ProjectId: action.Meta.ProjectID,
 		}
 	}
-	job.JobReference = acion.JobReference()
-	return s.Post(ctx, job, acion)
+	job.JobReference = action.JobReference()
+
+	if shared.IsInfoLoggingLevel() {
+		source := job.Configuration.Query.Query
+		if len(source) > 40 {
+			source = strings.Replace(string(source[:40]), "\n", "", len(source))
+		}
+		dest := base.EncodeTableReference(job.Configuration.Query.DestinationTable, true)
+		fmt.Printf("[%v] runing query %v ... into %v\n", action.Meta.DestTable, source, dest)
+	}
+
+	return s.Post(ctx, job, action)
 }
 
 //QueryRequest represents Query request

@@ -3,9 +3,9 @@ package bqtail
 import (
 	"context"
 	"errors"
-	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/dispatch"
 	"github.com/viant/bqtail/dispatch/contract"
+	"github.com/viant/bqtail/shared"
 	"net/http"
 )
 
@@ -23,7 +23,7 @@ func handleDispatchEvent(ctx context.Context) (*contract.Response, error) {
 		return nil, err
 	}
 	response := service.Dispatch(ctx)
-	base.Log(response)
+	shared.LogLn(response)
 	if response.Error != "" {
 		return response, errors.New(response.Error)
 	}

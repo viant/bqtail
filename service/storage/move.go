@@ -6,7 +6,7 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/url"
-	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 )
 
 //Move move source to destination
@@ -36,8 +36,8 @@ func (s *service) move(ctx context.Context, isDestAbsoluteURL bool, sourceURL, d
 	if !isDestAbsoluteURL {
 		destURL = url.Join(destURL, sourceLocation)
 	}
-	if base.IsLoggingEnabled() {
-		base.Log(fmt.Sprintf("moving: %v -> %v\n", sourceURL, destURL))
+	if shared.IsDebugLoggingLevel() {
+		shared.LogLn(fmt.Sprintf("moving: %v -> %v\n", sourceURL, destURL))
 	}
 
 	err := s.fs.Move(ctx, sourceURL, destURL)

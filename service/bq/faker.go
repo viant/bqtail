@@ -20,6 +20,14 @@ func (f *faker) Table(ctx context.Context, reference *bigquery.TableReference) (
 	return f.tables[key], nil
 }
 
+func (f *faker) CreateDatasetIfNotExist(ctx context.Context, region string, dataset *bigquery.DatasetReference) error {
+	return nil
+}
+
+func (f *faker) CreateTableIfNotExist(ctx context.Context, table *bigquery.Table) error {
+	return nil
+}
+
 //NewFakerWithTables creates a faker with tables
 func NewFakerWithTables(tables map[string]*bigquery.Table) Service {
 	return &faker{tables: tables}

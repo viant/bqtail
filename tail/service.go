@@ -214,9 +214,9 @@ func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *
 	result.DoneProcessURL = s.config.DoneLoadURL(result)
 	result.ProjectID = s.selectProjectID(ctx, rule, response)
 	result.Params, err = rule.Dest.Params(result.Source.URL)
-	if base.IsLoggingEnabled() {
+	if shared.IsDebugLoggingLevel() {
 		fmt.Printf("process: ")
-		base.Log(result)
+		shared.LogLn(result)
 	}
 	return result, err
 }
@@ -229,9 +229,9 @@ func (s *service) submitJob(ctx context.Context, job *load.Job, response *contra
 	if err := job.Persist(ctx, s.fs); err != nil {
 		response.UploadError = err.Error()
 	}
-	if base.IsLoggingEnabled() {
+	if shared.IsDebugLoggingLevel() {
 		fmt.Printf("loadRequest: ")
-		base.Log(loadRequest)
+		shared.LogLn(loadRequest)
 	}
 	bqJob, err := s.bq.Load(ctx, loadRequest, action)
 	if bqJob != nil {
@@ -260,9 +260,9 @@ func (s *service) runLoadProcess(ctx context.Context, request *contract.Request,
 	if processJob.Rule = s.config.Rule(ctx, processJob.RuleURL); processJob.Rule == nil {
 		return errors.Errorf("failed to lookup rule: '%v'", processJob.RuleURL)
 	}
-	if base.IsLoggingEnabled() {
+	if shared.IsDebugLoggingLevel() {
 		fmt.Printf("replaying load process ...\n")
-		base.Log(processJob)
+		shared.LogLn(processJob)
 	}
 
 	_, err = s.submitJob(ctx, processJob, response)
@@ -327,8 +327,8 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		return err
 	}
 
-	if base.IsLoggingEnabled() {
-		base.Log(action)
+	if shared.IsDebugLoggingLevel() {
+		shared.LogLn(action)
 	}
 	response.Process = &action.Meta.Process
 	action.Meta.Region = action.Job.JobReference.Location
@@ -341,10 +341,10 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		errorURL := url.Join(s.config.ErrorURL, action.Meta.DestTable, fmt.Sprintf("%v%v", action.Meta.EventID, shared.ErrorExt))
 		_ = s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(bqErr.Error()))
 	}
-	if base.IsLoggingEnabled() {
-		base.Log(request)
+	if shared.IsDebugLoggingLevel() {
+		shared.LogLn(request)
 		if bqJob != nil {
-			base.Log(bqJob.Status)
+			shared.LogLn(bqJob.Status)
 		}
 	}
 	if err != nil {
@@ -358,7 +358,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	bqJobError := base.JobError(bqJob)
 
 	if bqJobError != nil && bqJob.Configuration != nil && bqJob.Configuration.Load != nil {
-		if base.IsLoggingEnabled() {
+		if shared.IsDebugLoggingLevel() {
 			fmt.Printf("load error - reloading ...\n")
 		}
 		rule := s.config.Rule(ctx, action.Meta.RuleURL)
@@ -413,7 +413,6 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 		}
 		return err
 	}
-
 	return s.tryRecoverAndReport(ctx, loadJob, response)
 }
 
@@ -423,8 +422,14 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	if rule == nil {
 		return nil, fmt.Errorf("rule was empty for %v", window.RuleURL)
 	}
+	if shared.IsInfoLoggingLevel() {
+		shared.LogF("[%v] starting batch window: %s\n", window.DestTable, rule.Batch.Window.Duration)
+	}
 	batchingDistributionDelay := time.Duration(getRandom(shared.StorageListVisibilityDelay, rule.Batch.MaxDelayMs(shared.StorageListVisibilityDelay))) * time.Millisecond
 	remainingDuration := window.End.Sub(time.Now()) + batchingDistributionDelay
+	if remainingDuration < 0 && window.IsSyncMode() { //intendent for client sync mode
+		remainingDuration = shared.StorageListVisibilityDelay
+	}
 	if remainingDuration > 0 {
 		time.Sleep(remainingDuration)
 	}
@@ -465,10 +470,18 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 	uris := status.NewURIs()
 	uris.Classify(ctx, s.fs, job.BqJob)
 	corruptedFileURL, invalidSchemaURL := s.getDataErrorsURLs(job.Rule)
+
+	if shared.IsInfoLoggingLevel() {
+		if len(uris.Corrupted) > 0 || len(uris.InvalidSchema) > 0 {
+			fmt.Printf("[%v] excluding corrupted: %v, incompatible schema: %v file(s)\n", job.DestTable, len(uris.Corrupted), len(uris.InvalidSchema))
+		}
+	}
+
 	if err := s.moveAssets(ctx, uris.Corrupted, corruptedFileURL); err != nil {
 		err = errors.Wrapf(err, "failed to move %v to %v", response.Corrupted, corruptedFileURL)
 		response.MoveError = err.Error()
 	}
+
 	if err := s.moveAssets(ctx, uris.InvalidSchema, invalidSchemaURL); err != nil {
 		err = errors.Wrapf(err, "failed to move %v to %v", response.InvalidSchema, invalidSchemaURL)
 		response.MoveError = err.Error()
@@ -485,9 +498,9 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 	meta := activity.Parse(job.BqJob.JobReference.JobId)
 	action.Meta.Step = meta.Step + 1
 	reloadCount := meta.Step - 1
-	if base.IsLoggingEnabled() {
+	if shared.IsDebugLoggingLevel() {
 		fmt.Printf("reload attempt: %v\n", reloadCount)
-		base.Log(meta)
+		shared.LogLn(meta)
 	}
 	if reloadCount > job.Rule.MaxReloadAttempts() {
 		return base.JobError(job.BqJob)
@@ -531,8 +544,8 @@ func (s *service) moveAssets(ctx context.Context, URLs []string, baseDestURL str
 		destURL := url.Join(baseDestURL, URLPath)
 		e := s.fs.Move(ctx, sourceURL, destURL)
 
-		if base.IsLoggingEnabled() {
-			base.Log(fmt.Sprintf("moving: %v %v, %v\n", sourceURL, destURL, err))
+		if shared.IsDebugLoggingLevel() {
+			shared.LogLn(fmt.Sprintf("moving: %v %v, %v\n", sourceURL, destURL, err))
 		}
 		if e != nil {
 			if exists, _ := s.fs.Exists(ctx, sourceURL, option.NewObjectKind(true)); !exists {

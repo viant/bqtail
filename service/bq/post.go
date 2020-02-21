@@ -48,8 +48,8 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, action *tas
 	} else {
 		callerJob.Id = job.Id
 	}
-	if base.IsLoggingEnabled() {
-		base.Log(action)
+	if shared.IsDebugLoggingLevel() {
+		shared.LogLn(action)
 	}
 
 	if action.Meta.IsSyncMode() {
@@ -60,8 +60,8 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, action *tas
 				err = base.JobError(job)
 			}
 		}
-		if base.IsLoggingEnabled() && job != nil && job.Status != nil {
-			base.Log(job.Status)
+		if shared.IsDebugLoggingLevel() && job != nil && job.Status != nil {
+			shared.LogLn(job.Status)
 		}
 		if job == nil {
 			job = callerJob
@@ -92,8 +92,8 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 		return nil, errors.Wrapf(err, "failed to schedule bqJob %v", job.JobReference.JobId)
 	}
 
-	if base.IsLoggingEnabled() {
-		base.Log(job)
+	if shared.IsDebugLoggingLevel() {
+		shared.LogLn(job)
 	}
 	projectID := action.Meta.GetOrSetProject(s.Config.ProjectID)
 	jobService := bigquery.NewJobsService(s.Service)
@@ -110,7 +110,7 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 			continue
 		}
 		if i > 0 && base.IsDuplicateJobError(err) {
-			if base.IsLoggingEnabled() {
+			if shared.IsDebugLoggingLevel() {
 				fmt.Printf("duplicate job: [%v]: %v\n", job.Id, err)
 			}
 			err = nil
@@ -123,8 +123,8 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 		}
 	}
 	if err != nil || (callJob != nil && base.JobError(callJob) != nil) {
-		if base.IsLoggingEnabled() && callJob != nil && callJob.Status != nil {
-			base.Log(callJob.Status)
+		if shared.IsDebugLoggingLevel() && callJob != nil && callJob.Status != nil {
+			shared.LogLn(callJob.Status)
 		}
 		return callJob, err
 	}

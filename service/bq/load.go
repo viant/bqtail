@@ -3,6 +3,8 @@ package bq
 import (
 	"context"
 	"fmt"
+	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -34,10 +36,20 @@ func (s *service) Load(ctx context.Context, request *LoadRequest, action *task.A
 	job.JobReference = action.JobReference()
 	job.Configuration.Load.SourceUris = s.getUniqueURIs(ctx, job.Configuration.Load.SourceUris)
 	s.adjustRegion(ctx, action, job.Configuration.Load.DestinationTable)
-	if len(job.Configuration.Load.SourceUris) <= maxJobLoadURIs {
+	datafileCount := len(job.Configuration.Load.SourceUris)
+	if shared.IsInfoLoggingLevel() {
+		shared.LogF("[%v] loading %v datafile(s) into %v", action.Meta.DestTable, datafileCount, base.EncodeTableReference(job.Configuration.Load.DestinationTable, true))
+	}
+	if datafileCount <= maxJobLoadURIs {
 		return s.Post(ctx, job, action)
 	}
-	return s.loadInParts(ctx, job, request, action)
+	postJob, err := s.loadInParts(ctx, job, request, action)
+	if err == nil && base.JobError(postJob) == nil {
+		if shared.IsInfoLoggingLevel() {
+			shared.LogF("[%v] loaded % datafile(s).\n", action.Meta.DestTable, datafileCount)
+		}
+	}
+	return postJob, err
 }
 
 func (s *service) getUniqueURIs(ctx context.Context, candidates []string) []string {

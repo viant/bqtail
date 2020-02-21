@@ -34,6 +34,12 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 
 	s.adjustRegion(ctx, action, job.Configuration.Copy.DestinationTable)
 	job.JobReference = action.JobReference()
+
+	if shared.IsInfoLoggingLevel() {
+		source := base.EncodeTableReference(job.Configuration.Copy.SourceTable, true)
+		dest := base.EncodeTableReference(job.Configuration.Copy.DestinationTable, true)
+		shared.LogF("[%v] copy %v into %v\n", action.Meta.DestTable, source, dest)
+	}
 	return s.Post(ctx, job, action)
 }
 

@@ -10,7 +10,6 @@ import (
 	"github.com/viant/afs/option"
 	astorage "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
-	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/dispatch/contract"
 	"github.com/viant/bqtail/dispatch/project"
 	"github.com/viant/bqtail/service/bq"
@@ -360,7 +359,7 @@ func (s *service) notify(ctx context.Context, job *contract.Job, events *project
 	info.Region = events.Region
 	info.ProjectID = events.ProjectID
 	taskURL := s.config.BuildTaskURL(info) + shared.JSONExt
-	if base.IsLoggingEnabled() {
+	if shared.IsDebugLoggingLevel() {
 		fmt.Printf("notyfying: %v -> %v\n", job.URL, taskURL)
 	}
 	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
