@@ -86,7 +86,7 @@ func (r Rule) Validate() error {
 	return r.Dest.Validate()
 }
 
-//init initialises rule
+//Init initialises rule
 func (r *Rule) Init(ctx context.Context, fs afs.Service) error {
 	actions := r.Actions()
 	if r.Dest.Pattern != "" && r.When.Filter == "" {

@@ -73,7 +73,7 @@ type QueryRequest struct {
 	destinationTable *bigquery.TableReference
 }
 
-//init initialises request
+//Init initialises request
 func (r *QueryRequest) Init(projectID string, Action *task.Action) (err error) {
 	Action.Meta.GetOrSetProject(projectID)
 	if r.Dest != "" {

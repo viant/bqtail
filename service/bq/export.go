@@ -46,7 +46,7 @@ type ExportRequest struct {
 	Format         string
 }
 
-//init initialises request
+//Init initialises request
 func (r *ExportRequest) Init(projectID string, activity *task.Action) (err error) {
 	activity.Meta.GetOrSetProject(projectID)
 	if r.Source != "" {

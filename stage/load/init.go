@@ -9,7 +9,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
-//init initialises job
+//Init initialises job
 func (j *Job) Init(ctx context.Context, service bq.Service) error {
 	tableReference, err := base.NewTableReference(j.DestTable)
 	if err != nil {

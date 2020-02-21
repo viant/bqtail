@@ -52,7 +52,7 @@ type CopyRequest struct {
 	destinationTable *bigquery.TableReference
 }
 
-//init initialises a copy request
+//Init initialises a copy request
 func (r *CopyRequest) Init(projectID string, activity *task.Action) (err error) {
 	activity.Meta.GetOrSetProject(projectID)
 

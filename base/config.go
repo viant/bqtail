@@ -62,7 +62,7 @@ func (c *Config) BuildTaskURL(info *activity.Meta) string {
 	return fmt.Sprintf("gs://%v%v%v/%v", c.TriggerBucket, c.PostJobPrefix, date, info.JobFilename())
 }
 
-//init initialises config
+//Init initialises config
 func (c *Config) Init(ctx context.Context) error {
 	if c.ProjectID == "" {
 		for _, key := range cloudFunctionProjectEnvKeys {

@@ -24,7 +24,7 @@ type Batch struct {
 	MaxDelayInSec int `json:",omitempty"`
 }
 
-//init initialises batch mode
+//Init initialises batch mode
 func (b *Batch) Init(baseURL string) {
 	if b.Window == nil {
 		b.Window = &Window{}

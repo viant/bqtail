@@ -79,7 +79,7 @@ func (r *Ruleset) remove(ctx context.Context, fs afs.Service, URL string) {
 	r.Rules = temp
 }
 
-//init initialises resources
+//Init initialises resources
 func (r *Ruleset) Init(ctx context.Context, fs afs.Service, projectID string) error {
 	if err := r.initRules(); err != nil {
 		return err

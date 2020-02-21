@@ -27,7 +27,7 @@ type Response struct {
 	Error    string
 }
 
-//init initialises request
+//Init initialises request
 func (r *Request) Init() (err error) {
 	if r.UnprocessedDuration == "" {
 		r.UnprocessedDuration = defaultTriggerAge

@@ -34,7 +34,7 @@ type DropRequest struct {
 	dropTable *bigquery.TableReference
 }
 
-//init initialises a copy request
+//Init initialises a copy request
 func (r *DropRequest) Init(projectID string) (err error) {
 	if r.ProjectID != "" {
 		projectID = r.ProjectID

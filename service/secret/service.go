@@ -23,7 +23,7 @@ func (s service) Kms(service afs.Service) (kms.Service, error) {
 	return gcp.New(service), nil
 }
 
-//init initialises resources
+//Init initialises resources
 func (s *service) Decode(ctx context.Context, service afs.Service, secret *base.Secret, target interface{}) error {
 	kmsService, err := s.Kms(service)
 	if err != nil {

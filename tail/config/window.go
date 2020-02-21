@@ -18,7 +18,7 @@ type Window struct {
 	DurationInSec int `json:",omitempty"`
 }
 
-//init initialises window
+//Init initialises window
 func (w *Window) Init() {
 	if w.DurationInSec == 0 && w.Duration == 0 {
 		w.DurationInSec = DefaultWindowDurationSec

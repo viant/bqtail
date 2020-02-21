@@ -145,7 +145,7 @@ func (r Ruleset) UsesAsync() bool {
 	return false
 }
 
-//init initialises resources
+//Init initialises resources
 func (r *Ruleset) Init(ctx context.Context, fs afs.Service, projectID string) error {
 	if err := r.initRules(); err != nil {
 		return err
