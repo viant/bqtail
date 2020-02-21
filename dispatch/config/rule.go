@@ -12,7 +12,7 @@ type Rule struct {
 	Info base.Info `json:",omitempty"`
 }
 
-//Init initialises rule
+//init initialises rule
 func (r *Rule) Init() error {
 	return r.When.Init()
 }

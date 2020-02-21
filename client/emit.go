@@ -4,20 +4,25 @@ import (
 	"context"
 	"fmt"
 	"github.com/viant/afs/storage"
+	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/client/tail"
 	"github.com/viant/bqtail/tail/contract"
 	"math/rand"
 	"sync/atomic"
 	"time"
 )
 
-func (s *service) publish(ctx context.Context, object storage.Object, response *TailResponse) error {
+func (s *service) emit(ctx context.Context, object storage.Object, response *tail.Response) error {
 	if object.IsDir() {
 		objects, err := s.fs.List(ctx, object.URL())
 		if err != nil {
 			return err
 		}
-		for _, object := range objects {
-			if err := s.publish(ctx, object, response); err != nil {
+		for i := range objects {
+			if url.IsSchemeEquals(object.URL(), objects[i].URL()) {
+				continue
+			}
+			if err := s.emit(ctx, objects[i], response); err != nil {
 				return err
 			}
 		}
@@ -28,7 +33,7 @@ func (s *service) publish(ctx context.Context, object storage.Object, response *
 		SourceURL: object.URL(),
 	}
 	atomic.AddInt32(&response.Published, 1)
-	atomic.AddInt32(&response.pending, 1)
+	response.IncrementPending(1)
 	s.requestChan <- request
 	return nil
 }

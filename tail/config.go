@@ -23,7 +23,7 @@ type Config struct {
 	Async *bool
 }
 
-//Init initializes config
+//init initializes config
 func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	err := c.Config.Init(ctx)
 	if err != nil {

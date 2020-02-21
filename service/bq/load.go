@@ -86,7 +86,7 @@ func (s *service) loadInParts(ctx context.Context, job *bigquery.Job, request *L
 	return postJob, err
 }
 
-//Init initialises request
+//init initialises request
 func (r *LoadRequest) Init(projectID string, Action *task.Action) {
 	table := r.JobConfigurationLoad.DestinationTable
 	if table == nil {

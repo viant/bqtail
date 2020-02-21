@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	ctail "github.com/viant/bqtail/client/tail"
 	"github.com/viant/bqtail/tail"
 	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/bqtail/tail/contract"
@@ -16,7 +17,7 @@ type Service interface {
 
 	ValidateRule(ctx context.Context, request *ValidateRuleRequest) error
 
-	Tail(ctx context.Context, request *TailRequest) (*TailResponse, error)
+	Tail(ctx context.Context, request *ctail.Request) (*ctail.Response, error)
 
 	Stop()
 }
@@ -40,6 +41,7 @@ func (s *service) Stop() {
 	}
 }
 
+
 //New creates a service
 func New() (Service, error) {
 	ctx := context.Background()
@@ -55,8 +57,8 @@ func New() (Service, error) {
 		config:       cfg,
 		fs:           afs.New(),
 		tailService:  tailService,
-		requestChan:  make(chan *contract.Request, processingChannelSize),
-		responseChan: make(chan *contract.Response, processingChannelSize),
+		requestChan:  make(chan *contract.Request, processingRoutines),
+		responseChan: make(chan *contract.Response, processingRoutines),
 		stopChan:     make(chan bool, 2),
 	}, nil
 }

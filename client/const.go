@@ -1,5 +1,5 @@
 package client
 
 const (
-	processingChannelSize = 30
+	processingRoutines = 30
 )

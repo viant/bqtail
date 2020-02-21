@@ -31,7 +31,7 @@ func (c *Config) TimeToLive() time.Duration {
 	return time.Minute*time.Duration(c.TimeToLiveInMin) - (5 * time.Second)
 }
 
-//Init initialises config
+//init initialises config
 func (c *Config) Init(ctx context.Context, fs afs.Service) error {
 	err := c.Config.Init(ctx)
 	if err != nil {

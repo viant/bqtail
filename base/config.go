@@ -10,6 +10,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"os"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -61,7 +62,7 @@ func (c *Config) BuildTaskURL(info *activity.Meta) string {
 	return fmt.Sprintf("gs://%v%v%v/%v", c.TriggerBucket, c.PostJobPrefix, date, info.JobFilename())
 }
 
-//Init initialises config
+//init initialises config
 func (c *Config) Init(ctx context.Context) error {
 	if c.ProjectID == "" {
 		for _, key := range cloudFunctionProjectEnvKeys {
@@ -77,6 +78,10 @@ func (c *Config) Init(ctx context.Context) error {
 			}
 			c.ProjectID = credentials.ProjectID
 		}
+	}
+
+	if c.TriggerBucket == "" {
+		c.TriggerBucket = strings.Replace(c.ProjectID, "-", "_", len(c.ProjectID)) + "_bqtail"
 	}
 
 	if c.Region == "" {

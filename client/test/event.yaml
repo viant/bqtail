@@ -9,16 +9,16 @@ Batch:
 Async: true
 Dest:
   Pattern: '/adelphic/event/adlog/(\d{4})/(\d{2})/(\d{2})/.+'
-  Table: 'viant-misc-billing:adelphic_logs.ad_requests_$1$2$3'
+  Table: 'viant-e2e:adlogs.ad_requests_$1$2$3'
   Transient:
     Dataset: temp
     Template: 'viant-adelphic:adlogs.ad_v0'
     Balancer:
       Strategy: rand
       MaxLoadJobs: 81
-      ProjectIDs: ['viant-dataflow']
+      ProjectIDs: ['viant-e2e']
   Schema:
-    Template: 'viant-adelphic:adlogs.ad_v1'
+    Template: 'viant-e2e:adlogs.ad_v1'
 OnSuccess:
   - Action: delete
 Info:

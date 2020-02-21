@@ -124,7 +124,7 @@ func (s *service) sendMessage(context context.Context, client *slack.Client, req
 	return err
 }
 
-//Init initializes request
+//init initializes request
 func (r *NotifyRequest) Init(location, projectID string) error {
 	if r.Credentials != nil {
 		if strings.Count(r.Credentials.Key, "/") == 1 {

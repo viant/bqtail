@@ -2,53 +2,27 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/afs/storage"
+	"github.com/viant/afsc/gs"
+	"github.com/viant/bqtail/client/prefix"
+	"github.com/viant/bqtail/client/tail"
+	"github.com/viant/bqtail/client/uploader"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail/batch"
+	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/toolbox"
-	"gopkg.in/yaml.v2"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-type TailRequest struct {
-	Force     bool
-	RuleURL   string
-	Build     *BuildRuleRequest
-	SourceURL string
-}
 
-func (t TailRequest) Validate() error {
-	if t.SourceURL == "" {
-		return errors.New("sourceURL was empty")
-	}
-	return nil
-}
-
-type TailResponse struct {
-	Published int32
-	Batches   int32
-	NoMatched int32
-	Loaded    int32
-	pending   int32
-	Errors    []string
-	mux       sync.Mutex
-}
-
-func (r *TailResponse) AddError(err error) {
-	if err == nil {
-		return
-	}
-	r.mux.Lock()
-	defer r.mux.Unlock()
-	if len(r.Errors) == 0 {
-		r.Errors = make([]string, 0)
-	}
-	r.Errors = append(r.Errors, err.Error())
-}
-
-func (s *service) Tail(ctx context.Context, request *TailRequest) (*TailResponse, error) {
+func (s *service) Tail(ctx context.Context, request *tail.Request) (*tail.Response, error) {
+	request.Init(s.config)
+	toolbox.Dump(request)
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -56,28 +30,22 @@ func (s *service) Tail(ctx context.Context, request *TailRequest) (*TailResponse
 	if err != nil {
 		return nil, err
 	}
-	ruleMap := map[string]interface{}{}
-	toolbox.DefaultConverter.AssignConverted(&ruleMap, rule)
-	ruleMap = toolbox.DeleteEmptyKeys(ruleMap)
-	ruleYAML, err := yaml.Marshal(ruleMap)
-	if err == nil {
-		shared.LogF("using rule:\n%s\n", ruleYAML)
-	}
+	s.reportRule(rule)
 	object, err := s.fs.Object(ctx, request.SourceURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "source location not found: %v", request.SourceURL)
 	}
 
-	response := &TailResponse{}
+	response := &tail.Response{}
 	ctx, cancel := context.WithCancel(ctx)
 	go s.tailInBackground(ctx, cancel)
 	waitGroup := &sync.WaitGroup{}
 	waitGroup.Add(1)
-	go s.ingestDatafiles(ctx, waitGroup, object, rule, response)
+	go s.tail(ctx, waitGroup, object, rule, request, response)
 	go s.handleResponse(ctx, response)
 	waitGroup.Wait()
 
-	for atomic.LoadInt32(&s.stopped) == 0 && atomic.LoadInt32(&response.pending) > 0 {
+	for atomic.LoadInt32(&s.stopped) == 0 && response.Pending() > 0 {
 		time.Sleep(2 * time.Second)
 		shared.LogProgress()
 	}
@@ -85,7 +53,30 @@ func (s *service) Tail(ctx context.Context, request *TailRequest) (*TailResponse
 	return response, err
 }
 
-func (s *service) handleResponse(ctx context.Context, response *TailResponse) {
+
+func (s *service) tail(ctx context.Context, waitGroup *sync.WaitGroup, object storage.Object, rule *config.Rule, request * tail.Request, response *tail.Response) {
+	defer waitGroup.Done()
+	if rule.HasMatch(object.URL()) {
+		if err := s.emit(ctx, object, response); err != nil {
+			response.AddError(err)
+			s.Stop()
+		}
+		return
+	}
+	uploadService := uploader.New(ctx, s.fs,s.onUpload(ctx, response), processingRoutines)
+	dataPrefix := prefix.Extract(rule)
+	destURL := fmt.Sprintf("%v://%v/%v", gs.Scheme, request.Bucket, strings.Trim(dataPrefix, "/"))
+	s.upload(ctx, destURL, object, uploadService)
+	uploadService.Wait()
+
+
+}
+
+
+
+
+
+func (s *service) handleResponse(ctx context.Context, response *tail.Response) {
 	for {
 		select {
 		case <-s.stopChan:
@@ -101,11 +92,11 @@ func (s *service) handleResponse(ctx context.Context, response *TailResponse) {
 				atomic.AddInt32(&response.Batches, 1)
 				if window, ok := resp.Window.(batch.Info); ok {
 					atomic.AddInt32(&response.Loaded, int32(len(window.URIs)))
-					atomic.AddInt32(&response.pending, -int32(len(window.URIs)))
+					response.IncrementPending(-int32(len(window.URIs)))
 				}
 			}
 			if resp.Window == nil && resp.Matched {
-				atomic.AddInt32(&response.pending, -1)
+				response.IncrementPending(-1)
 				atomic.AddInt32(&response.Loaded, 1)
 			}
 			if !resp.Matched {
@@ -114,6 +105,7 @@ func (s *service) handleResponse(ctx context.Context, response *TailResponse) {
 		}
 	}
 }
+
 
 func (s *service) tailInBackground(ctx context.Context, cancel context.CancelFunc) {
 	for {

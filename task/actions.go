@@ -19,7 +19,7 @@ type Actions struct {
 	OnFailure []*Action     `json:",omitempty"`
 }
 
-//Init initialises actions
+//init initialises actions
 func (a *Actions) Init(ctx context.Context, fs afs.Service) error {
 	if a == nil {
 		return nil

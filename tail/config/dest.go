@@ -107,7 +107,7 @@ func (d Destination) Validate() error {
 	return nil
 }
 
-//Init initialises destination
+//init initialises destination
 func (d *Destination) Init() error {
 	if d.TransientDataset != "" {
 		if d.Transient == nil {

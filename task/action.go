@@ -24,7 +24,7 @@ type Action struct {
 	*Actions       `json:",omitempty"`
 }
 
-//Init initialises action
+//init initialises action
 func (a *Action) Init(ctx context.Context, fs afs.Service) error {
 	if a.Request == nil {
 		a.Request = make(map[string]interface{})

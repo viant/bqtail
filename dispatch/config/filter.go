@@ -15,7 +15,7 @@ type Filter struct {
 	Type   string
 }
 
-//Init initialises filter
+//init initialises filter
 func (f *Filter) Init() error {
 	var err error
 	if f.Source != "" {

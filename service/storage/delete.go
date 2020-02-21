@@ -39,7 +39,7 @@ type DeleteRequest struct {
 	SourceURL string
 }
 
-//Init initialize request
+//init initialize request
 func (r *DeleteRequest) Init() {
 	if len(r.URLs) == 0 {
 		r.URLs = make([]string, 0)
