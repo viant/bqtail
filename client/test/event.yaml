@@ -1,0 +1,28 @@
+When:
+  Prefix: "/adelphic/event/adlog/"
+  Suffix: ".avro"
+Batch:
+#  MultiPath: true
+#  MaxDelayInSec: 5
+#  Window:
+#    DurationInSec: 140
+Async: true
+Dest:
+  Pattern: '/adelphic/event/adlog/(\d{4})/(\d{2})/(\d{2})/.+'
+  Table: 'viant-misc-billing:adelphic_logs.ad_requests_$1$2$3'
+  Transient:
+    Dataset: temp
+    Template: 'viant-adelphic:adlogs.ad_v0'
+    Balancer:
+      Strategy: rand
+      MaxLoadJobs: 81
+      ProjectIDs: ['viant-dataflow']
+  Schema:
+    Template: 'viant-adelphic:adlogs.ad_v1'
+OnSuccess:
+  - Action: delete
+Info:
+  Workflow: Adelphic no bids
+  Description: no bids raw log ingestion
+  ProjectURL: JIRA/WIKi or any link referece
+  LeadEngineer: Runtime Team
