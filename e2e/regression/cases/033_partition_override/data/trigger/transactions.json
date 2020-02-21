@@ -1,0 +1,2 @@
+{ "id":"46A682A9-7523-4810-A7FF-7E22CD28220F",  "timestamp": "$FormatTime('now','yyyy-MM-dd HH:mm:ss','','yyyy-MM-dd')", "event_id": 101, "sku_id": 10023, "supply_entity_id": 22012, "payment": 32.2,  "demany_entity_id":332421, "fee_id": 1}
+{ "id":"CFE0011E-58AB-498F-ADAE-861D891EAA18", "timestamp": "$FormatTime('now','yyyy-MM-dd HH:mm:ss','','yyyy-MM-dd')", "event_id": 102, "sku_id": 50623, "supply_entity_id": 22010, "payment": 15.2,  "demany_entity_id":332421, "fee_id": 1}
