@@ -15,19 +15,19 @@ func TestBatch_WindowEndTime(t *testing.T) {
 	}{
 		{
 			description: "less than mid window",
-			batch:       NewBatch(10, ""),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(24, 0),
 			expect:      30,
 		},
 		{
 			description: "at the end of the widnow",
-			batch:       NewBatch(10, ""),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(30, 0),
 			expect:      40,
 		},
 		{
 			description: "at the beginng of the window",
-			batch:       NewBatch(10, ""),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(21, 0),
 			expect:      30,
 		},
@@ -50,33 +50,33 @@ func TestBatch_IsWithinFirstHalf(t *testing.T) {
 	}{
 		{
 			description: "less than mid window",
-			batch:       NewBatch(10, ""),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(24, 0),
 			expect:      true,
 		},
 		{
 			description: "more than mid window",
-			batch:       NewBatch(10, ""),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(26, 0),
 			expect:      false,
 		},
 
 		{
 			description: "at the beginng of the window",
-			batch:       NewBatch(10, ""),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(21, 0),
 			expect:      true,
 		},
 		{
 			description: "at the end of the widnow - move you to the beginign of the next",
-			batch:       NewBatch(10, ""),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(30, 0),
 			expect:      true,
 		},
 
 		{
 			description: "before the end of the widnow",
-			batch:       NewBatch(10, ""),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(29, 0),
 			expect:      false,
 		},
@@ -100,28 +100,28 @@ func TestBatch_WindowURL(t *testing.T) {
 		{
 			description: "less than mid window",
 			dest:        "mydata.mytable",
-			batch:       NewBatch(10, "mem://127.0.0.1/batch"),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(24, 0),
 			expect:      "mem://127.0.0.1/batch/mydata.mytable_30.win",
 		},
 		{
 			description: "at the end of the widnow",
 			dest:        "mydata.mytable",
-			batch:       NewBatch(10, "mem://127.0.0.1/batch"),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(30, 0),
 			expect:      "mem://127.0.0.1/batch/mydata.mytable_40.win",
 		},
 		{
 			description: "at the beginng of the window",
 			dest:        "mydata.mytable",
-			batch:       NewBatch(10, "mem://127.0.0.1/batch"),
+			batch:       NewBatch(10),
 			modTime:     time.Unix(21, 0),
 			expect:      "mem://127.0.0.1/batch/mydata.mytable_30.win",
 		},
 	}
 
 	for _, useCase := range useCases {
-		actual := useCase.batch.WindowURL(useCase.dest, useCase.modTime)
+		actual := useCase.batch.WindowURL("mem://127.0.0.1/batch", useCase.dest, useCase.modTime)
 		assert.EqualValues(t, useCase.expect, actual, useCase.description)
 
 	}

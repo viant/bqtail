@@ -70,7 +70,7 @@ func (s *service) Init(ctx context.Context) error {
 		return err
 	}
 	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.Config)
-	s.batch = batch.New(s.fs)
+	s.batch = batch.New(s.config.TaskURL, s.fs)
 	bq.InitRegistry(s.Registry, s.bq)
 	http.InitRegistry(s.Registry, http.New())
 	storage.InitRegistry(s.Registry, storage.New(s.fs))
@@ -297,6 +297,7 @@ func (s *service) selectProjectID(ctx context.Context, rule *config.Rule, respon
 }
 
 func (s *service) tailInBatch(ctx context.Context, process *stage.Process, rule *config.Rule, response *contract.Response) (*load.Job, error) {
+	response.Batched = true
 	batchWindow, err := s.batch.TryAcquireWindow(ctx, process, rule)
 	if batchWindow == nil || err != nil {
 		if err != nil {
@@ -422,13 +423,13 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	if rule == nil {
 		return nil, fmt.Errorf("rule was empty for %v", window.RuleURL)
 	}
+	batchingDistributionDelay := time.Duration(getRandom(shared.StorageListVisibilityDelay, rule.Batch.MaxDelayMs(shared.StorageListVisibilityDelay))) * time.Millisecond
+	remainingDuration := window.End.Sub(time.Now().UTC()) + batchingDistributionDelay
+	if remainingDuration < 0 && window.IsSyncMode() { //intendent for client sync mode
+		remainingDuration = time.Duration(shared.StorageListVisibilityDelay) * time.Millisecond
+	}
 	if shared.IsInfoLoggingLevel() {
 		shared.LogF("[%v] starting batch window: %s\n", window.DestTable, rule.Batch.Window.Duration)
-	}
-	batchingDistributionDelay := time.Duration(getRandom(shared.StorageListVisibilityDelay, rule.Batch.MaxDelayMs(shared.StorageListVisibilityDelay))) * time.Millisecond
-	remainingDuration := window.End.Sub(time.Now()) + batchingDistributionDelay
-	if remainingDuration < 0 && window.IsSyncMode() { //intendent for client sync mode
-		remainingDuration = shared.StorageListVisibilityDelay
 	}
 	if remainingDuration > 0 {
 		time.Sleep(remainingDuration)
@@ -454,7 +455,6 @@ func (s *service) tryRecoverAndReport(ctx context.Context, job *load.Job, respon
 	if err == nil {
 		return err
 	}
-	//TODO report error
 	return s.tryRecover(ctx, job, response)
 }
 

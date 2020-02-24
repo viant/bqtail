@@ -26,13 +26,13 @@ func TestActions_Expand(t *testing.T) {
 				},
 			},
 			expander: map[string]interface{}{
-				"LoadURIs": "gs://viant_e2e_bqtail/data/case002/dummy1.json",
+				"LoadURIs": "gs://viant_e2e_bqtail/data/case002/dummy.json",
 			},
 
 			expanded: Action{
 				Action: "delete",
 				Request: map[string]interface{}{
-					"URLs": "gs://viant_e2e_bqtail/data/case002/dummy1.json",
+					"URLs": "gs://viant_e2e_bqtail/data/case002/dummy.json",
 				},
 			},
 		},

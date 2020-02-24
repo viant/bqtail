@@ -5,7 +5,7 @@ import (
 	"github.com/viant/bqtail/tail/config"
 )
 
-//Info represents monitoring info
+//Logging represents monitoring info
 type Info struct {
 	*info.Destination
 	*info.Activity `json:",omitempty"`

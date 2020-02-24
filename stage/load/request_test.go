@@ -67,7 +67,7 @@ func TestJob_NewLoadRequest(t *testing.T) {
 		//
 	}
 
-	for _, useCase := range useCases {
+	for _, useCase := range useCases[6:] {
 		ctx := context.Background()
 		err := loadTestAsset(ctx, &useCase.process, path.Join(useCase.caseURL, "process.json"))
 		if !assert.Nil(t, err, useCase.description) {

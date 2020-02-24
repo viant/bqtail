@@ -104,6 +104,22 @@ func (d Destination) Validate() error {
 	if d.Transient != nil {
 		return d.Transient.Validate()
 	}
+
+	if d.Table != "" {
+		if _, err := base.NewTableReference(d.Table); err != nil {
+			return errors.Wrapf(err, "invalid table: %v", d.Table)
+		}
+	}
+	if d.Transient != nil && d.Transient.Template != "" {
+		if _, err := base.NewTableReference(d.Transient.Template); err != nil {
+			return errors.Wrapf(err, "invalid transient.template: %v", d.Transient.Template)
+		}
+	}
+	if d.Schema.Template != "" {
+		if _, err := base.NewTableReference(d.Schema.Template); err != nil {
+			return errors.Wrapf(err, "invalid schema.template: %v", d.Schema.Template)
+		}
+	}
 	return nil
 }
 

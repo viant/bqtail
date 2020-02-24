@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-//Info represents job info summary
+//Logging represents job info summary
 type Info struct {
 	ProjectID           string
 	Error               string

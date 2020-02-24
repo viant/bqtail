@@ -5,43 +5,59 @@ import (
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/client/history"
 	"github.com/viant/bqtail/client/tail"
 	"github.com/viant/bqtail/client/uploader"
+	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/stage"
 	"sync/atomic"
 )
 
-
-
-func (s *service) upload(ctx context.Context, baseDestURL string, object storage.Object, uploadService uploader.Service)  error {
+func (s *service) upload(ctx context.Context, destURL string, object storage.Object, uploadService uploader.Service, request *tail.Request, response *tail.Response) error {
 	if object.IsDir() {
 		objects, err := s.fs.List(ctx, object.URL())
 		if err != nil {
 			return err
 		}
-
+		eventsHistory := history.New(request.HistoryPathURL(object.URL()))
 		for i := range objects {
-			if url.IsSchemeEquals(object.URL(), objects[i].URL()) {
+			if url.Equals(object.URL(), objects[i].URL()) {
 				continue
 			}
-			destURL := url.Join(baseDestURL, objects[i].URL())
-			if objects[i].IsDir() {
-				if err = s.upload(ctx, destURL, objects[i], uploadService);err != nil {
-					return err
+			if !objects[i].IsDir() {
+				if !eventsHistory.Add(stage.NewSource(objects[i].URL(), objects[i].ModTime())) {
+					continue
 				}
-				continue
 			}
-			uploadService.Schedule(uploader.NewRequest(objects[i].URL(), destURL))
+			destURL := url.Join(destURL, objects[i].Name())
+			if err = s.upload(ctx, destURL, objects[i], uploadService, request, response); err != nil {
+				return err
+			}
 		}
+
+		if len(eventsHistory.Events) > 0 {
+			if err = eventsHistory.Persist(ctx, s.fs); err != nil {
+				response.AddError(err)
+			}
+			response.AddHistoryURL(eventsHistory.URL)
+
+		}
+		return nil
 	}
+
+	if shared.IsDebugLoggingLevel() {
+		shared.LogF("scheduling: %v\n", destURL)
+	}
+	uploadService.Schedule(uploader.NewRequest(object.URL(), destURL))
 	return nil
 }
 
 //onUpload returns a callback function which is called per each uploader file
-func (s *service) onUpload(ctx context.Context, response *tail.Response) func (URL string, err error) {
+func (s *service) onUpload(ctx context.Context, response *tail.Response) func(URL string, err error) {
 	return func(URL string, err error) {
 		var object storage.Object
 		if err == nil {
-			atomic.AddInt32(&response.Uplodaded, 1)
+			atomic.AddInt32(&response.Info.Uplodaded, 1)
 			if object, err = s.fs.Object(ctx, URL, option.NewObjectKind(true)); err == nil {
 				err = s.emit(ctx, object, response)
 			}

@@ -13,8 +13,6 @@ type Batch struct {
 	Window *Window `json:",omitempty"`
 	//RollOver if this flag is set, if the first event of the batch fall outside of the first half time, the window can be expanded if previous window had not existed.
 	RollOver bool `json:",omitempty"`
-	//Batch base URL
-	BaseURL string `json:",omitempty"`
 
 	//MultiPath is one batch can collect files from various folder
 	MultiPath bool `json:",omitempty"`
@@ -25,14 +23,12 @@ type Batch struct {
 }
 
 //Init initialises batch mode
-func (b *Batch) Init(baseURL string) {
+func (b *Batch) Init() {
 	if b.Window == nil {
 		b.Window = &Window{}
 	}
 	b.Window.Init()
-	if b.BaseURL == "" {
-		b.BaseURL = baseURL
-	}
+
 }
 
 //MaxDelayMs max delay in ms
@@ -62,19 +58,18 @@ func (b *Batch) WindowEndTime(sourceTime time.Time) time.Time {
 	sourceUnixTimestamp := sourceTime.Unix()
 	remainder := int(sourceUnixTimestamp) % windowDuration
 	endTimeWindowDelta := windowDuration - remainder
-	return time.Unix(sourceUnixTimestamp+int64(endTimeWindowDelta), 0)
+	return time.Unix(sourceUnixTimestamp+int64(endTimeWindowDelta), 0).UTC()
 }
 
 //WindowURL returns windowURL
-func (b *Batch) WindowURL(dest string, sourceTime time.Time) string {
+func (b *Batch) WindowURL(baseURL, dest string, sourceTime time.Time) string {
 	endTime := b.WindowEndTime(sourceTime)
-	return url.Join(b.BaseURL, fmt.Sprintf("%v_%v%v", dest, endTime.Unix(), shared.WindowExt))
+	return url.Join(baseURL, fmt.Sprintf("%v_%v%v", dest, endTime.Unix(), shared.WindowExt))
 }
 
 //NewBatch creates a batch
-func NewBatch(durationInSec int, baseURL string) *Batch {
+func NewBatch(durationInSec int) *Batch {
 	return &Batch{
-		BaseURL: baseURL,
 		Window: &Window{
 			DurationInSec: durationInSec,
 			Duration:      time.Second * time.Duration(durationInSec),

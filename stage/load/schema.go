@@ -28,7 +28,7 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 				return errors.Wrapf(err, "failed to create table from transient.Template: %v", transient.Template)
 			}
 			if table, err = service.Table(ctx, transientTempRef); err != nil {
-				return errors.Wrapf(err, "failed to get template table: %v", transientTempRef)
+				return errors.Wrapf(err, "failed to get template table: %v", base.EncodeTableReference(transientTempRef, false))
 			}
 			j.TempSchema = table
 		}
@@ -52,7 +52,7 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 
 	if table == nil && !hasTransientTemplate {
 		if table, err = service.Table(ctx, tableReference); err != nil {
-			return errors.Wrapf(err, "failed to get table: %+v", tableReference)
+			return errors.Wrapf(err, "failed to get table: %v", base.EncodeTableReference(tableReference, false))
 		}
 		j.DestSchema = table
 	}

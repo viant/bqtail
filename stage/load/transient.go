@@ -5,6 +5,7 @@ import (
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/tail/sql"
 	"github.com/viant/bqtail/task"
+	"github.com/viant/toolbox"
 	"strings"
 )
 
@@ -30,7 +31,10 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	destinationTable, _ := j.Rule.Dest.CustomTableReference(j.DestTable, j.Source)
 	partition := base.TablePartition(destinationTable.TableId)
 	if len(dest.UniqueColumns) > 0 || partition != "" || len(dest.Transform) > 0 {
+
 		query := bq.NewQueryAction(selectAll, destinationTable, j.Rule.IsAppend(), actions)
+
+		toolbox.DumpIndent(query, true)
 		result.AddOnSuccess(query)
 	} else {
 		source := base.EncodeTableReference(load.DestinationTable, false)

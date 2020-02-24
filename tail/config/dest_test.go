@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/bqtail/stage"
 	"google.golang.org/api/bigquery/v2"
 	"testing"
 	"time"
@@ -76,7 +77,7 @@ func TestDestination_ExpandTable(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		actual, err := useCase.dest.ExpandTable(useCase.dest.Table, useCase.created, useCase.sourceURI)
+		actual, err := useCase.dest.ExpandTable(useCase.dest.Table, stage.NewSource(useCase.sourceURI, useCase.created))
 		if useCase.hasError {
 			assert.NotNil(t, err, useCase.description)
 			continue
@@ -139,7 +140,7 @@ func TestDestination_TableReference(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		actual, err := useCase.dest.TableReference(useCase.created, useCase.sourceURI)
+		actual, err := useCase.dest.TableReference(stage.NewSource(useCase.sourceURI, useCase.created))
 		if useCase.hasError {
 			assert.NotNil(t, err, useCase.description)
 			continue

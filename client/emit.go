@@ -19,7 +19,7 @@ func (s *service) emit(ctx context.Context, object storage.Object, response *tai
 			return err
 		}
 		for i := range objects {
-			if url.IsSchemeEquals(object.URL(), objects[i].URL()) {
+			if url.Equals(object.URL(), objects[i].URL()) {
 				continue
 			}
 			if err := s.emit(ctx, objects[i], response); err != nil {
@@ -32,7 +32,7 @@ func (s *service) emit(ctx context.Context, object storage.Object, response *tai
 		EventID:   fmt.Sprintf("%v", nextEventID()),
 		SourceURL: object.URL(),
 	}
-	atomic.AddInt32(&response.Published, 1)
+	atomic.AddInt32(&response.Info.Published, 1)
 	response.IncrementPending(1)
 	s.requestChan <- request
 	return nil

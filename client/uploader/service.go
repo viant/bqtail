@@ -8,13 +8,11 @@ import (
 	"time"
 )
 
-
 //Service represent uploader service
 type Service interface {
 	Schedule(request *Request)
 	Wait() error
 }
-
 
 type service struct {
 	*sync.WaitGroup
@@ -22,11 +20,10 @@ type service struct {
 	hasError   int32
 	errChannel chan error
 	OnDone
-	closed     int32
-	fs         afs.Service
+	closed  int32
+	fs      afs.Service
 	uploads chan *Request
 }
-
 
 func (d *service) upload(ctx context.Context, upload *Request) {
 	defer d.Done()
@@ -42,8 +39,6 @@ func (d *service) upload(ctx context.Context, upload *Request) {
 	}
 
 }
-
-
 
 func (d *service) Schedule(request *Request) {
 	d.WaitGroup.Add(1)
@@ -65,7 +60,6 @@ func (d *service) Wait() (err error) {
 	return err
 }
 
-
 func (d *service) init(ctx context.Context, routines int) {
 	d.routines = routines
 	d.uploads = make(chan *Request, routines)
@@ -85,9 +79,9 @@ func (d *service) init(ctx context.Context, routines int) {
 }
 
 //New creates a upload service
-func New(ctx context.Context, fs afs.Service, done OnDone, routines int) Service{
+func New(ctx context.Context, fs afs.Service, done OnDone, routines int) Service {
 	srv := &service{
-		OnDone: done,
+		OnDone:     done,
 		WaitGroup:  &sync.WaitGroup{},
 		errChannel: make(chan error, 1),
 		fs:         fs,
@@ -95,4 +89,3 @@ func New(ctx context.Context, fs afs.Service, done OnDone, routines int) Service
 	srv.init(ctx, routines)
 	return srv
 }
-

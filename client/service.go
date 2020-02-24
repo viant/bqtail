@@ -4,20 +4,21 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	"github.com/viant/bqtail/client/rule/build"
+	"github.com/viant/bqtail/client/rule/validate"
 	ctail "github.com/viant/bqtail/client/tail"
 	"github.com/viant/bqtail/tail"
-	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/bqtail/tail/contract"
 	"sync/atomic"
 )
 
 //Service represents a client service
 type Service interface {
-	BuildRule(ctx context.Context, request *BuildRuleRequest) (*config.Rule, error)
+	Build(ctx context.Context, request *build.Request) error
 
-	ValidateRule(ctx context.Context, request *ValidateRuleRequest) error
+	Validate(ctx context.Context, request *validate.Request) error
 
-	Tail(ctx context.Context, request *ctail.Request) (*ctail.Response, error)
+	Load(ctx context.Context, request *ctail.Request) (*ctail.Response, error)
 
 	Stop()
 }
@@ -41,17 +42,16 @@ func (s *service) Stop() {
 	}
 }
 
-
 //New creates a service
 func New() (Service, error) {
 	ctx := context.Background()
 	cfg, err := NewConfig(ctx, "")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create tail config")
+		return nil, errors.Wrapf(err, "failed to create scanFiles config")
 	}
 	tailService, err := tail.New(ctx, cfg)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create tail service")
+		return nil, errors.Wrapf(err, "failed to create scanFiles service")
 	}
 	return &service{
 		config:       cfg,

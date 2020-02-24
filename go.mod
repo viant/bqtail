@@ -5,6 +5,7 @@ go 1.12
 require (
 	cloud.google.com/go v0.53.0
 	github.com/go-errors/errors v1.0.1 // indirect
+	github.com/jessevdk/go-flags v1.4.0
 	github.com/nlopes/slack v0.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.5.1

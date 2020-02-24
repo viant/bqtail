@@ -14,6 +14,9 @@ const (
 	StatusError = "error"
 	//StatusStalled status for unprocessed file
 	StatusStalled = "stalled"
+
+	//StatusPending pending status
+	StatusPending = "pending"
 )
 
 //Process Extension
@@ -148,6 +151,13 @@ const PerformanceFile = "performance.json"
 
 //DateLayout represents a date layout
 const DateLayout = "2006-01-02_15"
+
+const (
+	//DefaultPrefix default prefix
+	DefaultPrefix = "/_adhoc_/"
+	//InMemoryStorageBaseURL in memory storage URL
+	InMemoryStorageBaseURL = "mem://localhost/"
+)
 
 //MaxReload default max load attempts (excluding corrupted files)
 var MaxReload = 15

@@ -31,7 +31,8 @@ type Service interface {
 }
 
 type service struct {
-	fs afs.Service
+	batchURLProvider func(rule *config.Rule) string
+	fs               afs.Service
 }
 
 func (s *service) addLocationFile(ctx context.Context, window *Window, location string) error {
@@ -51,8 +52,9 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 		//one batch per folder location
 		windowDest = fmt.Sprintf("%v_%v", process.DestTable, base.Hash(parentURL))
 	}
+	taskURL := s.batchURLProvider(rule)
 	batch := rule.Batch
-	windowURL := batch.WindowURL(windowDest, process.Source.Time)
+	windowURL := batch.WindowURL(taskURL, windowDest, process.Source.Time)
 	exists, _ := s.fs.Exists(ctx, windowURL, option.NewObjectKind(true))
 
 	endTime := batch.WindowEndTime(process.Source.Time)
@@ -68,7 +70,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 	}
 
 	if batch.RollOver && !batch.IsWithinFirstHalf(process.Source.Time) {
-		prevWindowURL := batch.WindowURL(process.DestTable, process.Source.Time.Add(-(1 + batch.Window.Duration)))
+		prevWindowURL := batch.WindowURL(taskURL, process.DestTable, process.Source.Time.Add(-(1 + batch.Window.Duration)))
 		if exists, _ := s.fs.Exists(ctx, prevWindowURL, option.NewObjectKind(true)); !exists {
 			startTime = startTime.Add(-batch.Window.Duration)
 		}
@@ -185,8 +187,9 @@ func (s *service) matchData(ctx context.Context, window *Window, rule *config.Ru
 }
 
 //New create stage service
-func New(storageService afs.Service) Service {
+func New(batchURLProvider func(rule *config.Rule) string, storageService afs.Service) Service {
 	return &service{
-		fs: storageService,
+		batchURLProvider: batchURLProvider,
+		fs:               storageService,
 	}
 }

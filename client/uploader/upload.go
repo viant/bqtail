@@ -11,7 +11,5 @@ type Request struct {
 
 //NewRequest creates a new upload request
 func NewRequest(src, dest string) *Request {
-	return &Request{src: src,dest:dest}
+	return &Request{src: src, dest: dest}
 }
-
-

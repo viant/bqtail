@@ -29,6 +29,8 @@ pipeline:
         - cp -rf service vendor/github.com/viant/bqtail
         - cp -rf s* vendor/github.com/viant/bqtail/
         - cp -rf t* vendor/github.com/viant/bqtail/
+        - cd ${appPath}/client/bqtail
+        - go build
 
     deploay:
       bqtail:

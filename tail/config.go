@@ -53,17 +53,22 @@ func (c Config) Match(URL string) []*config.Rule {
 	return matched
 }
 
+//TaskURL returns task URL
+func (c Config) TaskURL(rule *config.Rule) string {
+	baseURL := c.SyncTaskURL
+	if rule.Async {
+		baseURL = c.AsyncTaskURL
+	}
+	return baseURL
+}
+
 func (c *Config) initLoadedRules() {
 	if len(c.Rules) == 0 {
 		return
 	}
 	for _, route := range c.Rules {
 		if route.Batch != nil {
-			baseURL := c.SyncTaskURL
-			if route.Async {
-				baseURL = c.AsyncTaskURL
-			}
-			route.Batch.Init(baseURL)
+			route.Batch.Init()
 		}
 	}
 }

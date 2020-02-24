@@ -43,13 +43,13 @@ func isLoggingLevel(key string, value string) bool {
 //LogProgress logs progress
 func LogProgress() {
 	sequence := ""
-	if lastLogMessage != LoggingProgressChar || progressCharCount > LoggingProgressLineSize {
+	if (lastLogMessage != LoggingProgressChar && !strings.HasSuffix(lastLogMessage, "\n")) || progressCharCount > LoggingProgressLineSize {
 		progressCharCount = 0
-		sequence += "\n"
+		sequence = "\n"
 	}
 	progressCharCount++
-	lastLogMessage = sequence + LoggingProgressChar
-	fmt.Printf(LoggingProgressChar)
+	lastLogMessage = LoggingProgressChar
+	fmt.Printf(sequence + LoggingProgressChar)
 }
 
 //LogF logs message template with parameters
@@ -70,12 +70,13 @@ func LogLn(message interface{}) {
 		if err := toolbox.DefaultConverter.AssignConverted(&aMap, message); err != nil {
 			log.Println(err)
 		}
-		aMap = toolbox.DeleteEmptyKeys(aMap)
-		JSON, err := json.Marshal(aMap)
+		compacted := map[string]interface{}{}
+		toolbox.CopyMap(aMap, compacted, toolbox.OmitEmptyMapWriter)
+		JSON, err := json.Marshal(compacted)
 		if err != nil {
 			textMessage = fmt.Sprintf("%+v", message)
 		} else {
-			textMessage = "." + string(JSON)
+			textMessage = "&" + string(JSON)
 		}
 	}
 	if !strings.HasSuffix(textMessage, "\n") {

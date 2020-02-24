@@ -12,11 +12,10 @@ type replacement struct {
 	once bool
 }
 
-
-func  expandPattern(pattern string) string {
+func expandPattern(pattern string) string {
 	for _, rule := range patternReplacements() {
 		count := 1
-		if ! rule.once {
+		if !rule.once {
 			count = strings.Count(pattern, rule.from)
 		}
 		pattern = strings.Replace(pattern, rule.from, rule.to, count)
@@ -27,32 +26,33 @@ func  expandPattern(pattern string) string {
 func patternReplacements() []*replacement {
 	now := time.Now()
 	return []*replacement{
+
 		{
-			from: "\\d{4}",
+			from: "(\\d{4})",
 			to:   fmt.Sprintf("%04d", now.Year()),
 		},
 		{
-			from: "\\d{2}",
+			from: "(\\d{2})",
 			to:   fmt.Sprintf("%02d", now.Month()),
 			once: true,
 		},
 		{
-			from: "\\d{2}",
+			from: "(\\d{2})",
 			to:   fmt.Sprintf("%02d", now.Day()),
 			once: true,
 		},
 		{
-			from: "\\d{2}",
+			from: "(\\d{2})",
 			to:   fmt.Sprintf("%02d", now.Hour()),
 			once: true,
 		},
 		{
-			from: "\\d{2}",
+			from: "(\\d{2})",
 			to:   fmt.Sprintf("%02d", now.Minute()),
 			once: true,
 		},
 		{
-			from: "\\d{2}",
+			from: "(\\d{2})",
 			to:   fmt.Sprintf("%02d", now.Second()),
 			once: true,
 		},
@@ -61,7 +61,7 @@ func patternReplacements() []*replacement {
 			to:   fmt.Sprintf("%10d", now.Unix()),
 		},
 		{
-			from: "\\.+",
+			from: ".+",
 			to:   fmt.Sprintf("%10d", now.Unix()),
 		},
 		{

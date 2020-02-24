@@ -3,6 +3,7 @@ package contract
 import (
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/tail/batch"
 	"github.com/viant/bqtail/tail/status"
 )
 
@@ -20,7 +21,7 @@ type Response struct {
 
 	TriggerURL     string
 	ScheduledURL   string         `json:",omitempty"`
-	Window         interface{}    `json:",omitempty"`
+	Window         *batch.Window  `json:",omitempty"`
 	Process        *stage.Process `json:",omitempty"`
 	ListOpCount    int            `json:",omitempty"`
 	StorageRetries map[int]int    `json:",omitempty"`

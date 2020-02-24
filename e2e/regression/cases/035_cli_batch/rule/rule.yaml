@@ -1,0 +1,12 @@
+When:
+  Prefix: /data/case035
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v035
+Batch:
+  MultiPath: true
+  Window:
+    DurationInSec: 15
+Async: true
+OnSuccess:
+  - Action: delete

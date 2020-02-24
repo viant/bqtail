@@ -191,7 +191,7 @@ func TestURIs_Classify(t *testing.T) {
 			expectMissing:       []string{},
 			expectCorrupted:     []string{},
 			expectInvalidSchema: []string{"gs://myproject_bqtail/data/case018/dummy2.json"},
-			expectedValid:       []string{"gs://myproject_bqtail/data/case018/dummy1.json"},
+			expectedValid:       []string{"gs://myproject_bqtail/data/case018/dummy.json"},
 			job: `{
   "configuration": {
     "jobType": "LOAD",
@@ -204,7 +204,7 @@ func TestURIs_Classify(t *testing.T) {
       },
       "sourceFormat": "NEWLINE_DELIMITED_JSON",
       "sourceUris": [
-         "gs://myproject_bqtail/data/case018/dummy1.json",
+         "gs://myproject_bqtail/data/case018/dummy.json",
          "gs://myproject_bqtail/data/case018/dummy2.json"
       ],
       "writeDisposition": "WRITE_TRUNCATE"

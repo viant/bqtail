@@ -12,19 +12,6 @@ import (
 	"time"
 )
 
-//BuildRuleRequest represents build rule request
-type BuildRuleRequest struct {
-	ProjectID string
-	Bucket    string
-	BasePath  string
-	Window    int
-	SourceURL string
-}
-
-func (s *service) BuildRule(ctx context.Context, request *BuildRuleRequest) (*config.Rule, error) {
-	return nil, nil
-}
-
 func (s *service) loadRule(ctx context.Context, URL string) (*config.Rule, error) {
 	reader, err := s.fs.DownloadWithURL(ctx, URL)
 	if err != nil {
@@ -51,15 +38,18 @@ func (s *service) loadRule(ctx context.Context, URL string) (*config.Rule, error
 	return rule, nil
 }
 
-
-func (s *service) reportRule(rule *config.Rule)  {
+func ruleToMap(rule *config.Rule) map[string]interface{} {
 	ruleMap := map[string]interface{}{}
 	toolbox.DefaultConverter.AssignConverted(&ruleMap, rule)
 	compactedMap := map[string]interface{}{}
 	toolbox.CopyMap(ruleMap, compactedMap, toolbox.OmitEmptyMapWriter)
-	var ruleYAML, err = yaml.Marshal(compactedMap)
-	if err == nil {
-		shared.LogF("==== USING RULE ===\n%s\n", ruleYAML)
-	}
+	return compactedMap
 }
 
+func (s *service) reportRule(rule *config.Rule) {
+	ruleMap := ruleToMap(rule)
+	var ruleYAML, err = yaml.Marshal(ruleMap)
+	if err == nil {
+		shared.LogF("==== USING RULE ===\n%s===== END ====\n", ruleYAML)
+	}
+}
