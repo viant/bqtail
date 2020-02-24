@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+var Version string
+
 func main() {
-	client.RunClient(os.Args[1:])
+	client.RunClient(Version, os.Args[1:])
 }

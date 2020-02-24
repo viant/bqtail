@@ -56,9 +56,6 @@ bqtail -s=mydatafile -d='myProject:mydataset.mytable' -V
 bqtail -s=mydatafile -d='myProject:mydataset.mytable'
 ```
 
-
-
-
 **Local data ingestion with data ingestion rule**
 
 ```bash

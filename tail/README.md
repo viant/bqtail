@@ -20,7 +20,6 @@ Tail service is a google storage triggered cloud function that:
 
 Configuration is defined as [config.go](config.go)
 
-
 **Configuration options:**
 
 - JournalURL: active/past job journal URL 

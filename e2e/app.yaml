@@ -1,5 +1,7 @@
 defaults:
   credentials: $gcpCredentials
+init:
+  AppVersion: $Cat(${appPath}/Version)
 
 pipeline:
 
@@ -30,7 +32,14 @@ pipeline:
         - cp -rf s* vendor/github.com/viant/bqtail/
         - cp -rf t* vendor/github.com/viant/bqtail/
         - cd ${appPath}/client/bqtail
-        - go build
+        - export GOOS=linux
+        - go build -ldflags "-X main.Version=${AppVersion}"
+        - tar cvzf bqtail_linux_${AppVersion}.tar.gz bqtail
+        - export GOOS=darwin
+        - go build -ldflags "-X main.Version=${AppVersion}"
+        - tar cvzf bqtail_osx_${AppVersion}.tar.gz bqtail
+        - unset GOOS
+        - go build -ldflags "-X main.Version=${AppVersion}"
 
     deploay:
       bqtail:

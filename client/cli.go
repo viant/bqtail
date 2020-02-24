@@ -8,13 +8,15 @@ import (
 	"github.com/viant/bqtail/client/rule/validate"
 	"github.com/viant/bqtail/client/tail"
 	"github.com/viant/bqtail/shared"
-	"github.com/viant/toolbox"
 	"log"
 	"os"
 )
 
+
+var Version string
+
 //RunClient run client
-func RunClient(args []string) {
+func RunClient(Version string, args []string) {
 	options := &option.Options{}
 	_, err := flags.ParseArgs(options, args)
 	if isHelOption(args) {
@@ -23,15 +25,23 @@ func RunClient(args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+
+	if options.Version {
+		shared.LogF("BqTail: Version: %v\n", Version)
+		return
+	}
+
 	if options.Logging != "" {
 		os.Setenv(shared.LoggingEnvKey, options.Logging)
 	}
-	toolbox.Dump(options)
+
 	canBuildRule := options.Destination != ""
 	canLoad := options.SourceURL != ""
 	if !(canLoad || options.Validate || canBuildRule) && len(args) == 1 {
 		os.Exit(1)
 	}
+
 
 	srv, err := New()
 	if err != nil {

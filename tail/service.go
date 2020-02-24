@@ -212,6 +212,7 @@ func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *
 	}
 	result.ProcessURL = s.config.BuildLoadURL(result)
 	result.DoneProcessURL = s.config.DoneLoadURL(result)
+	result.FailedURL = url.Join(s.config.JournalURL, "failed")
 	result.ProjectID = s.selectProjectID(ctx, rule, response)
 	result.Params, err = rule.Dest.Params(result.Source.URL)
 	if shared.IsDebugLoggingLevel() {
@@ -464,6 +465,7 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 	if configuration.Load == nil || len(configuration.Load.SourceUris) == 0 {
 		err := base.JobError(job.BqJob)
 		response.Retriable = base.IsRetryError(err)
+		_  = job.MoveToFailed(ctx, s.fs)
 		return err
 	}
 	response.LoadError = base.JobError(job.BqJob).Error()

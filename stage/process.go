@@ -1,9 +1,11 @@
 package stage
 
 import (
+	"context"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/afs"
 	"strings"
 )
 
@@ -12,6 +14,7 @@ type Process struct {
 	Source         *Source                `json:",omitempty"`
 	ProcessURL     string                 `json:",omitempty"`
 	DoneProcessURL string                 `json:",omitempty"`
+	FailedURL      string                 `json:",omitempty"`
 	RuleURL        string                 `json:",omitempty"`
 	EventID        string                 `json:",omitempty"`
 	ProjectID      string                 `json:",omitempty"`
@@ -21,6 +24,10 @@ type Process struct {
 	TempTable      string                 `json:",omitempty"`
 	DestTable      string                 `json:",omitempty"`
 	StepCount      int                    `json:",omitempty"`
+}
+
+func (p *Process) MoveToFailed(ctx context.Context, fs afs.Service) error {
+	return fs.Move(ctx, p.ProcessURL, p.FailedURL)
 }
 
 //Mode returns action suffix
