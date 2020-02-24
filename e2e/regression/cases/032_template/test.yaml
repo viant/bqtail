@@ -50,7 +50,7 @@ pipeline:
     source:
       URL: ${parent.path}/data/trigger/dummy.json
     dest:
-      URL: gs://${triggerBucket}/data/case${parent.index}/2020/01/03/dummy.json
+      URL: gs://${triggerBucket}/data/case${parent.index}/2020/01/02/dummy.json
       credentials: $gcpCredentials
 
 
