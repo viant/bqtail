@@ -1,1 +1,2 @@
 - Update documentation/examples
+- Add bqtail docker image
