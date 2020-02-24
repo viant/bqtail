@@ -8,6 +8,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Introduction](#introduction)
 - [Tail Service](tail/README.md)
 - [Dispatch Service](dispatch/README.md)
+- [Getting Started](#)
 - [Usage](#usage)
 - [End to end testing](#end-to-end-testing)
 
@@ -31,12 +32,14 @@ Note that free of charge data ingestion takes place on default-pipeline reservat
 To guarantee ingestion speed for critical data it is recommended to use project with [slot reservation](https://cloud.google.com/bigquery/docs/slots)
 
 
-
 _BqTail_ is used by Viant to ingest **70+ billions** transactions _daily_, **1.4 million files** to 100+ tables, all under $15, as viable alternative
 for Big Query Streaming API, BigQuery Transfer Service, Cloud Dataflow. 
 
 
 ## Introduction
+
+BqTail process can ingest data in async mode using serverless cloud functions based tail and dispatch service, or sync mode with standalone bqtail client. 
+
 
 ![BqTail](images/bqtail.png)
 
@@ -45,6 +48,23 @@ for Big Query Streaming API, BigQuery Transfer Service, Cloud Dataflow.
 - [Dispatch Service](dispatch/README.md)
 - [Task Service](service/README.md)
 
+
+## Getting started
+
+[BqTail client](client/README.md) client is great place to start to start building and validating ingestion rule locally.
+
+```bash
+    ## to validate
+    bqtail -s=localSourceFolder -d='myproject:mydataset.mytable' -w=90 -V
+    ## to load data
+    bqtail -s=localSourceFolder -d='myproject:mydataset.mytable' -w=90
+    ## to load with rule file
+    bqtail -s=localSourceFolder -r='myrule.yaml'
+
+    ### to stream data from s3
+    export AWS_SDK_LOAD_CONFIG=true
+    bqtail -s='s3://bybucket/dataxx/' -r='myrule.yaml' -X
+```
 
 ## Usage
 

@@ -21,7 +21,7 @@ func (s *service) Validate(ctx context.Context, request *validate.Request) error
 	}
 	cfg.RulesURL = parent
 	err = cfg.Init(ctx, s.fs)
-	if err == nil {
+	if err == nil && len(cfg.Rules) > 0 {
 		s.reportRule(cfg.Rules[0])
 		shared.LogLn("Rule is VALID\n")
 	}

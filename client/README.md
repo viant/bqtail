@@ -25,38 +25,61 @@ Help:
 bqtail -h
 ```
 
+**Data ingestion rule validation**
+
+To validate rule use -V option.
+
+```bash
+    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
+
+    bqtail -r='myRuleURL -V'
+
+   bqtail -s=mydatafile -d='myProject:mydataset.mytable' -V
+  
+```
+
+
 **Local data file ingestion**
 
 ```bash
+    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
     bqtail -s=mydatafile -d='myProject:mydataset.mytable'
 ```
+
+
+
 
 **Local data ingestion with data ingestion rule**
 
 ```bash
+    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
     bqtail -s=mydatafile -r='myRuleURL' 
 ```
 
 **Local data files ingestion**
 
 ```bash
+    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
     bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable'
 ```
 
 **Local data files ingestion in batch with 120 sec window**
 
 ```bash
+    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
     bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120
 ```
 
 **Local data files streaming ingestion with rule**
 
 ```bash
+    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
     bqtail -s=mylocaldatafolder -r='myRuleURL' -X 
 ```
 
 **Local data files ingestion in batch with 120 sec window with processed file tracking**
 
 ```bash
+    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
     bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120 -h=~/.bqtail
 ```
