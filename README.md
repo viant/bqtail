@@ -10,6 +10,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Dispatch Service](dispatch/README.md)
 - [Getting Started](#)
 - [Usage](#usage)
+- [Data ingestion rule](tail/README.md#data-ingestion-rules)
 - [End to end testing](#end-to-end-testing)
 
 
@@ -65,6 +66,7 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
     export AWS_SDK_LOAD_CONFIG=true
     bqtail -s='s3://bybucket/dataxx/' -r='myrule.yaml' -X
 ```
+
 
 ## Usage
 

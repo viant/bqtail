@@ -14,10 +14,25 @@ By default only streaming mode stores history file in file:///${env.HOME}/.bqtai
 
 ### Installation
 
+##### OSX
 
+wget https://github.com/viant/bqtail/releases/download/v2.0.0/bqtail_osx_2.0.0.tar.gz
+tar -xvzf bqtail_osx_2.0.0.tar.gz
+cp bqtail /usr/local/bin/
+
+##### Linux
+
+wget https://github.com/viant/bqtail/releases/download/v2.0.0/bqtail_linux_2.0.0.tar.gz
+tar -xvzf bqtail_linux_2.0.0.tar.gz
+cp bqtail /usr/local/bin/
 
 
 ### Usage  
+
+Since bqtail client uses default google service account credentials, before running load process set **GOOGLE_APPLICATION_CREDENTIALS**
+
+```bash
+```
 
 Help: 
 
@@ -30,20 +45,15 @@ bqtail -h
 To validate rule use -V option.
 
 ```bash
-    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
+bqtail -r='myRuleURL -V'
+bqtail -s=mydatafile -d='myProject:mydataset.mytable' -V
 
-    bqtail -r='myRuleURL -V'
-
-   bqtail -s=mydatafile -d='myProject:mydataset.mytable' -V
-  
 ```
-
 
 **Local data file ingestion**
 
 ```bash
-    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
-    bqtail -s=mydatafile -d='myProject:mydataset.mytable'
+bqtail -s=mydatafile -d='myProject:mydataset.mytable'
 ```
 
 
@@ -52,34 +62,29 @@ To validate rule use -V option.
 **Local data ingestion with data ingestion rule**
 
 ```bash
-    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
-    bqtail -s=mydatafile -r='myRuleURL' 
+bqtail -s=mydatafile -r='myRuleURL' 
 ```
 
 **Local data files ingestion**
 
 ```bash
-    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
-    bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable'
+bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable'
 ```
 
 **Local data files ingestion in batch with 120 sec window**
 
 ```bash
-    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
-    bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120
+bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120
 ```
 
 **Local data files streaming ingestion with rule**
 
 ```bash
-    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
-    bqtail -s=mylocaldatafolder -r='myRuleURL' -X 
+bqtail -s=mylocaldatafolder -r='myRuleURL' -X 
 ```
 
 **Local data files ingestion in batch with 120 sec window with processed file tracking**
 
 ```bash
-    export GOOGLE_APPLICATION_CREDENTIALS='mygoogle-secret.json'
-    bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120 -h=~/.bqtail
+bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120 -h=~/.bqtail
 ```

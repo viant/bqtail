@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.53.0
+	github.com/aws/aws-sdk-go v1.29.9 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/nlopes/slack v0.6.0
