@@ -13,7 +13,7 @@
   * Added Config.Async - global setting for all rules
   * Added URL pattern name substitution parameters
   * Added pubsub push action
-
+  * Added stand alone BqTail command
 
 ## Jan 14 2020 1.1.0
 

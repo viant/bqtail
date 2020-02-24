@@ -1,4 +1,4 @@
-package client
+package cmd
 
 import (
 	"context"
@@ -7,10 +7,10 @@ import (
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
-	"github.com/viant/bqtail/client/history"
-	"github.com/viant/bqtail/client/prefix"
-	"github.com/viant/bqtail/client/tail"
-	"github.com/viant/bqtail/client/uploader"
+	"github.com/viant/bqtail/cmd/history"
+	"github.com/viant/bqtail/cmd/prefix"
+	"github.com/viant/bqtail/cmd/tail"
+	"github.com/viant/bqtail/cmd/uploader"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/bqtail/tail/contract"

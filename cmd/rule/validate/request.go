@@ -1,7 +1,7 @@
 package validate
 
 import (
-	"github.com/viant/bqtail/client/option"
+	"github.com/viant/bqtail/cmd/option"
 )
 
 //Request represents rule validation request

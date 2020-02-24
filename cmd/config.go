@@ -1,4 +1,4 @@
-package client
+package cmd
 
 import (
 	"bytes"

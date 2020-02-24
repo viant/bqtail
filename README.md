@@ -39,8 +39,7 @@ for Big Query Streaming API, BigQuery Transfer Service, Cloud Dataflow.
 
 ## Introduction
 
-BqTail process can ingest data in async mode using serverless cloud functions based tail and dispatch service, or sync mode with standalone bqtail client. 
-
+BqTail process can ingest data in async mode using serverless cloud functions based tail and dispatch service, or sync mode with standalone bqtail command. 
 
 ![BqTail](images/bqtail.png)
 
@@ -52,8 +51,7 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
 
 ## Getting started
 
-[BqTail client](client/README.md) client is great place to start to start building and validating ingestion rule locally.
-
+[BqTail command](cmd/README.md) is great place to start to start building and validating ingestion rule locally.
 ```bash
     ## to validate
     bqtail -s=localSourceFolder -d='myproject:mydataset.mytable' -w=90 -V
@@ -67,6 +65,8 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
     bqtail -s='s3://bybucket/dataxx/' -r='myrule.yaml' -X
 ```
 
+
+[Deploying serverless stack](deployment/README.md) 
 
 ## Usage
 

@@ -1,11 +1,11 @@
-package client
+package cmd
 
 import (
 	"context"
 	"fmt"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
-	"github.com/viant/bqtail/client/tail"
+	"github.com/viant/bqtail/cmd/tail"
 	"github.com/viant/bqtail/tail/contract"
 	"math/rand"
 	"sync/atomic"

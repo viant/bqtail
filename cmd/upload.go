@@ -1,13 +1,13 @@
-package client
+package cmd
 
 import (
 	"context"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
-	"github.com/viant/bqtail/client/history"
-	"github.com/viant/bqtail/client/tail"
-	"github.com/viant/bqtail/client/uploader"
+	"github.com/viant/bqtail/cmd/history"
+	"github.com/viant/bqtail/cmd/tail"
+	"github.com/viant/bqtail/cmd/uploader"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
 	"sync/atomic"

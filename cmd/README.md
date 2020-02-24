@@ -1,10 +1,10 @@
-## BqTail - client
+## BqTail - command line loader
 
 Stand alone Google Storage based BigQuery loader.
 
 ### Introduction
 
-BqTail client manages ingestion process on client side using [Data ingestion rules](../../bqtail/tail/README.md#data-ingestion-rules).
+BqTail command loader manages ingestion process as stand along process using [Data ingestion rules](../../bqtail/tail/README.md#data-ingestion-rules).
 For each source datafile an event is triggered to local BqTail process.
 For any source where URL is not Google Storage (gs://), the tail process copies data file to Google Storage bucket followed by triggering local events.
 BqTail client supports all feature of serverless BqTail with exception that is always run in sync mode, on top of that it also support constant data streaming option.

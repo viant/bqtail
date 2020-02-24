@@ -1,4 +1,4 @@
-package client
+package cmd
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	foption "github.com/viant/afs/option"
 	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/client/rule/build"
+	"github.com/viant/bqtail/cmd/rule/build"
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail/config"

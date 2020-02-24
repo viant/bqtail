@@ -1,12 +1,12 @@
-package client
+package cmd
 
 import (
 	"context"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
-	"github.com/viant/bqtail/client/rule/build"
-	"github.com/viant/bqtail/client/rule/validate"
-	ctail "github.com/viant/bqtail/client/tail"
+	"github.com/viant/bqtail/cmd/rule/build"
+	"github.com/viant/bqtail/cmd/rule/validate"
+	ctail "github.com/viant/bqtail/cmd/tail"
 	"github.com/viant/bqtail/tail"
 	"github.com/viant/bqtail/tail/contract"
 	"sync/atomic"

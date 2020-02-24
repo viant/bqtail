@@ -1,11 +1,11 @@
-package client
+package cmd
 
 import (
 	"context"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
-	"github.com/viant/bqtail/client/rule/validate"
+	"github.com/viant/bqtail/cmd/rule/validate"
 	"github.com/viant/bqtail/shared"
 )
 

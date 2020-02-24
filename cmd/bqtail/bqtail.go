@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/viant/bqtail/client"
+	"github.com/viant/bqtail/cmd"
 	_ "github.com/viant/afsc/s3"
 	"os"
 )
@@ -9,5 +9,5 @@ import (
 var Version string
 
 func main() {
-	client.RunClient(Version, os.Args[1:])
+	cmd.RunClient(Version, os.Args[1:])
 }
