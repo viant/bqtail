@@ -1,7 +1,7 @@
 init:
   doneCounter: 0
   parentIndex: ${parent.index}
-  bqtailCmd: ${appPath}/client/bqtail/bqtail
+  bqtailCmd: ${appPath}/cmd/bqtail/bqtail
 
 pipeline:
   prepare:
