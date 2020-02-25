@@ -2,10 +2,10 @@ package stage
 
 import (
 	"context"
+	"github.com/viant/afs"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/afs"
 	"strings"
 )
 

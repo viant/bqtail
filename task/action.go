@@ -60,7 +60,7 @@ func (a *Action) Init(ctx context.Context, fs afs.Service) error {
 		}
 	} else {
 		if a.Actions != nil && (len(a.Actions.OnSuccess) > 0 || len(a.Actions.OnFailure) > 0) {
-			return errors.Errorf("action %v does not support OnSuccess/OnFailure")
+			return errors.Errorf("action %v does not support OnSuccess/OnFailure", a.Action)
 		}
 		a.Actions = nil
 		return nil

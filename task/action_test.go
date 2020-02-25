@@ -40,7 +40,7 @@ func TestActions_Expand(t *testing.T) {
 
 	for _, useCase := range useCases {
 		expander := data.Map(useCase.expander)
-		expanded := useCase.action.Expand(useCase.req, useCase.root, expander)
+		expanded := useCase.action.Expand(useCase.root, expander)
 		assert.EqualValues(t, useCase.expanded, *expanded, useCase.description)
 	}
 

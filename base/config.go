@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/auth"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
 	"github.com/viant/bqtail/stage/activity"
-	"golang.org/x/oauth2/google"
 	"os"
 	"path"
 	"strings"
@@ -72,11 +72,11 @@ func (c *Config) Init(ctx context.Context) error {
 			}
 		}
 		if c.ProjectID == "" {
-			credentials, err := google.FindDefaultCredentials(ctx)
+			project, err := auth.DefaultProjectProvider(ctx, auth.Scopes)
 			if err != nil {
 				return err
 			}
-			c.ProjectID = credentials.ProjectID
+			c.ProjectID = project
 		}
 	}
 

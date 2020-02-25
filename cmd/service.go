@@ -43,9 +43,9 @@ func (s *service) Stop() {
 }
 
 //New creates a service
-func New() (Service, error) {
+func New(projectID string) (Service, error) {
 	ctx := context.Background()
-	cfg, err := NewConfig(ctx, "")
+	cfg, err := NewConfig(ctx, projectID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create scanFiles config")
 	}

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/viant/bqtail/cmd"
 	_ "github.com/viant/afsc/s3"
+	"github.com/viant/bqtail/cmd"
 	"os"
 )
 

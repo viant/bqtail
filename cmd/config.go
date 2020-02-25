@@ -8,10 +8,9 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
+	"github.com/viant/bqtail/auth"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/storage/v1"
 	"strings"
 )
 
@@ -38,12 +37,11 @@ func NewConfig(ctx context.Context, projectID string) (*tail.Config, error) {
 }
 
 func newConfig(ctx context.Context, projectID string) (*tail.Config, error) {
-	credentials, err := google.FindDefaultCredentials(ctx, storage.CloudPlatformScope)
-	if err != nil {
-		return nil, err
-	}
+	var err error
 	if projectID == "" {
-		projectID = credentials.ProjectID
+		if projectID, err = auth.DefaultProjectProvider(ctx, auth.Scopes); err != nil {
+			return nil, err
+		}
 	}
 	cfg := &tail.Config{}
 	cfg.Async = &async

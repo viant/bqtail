@@ -13,6 +13,7 @@ import (
 	astorage "github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
+	"github.com/viant/bqtail/auth"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/base/job"
 	"github.com/viant/bqtail/service/bq"
@@ -32,6 +33,7 @@ import (
 	"github.com/viant/bqtail/task"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
+	goption "google.golang.org/api/option"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -59,13 +61,20 @@ func (s *service) Init(ctx context.Context) error {
 	}
 	slackService := slack.New(s.config.Region, s.config.ProjectID, s.fs, secret.New(), s.config.SlackCredentials)
 	slack.InitRegistry(s.Registry, slackService)
-	pubsubService, err := pubsub.New(ctx, s.config.ProjectID)
+
+	options := []goption.ClientOption{goption.WithScopes(auth.Scopes...)}
+	if client, _ := auth.DefaultHTTPClientProvider(ctx, auth.Scopes); client != nil {
+		options = append(options, goption.WithHTTPClient(client))
+	}
+
+	pubsubService, err := pubsub.New(ctx, s.config.ProjectID, options...)
 	if err == nil {
 		pubsub.InitRegistry(s.Registry, pubsubService)
 	} else {
 		fmt.Printf("failed to create pubsub service: %v", err)
 	}
-	bqService, err := bigquery.NewService(ctx)
+
+	bqService, err := bigquery.NewService(ctx, options...)
 	if err != nil {
 		return err
 	}
@@ -465,7 +474,7 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 	if configuration.Load == nil || len(configuration.Load.SourceUris) == 0 {
 		err := base.JobError(job.BqJob)
 		response.Retriable = base.IsRetryError(err)
-		_  = job.MoveToFailed(ctx, s.fs)
+		_ = job.MoveToFailed(ctx, s.fs)
 		return err
 	}
 	response.LoadError = base.JobError(job.BqJob).Error()

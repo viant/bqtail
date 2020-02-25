@@ -29,10 +29,26 @@ cp bqtail /usr/local/bin/
 
 ### Usage  
 
-Since bqtail client uses default google service account credentials, before running load process set **GOOGLE_APPLICATION_CREDENTIALS**
+BqTail client can use one the following auth method
+
+1.With Google Service Account Secrets
 
 ```bash
+export GOOGLE_APPLICATION_CREDENTIALS=myGoogle.secret
 ```
+
+2. With gsutil authentication
+
+```bash
+    gcloud config set project my-project
+    gcloud auth login`
+    export GCLOUD_AUTH=true
+``` 
+
+3. With BqTail client
+
+
+
 
 Help: 
 
@@ -45,9 +61,8 @@ bqtail -h
 To validate rule use -V option.
 
 ```bash
-bqtail -r='myRuleURL -V'
+bqtail -r='myRuleURL -V' -p=myProject
 bqtail -s=mydatafile -d='myProject:mydataset.mytable' -V
-
 ```
 
 **Local data file ingestion**

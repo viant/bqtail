@@ -3,15 +3,17 @@ package cmd
 import (
 	"context"
 	"github.com/jessevdk/go-flags"
+	"github.com/viant/afsc/gs"
+	"github.com/viant/bqtail/auth"
 	"github.com/viant/bqtail/cmd/option"
 	"github.com/viant/bqtail/cmd/rule/build"
 	"github.com/viant/bqtail/cmd/rule/validate"
 	"github.com/viant/bqtail/cmd/tail"
 	"github.com/viant/bqtail/shared"
+	"github.com/viant/toolbox"
 	"log"
 	"os"
 )
-
 
 var Version string
 
@@ -26,6 +28,10 @@ func RunClient(Version string, args []string) {
 		log.Fatal(err)
 	}
 
+	useGsUtilAuth := toolbox.AsBoolean(os.Getenv("GCLOUD_AUTH"))
+	authService := auth.New(auth.BqTailClient, useGsUtilAuth, options.ProjectID, auth.Scopes...)
+
+	setDefaultAuth(authService)
 
 	if options.Version {
 		shared.LogF("BqTail: Version: %v\n", Version)
@@ -42,8 +48,7 @@ func RunClient(Version string, args []string) {
 		os.Exit(1)
 	}
 
-
-	srv, err := New()
+	srv, err := New(options.ProjectID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,6 +78,13 @@ func RunClient(Version string, args []string) {
 		os.Exit(1)
 	}
 	os.Exit(0)
+}
+
+func setDefaultAuth(authService auth.Service) {
+	auth.DefaultHTTPClientProvider = authService.AuthHTTPClient
+	auth.DefaultProjectProvider = authService.ProjectID
+	gs.DefaultHTTPClientProvider = authService.AuthHTTPClient
+	gs.DefaultProjectProvider = authService.ProjectID
 }
 
 func isHelOption(args []string) bool {

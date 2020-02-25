@@ -157,6 +157,12 @@ const (
 	DefaultPrefix = "/_adhoc_/"
 	//InMemoryStorageBaseURL in memory storage URL
 	InMemoryStorageBaseURL = "mem://localhost/"
+
+	//ServiceAccountCredentials
+	ServiceAccountCredentials = "GOOGLE_APPLICATION_CREDENTIALS"
+
+	//UserAgent bqtail user agent
+	UserAgent = "Viant/BqTail"
 )
 
 //MaxReload default max load attempts (excluding corrupted files)

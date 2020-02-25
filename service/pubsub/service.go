@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/viant/bqtail/task"
+	"google.golang.org/api/option"
 	"google.golang.org/api/pubsub/v1"
-
 	"strings"
 )
 
@@ -29,8 +29,8 @@ func (s *service) topicInProject(request *PushRequest) string {
 }
 
 //New creates a service
-func New(ctx context.Context, projectID string) (Service, error) {
-	srv, err := pubsub.NewService(ctx)
+func New(ctx context.Context, projectID string, options ...option.ClientOption) (Service, error) {
+	srv, err := pubsub.NewService(ctx, options...)
 	if err != nil {
 		return nil, err
 	}

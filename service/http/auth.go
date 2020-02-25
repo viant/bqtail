@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/option"
 	htransport "google.golang.org/api/transport/http"
 	"io/ioutil"
@@ -11,8 +12,6 @@ import (
 )
 
 const (
-	//UserAgent bqtail user agent
-	UserAgent              = "Viant/BqTail"
 	metadataServerTokenURL = "http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?audience="
 )
 
@@ -54,7 +53,7 @@ func scopedHTTPClient(ctx context.Context, scopes ...string) (*http.Client, erro
 	scopes = append(scopes, CloudPlatformScope, DevstorageFullControlScope, ComputeCloudPlatformScope, BigQueryScope, BigQueryInsertScope)
 	o := []option.ClientOption{
 		option.WithScopes(scopes...),
-		option.WithUserAgent(UserAgent),
+		option.WithUserAgent(shared.UserAgent),
 	}
 	httpClient, _, err := htransport.NewClient(ctx, o...)
 	return httpClient, err
