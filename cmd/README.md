@@ -81,13 +81,17 @@ bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120 -h=~/.bqtail
 
 BqTail client can use one the following auth method
 
-1.With Google Service Account Secrets
+1. With BqTail oath client (by default)
+
+- no env setting needed
+
+2.With Google Service Account Secrets
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=myGoogle.secret
 ```
 
-2. With gsutil authentication
+3. With gsutil authentication
 
 ```bash
     gcloud config set project my-project
@@ -95,7 +99,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=myGoogle.secret
     export GCLOUD_AUTH=true
 ``` 
 
-3. With BqTail client
+
 
 
 Help: 
