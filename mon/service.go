@@ -32,7 +32,10 @@ import (
 	"time"
 )
 
-const maxErrors = 40
+const (
+	maxErrors               = 40
+	maxLongRunningProcesses = 100
+)
 
 //Service represents monitoring service
 type Service interface {
@@ -106,9 +109,13 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 		}
 	}()
 	waitGroup.Wait()
+
 	if len(active) > 0 {
 		s.updateActiveLoads(active, infoDest)
 	}
+
+	s.updateLongRunningProcesses(ctx, active, request, response, infoDest)
+
 	if len(doneLoads) > 0 {
 		s.updateRecentlyDone(doneLoads, infoDest)
 	}
@@ -156,11 +163,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 
 		if inf.Activity != nil {
 			if inf.Activity.Running != nil {
-				stalledDuration := 90 * time.Minute
-				if rule != nil && rule.StalledThresholdInSec > 0 {
-					stalledDuration = time.Duration(rule.StalledThresholdInSec) * time.Second
-				}
-
+				stalledDuration := rule.StalledDuration()
 				if time.Now().Sub(*inf.Activity.Running.Min) > stalledDuration {
 					metric := response.Stalled.GetOrCreate(inf.Destination.Table)
 					if response.Status == shared.StatusOK && !permissionError {
@@ -193,6 +196,57 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 		}
 	}
 	return nil
+}
+
+func (s *service) updateLongRunningProcesses(ctx context.Context, active activeLoads, request *Request, response *Response, infoDest map[string]*Info) {
+	if len(active) > 0 {
+		response.LongRunning = make([]*info.Process, 0)
+		for _, load := range active {
+			if len(response.LongRunning) > 100 {
+				break
+			}
+			inf := s.getInfo(load.dest, infoDest)
+			if inf.rule == nil {
+				continue
+			}
+			elapsed := time.Now().Sub(load.started)
+			if elapsed < inf.rule.StalledDuration() {
+				continue
+			}
+			process := &info.Process{
+				URL:     load.URL,
+				Created: load.started,
+				Age:     fmt.Sprintf("%s", time.Now().Sub(load.started)),
+				Error:   "",
+			}
+			response.LongRunning = append(response.LongRunning, process)
+			errorURL := load.ErrorURL()
+			if reader, err := s.fs.DownloadWithURL(ctx, errorURL); err == nil {
+				data, err := ioutil.ReadAll(reader)
+				_ = reader.Close()
+				if err == nil {
+					process.Error = string(data)
+				}
+			}
+
+			if inf.traversed {
+				process.ActiveDatafiles = inf.activeDatafile
+				process.StalledDatafiles = inf.stalledDatafile
+			} else {
+				baseURL := fmt.Sprintf("gs://%v", s.TriggerBucket)
+				URL := url.Join(baseURL, inf.rule.When.Prefix)
+				if err := traverse(ctx, URL, s.fs, 1000, &inf.stalledDatafile, &inf.activeDatafile, inf.rule.StalledDuration()); err == nil {
+					inf.traversed = true
+					if inf.activeDatafile > 0 && inf.stalledDatafile == 0 {
+						//remove process file since there are no data backlog
+						_ = s.fs.Delete(ctx, load.URL)
+					}
+				}
+
+			}
+		}
+
+	}
 }
 
 func (s *service) getURLMetrics(ctx context.Context, URL string, inf *Info, recencyExpr string) (*info.Metric, error) {

@@ -8,11 +8,14 @@ import (
 //Logging represents monitoring info
 type Info struct {
 	*info.Destination
-	*info.Activity `json:",omitempty"`
-	Stalled        info.Metrics `json:",omitempty"`
-	Corrupted      *info.Metric `json:",omitempty"`
-	InvalidSchema  *info.Metric `json:",omitempty"`
-	rule           *config.Rule
+	*info.Activity  `json:",omitempty"`
+	Stalled         info.Metrics `json:",omitempty"`
+	Corrupted       *info.Metric `json:",omitempty"`
+	InvalidSchema   *info.Metric `json:",omitempty"`
+	rule            *config.Rule
+	traversed       bool
+	activeDatafile  int
+	stalledDatafile int
 }
 
 //Add adds info

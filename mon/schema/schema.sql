@@ -135,5 +135,15 @@ CREATE OR REPLACE  TABLE bqtail.bqmon (
                             Count INT64
                     >
             >
+        >,
+        LongRunning  ARRAY<
+            STRUCT<
+                URL STRING,
+                Created TIMESTAMP,
+                Age STRING,
+                Error STRING,
+                StalledDatafiles INT64,
+                ActiveDatafiles INT64
+            >
         >
 ) PARTITION BY DATE(Timestamp);
