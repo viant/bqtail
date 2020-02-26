@@ -60,6 +60,10 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, action *tas
 				err = base.JobError(job)
 			}
 		}
+
+		if shared.IsInfoLoggingLevel()  && job != nil && job.Status != nil && job.Status.ErrorResult != nil  {
+			shared.LogLn(job.Status)
+		}
 		if shared.IsDebugLoggingLevel() && job != nil && job.Status != nil {
 			shared.LogLn(job.Status)
 		}
