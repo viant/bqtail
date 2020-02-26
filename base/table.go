@@ -10,7 +10,7 @@ import (
 func NewTableReference(table string) (*bigquery.TableReference, error) {
 	dotIndex := strings.LastIndex(table, ".")
 	if dotIndex == -1 {
-		return nil, fmt.Errorf("datasetID is missing, invalid table format: %v", table)
+		return nil, fmt.Errorf("datasetID is missing, expected [ProjectID:].DatasetID.%v", table)
 	}
 	count := strings.Count(table, ".")
 	if count == 2 {

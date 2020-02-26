@@ -47,7 +47,7 @@ func New(projectID string) (Service, error) {
 	ctx := context.Background()
 	cfg, err := NewConfig(ctx, projectID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create scanFiles config")
+		return nil, errors.Wrapf(err, "failed to create config")
 	}
 	tailService, err := tail.New(ctx, cfg)
 	if err != nil {

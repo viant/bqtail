@@ -85,12 +85,16 @@ func (d Destination) Validate() error {
 	if d.Table == "" {
 		return fmt.Errorf("dest.Table was empty")
 	}
+
 	if d.Schema.Split != nil {
 		if d.Transient == nil || d.Transient.Dataset == "" {
 			return fmt.Errorf("dest.Schema.Split requires dest.Transient.Dataset")
 		}
-		return d.Schema.Split.Validate()
+		if err := d.Schema.Split.Validate();err != nil {
+			return err
+		}
 	}
+
 	if len(d.SideInputs) > 0 {
 		if d.Transient == nil || d.Transient.Dataset == "" {
 			return errors.Errorf("sideInput %v requires transient.dataset", d.SideInputs[0].Table)
@@ -102,7 +106,9 @@ func (d Destination) Validate() error {
 		}
 	}
 	if d.Transient != nil {
-		return d.Transient.Validate()
+		if err :=  d.Transient.Validate();err != nil {
+			return err
+		}
 	}
 
 	if d.Table != "" {

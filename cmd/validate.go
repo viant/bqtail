@@ -17,7 +17,7 @@ func (s *service) Validate(ctx context.Context, request *validate.Request) error
 	parent, _ := url.Split(request.RuleURL, file.Scheme)
 	cfg, err := newConfig(ctx, s.config.ProjectID)
 	if err != nil {
-		return errors.Wrap(err, "failed to create config")
+		return errors.Wrap(err, "failed to create config for validation")
 	}
 	cfg.RulesURL = parent
 	err = cfg.Init(ctx, s.fs)

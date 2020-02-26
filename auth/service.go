@@ -128,8 +128,10 @@ func (s *service) ProjectID(ctx context.Context, scopes []string) (string, error
 				return gsUtilCfg.Core.Project, nil
 			}
 		}
-		if client, err := s.AuthHTTPClient(ctx, scopes); err == nil {
-			if project, err := SelectProjectID(ctx, client); err == nil {
+		 client, err := s.AuthHTTPClient(ctx, scopes);
+		 if  err == nil {
+			project, err := SelectProjectID(ctx, client)
+			if  err == nil {
 				s.projectID = project
 				return s.projectID, nil
 			}
