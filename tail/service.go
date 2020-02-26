@@ -161,7 +161,6 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 		err = s.runPostLoadActions(ctx, request, response)
 	} else if request.HasURLPrefix(s.config.BatchPrefix) {
 		err = s.runBatch(ctx, request, response)
-
 	} else {
 		response.IsDataFile = true
 		err = s.tail(ctx, request, response)
@@ -207,11 +206,13 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 		_, err = s.tailIndividually(ctx, process, rule, response)
 		return err
 	}
-	if err == nil || job == nil {
+	if ! job.Recoverable() {
 		return err
 	}
 	return s.tryRecoverAndReport(ctx, job, response)
 }
+
+
 
 func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*stage.Process, error) {
 	result := stage.NewProcess(request.EventID, stage.NewSource(source.URL(), source.ModTime()), rule.Info.URL, rule.Async)
@@ -378,6 +379,9 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 			return bqJobError
 		}
 		processJob.BqJob = bqJob
+		if ! processJob.Recoverable() {
+			return err
+		}
 		return s.tryRecoverAndReport(ctx, processJob, response)
 	}
 	if base.IsRetryError(bqJobError) {
@@ -418,11 +422,11 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 	request.EventID = window.EventID
 	rule := s.config.Rule(ctx, window.RuleURL)
 	loadJob, batchErr := s.runInBatch(ctx, rule, window, response)
-	if batchErr == nil || loadJob == nil {
+	if ! loadJob.Recoverable() {
 		if batchErr != nil {
 			response.Retriable = base.IsRetryError(batchErr)
 		}
-		return err
+		return batchErr
 	}
 	return s.tryRecoverAndReport(ctx, loadJob, response)
 }

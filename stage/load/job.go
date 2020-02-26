@@ -30,6 +30,17 @@ type Job struct {
 	BqJob          *bigquery.Job                  `json:"-"`
 }
 
+//Recoverable returns true if recoverable
+func (j *Job) Recoverable() bool {
+	if j == nil {
+		return false
+	}
+	if j.BqJob == nil {
+		return true
+	}
+	return  j.BqJob.Status != nil && j.BqJob.Status.ErrorResult != nil
+}
+
 //Persist persist a job
 func (j *Job) Persist(ctx context.Context, fs afs.Service) error {
 	JSON, err := json.Marshal(j)

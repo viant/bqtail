@@ -60,21 +60,18 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, action *tas
 				err = base.JobError(job)
 			}
 		}
-
-		if shared.IsInfoLoggingLevel()  && job != nil && job.Status != nil && job.Status.ErrorResult != nil  {
-			shared.LogLn(job.Status)
-		}
 		if shared.IsDebugLoggingLevel() && job != nil && job.Status != nil {
 			shared.LogLn(job.Status)
 		}
 		if job == nil {
 			job = callerJob
 		}
-		if e := s.runActions(ctx, err, job, action.Actions); e != nil {
+		postErr := s.runActions(ctx, err, job, action.Actions);
+		if postErr != nil {
 			if err == nil {
-				err = e
+				err = postErr
 			} else {
-				err = errors.Wrapf(err, "failed to run post action: %v", e)
+				err = errors.Wrapf(err, "failed to run post action: %v", postErr)
 			}
 		}
 	}

@@ -45,7 +45,6 @@ func (r *Response) AddError(err error) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
 	r.Status = shared.StatusError
-	shared.LogF("[Error]: %v\n", err)
 	r.Errors = append(r.Errors, err.Error())
 }
 
