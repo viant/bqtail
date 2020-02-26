@@ -28,6 +28,10 @@ type Info struct {
 	JobType             string
 	TempTable           string
 	DestinationTable    string
+	URI                 string
+	URIs                []string
+	EventID             string
+	RuleURL             string
 }
 
 //NewInfo creates new job info
@@ -64,5 +68,12 @@ func NewInfo(job *bigquery.Job) *Info {
 			info.Error = string(JSON)
 		}
 	}
+	if job.Configuration != nil && job.Configuration.Load != nil {
+		info.URIs = job.Configuration.Load.SourceUris
+		if len(job.Configuration.Load.SourceUris) > 0 {
+			info.URI = job.Configuration.Load.SourceUris[0]
+		}
+	}
+
 	return info
 }

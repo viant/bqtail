@@ -17,7 +17,11 @@ OutputRows  INT64,
 BadRecords INT64,
 ExecutionTimeMs INT64,
 TotalSlotMs INT64,
-TimeTakenMs INT64
+TimeTakenMs INT64,
+URI STRING,
+URIs ARRAY<STRING>,
+EventID STRING,
+RuleURL STRING
 ) PARTITION BY DATE(CreateTime);
 
 

@@ -361,7 +361,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		response.Retriable = base.IsRetryError(err)
 		return errors.Wrapf(err, "failed to fetch aJob %v,", action.Job.JobReference.JobId)
 	}
-	if err := s.logJobInfo(ctx, bqJob); err != nil {
+	if err := s.logJobInfo(ctx, bqJob, action); err != nil {
 		response.UploadError = fmt.Sprintf("failed to log aJob info: %v", err.Error())
 	}
 
@@ -609,11 +609,16 @@ func (s *service) replayLoadProcess(ctx context.Context, sourceURL string, reque
 	return s.fs.Copy(ctx, sourceURL, loadJobURL)
 }
 
-func (s *service) logJobInfo(ctx context.Context, bqjob *bigquery.Job) error {
+func (s *service) logJobInfo(ctx context.Context, bqjob *bigquery.Job, action *task.Action) error {
 	if s.config.BqJobInfoPath == "" {
 		return nil
 	}
 	info := job.NewInfo(bqjob)
+	if action != nil && action.Meta != nil {
+		info.EventID = action.Meta.EventID
+		info.TempTable = action.Meta.TempTable
+		info.RuleURL = action.Meta.RuleURL
+	}
 	URL := url.Join(fmt.Sprintf("gs://%v/", s.config.TriggerBucket), s.config.BqJobInfoPath, bqjob.JobReference.JobId+shared.JSONExt)
 	data, err := json.Marshal(info)
 	if err != nil {
