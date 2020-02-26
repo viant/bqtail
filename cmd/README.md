@@ -29,32 +29,6 @@ cp bqtail /usr/local/bin/
 
 ### Usage  
 
-BqTail client can use one the following auth method
-
-1.With Google Service Account Secrets
-
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS=myGoogle.secret
-```
-
-2. With gsutil authentication
-
-```bash
-    gcloud config set project my-project
-    gcloud auth login`
-    export GCLOUD_AUTH=true
-``` 
-
-3. With BqTail client
-
-
-
-
-Help: 
-
-```bash
-bqtail -h
-```
 
 **Data ingestion rule validation**
 
@@ -99,4 +73,33 @@ bqtail -s=mylocaldatafolder -r='myRuleURL' -X
 
 ```bash
 bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120 -h=~/.bqtail
+```
+
+
+
+### Authentication
+
+BqTail client can use one the following auth method
+
+1.With Google Service Account Secrets
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=myGoogle.secret
+```
+
+2. With gsutil authentication
+
+```bash
+    gcloud config set project my-project
+    gcloud auth login`
+    export GCLOUD_AUTH=true
+``` 
+
+3. With BqTail client
+
+
+Help: 
+
+```bash
+bqtail -h
 ```
