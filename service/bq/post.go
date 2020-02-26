@@ -66,7 +66,7 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, action *tas
 		if job == nil {
 			job = callerJob
 		}
-		postErr := s.runActions(ctx, err, job, action.Actions);
+		postErr := s.runActions(ctx, err, job, action.Actions)
 		if postErr != nil {
 			if err == nil {
 				err = postErr

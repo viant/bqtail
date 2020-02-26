@@ -206,13 +206,11 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 		_, err = s.tailIndividually(ctx, process, rule, response)
 		return err
 	}
-	if ! job.Recoverable() {
+	if !job.Recoverable() {
 		return err
 	}
 	return s.tryRecoverAndReport(ctx, job, response)
 }
-
-
 
 func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*stage.Process, error) {
 	result := stage.NewProcess(request.EventID, stage.NewSource(source.URL(), source.ModTime()), rule.Info.URL, rule.Async)
@@ -379,7 +377,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 			return bqJobError
 		}
 		processJob.BqJob = bqJob
-		if ! processJob.Recoverable() {
+		if !processJob.Recoverable() {
 			return err
 		}
 		return s.tryRecoverAndReport(ctx, processJob, response)
@@ -422,7 +420,7 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 	request.EventID = window.EventID
 	rule := s.config.Rule(ctx, window.RuleURL)
 	loadJob, batchErr := s.runInBatch(ctx, rule, window, response)
-	if ! loadJob.Recoverable() {
+	if !loadJob.Recoverable() {
 		if batchErr != nil {
 			response.Retriable = base.IsRetryError(batchErr)
 		}

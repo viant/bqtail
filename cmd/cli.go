@@ -32,7 +32,6 @@ func RunClient(Version string, args []string) {
 	authService := auth.New(auth.BqTailClient, useGsUtilAuth, options.ProjectID, auth.Scopes...)
 	setDefaultAuth(authService)
 
-
 	if options.Version {
 		shared.LogF("BqTail: Version: %v\n", Version)
 		return

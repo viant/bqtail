@@ -38,7 +38,7 @@ func (j *Job) Recoverable() bool {
 	if j.BqJob == nil {
 		return true
 	}
-	return  j.BqJob.Status != nil && j.BqJob.Status.ErrorResult != nil
+	return j.BqJob.Status != nil && j.BqJob.Status.ErrorResult != nil
 }
 
 //Persist persist a job

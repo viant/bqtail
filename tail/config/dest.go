@@ -90,7 +90,7 @@ func (d Destination) Validate() error {
 		if d.Transient == nil || d.Transient.Dataset == "" {
 			return fmt.Errorf("dest.Schema.Split requires dest.Transient.Dataset")
 		}
-		if err := d.Schema.Split.Validate();err != nil {
+		if err := d.Schema.Split.Validate(); err != nil {
 			return err
 		}
 	}
@@ -106,7 +106,7 @@ func (d Destination) Validate() error {
 		}
 	}
 	if d.Transient != nil {
-		if err :=  d.Transient.Validate();err != nil {
+		if err := d.Transient.Validate(); err != nil {
 			return err
 		}
 	}
