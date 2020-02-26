@@ -22,7 +22,6 @@ import (
 	"github.com/viant/bqtail/task"
 	"github.com/viant/toolbox"
 	"io/ioutil"
-	"log"
 	"sort"
 	"strings"
 
