@@ -8,7 +8,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Introduction](#introduction)
 - [Tail Service](tail/README.md)
 - [Dispatch Service](dispatch/README.md)
-- [Getting Started](#)
+- [Getting Started](#getting-started)
 - [Usage](#usage)
 - [Data ingestion rule](tail/README.md#data-ingestion-rules)
 - [End to end testing](#end-to-end-testing)
@@ -49,7 +49,7 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
 - [Task Service](service/README.md)
 
 
-## Getting started
+## Getting Started
 
 [BqTail command](cmd/README.md) is great place to start to start building and validating ingestion rule locally.
 ```bash

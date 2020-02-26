@@ -33,6 +33,15 @@ type Rule struct {
 	MaxReload             *int           `json:",omitempty"`
 }
 
+
+//StalledDuration returns stalled duration
+func (r Rule) StalledDuration() time.Duration {
+	if r.StalledThresholdInSec == 0 {
+		return shared.StalledDuration
+	}
+	return time.Second * time.Duration(r.StalledThresholdInSec)
+
+}
 //MaxReloadAttempts returns max reload attempts
 func (r *Rule) MaxReloadAttempts() int {
 	if r.MaxReload == nil {

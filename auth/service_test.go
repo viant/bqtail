@@ -2,17 +2,16 @@ package auth
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
 	"testing"
-	"time"
 )
 
 func TestService_AuthHTTPClient(t *testing.T) {
-	srv := New(BqTailClient, "", Scopes...)
-
+	srv := New(BqTailClient, true, "", Scopes...)
 	ctx := context.Background()
-	client, err := srv.AuthHTTPClient(ctx)
+	client, err := srv.AuthHTTPClient(ctx, Scopes)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,7 +22,6 @@ func TestService_AuthHTTPClient(t *testing.T) {
 	}
 	defer email.Body.Close()
 	data, _ := ioutil.ReadAll(email.Body)
-	log.Println("Email body: ", string(data))
-	time.Sleep(time.Minute)
+	assert.True(t, len(data) > 0)
 
 }

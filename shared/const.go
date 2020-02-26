@@ -1,5 +1,7 @@
 package shared
 
+import "time"
+
 //Process status
 const (
 	//StatusOK response status
@@ -165,9 +167,6 @@ const (
 	UserAgent = "Viant/BqTail"
 )
 
-//MaxReload default max load attempts (excluding corrupted files)
-var MaxReload = 15
-
 //Waits and retries
 const (
 	//MaxRetries defines max retries
@@ -177,6 +176,12 @@ const (
 	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
 	StorageListVisibilityDelay = 5000
 )
+
+//MaxReload default max load attempts (excluding corrupted files)
+var MaxReload = 15
+
+//StalledDuration default stalled duration
+var StalledDuration = 90 * time.Minute
 
 const (
 	//PathElementSeparator path separator
