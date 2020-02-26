@@ -22,6 +22,7 @@ import (
 	"github.com/viant/bqtail/task"
 	"github.com/viant/toolbox"
 	"io/ioutil"
+	"log"
 	"sort"
 	"strings"
 
@@ -235,7 +236,7 @@ func (s *service) updateLongRunningProcesses(ctx context.Context, active activeL
 			} else {
 				baseURL := fmt.Sprintf("gs://%v", s.TriggerBucket)
 				URL := url.Join(baseURL, inf.rule.When.Prefix)
-
+				log.Printf(URL)
 				if err := traverse(ctx, URL, s.fs, 1000, &inf.stalledDatafile, &inf.activeDatafile, inf.rule.StalledDuration()); err == nil {
 					inf.traversed = true
 					if inf.activeDatafile > 0 && inf.stalledDatafile == 0 {
