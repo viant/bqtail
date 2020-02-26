@@ -14,6 +14,7 @@
   * Added URL pattern name substitution parameters
   * Added pubsub push action
   * Added stand alone BqTail command
+  * Added LongRunning process info (bqmon)
 
 ## Jan 14 2020 1.1.0
 

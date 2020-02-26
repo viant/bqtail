@@ -45,6 +45,7 @@ pipeline:
         - cp -rf service vendor/github.com/viant/bqtail
         - cp -rf s* vendor/github.com/viant/bqtail/
         - cp -rf t* vendor/github.com/viant/bqtail/
+        - cp -rf a* vendor/github.com/viant/bqtail/
         - go build
 
     upload:

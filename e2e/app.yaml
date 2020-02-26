@@ -31,6 +31,7 @@ pipeline:
         - cp -rf service vendor/github.com/viant/bqtail
         - cp -rf s* vendor/github.com/viant/bqtail/
         - cp -rf t* vendor/github.com/viant/bqtail/
+        - cp -rf a* vendor/github.com/viant/bqtail/
         - cd ${appPath}/cmd/bqtail
         - export GOOS=linux
         - go build -ldflags "-X main.Version=${AppVersion}"
