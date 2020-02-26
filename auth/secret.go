@@ -1,7 +1,8 @@
 package auth
 
-//BqTailClient bqtail client
+
+//BqTailClient BqTail oath client
 var BqTailClient = &Client{
-	ID:     "284430963579-696unvdq2ocia0m461a0o4s54uevqktg.apps.googleusercontent.com",
-	Secret: "17XGEKKhbGefzZkYS7Q0R-KP",
+	ID:     "283104209294-2tmkjlki0gcaddh20d58gq0umq52p9b2.apps.googleusercontent.com",
+	Secret: "_imXJeb8za1xGCfqLY_InwtZ",
 }
