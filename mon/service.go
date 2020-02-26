@@ -243,8 +243,9 @@ func (s *service) updateLongRunningProcesses(ctx context.Context, active activeL
 						//remove process file since there are no data backlog
 						_ = s.fs.Delete(ctx, load.URL)
 					}
+					process.ActiveDatafiles = inf.activeDatafile
+					process.StalledDatafiles = inf.stalledDatafile
 				}
-
 			}
 		}
 
