@@ -1,10 +1,10 @@
 {
   "When": {
-    "Prefix": "/data/case${parentIndex}",
+    "Prefix": "/data/case010",
     "Suffix": ".json"
   },
   "Dest": {
-    "Table": "bqtail.dummy_v${parentIndex}",
+    "Table": "bqtail.dummy_v010",
     "Transient":{"Dataset": "temp"},
     "UniqueColumns": [
       "id"
@@ -25,7 +25,7 @@
       "Request": {
         "Append": true,
         "SQL": "SELECT '$EventID' AS event_id, SPLIT('$URLs', ',') AS uris, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $TempTable",
-        "Dest": "bqtail.summary_v${parentIndex}"
+        "Dest": "bqtail.summary_v010"
       }
     },
     {

@@ -37,6 +37,7 @@ To validate rule use -V option.
 ```bash
 bqtail -r='myRuleURL -V' -p=myProject
 bqtail -s=mydatafile -d='myProject:mydataset.mytable' -V
+bqtail -r=gs://MY_CONFIG_BUCKET/BqTail/Rules/sys/bqjob.yaml -V
 ```
 
 **Local data file ingestion**
