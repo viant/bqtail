@@ -30,11 +30,12 @@ func (s *service) loadRule(ctx context.Context, URL string) (*config.Rule, error
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to reload rules: %v", ruleURL)
 	}
-
 	rule := s.config.Rule(ctx, ruleURL)
 	if rule == nil {
 		return nil, errors.Errorf("failed to lookup rule: %v", ruleURL)
 	}
+	//Assume that rule is never disable for stand alone process
+	rule.Disabled = false
 	return rule, nil
 }
 

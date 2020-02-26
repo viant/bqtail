@@ -22,6 +22,7 @@ import (
 
 func (s *service) Load(ctx context.Context, request *tail.Request) (*tail.Response, error) {
 	request.Init(s.config)
+
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
