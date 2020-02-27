@@ -68,16 +68,29 @@ func (d Destination) HasSplit() bool {
 
 //Clone clones destination
 func (d Destination) Clone() *Destination {
-	return &Destination{
+	cloned := &Destination{
 		Table:            d.Table,
+		Partition:        d.Partition,
 		Pattern:          d.Pattern,
+		Transform:        d.Transform,
+		Parameters:       d.Parameters,
 		compiled:         d.compiled,
 		Schema:           d.Schema,
 		TransientDataset: d.TransientDataset,
 		Transient:        d.Transient,
 		UniqueColumns:    d.UniqueColumns,
 		SideInputs:       d.SideInputs,
+		Override:         d.Override,
 	}
+
+	if len(d.Transform) > 0 {
+		cloned.Transform = make(map[string]string)
+		for k, v := range d.Transform {
+			cloned.Transform[k] = v
+		}
+	}
+
+	return cloned
 }
 
 //Validate checks if destination is valid
@@ -109,6 +122,9 @@ func (d Destination) Validate() error {
 		if err := d.Transient.Validate(); err != nil {
 			return err
 		}
+		if d.HasTransformation() && d.Transient.Autodetect {
+			return errors.Errorf("autodetect schema is not supported with transformation options")
+		}
 	}
 
 	if d.Table != "" {
@@ -121,6 +137,7 @@ func (d Destination) Validate() error {
 			return errors.Wrapf(err, "invalid transient.template: %v", d.Transient.Template)
 		}
 	}
+
 	if d.Schema.Template != "" {
 		if _, err := base.NewTableReference(d.Schema.Template); err != nil {
 			return errors.Wrapf(err, "invalid schema.template: %v", d.Schema.Template)
@@ -146,6 +163,11 @@ func (d *Destination) Init() error {
 		d.Transform = make(map[string]string)
 	}
 	return nil
+}
+
+//HasTransformation returns true if dest requires transformation
+func (d *Destination) HasTransformation() bool {
+	return len(d.SideInputs) > 0 || len(d.Transform) > 0 || d.Schema.Split != nil || len(d.UniqueColumns) > 0
 }
 
 //ExpandTable returns expanded table
