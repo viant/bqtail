@@ -1,0 +1,38 @@
+init:
+  doneCounter: 0
+  parentIndex: ${parent.index}
+  bqtailCmd: ${appPath}/cmd/bqtail/bqtail
+
+pipeline:
+  prepare:
+    init-db:
+      action: dsunit:init
+      datastore: bqtail
+      expand: true
+      config:
+        driverName: bigquery
+        credentials: $gcpCredentials
+        parameters:
+          datasetId: bqtail
+      scripts:
+        - URL: ${parent.path}/bqtail/schema.sql
+    populate:
+      bqtail:
+        action: dsunit:prepare
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/prepare
+
+
+  trigger:
+    action: exec:run
+    #checkError: true
+    commands:
+      - export GOOGLE_APPLICATION_CREDENTIALS='${env.HOME}/.secret/${gcpCredentials}.json'
+      - ${bqtailCmd} -s='${parent.path}/data/' -d='bqtail.dummy_v036'  -w=15
+
+  validate:
+    check-db:
+      bqtail:
+        action: dsunit:expect
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/expect
