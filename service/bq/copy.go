@@ -31,7 +31,6 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 		job.Configuration.Copy.WriteDisposition = "WRITE_TRUNCATE"
 	}
 	job.Configuration.Copy.CreateDisposition = "CREATE_IF_NEEDED"
-
 	s.adjustRegion(ctx, action, job.Configuration.Copy.DestinationTable)
 	job.JobReference = action.JobReference()
 

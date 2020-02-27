@@ -49,6 +49,7 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, action *tas
 		callerJob.Id = job.Id
 	}
 	if shared.IsDebugLoggingLevel() {
+		shared.LogF("bq action: %v\n", action.Action)
 		shared.LogLn(action)
 	}
 
@@ -112,7 +113,7 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 		}
 		if i > 0 && base.IsDuplicateJobError(err) {
 			if shared.IsDebugLoggingLevel() {
-				fmt.Printf("duplicate job: [%v]: %v\n", job.Id, err)
+				shared.LogF("duplicate job: [%v]: %v\n", job.Id, err)
 			}
 			err = nil
 			callJob, _ = s.GetJob(ctx, job.JobReference.Location, job.JobReference.ProjectId, job.JobReference.JobId)

@@ -24,7 +24,7 @@ func (f *faker) CreateDatasetIfNotExist(ctx context.Context, region string, data
 	return nil
 }
 
-func (f *faker) CreateTableIfNotExist(ctx context.Context, table *bigquery.Table) error {
+func (f *faker) CreateTableIfNotExist(ctx context.Context, table *bigquery.Table, patchIfNeeded bool) error {
 	return nil
 }
 

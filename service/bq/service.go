@@ -27,7 +27,9 @@ type Service interface {
 
 	CreateDatasetIfNotExist(ctx context.Context, region string, dataset *bigquery.DatasetReference) error
 
-	CreateTableIfNotExist(ctx context.Context, table *bigquery.Table) error
+	Patch(ctx context.Context, request *PatchRequest) (*bigquery.Table, error)
+
+	CreateTableIfNotExist(ctx context.Context, table *bigquery.Table, patchIfDifferent bool) error
 }
 
 type service struct {

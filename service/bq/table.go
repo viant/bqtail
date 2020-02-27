@@ -34,7 +34,7 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 }
 
 //CreateTableIfNotExist creates a table if does not exist
-func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Table) error {
+func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Table, patchIfDifferent bool) error {
 	ref := table.TableReference
 	srv := bigquery.NewTablesService(s.Service)
 	if ref.ProjectId == "" {
@@ -42,12 +42,95 @@ func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Tab
 	}
 	getTableCall := srv.Get(ref.ProjectId, ref.DatasetId, ref.TableId)
 	getTableCall.Context(ctx)
-	_, err := getTableCall.Do()
-	if !base.IsNotFoundError(err) {
+	existing, err := getTableCall.Do()
+	if !base.IsNotFoundError(err) && !patchIfDifferent {
+		return nil
+	}
+
+	if existing != nil {
+		isEqual := isSchemaEqual(existing.Schema.Fields, table.Schema.Fields)
+		if isEqual {
+			return nil
+		}
+		patchable := isSchemaPatchable(existing.Schema.Fields, table.Schema.Fields)
+		if patchable {
+			if isEqual {
+				return nil
+			}
+			_, err = s.Patch(ctx, &PatchRequest{
+				Table:         base.EncodeTableReference(table.TableReference, false),
+				TemplateTable: table,
+				ProjectID:     ref.ProjectId,
+			})
+			return err
+		}
 		return nil
 	}
 	insertTableCall := srv.Insert(ref.ProjectId, ref.DatasetId, table)
 	insertTableCall.Context(ctx)
 	_, err = insertTableCall.Do()
 	return err
+}
+
+func isSchemaEqual(source []*bigquery.TableFieldSchema, template []*bigquery.TableFieldSchema) bool {
+	if len(source) != len(template) {
+		return false
+	}
+	sourceIndex := map[string]*bigquery.TableFieldSchema{}
+	for i := range source {
+		sourceIndex[source[i].Name] = source[i]
+	}
+	for _, dest := range template {
+		src, ok := sourceIndex[dest.Name]
+		if !ok {
+			return false
+		}
+		if src.Type != dest.Type {
+			return false
+		}
+		if len(src.Fields) > 0 {
+			if !isSchemaEqual(src.Fields, dest.Fields) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func isSchemaPatchable(source []*bigquery.TableFieldSchema, template []*bigquery.TableFieldSchema) bool {
+	if len(source) > len(template) {
+		index := indexFields(template)
+		for _, f := range source {
+			if _, ok := index[f.Name]; !ok {
+				if shared.IsDebugLoggingLevel() {
+					shared.LogF("not patchable: template is missing %v\n", f.Name)
+				}
+			}
+		}
+		return false
+	}
+	index := indexFields(source)
+	for _, dest := range template {
+		src, ok := index[dest.Name]
+		if !ok {
+			continue
+		}
+		if src.Type != dest.Type {
+			return false
+		}
+		if len(src.Fields) > 0 {
+			if !isSchemaPatchable(src.Fields, dest.Fields) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func indexFields(source []*bigquery.TableFieldSchema) map[string]*bigquery.TableFieldSchema {
+	index := map[string]*bigquery.TableFieldSchema{}
+	for i := range source {
+		index[source[i].Name] = source[i]
+	}
+	return index
 }
