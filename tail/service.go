@@ -71,7 +71,7 @@ func (s *service) Init(ctx context.Context) error {
 	if err == nil {
 		pubsub.InitRegistry(s.Registry, pubsubService)
 	} else {
-		fmt.Printf("failed to create pubsub service: %v", err)
+		shared.LogF("failed to create pubsub service: %v", err)
 	}
 
 	bqService, err := bigquery.NewService(ctx, options...)
@@ -224,7 +224,7 @@ func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *
 	result.ProjectID = s.selectProjectID(ctx, rule, response)
 	result.Params, err = rule.Dest.Params(result.Source.URL)
 	if shared.IsDebugLoggingLevel() {
-		fmt.Printf("process: ")
+		shared.LogF("process: ")
 		shared.LogLn(result)
 	}
 	return result, err
@@ -239,7 +239,7 @@ func (s *service) submitJob(ctx context.Context, job *load.Job, response *contra
 		response.UploadError = err.Error()
 	}
 	if shared.IsDebugLoggingLevel() {
-		fmt.Printf("loadRequest: ")
+		shared.LogF("loadRequest: ")
 		shared.LogLn(loadRequest)
 	}
 	bqJob, err := s.bq.Load(ctx, loadRequest, action)
@@ -270,7 +270,7 @@ func (s *service) runLoadProcess(ctx context.Context, request *contract.Request,
 		return errors.Errorf("failed to lookup rule: '%v'", processJob.RuleURL)
 	}
 	if shared.IsDebugLoggingLevel() {
-		fmt.Printf("replaying load process ...\n")
+		shared.LogF("replaying load process ...\n")
 		shared.LogLn(processJob)
 	}
 
@@ -337,9 +337,6 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		return err
 	}
 
-	if shared.IsDebugLoggingLevel() {
-		shared.LogLn(action)
-	}
 	response.Process = &action.Meta.Process
 	action.Meta.Region = action.Job.JobReference.Location
 	action.Meta.ProjectID = action.Job.JobReference.ProjectId
@@ -369,7 +366,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 
 	if bqJobError != nil && bqJob.Configuration != nil && bqJob.Configuration.Load != nil {
 		if shared.IsDebugLoggingLevel() {
-			fmt.Printf("load error - reloading ...\n")
+			shared.LogF("load error - reloading ...\n")
 		}
 		rule := s.config.Rule(ctx, action.Meta.RuleURL)
 		processJob, err := load.NewJobFromURL(ctx, rule, &action.Meta.Process, s.fs)
@@ -486,8 +483,11 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 
 	if shared.IsInfoLoggingLevel() {
 		if len(uris.Corrupted) > 0 || len(uris.InvalidSchema) > 0 {
-			fmt.Printf("[%v] excluding corrupted: %v, incompatible schema: %v file(s)\n", job.DestTable, len(uris.Corrupted), len(uris.InvalidSchema))
+			shared.LogF("[%v] excluding corrupted: %v, incompatible schema: %v file(s)\n", job.DestTable, len(uris.Corrupted), len(uris.InvalidSchema))
 		}
+	}
+	if len(uris.InvalidSchema) == 0 && len(uris.Corrupted) == 0 {
+		return base.JobError(job.BqJob)
 	}
 
 	if err := s.moveAssets(ctx, uris.Corrupted, corruptedFileURL); err != nil {
@@ -512,7 +512,7 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 	action.Meta.Step = meta.Step + 1
 	reloadCount := meta.Step - 1
 	if shared.IsDebugLoggingLevel() {
-		fmt.Printf("reload attempt: %v\n", reloadCount)
+		shared.LogF("reload attempt: %v\n", reloadCount)
 		shared.LogLn(meta)
 	}
 	if reloadCount > job.Rule.MaxReloadAttempts() {
@@ -526,9 +526,7 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 
 	if err != nil && loadJob != nil {
 		job.BqJob = loadJob
-
 		return s.tryRecover(ctx, job, response)
-
 	}
 	return err
 }
