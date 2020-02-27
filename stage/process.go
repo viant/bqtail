@@ -26,6 +26,10 @@ type Process struct {
 	StepCount      int                    `json:",omitempty"`
 }
 
+func (p *Process) SplitTable() string {
+	return strings.Replace(p.TempTable, p.EventID, "s"+p.EventID, 1)
+}
+
 func (p *Process) MoveToFailed(ctx context.Context, fs afs.Service) error {
 	return fs.Move(ctx, p.ProcessURL, p.FailedURL)
 }

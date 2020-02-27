@@ -25,9 +25,11 @@ type Job struct {
 	JobStatus      *bigquery.JobStatus            `json:"jobStatus,omitempty"`
 	Load           *bigquery.JobConfigurationLoad `json:"load,ommittempty"`
 	TempSchema     *bigquery.Table                `json:",omitempty"`
+	SplitSchema    *bigquery.Table                `json:",omitempty"`
 	DestSchema     *bigquery.Table                `json:",omitempty"`
 	Actions        *task.Actions                  `json:",omitempty"`
 	BqJob          *bigquery.Job                  `json:"-"`
+	splitColumns   []*bigquery.TableFieldSchema
 }
 
 //Recoverable returns true if recoverable

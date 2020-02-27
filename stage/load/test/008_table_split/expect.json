@@ -1,0 +1,213 @@
+{
+  "Action": "load",
+  "Meta": {
+    "Action": "load",
+    "Async": false,
+    "DestTable": "adlogs_us.ad_20200227",
+    "DoneProcessURL": "mem://localhost/operation/journal/Done/adlogs_us.ad_20200227/2020-02-27_08/6056467489517448.run",
+    "EventID": "6056467489517448",
+    "FailedURL": "mem://localhost/operation/journal/failed",
+    "Mode": "tail",
+    "ProcessURL": "mem://localhost/operation/journal/Running/adlogs_us.ad_20200227--6056467489517448.run",
+    "RuleURL": "mem://localhost/BqTail/config/rule/unison.yaml",
+    "Source": {
+      "Time": "2020-02-27T16:04:52Z",
+      "URL": "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
+    },
+    "Step": 1,
+    "StepCount": 1,
+    "TempTable": "`temp.ad_20200227_6056467489517448`"
+  },
+  "OnSuccess": [
+    {
+      "Action": "query",
+      "Meta": {
+        "Action": "query",
+        "Async": false,
+        "DestTable": "adlogs_us.ad_20200227",
+        "DoneProcessURL": "mem://localhost/operation/journal/Done/adlogs_us.ad_20200227/2020-02-27_08/6056467489517448.run",
+        "EventID": "6056467489517448",
+        "FailedURL": "mem://localhost/operation/journal/failed",
+        "Mode": "tail",
+        "ProcessURL": "mem://localhost/operation/journal/Running/adlogs_us.ad_20200227--6056467489517448.run",
+        "RuleURL": "mem://localhost/BqTail/config/rule/unison.yaml",
+        "Source": {
+          "Time": "2020-02-27T16:04:52Z",
+          "URL": "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
+        },
+        "Step": 2,
+        "StepCount": 2,
+        "TempTable": "`temp.ad_20200227_6056467489517448`"
+      },
+      "OnSuccess": [
+        {
+          "Action": "query",
+          "Meta": {
+            "Action": "query",
+            "Async": false,
+            "DestTable": "adlogs_us.ad_20200227",
+            "DoneProcessURL": "mem://localhost/operation/journal/Done/adlogs_us.ad_20200227/2020-02-27_08/6056467489517448.run",
+            "EventID": "6056467489517448",
+            "FailedURL": "mem://localhost/operation/journal/failed",
+            "Mode": "tail",
+            "ProcessURL": "mem://localhost/operation/journal/Running/adlogs_us.ad_20200227--6056467489517448.run",
+            "RuleURL": "mem://localhost/BqTail/config/rule/unison.yaml",
+            "Source": {
+              "Time": "2020-02-27T16:04:52Z",
+              "URL": "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
+            },
+            "Step": 3,
+            "StepCount": 3,
+            "TempTable": "`temp.ad_20200227_6056467489517448`"
+          },
+          "OnSuccess": [
+            {
+              "Action": "query",
+              "Meta": {
+                "Action": "query",
+                "Async": false,
+                "DestTable": "adlogs_us.ad_20200227",
+                "DoneProcessURL": "mem://localhost/operation/journal/Done/adlogs_us.ad_20200227/2020-02-27_08/6056467489517448.run",
+                "EventID": "6056467489517448",
+                "FailedURL": "mem://localhost/operation/journal/failed",
+                "Mode": "tail",
+                "ProcessURL": "mem://localhost/operation/journal/Running/adlogs_us.ad_20200227--6056467489517448.run",
+                "RuleURL": "mem://localhost/BqTail/config/rule/unison.yaml",
+                "Source": {
+                  "Time": "2020-02-27T16:04:52Z",
+                  "URL": "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
+                },
+                "Step": 4,
+                "StepCount": 4,
+                "TempTable": "`temp.ad_20200227_6056467489517448`"
+              },
+              "OnSuccess": [
+                {
+                  "Action": "delete",
+                  "Request": {
+                    "URLs": [
+                      "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
+                    ]
+                  }
+                },
+                {
+                  "Action": "move",
+                  "Request": {
+                    "DestURL": "mem://localhost/operation/journal/Done/adlogs_us.ad_20200227/2020-02-27_08/6056467489517448.run",
+                    "IsDestAbsoluteURL": true,
+                    "SourceURL": "mem://localhost/operation/journal/Running/adlogs_us.ad_20200227--6056467489517448.run"
+                  }
+                },
+                {
+                  "Action": "drop",
+                  "Meta": {
+                    "Action": "drop",
+                    "Async": false,
+                    "DestTable": "adlogs_us.ad_20200227",
+                    "DoneProcessURL": "mem://localhost/operation/journal/Done/adlogs_us.ad_20200227/2020-02-27_08/6056467489517448.run",
+                    "EventID": "6056467489517448",
+                    "FailedURL": "mem://localhost/operation/journal/failed",
+                    "Mode": "nop",
+                    "ProcessURL": "mem://localhost/operation/journal/Running/adlogs_us.ad_20200227--6056467489517448.run",
+                    "RuleURL": "mem://localhost/BqTail/config/rule/unison.yaml",
+                    "Source": {
+                      "Time": "2020-02-27T16:04:52Z",
+                      "URL": "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
+                    },
+                    "Step": 7,
+                    "StepCount": 7,
+                    "TempTable": "`temp.ad_20200227_6056467489517448`"
+                  },
+                  "Request": {
+                    "Table": "temp.ad_20200227_s6056467489517448"
+                  }
+                }
+              ],
+              "Request": {
+                "Append": true,
+                "Dest": "logs.ad_impressions_20200227",
+                "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id, t.extra AS extra \nFROM `temp.ad_20200227_s6056467489517448` t   WHERE  id in (43,73) AND adMeta.campaignId \u003e 0 ",
+                "UseLegacy": false
+              }
+            }
+          ],
+          "Request": {
+            "Append": true,
+            "Dest": "logs.ad_default_impressions_3_20200227",
+            "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id, t.extra AS extra \nFROM `temp.ad_20200227_s6056467489517448` t   WHERE  id in (43,73) AND adMeta.campaignId is null ",
+            "UseLegacy": false
+          }
+        }
+      ],
+      "Request": {
+        "Append": false,
+        "Dest": "temp.ad_20200227_6056467489517448",
+        "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id, t.extra AS extra, null AS ts \nFROM `temp.ad_20200227_s6056467489517448` t  ",
+        "UseLegacy": false
+      }
+    }
+  ],
+  "Request": {
+    "Append": true,
+    "DestinationTable": {
+      "DatasetId": "temp",
+      "TableId": "ad_20200227_s6056467489517448"
+    },
+    "Schema": {
+      "Fields": [
+        {
+          "Name": "id",
+          "Type": "STRING"
+        },
+        {
+          "Name": "timestamp",
+          "Type": "TIMESTAMP"
+        },
+        {
+          "Name": "batch_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "event_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "sku_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "supply_entity_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "payment",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "demany_entity_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "charge",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "qty",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "fee_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "extra",
+          "Type": "INTEGER"
+        }
+      ]
+    },
+    "SourceUris": [
+      "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
+    ],
+    "WriteDisposition": "WRITE_TRUNCATE"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "DestTable": "adlogs_us.ad_20200227",
+  "DoneProcessURL": "mem://localhost/operation/journal/Done/adlogs_us.ad_20200227/2020-02-27_08/6056467489517448.run",
+  "EventID": "6056467489517448",
+  "FailedURL": "mem://localhost/operation/journal/failed",
+  "ProcessURL": "mem://localhost/operation/journal/Running/adlogs_us.ad_20200227--6056467489517448.run",
+  "RuleURL": "mem://localhost/BqTail/config/rule/unison.yaml",
+  "Source": {
+    "Time": "2020-02-27T16:04:52Z",
+    "URL": "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
+  }
+}

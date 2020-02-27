@@ -1,0 +1,48 @@
+{
+  "When": {
+    "Prefix": "/unison/",
+    "Suffix": ".avro"
+  },
+  "CorruptedFileURL": "gs://xx_trigger/bqtail/corrupted/",
+  "Dest": {
+    "Pattern": "/unison/.+/.+/(\\d{4})/(\\d{2})/(\\d{2})/.+",
+    "Schema": {
+      "Split": {
+        "ClusterColumns": ["id"],
+        "Mapping": [
+          {
+            "Then": "logs.ad_impressions_$1$2$3",
+            "When": "id in (43,73) AND adMeta.campaignId \u003e 0"
+          },
+          {
+            "Then": "logs.ad_default_impressions_$Mod(10)_$1$2$3",
+            "When": "id in (43,73) AND adMeta.campaignId is null"
+          }
+        ]
+      },
+      "Template": "logs.ad_v1"
+    },
+    "Table": "xx:logs.ad_un_$1$2$3",
+    "Transient": {
+      "Alias": "t",
+      "Dataset": "temp",
+      "Template": "logs.ad_v0"
+    }
+  },
+  "Info": {
+    "Description": "Unision raw log ingestion",
+    "LeadEngineer": "Runtime Team",
+    "ProjectURL": "JIRA/WIKi or any link referece",
+    "URL": "mem://localhost/BqTail/config/rule/unison.yaml",
+    "Workflow": "Unison log ingestion"
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": "$LoadURIs"
+      }
+    }
+  ]
+
+}

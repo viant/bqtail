@@ -1,9 +1,11 @@
 package load
 
 import (
-	"fmt"
+	"context"
 	"github.com/pkg/errors"
+	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/service/bq"
+	"github.com/viant/bqtail/tail/sql"
 	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -19,79 +21,104 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 	if split == nil {
 		return nil
 	}
+
 	next := onDone
-	if next == nil {
-		next = task.NewActions(nil, nil)
+	dest := j.Rule.Dest.Clone()
+	destTemplate := ""
+	if dest.Schema.Template != "" {
+		destTemplate = dest.Schema.Template
 	}
-	dest := j.Rule.Dest
 	for i := range split.Mapping {
 		mapping := split.Mapping[i]
 		destTable, _ := dest.CustomTableReference(mapping.Then, j.Process.Source)
 		SQL := strings.Replace(selectSQL, "$WHERE", " WHERE  "+mapping.When+" ", 1)
-		query := bq.NewQueryAction(SQL, destTable, j.Rule.IsAppend(), next)
+		query := bq.NewQueryAction(SQL, destTable, destTemplate, j.Rule.IsAppend(), next)
 		group := task.NewActions(nil, nil)
 		group.AddOnSuccess(query)
 		next = group
 	}
 
-	if len(split.ClusterColumns) > 0 {
-		setColumns := []string{}
-		for i, column := range split.ClusterColumns {
-			if index := strings.LastIndex(split.ClusterColumns[i], "."); index != -1 {
-				setColumns = append(setColumns, fmt.Sprintf("%v = %v ", string(column[index+1:]), column))
-			}
-		}
-		if len(setColumns) > 0 {
-			DML := fmt.Sprintf("UPDATE %v SET %v WHERE 1=1", j.TempTable, strings.Join(setColumns, ","))
-			query := bq.NewQueryAction(DML, nil, j.Rule.IsAppend(), next)
-			result.AddOnSuccess(query)
-		}
-	} else {
+	if len(j.splitColumns) == 0 {
 		result.AddOnSuccess(next.OnSuccess...)
 		result.AddOnSuccess(next.OnFailure...)
+		return nil
 	}
+
+	if len(dest.Transform) == 0 {
+		dest.Transform = make(map[string]string)
+	}
+
+	for _, column := range j.splitColumns {
+		dest.Transform[column.Name] = column.Type + "(NULL)"
+	}
+	if len(split.ClusterColumns) > 0 {
+		for i, column := range split.ClusterColumns {
+			if index := strings.LastIndex(split.ClusterColumns[i], "."); index != -1 {
+				dest.Transform[string(column[index+1:])] = column
+			}
+		}
+	}
+	sourceRef, _ := base.NewTableReference(j.SplitTable())
+	selectAll := sql.BuildSelect(sourceRef, j.SplitSchema.Schema, dest)
+	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
+	destRef, _ := base.NewTableReference(j.TempTable)
+	result.AddOnSuccess(bq.NewQueryAction(selectAll, destRef, "", false, next))
 	return nil
 }
 
-func (j *Job) applySplitSchemaOptimization() error {
+func (j *Job) initTableSplit(ctx context.Context, service bq.Service) error {
 	split := j.Rule.Dest.Schema.Split
 	if j.Load.Schema == nil {
 		return nil
 	}
+	tableRef, _ := base.NewTableReference(j.TempTable)
+	tempTable := &bigquery.Table{
+		Schema:         &bigquery.TableSchema{Fields: j.Load.Schema.Fields},
+		TableReference: tableRef,
+	}
+	splitColumns := []*bigquery.TableFieldSchema{}
+	schema := tempTable.Schema
 	if len(split.ClusterColumns) > 0 {
 		if split.TimeColumn == "" {
 			split.TimeColumn = "ts"
 		}
-		field := getColumn(j.Load.Schema.Fields, split.TimeColumn)
+		field := getColumn(schema.Fields, split.TimeColumn)
 		if field == nil {
-			j.Load.Schema.Fields = append(j.Load.Schema.Fields, &bigquery.TableFieldSchema{
+			splitColumns = append(splitColumns, &bigquery.TableFieldSchema{
 				Name: split.TimeColumn,
 				Type: timestampDataType,
 			})
 		}
-		j.Load.TimePartitioning = &bigquery.TimePartitioning{
+		tempTable.TimePartitioning = &bigquery.TimePartitioning{
 			Field: split.TimeColumn,
 			Type:  timePartitionType,
 		}
-		var clusterdColumn = make([]string, 0)
+		var clusterColumn = make([]string, 0)
 		for i, name := range split.ClusterColumns {
 			if strings.Contains(split.ClusterColumns[i], ".") {
-				column := getColumn(j.Load.Schema.Fields, split.ClusterColumns[i])
+				column := getColumn(schema.Fields, split.ClusterColumns[i])
 				if column == nil {
 					return errors.Errorf("failed to lookup cluster column: %v", name)
 				}
-				j.Load.Schema.Fields = append(j.Load.Schema.Fields, column)
-				clusterdColumn = append(clusterdColumn, column.Name)
+				splitColumns = append(splitColumns, column)
+				clusterColumn = append(clusterColumn, column.Name)
 				continue
 			}
-			clusterdColumn = append(clusterdColumn, split.ClusterColumns[i])
+			clusterColumn = append(clusterColumn, split.ClusterColumns[i])
 		}
-
-		j.Load.Clustering = &bigquery.Clustering{
-			Fields: clusterdColumn,
+		tempTable.Clustering = &bigquery.Clustering{
+			Fields: clusterColumn,
 		}
 	}
-	return nil
+	j.splitColumns = splitColumns
+	if len(splitColumns) == 0 {
+		return nil
+	}
+	schema.Fields = append(schema.Fields, splitColumns...)
+	splitRef, _ := base.NewTableReference(j.SplitTable())
+	j.Load.DestinationTable = splitRef
+	j.SplitSchema = tempTable
+	return service.CreateTableIfNotExist(ctx, tempTable, false)
 }
 
 func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.TableFieldSchema {

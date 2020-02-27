@@ -20,15 +20,18 @@ func (j *Job) Init(ctx context.Context, service bq.Service) error {
 	}
 
 	j.setDestinationTable(tableReference)
+
+	if j.Rule.Dest.HasSplit() {
+		if err = j.initTableSplit(ctx, service); err != nil {
+			return errors.Wrapf(err, "failed to apply split schema optimization: %+v", j.Rule.Dest.Schema.Split)
+		}
+	}
+
 	j.Actions, err = j.buildActions()
 	if err != nil {
 		return errors.Wrapf(err, "failed to build actions")
 	}
-	if j.Rule.Dest.HasSplit() {
-		if err = j.applySplitSchemaOptimization(); err != nil {
-			return errors.Wrapf(err, "failed to apply split schema optimization: %+v", j.Rule.Dest.Schema.Split)
-		}
-	}
+
 	return nil
 }
 

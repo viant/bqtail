@@ -44,10 +44,16 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 			return errors.Wrapf(err, "fail to get template table: %v", j.Rule.Dest.Schema.Template)
 		}
 		table.TableReference, _ = base.NewTableReference(j.DestTable)
-		if err = service.CreateTableIfNotExist(ctx, table); err != nil {
+		if err = service.CreateTableIfNotExist(ctx, table, true); err != nil {
 			return errors.Wrapf(err, "failed to create table: %v", base.EncodeTableReference(tableReference, false))
 		}
 		j.DestSchema = table
+	}
+
+	if transient != nil && transient.Autodetect {
+		j.Load.Schema = nil
+		j.Load.Autodetect = j.Rule.Dest.Schema.Autodetect
+		return nil
 	}
 
 	if table == nil && !hasTransientTemplate {
@@ -66,12 +72,13 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 }
 
 func (j *Job) updateSchema(table *bigquery.Table) {
+	if j.Rule.Dest.Schema.Autodetect {
+		j.Load.Schema = nil
+		j.Load.Autodetect = j.Rule.Dest.Schema.Autodetect
+		return
+	}
+
 	if table != nil {
-		if j.Rule.Dest.Schema.Autodetect {
-			j.Load.Schema = nil
-			j.Load.Autodetect = j.Rule.Dest.Schema.Autodetect
-			return
-		}
 		j.Load.Schema = table.Schema
 		if table.TimePartitioning != nil {
 			j.Load.TimePartitioning = table.TimePartitioning

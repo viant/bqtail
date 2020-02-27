@@ -63,11 +63,13 @@ func TestJob_NewLoadRequest(t *testing.T) {
 			description: "transient ingestion with partition override request",
 			caseURL:     path.Join(baseURL, "007_partition_override"),
 		},
-
-		//
+		{
+			description: "table split request",
+			caseURL:     path.Join(baseURL, "008_table_split"),
+		},
 	}
 
-	for _, useCase := range useCases[6:] {
+	for _, useCase := range useCases {
 		ctx := context.Background()
 		err := loadTestAsset(ctx, &useCase.process, path.Join(useCase.caseURL, "process.json"))
 		if !assert.Nil(t, err, useCase.description) {

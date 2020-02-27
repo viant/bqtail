@@ -1,0 +1,107 @@
+{
+  "logs.ad_v0": {
+    "Schema": {
+      "Fields": [
+        {
+          "Name": "id",
+          "Type": "STRING"
+        },
+        
+        {
+          "Name": "timestamp",
+          "Type": "TIMESTAMP"
+        },
+        {
+          "Name": "batch_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "event_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "sku_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "supply_entity_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "payment",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "demany_entity_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "charge",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "qty",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "fee_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "extra",
+          "Type": "INTEGER"
+        }
+      ]
+    }
+  },
+  "logs.ad_v1": {
+    "Schema": {
+      "Fields": [
+        {
+          "Name": "id",
+          "Type": "STRING"
+        },
+        {
+          "Name": "timestamp",
+          "Type": "TIMESTAMP"
+        },
+        {
+          "Name": "batch_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "event_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "sku_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "supply_entity_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "payment",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "demany_entity_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "charge",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "qty",
+          "Type": "FLOAT"
+        },
+        {
+          "Name": "fee_id",
+          "Type": "INTEGER"
+        }
+      ]
+    }
+  }
+}
