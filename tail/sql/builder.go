@@ -14,7 +14,8 @@ func buildNestedDedupeSQL(sourceTable string, schema Schema, dest *config.Destin
 
 	for _, field := range schema.Fields {
 		projection = append(projection, field.Name)
-		if expression, ok := dest.Transform[strings.ToLower(field.Name)]; ok {
+
+		if expression, ok := getTransformExpression(dest, field); ok {
 			innerProjection = append(innerProjection, fmt.Sprintf("%v AS %v", expression, field.Name))
 			continue
 		}
@@ -40,7 +41,7 @@ func buildDedupeSQL(sourceTable string, schema Schema, unique map[string]bool, d
 			continue
 		}
 		expression := fmt.Sprintf("%v.%v", dest.Transient.Alias, field.Name)
-		if transformExpression, ok := dest.Transform[strings.ToLower(field.Name)]; ok {
+		if transformExpression, ok := getTransformExpression(dest, field); ok {
 			expression = transformExpression
 		}
 		projection = append(projection, fmt.Sprintf("MAX(%v) AS %v", expression, field.Name))
@@ -59,7 +60,8 @@ GROUP BY %v`,
 func buildSelectAll(sourceTable string, schema Schema, dest *config.Destination) string {
 	var projection = make([]string, 0)
 	for _, field := range schema.Fields {
-		if expression, ok := dest.Transform[strings.ToLower(field.Name)]; ok {
+
+		if expression, ok := getTransformExpression(dest, field); ok {
 			projection = append(projection, fmt.Sprintf("%v AS %v", expression, field.Name))
 			continue
 		}
@@ -72,6 +74,14 @@ FROM %v %v $JOIN $WHERE`,
 		sourceTable,
 		dest.Transient.Alias,
 	)
+}
+
+func getTransformExpression(dest *config.Destination, field *bigquery.TableFieldSchema) (string, bool) {
+	expression, ok := dest.Transform[field.Name]
+	if !ok {
+		expression, ok = dest.Transform[strings.ToLower(field.Name)]
+	}
+	return expression, ok
 }
 
 //BuildSelect returns select SQL statement for specified parameter, if uniqueColumns SQL de-duplicates data
