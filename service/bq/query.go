@@ -29,6 +29,14 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, action *task
 	}
 
 	if job.Configuration.Query.DestinationTable != nil {
+		if request.Template != "" { //Try to update template, otherwise try run regular path
+			tempRef, _ := base.NewTableReference(request.Template)
+			if template, err := s.Table(ctx, tempRef); err == nil {
+				template.TableReference = job.Configuration.Query.DestinationTable
+				_ = s.CreateTableIfNotExist(ctx, template, true)
+			}
+		}
+
 		if request.Append {
 			job.Configuration.Query.WriteDisposition = "WRITE_APPEND"
 		} else {
@@ -55,7 +63,7 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, action *task
 			source = strings.Replace(string(source[:40]), "\n", "", len(source))
 		}
 		dest := base.EncodeTableReference(job.Configuration.Query.DestinationTable, true)
-		fmt.Printf("[%v] runing query %v ... into %v\n", action.Meta.DestTable, source, dest)
+		shared.LogF("[%v] runing query %v ... into %v\n", action.Meta.DestTable, source, dest)
 	}
 
 	return s.Post(ctx, job, action)
@@ -98,11 +106,12 @@ func (r *QueryRequest) Validate() error {
 }
 
 //NewQueryAction creates a new query request
-func NewQueryAction(SQL string, dest *bigquery.TableReference, append bool, finally *task.Actions) *task.Action {
+func NewQueryAction(SQL string, dest *bigquery.TableReference, template string, append bool, finally *task.Actions) *task.Action {
 	query := &QueryRequest{
 		SQL:              SQL,
 		destinationTable: dest,
 		Append:           append,
+		Template:         template,
 	}
 	if dest != nil {
 		query.Dest = base.EncodeTableReference(dest, false)
