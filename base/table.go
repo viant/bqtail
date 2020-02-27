@@ -8,6 +8,10 @@ import (
 
 //NewTableReference creates a table reference for table in the following syntax [project:]dataset.table
 func NewTableReference(table string) (*bigquery.TableReference, error) {
+	quotes := strings.Count(table, "`")
+	if quotes > 0 {
+		table = strings.Replace(table, "`", "", quotes)
+	}
 	dotIndex := strings.LastIndex(table, ".")
 	if dotIndex == -1 {
 		return nil, fmt.Errorf("datasetID is missing, expected [ProjectID:].DatasetID.%v", table)

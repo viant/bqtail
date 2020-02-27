@@ -165,7 +165,7 @@ func (s *service) AuthHTTPClient(ctx context.Context, scopes []string) (client *
 func (s *service) loadGsUtilAuthHTTPClient(ctx context.Context) (*http.Client, error) {
 	gsUtilCfg, err := gcloud.ConfigFromURL(ctx, gsUtilConfigLocation, s.fs)
 	if err == nil {
-		fmt.Printf("%+v\n", gsUtilCfg)
+		shared.LogF("%+v\n", gsUtilCfg)
 		conf, err := google.NewSDKConfig(gsUtilCfg.Core.Account)
 		if err != nil {
 			return nil, err

@@ -46,6 +46,7 @@ func (s *service) Load(ctx context.Context, request *tail.Request) (*tail.Respon
 		if !request.Stream {
 			break
 		}
+
 		if response.Info.Uplodaded > 0 {
 			shared.LogLn(response)
 			response = tail.NewResponse()

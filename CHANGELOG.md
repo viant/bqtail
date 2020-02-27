@@ -15,6 +15,9 @@
   * Added pubsub push action
   * Added stand-alone BqTail command
   * Added LongRunning process info (bqmon)
+  * Added bq.query action destination template
+  * Update Dynamic Table Destination (split) to work with AVRO source files
+  * Added dynamic patching with Schema.template
 
 ## Jan 14 2020 1.1.0
 

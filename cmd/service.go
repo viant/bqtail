@@ -25,10 +25,10 @@ type Service interface {
 }
 
 type service struct {
-	config      *tail.Config
-	tailService tail.Service
-	fs          afs.Service
-	stopped     int32
+	config       *tail.Config
+	tailService  tail.Service
+	fs           afs.Service
+	stopped      int32
 	stopChan     chan bool
 	requestChan  chan *contract.Request
 	responseChan chan *contract.Response

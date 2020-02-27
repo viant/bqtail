@@ -9,3 +9,7 @@ go.mod
 go.sum
 local.go
 local_test.go
+cmd
+cmd/
+scratchpad
+scratchpad/

@@ -79,7 +79,7 @@ func (s *service) buildQueryAction(query, destTable string) (*task.Action, error
 	if err != nil {
 		return nil, errors.Wrapf(err, "invalid query dest table: %v", destTable)
 	}
-	return bq.NewQueryAction(query, destReference, true, nil), nil
+	return bq.NewQueryAction(query, destReference, "", true, nil), nil
 }
 
 func (s *service) initDestination(rule *config.Rule, request *build.Request) {

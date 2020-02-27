@@ -33,7 +33,7 @@ func (s *service) matchSourceWithRule(response *contract.Response, request *cont
 		return nil
 	}
 	if shared.IsDebugLoggingLevel() {
-		fmt.Printf("rule: ")
+		shared.LogF("rule: ")
 		shared.LogLn(rule)
 	}
 	return rule

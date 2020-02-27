@@ -41,6 +41,7 @@ pipeline:
         - tar cvzf bqtail_osx_${AppVersion}.tar.gz bqtail
         - unset GOOS
         - go build -ldflags "-X main.Version=${AppVersion}"
+        - cp bqtail /usr/local/bin
 
     deploay:
       bqtail:

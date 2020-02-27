@@ -2,7 +2,6 @@ package task
 
 import (
 	"context"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
@@ -65,7 +64,7 @@ func RunWithService(ctx context.Context, registry Registry, serviceName string, 
 	var response Response
 	response, err = service.Run(ctx, request)
 	if shared.IsDebugLoggingLevel() && err != nil {
-		fmt.Printf("err: %v\n", err)
+		shared.LogF("err: %v\n", err)
 	}
 	return response, err
 }

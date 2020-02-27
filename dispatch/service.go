@@ -114,13 +114,13 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		}
 		response.Cycles++
 		if err = s.logPerformance(ctx, response); err != nil {
-			fmt.Printf("%v\n", err)
+			shared.LogF("%v\n", err)
 		}
 		if !s.wait(ctx, cycleStartTime, waitGroup, &running, &timeoutDuration) {
 			break
 		}
 		for i := range projectEvents {
-			fmt.Printf("%v\n", projectEvents[i].Performance)
+			shared.LogF("%v\n", projectEvents[i].Performance)
 		}
 	}
 	return nil
@@ -360,7 +360,7 @@ func (s *service) notify(ctx context.Context, job *contract.Job, events *project
 	info.ProjectID = events.ProjectID
 	taskURL := s.config.BuildTaskURL(info) + shared.JSONExt
 	if shared.IsDebugLoggingLevel() {
-		fmt.Printf("notyfying: %v -> %v\n", job.URL, taskURL)
+		shared.LogF("notyfying: %v -> %v\n", job.URL, taskURL)
 	}
 	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
 }
