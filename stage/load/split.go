@@ -28,10 +28,15 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 	if dest.Schema.Template != "" {
 		destTemplate = dest.Schema.Template
 	}
+
+	clusterColumnMap := j.clusterColumnMap()
+
 	for i := range split.Mapping {
 		mapping := split.Mapping[i]
 		destTable, _ := dest.CustomTableReference(mapping.Then, j.Process.Source)
-		SQL := strings.Replace(selectSQL, "$WHERE", " WHERE  "+mapping.When+" ", 1)
+
+		where := replaceWithMap(mapping.When, clusterColumnMap)
+		SQL := strings.Replace(selectSQL, "$WHERE", " WHERE  "+where+" ", 1)
 		query := bq.NewQueryAction(SQL, destTable, destTemplate, j.Rule.IsAppend(), next)
 		group := task.NewActions(nil, nil)
 		group.AddOnSuccess(query)
@@ -43,11 +48,9 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 		result.AddOnSuccess(next.OnFailure...)
 		return nil
 	}
-
 	if len(dest.Transform) == 0 {
 		dest.Transform = make(map[string]string)
 	}
-
 	for _, column := range j.splitColumns {
 		dest.Transform[column.Name] = column.Type + "(NULL)"
 	}
@@ -64,6 +67,30 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 	destRef, _ := base.NewTableReference(j.TempTable)
 	result.AddOnSuccess(bq.NewQueryAction(selectAll, destRef, "", false, next))
 	return nil
+}
+
+func replaceWithMap(when string, columnMap map[string]string) string {
+	for k, v := range columnMap {
+		count := strings.Count(when, k)
+		if count == 0 {
+			continue
+		}
+		when = strings.Replace(when, k, v, count)
+	}
+	return when
+}
+
+func (j *Job) clusterColumnMap() map[string]string {
+	split := j.Rule.Dest.Schema.Split
+	result := map[string]string{}
+	if len(split.ClusterColumns) > 0 {
+		for i, column := range split.ClusterColumns {
+			if index := strings.LastIndex(split.ClusterColumns[i], "."); index != -1 {
+				result[column] = string(column[index+1:])
+			}
+		}
+	}
+	return result
 }
 
 func (j *Job) initTableSplit(ctx context.Context, service bq.Service) error {
