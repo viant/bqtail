@@ -81,16 +81,18 @@ func replaceWithMap(when string, columnMap map[string]string) string {
 }
 
 func (j *Job) clusterColumnMap() map[string]string {
-	split := j.Rule.Dest.Schema.Split
+
 	result := map[string]string{}
-	if len(split.ClusterColumns) > 0 {
-		for i, column := range split.ClusterColumns {
-			if index := strings.LastIndex(split.ClusterColumns[i], "."); index != -1 {
-				result[column] = string(column[index+1:])
-			}
-		}
-	}
 	return result
+	//split := j.Rule.Dest.Schema.Split
+	//if len(split.ClusterColumns) > 0 {
+	//	for i, column := range split.ClusterColumns {
+	//		if index := strings.LastIndex(split.ClusterColumns[i], "."); index != -1 {
+	//			result[column] = string(column[index+1:])
+	//		}
+	//	}
+	//}
+	//return result
 }
 
 func (j *Job) initTableSplit(ctx context.Context, service bq.Service) error {
