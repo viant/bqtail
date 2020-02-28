@@ -48,9 +48,19 @@ type Options struct {
 
 	Logging string `short:"l" long:"logging" description:"logging level" choice:"info" choice:"debug" choice:"off" default:"info" `
 
-	HistoryURL string `short:"h" long:"history" description:"history url to track already process file in previous run"`
+	HistoryURL string `short:"H" long:"history" description:"history url to track already process file in previous run"`
 
 	Stream bool `short:"X" long:"stream" description:"run constantly to stream changed/new datafile(s)"`
+
+	Client string `short:"c" long:"client" description:"GCP OAuth client url"`
+}
+
+//ClientURI returns clientURL
+func (r *Options) ClientURL() string {
+	if r.Client == "" {
+		r.Client = shared.ClientSecretURL
+	}
+	return r.Client
 }
 
 //HistoryPathURL return history URL

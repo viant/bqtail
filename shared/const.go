@@ -200,3 +200,6 @@ const (
 	//WriteDispositionAppend append data
 	WriteDispositionAppend = "WRITE_APPEND"
 )
+
+//ClientSecretURL client secret
+const ClientSecretURL = "mem://github.com/viant/bqtail/auth/key.json"

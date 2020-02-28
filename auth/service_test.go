@@ -3,13 +3,19 @@ package auth
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/bqtail/shared"
 	"io/ioutil"
 	"log"
 	"testing"
 )
 
 func TestService_AuthHTTPClient(t *testing.T) {
-	srv := New(BqTailClient, true, "", Scopes...)
+
+	oAuthClient, err := ClientFromURL(shared.ClientSecretURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	srv := New(oAuthClient, true, "", Scopes...)
 	ctx := context.Background()
 	client, err := srv.AuthHTTPClient(ctx, Scopes)
 	if err != nil {

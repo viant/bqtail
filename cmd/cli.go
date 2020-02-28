@@ -27,9 +27,14 @@ func RunClient(Version string, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	client, err := auth.ClientFromURL(options.ClientURL())
+	if err != nil {
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	useGsUtilAuth := toolbox.AsBoolean(os.Getenv("GCLOUD_AUTH"))
-	authService := auth.New(auth.BqTailClient, useGsUtilAuth, options.ProjectID, auth.Scopes...)
+	authService := auth.New(client, useGsUtilAuth, options.ProjectID, auth.Scopes...)
 	setDefaultAuth(authService)
 
 	if options.Version {

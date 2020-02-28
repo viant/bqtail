@@ -1,7 +1,27 @@
 package auth
 
-//BqTailClient bqtail client
-var BqTailClient = &Client{
-	ID:     "283104209294-2tmkjlki0gcaddh20d58gq0umq52p9b2.apps.googleusercontent.com",
-	Secret: "_imXJeb8za1xGCfqLY_InwtZ",
+import (
+	"context"
+	"encoding/json"
+	"github.com/pkg/errors"
+	"github.com/viant/afs"
+	"io/ioutil"
+)
+
+func ClientFromURL(URL string) (*Client, error) {
+	fs := afs.New()
+	reader, err := fs.DownloadWithURL(context.Background(), URL)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get client secret: %v", URL)
+	}
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to read client secret: %v", URL)
+	}
+	result := &Client{}
+	err = json.Unmarshal(data, result)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to decode client secret: %v", URL)
+	}
+	return result, nil
 }

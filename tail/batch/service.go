@@ -49,7 +49,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 	parentURL, _ := url.Split(process.Source.URL, gs.Scheme)
 	windowDest := process.DestTable
 	suffixRaw := process.DestTable + rule.When.Suffix
-	if ! rule.Batch.MultiPath {
+	if !rule.Batch.MultiPath {
 		suffixRaw += parentURL
 	}
 	windowDest = fmt.Sprintf("%v_%v", process.DestTable, base.Hash(suffixRaw))
