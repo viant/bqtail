@@ -82,7 +82,7 @@ bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120 -h=~/.bqtail
 
 BqTail client can use one the following auth method
 
-1. With BqTail oath client (by default)
+1. With BqTail BigQuery OAuth client (by default)
 
 - no env setting needed
 
@@ -100,7 +100,22 @@ export GOOGLE_APPLICATION_CREDENTIALS=myGoogle.secret
     export GCLOUD_AUTH=true
 ``` 
 
+4. With custom BigQuery Oath clent
 
+```bash
+bqtail -c=pathTo/custom.json
+```
+
+where:
+-  @pathTo/custom.json
+
+```json
+{
+   "Id": "xxxx.apps.googleusercontent.com",
+  "Secret": "xxxxxx"
+
+}
+```
 
 
 Help: 
