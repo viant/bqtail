@@ -48,10 +48,11 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error) {
 	parentURL, _ := url.Split(process.Source.URL, gs.Scheme)
 	windowDest := process.DestTable
-	if !rule.Batch.MultiPath {
-		//one batch per folder location
-		windowDest = fmt.Sprintf("%v_%v", process.DestTable, base.Hash(parentURL))
+	suffixRaw := process.DestTable + rule.When.Suffix
+	if ! rule.Batch.MultiPath {
+		suffixRaw += parentURL
 	}
+	windowDest = fmt.Sprintf("%v_%v", process.DestTable, base.Hash(suffixRaw))
 	taskURL := s.batchURLProvider(rule)
 	batch := rule.Batch
 	windowURL := batch.WindowURL(taskURL, windowDest, process.Source.Time)
@@ -66,7 +67,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 		if rule.Batch.MultiPath {
 			err = s.addLocationFile(ctx, window, parentURL)
 		}
-		return &Info{OwnerEventID: window.EventID, WindowURL:windowURL}, err
+		return &Info{OwnerEventID: window.EventID, WindowURL: windowURL}, err
 	}
 
 	if batch.RollOver && !batch.IsWithinFirstHalf(process.Source.Time) {
@@ -86,7 +87,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 				return nil, err
 			}
 		}
-		return &Info{OwnerEventID: window.EventID, WindowURL:windowURL}, nil
+		return &Info{OwnerEventID: window.EventID, WindowURL: windowURL}, nil
 	}
 	if rule.Batch.MultiPath {
 		err = s.addLocationFile(ctx, window, parentURL)

@@ -284,7 +284,7 @@ func expandMod(table string, source string, count int) (string, error) {
 }
 
 func expandDate(table string, created time.Time, count int) string {
-	date := created.Format(dateLayout)
+	date := created.UTC().Format(dateLayout)
 	return strings.Replace(table, DateExpr, date, count)
 }
 
