@@ -102,6 +102,9 @@ export GOOGLE_APPLICATION_CREDENTIALS=myGoogle.secret
 
 4. With custom BigQuery Oath clent
 
+-c switch
+
+
 ```bash
 bqtail -c=pathTo/custom.json
 ```
