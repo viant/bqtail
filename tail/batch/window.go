@@ -13,6 +13,7 @@ import (
 //Info represents batch info, process can be owner of be owner by existing batch
 type Info struct {
 	*Window
+	WindowURL string
 	OwnerEventID string
 }
 

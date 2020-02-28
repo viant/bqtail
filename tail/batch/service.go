@@ -66,7 +66,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 		if rule.Batch.MultiPath {
 			err = s.addLocationFile(ctx, window, parentURL)
 		}
-		return &Info{OwnerEventID: window.EventID}, err
+		return &Info{OwnerEventID: window.EventID, WindowURL:windowURL}, err
 	}
 
 	if batch.RollOver && !batch.IsWithinFirstHalf(process.Source.Time) {
@@ -86,7 +86,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 				return nil, err
 			}
 		}
-		return &Info{OwnerEventID: window.EventID}, nil
+		return &Info{OwnerEventID: window.EventID, WindowURL:windowURL}, nil
 	}
 	if rule.Batch.MultiPath {
 		err = s.addLocationFile(ctx, window, parentURL)

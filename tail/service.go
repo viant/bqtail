@@ -315,6 +315,7 @@ func (s *service) tailInBatch(ctx context.Context, process *stage.Process, rule 
 	}
 	if batchWindow.OwnerEventID != "" {
 		response.BatchingEventID = batchWindow.OwnerEventID
+		response.WindowURL = batchWindow.WindowURL
 	}
 	if batchWindow.Window == nil {
 		return nil, nil

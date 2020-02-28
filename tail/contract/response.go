@@ -18,21 +18,21 @@ type Response struct {
 	Batched         bool   `json:",omitempty"`
 	BatchRunner     bool   `json:",omitempty"`
 	BatchingEventID string `json:",omitempty"`
-
-	TriggerURL     string
-	ScheduledURL   string         `json:",omitempty"`
-	Window         *batch.Window  `json:",omitempty"`
-	Process        *stage.Process `json:",omitempty"`
-	ListOpCount    int            `json:",omitempty"`
-	StorageRetries map[int]int    `json:",omitempty"`
-	Retriable      bool           `json:",omitempty"`
-	RetryError     string         `json:",omitempty"`
-	RuleError      string         `json:",omitempty"`
-	LoadError      string         `json:",omitempty"`
-	RetryCount     int            `json:",omitempty"`
-	MoveError      string         `json:",omitempty"`
-	CounterError   string         `json:",omitempty"`
-	DownloadError  string         `json:",omitempty"`
+	WindowURL       string `json:",omitempty"`
+	TriggerURL      string
+	ScheduledURL    string         `json:",omitempty"`
+	Window          *batch.Window  `json:",omitempty"`
+	Process         *stage.Process `json:",omitempty"`
+	ListOpCount     int            `json:",omitempty"`
+	StorageRetries  map[int]int    `json:",omitempty"`
+	Retriable       bool           `json:",omitempty"`
+	RetryError      string         `json:",omitempty"`
+	RuleError       string         `json:",omitempty"`
+	LoadError       string         `json:",omitempty"`
+	RetryCount      int            `json:",omitempty"`
+	MoveError       string         `json:",omitempty"`
+	CounterError    string         `json:",omitempty"`
+	DownloadError   string         `json:",omitempty"`
 }
 
 //NewResponse creates a new response
