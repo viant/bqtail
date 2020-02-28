@@ -11,7 +11,7 @@ type Resources struct {
 	elements map[string]time.Time
 }
 
-//Add add url with modified time
+//Put add url with modified time
 func (r *Resources) Add(URL string, modified time.Time) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()

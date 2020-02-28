@@ -15,7 +15,7 @@ type Metric struct {
 	LagInSec int        `json:",omitempty"`
 }
 
-//Add adds a metric
+//Put adds a metric
 func (m *Metric) Add(metric *Metric, addLag bool) {
 	if m.Max == nil {
 		m.Max = metric.Max

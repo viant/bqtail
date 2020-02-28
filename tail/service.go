@@ -108,7 +108,7 @@ func (s *service) OnDone(ctx context.Context, request *contract.Request, respons
 			}
 			return
 		}
-		//Add extra sleep otherwise retry may kick in immediately and service may no be back on
+		//Put extra sleep otherwise retry may kick in immediately and service may no be back on
 		time.Sleep(3 * time.Second)
 	}
 

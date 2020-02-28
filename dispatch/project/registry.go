@@ -18,7 +18,7 @@ func (r *Registry) Events() []*Events {
 	return result
 }
 
-//Add adds project objects
+//Put adds project objects
 func (r *Registry) Add(regionedProject string, event storage.Object) {
 	_, ok := r.registry[regionedProject]
 	if !ok {

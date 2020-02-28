@@ -8,7 +8,7 @@ type Jobs struct {
 	mux  *sync.Mutex
 }
 
-//Add adds a job to a map
+//Put adds a job to a map
 func (j *Jobs) Add(job *Job) {
 	j.mux.Lock()
 	defer j.mux.Unlock()

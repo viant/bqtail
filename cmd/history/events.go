@@ -16,15 +16,14 @@ import (
 //Events represents history events
 type Events struct {
 	URL    string
-	Status string
 	Events []*stage.Source
 	index  map[string]*stage.Source
 }
 
-//Add adds events
-func (e *Events) Add(event *stage.Source) bool {
-	if prev, ok := e.index[event.URL]; ok && e.Status == shared.StatusOK {
-		if prev.Time == event.Time {
+//Put adds events
+func (e *Events) Put(event *stage.Source) bool {
+	if prev, ok := e.index[event.URL]; ok && e.index[event.URL].Status == shared.StatusOK {
+		if prev.Time.Equal(event.Time) {
 			return false
 		}
 	}
@@ -37,7 +36,6 @@ func (e *Events) Add(event *stage.Source) bool {
 func New(URL string) *Events {
 	return &Events{
 		URL:    URL,
-		Status: shared.StatusPending,
 		Events: make([]*stage.Source, 0),
 		index:  make(map[string]*stage.Source),
 	}

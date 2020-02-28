@@ -11,7 +11,10 @@ import (
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
 	"sync/atomic"
+	"time"
 )
+
+var minAgeUpload = 5 * time.Second
 
 func (s *service) upload(ctx context.Context, destURL string, object storage.Object, uploadService uploader.Service, request *tail.Request, response *tail.Response) error {
 	if object.IsDir() {
@@ -19,15 +22,23 @@ func (s *service) upload(ctx context.Context, destURL string, object storage.Obj
 		if err != nil {
 			return err
 		}
-		eventsHistory := history.New(request.HistoryPathURL(object.URL()))
+		eventsHistory, err := history.FromURL(ctx, request.HistoryPathURL(object.URL()), s.fs)
+		if err != nil {
+			return err
+		}
 		for i := range objects {
 			if url.Equals(object.URL(), objects[i].URL()) {
 				continue
 			}
 			if !objects[i].IsDir() {
-				if !eventsHistory.Add(stage.NewSource(objects[i].URL(), objects[i].ModTime())) {
+				age := time.Now().Sub(objects[i].ModTime())
+				if age < minAgeUpload && age >= 0 {
 					continue
 				}
+				if !eventsHistory.Put(stage.NewSource(objects[i].URL(), objects[i].ModTime())) {
+					continue
+				}
+				response.AddDataURL(objects[i].URL())
 			}
 			destURL := url.Join(destURL, objects[i].Name())
 			if err = s.upload(ctx, destURL, objects[i], uploadService, request, response); err != nil {

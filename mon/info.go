@@ -18,7 +18,7 @@ type Info struct {
 	stalledDatafile int
 }
 
-//Add adds info
+//Put adds info
 func (i *Info) Add(inf *Info) {
 	if i.Activity.Running == nil {
 		i.Activity.Running = info.NewMetric()

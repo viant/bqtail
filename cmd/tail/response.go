@@ -12,6 +12,7 @@ type Response struct {
 	Info        Performance
 	Errors      []string
 	historyURLs []string
+	dataURLs    []string
 	pending     int32
 	mux         sync.Mutex
 }
@@ -35,6 +36,18 @@ func (r *Response) AddHistoryURL(URL string) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
 	r.historyURLs = append(r.historyURLs, URL)
+}
+
+//AddDataURL adds data URL
+func (r *Response) AddDataURL(URL string) {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+	r.dataURLs = append(r.dataURLs, URL)
+}
+
+//DataURLs returns data URLs
+func (r Response) DataURLs() []string {
+	return r.dataURLs
 }
 
 //AddError adds repsponse error
@@ -63,6 +76,7 @@ func NewResponse() *Response {
 	return &Response{
 		Status:      shared.StatusOK,
 		historyURLs: make([]string, 0),
+		dataURLs:    make([]string, 0),
 		Errors:      make([]string, 0),
 	}
 }

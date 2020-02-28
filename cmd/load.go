@@ -41,6 +41,7 @@ func (s *service) Load(ctx context.Context, request *tail.Request) (*tail.Respon
 
 	waitGroup := &sync.WaitGroup{}
 	go s.handleResponse(ctx, response)
+
 	for atomic.LoadInt32(&s.stopped) == 0 {
 		s.loadDatafiles(waitGroup, ctx, object, rule, request, response)
 		if !request.Stream {
@@ -68,8 +69,10 @@ func (s *service) loadDatafiles(waitGroup *sync.WaitGroup, ctx context.Context, 
 		time.Sleep(2 * time.Second)
 		shared.LogProgress()
 	}
-	if err := s.updateHistory(ctx, response); err != nil {
-		response.AddError(err)
+	if len(response.Errors) == 0 {
+		if err := s.updateHistory(ctx, response); err != nil {
+			response.AddError(err)
+		}
 	}
 }
 
@@ -145,13 +148,20 @@ func (s *service) updateHistory(ctx context.Context, response *tail.Response) er
 	if len(historyURLs) == 0 {
 		return nil
 	}
-
+	var index = make(map[string]bool)
+	for _, URL := range response.DataURLs() {
+		index[URL] = true
+	}
 	for _, URL := range historyURLs {
 		events, err := history.FromURL(ctx, URL, s.fs)
 		if err != nil {
 			return err
 		}
-		events.Status = shared.StatusOK
+		for i, event := range events.Events {
+			if index[event.URL] {
+				events.Events[i].Status = shared.StatusOK
+			}
+		}
 		err = events.Persist(ctx, s.fs)
 		if err != nil {
 			return err

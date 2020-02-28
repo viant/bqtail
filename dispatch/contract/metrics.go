@@ -25,7 +25,7 @@ func (m *Metrics) Update(jobID string) *activity.Meta {
 	return stageInfo
 }
 
-//Add updates a metrics with supplied stage action and count
+//Put updates a metrics with supplied stage action and count
 func (m *Metrics) Add(stageInfo *activity.Meta, count int) {
 	switch stageInfo.Action {
 	case "query":
