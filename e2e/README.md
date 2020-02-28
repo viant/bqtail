@@ -122,10 +122,10 @@ endly -t=init
 ```
 
 
-- [Dynamic dest table name base on source data](regression/cases/013_schema_split)
+- [Dynamic dest table name base on source data](regression/cases/013_table_split)
 
 ```bash
-    endly -t=test -i=schema_split
+    endly -t=test -i=table_split
 ```
 
 - [Aggregation ETL](regression/cases/014_aggregation)

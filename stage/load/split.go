@@ -34,7 +34,6 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 	for i := range split.Mapping {
 		mapping := split.Mapping[i]
 		destTable, _ := dest.CustomTableReference(mapping.Then, j.Process.Source)
-
 		where := replaceWithMap(mapping.When, clusterColumnMap)
 		SQL := strings.Replace(selectSQL, "$WHERE", " WHERE  "+where+" ", 1)
 		query := bq.NewQueryAction(SQL, destTable, destTemplate, j.Rule.IsAppend(), next)
@@ -65,6 +64,8 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 	selectAll := sql.BuildSelect(sourceRef, j.SplitSchema.Schema, dest)
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
 	destRef, _ := base.NewTableReference(j.TempTable)
+	dropTable := bq.NewDropAction(j.ProjectID, j.SplitTable())
+	next.AddOnSuccess(dropTable)
 	result.AddOnSuccess(bq.NewQueryAction(selectAll, destRef, "", false, next))
 	return nil
 }
@@ -81,18 +82,16 @@ func replaceWithMap(when string, columnMap map[string]string) string {
 }
 
 func (j *Job) clusterColumnMap() map[string]string {
-
+	split := j.Rule.Dest.Schema.Split
 	result := map[string]string{}
+	if len(split.ClusterColumns) > 0 {
+		for i, column := range split.ClusterColumns {
+			if index := strings.LastIndex(split.ClusterColumns[i], "."); index != -1 {
+				result[column] = string(column[index+1:])
+			}
+		}
+	}
 	return result
-	//split := j.Rule.Dest.Schema.Split
-	//if len(split.ClusterColumns) > 0 {
-	//	for i, column := range split.ClusterColumns {
-	//		if index := strings.LastIndex(split.ClusterColumns[i], "."); index != -1 {
-	//			result[column] = string(column[index+1:])
-	//		}
-	//	}
-	//}
-	//return result
 }
 
 func (j *Job) initTableSplit(ctx context.Context, service bq.Service) error {

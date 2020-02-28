@@ -16,7 +16,8 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	if actions != nil {
 		result.AddOnFailure(actions.OnFailure...)
 	}
-	dropAction := bq.NewDropAction(j.ProjectID, base.EncodeTableReference(j.Load.DestinationTable, false))
+	tempRef, _ := base.NewTableReference(j.TempTable)
+	dropAction := bq.NewDropAction(j.ProjectID, base.EncodeTableReference(tempRef, false))
 	actions.AddOnSuccess(dropAction)
 	dest := j.Rule.Dest
 	load := j.Load
@@ -32,6 +33,8 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 
 	selectAll := sql.BuildSelect(load.DestinationTable, load.Schema, dest)
 	if dest.HasSplit() {
+		tempRef, _ := base.NewTableReference(j.TempTable)
+		selectAll := sql.BuildSelect(tempRef, load.Schema, dest)
 		return result, j.addSplitActions(selectAll, result, actions)
 	}
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
