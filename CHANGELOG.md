@@ -1,3 +1,8 @@
+## March 15 2020 2.0.1
+ * Added autodetect option cli options
+ * Added cap to list operation in dispatcher
+ * Minor patches
+  
 ## Feb 28 2020 2.0.0
   * Streamlined actions, introduced Process/Activity: BREAKING CHANGE - see [Migration](MIGRATION.md) 
   * Added custom transient project(s) on rule level support (reservation/billing project, distributing load)
