@@ -16,7 +16,7 @@ import (
 type Service interface {
 	//Build build a rule for cli options
 	Build(ctx context.Context, request *build.Request) error
-	//Validate check rule either build or with specified URL
+	//Validate check rule either build or with specified ProcessURL
 	Validate(ctx context.Context, request *validate.Request) error
 	//Load start load process for specified source and rule
 	Load(ctx context.Context, request *ctail.Request) (*ctail.Response, error)

@@ -31,14 +31,14 @@ func (r Response) HistoryURLs() []string {
 	return r.historyURLs
 }
 
-//AddHistoryURL adds history URL
+//AddHistoryURL adds history ProcessURL
 func (r *Response) AddHistoryURL(URL string) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
 	r.historyURLs = append(r.historyURLs, URL)
 }
 
-//AddDataURL adds data URL
+//AddDataURL adds data ProcessURL
 func (r *Response) AddDataURL(URL string) {
 	r.mux.Lock()
 	defer r.mux.Unlock()

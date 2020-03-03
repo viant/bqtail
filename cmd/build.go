@@ -92,6 +92,11 @@ func (s *service) initDestination(rule *config.Rule, request *build.Request) {
 	if request.DestinationOverride {
 		rule.Dest.Override = &request.DestinationOverride
 	}
+
+	if request.Autodetect {
+		rule.Dest.Schema.Autodetect = request.Autodetect
+	}
+
 	if request.DestinationPartition {
 		rule.Dest.Partition = config.DateExpr
 	}

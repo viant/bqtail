@@ -23,7 +23,7 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	load := j.Load
 
 	destinationTable, _ := j.Rule.Dest.CustomTableReference(j.DestTable, j.Source)
-	if dest.Transient.Autodetect {
+	if dest.Schema.Autodetect {
 		source := base.EncodeTableReference(load.DestinationTable, false)
 		dest := base.EncodeTableReference(destinationTable, false)
 		copyRequest := bq.NewCopyAction(source, dest, j.Rule.IsAppend(), actions)

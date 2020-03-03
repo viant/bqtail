@@ -15,25 +15,6 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 	hasTransientTemplate := false
 	transient := j.Rule.Dest.Transient
 
-	if transient != nil {
-		datasetRef := &bigquery.DatasetReference{ProjectId: j.ProjectID, DatasetId: transient.Dataset}
-
-		if err := service.CreateDatasetIfNotExist(ctx, transient.Region, datasetRef); err != nil {
-			return errors.Wrapf(err, "failed to create transient dataset: %v", transient.Dataset)
-		}
-		j.Load.WriteDisposition = shared.WriteDispositionTruncate
-		if hasTransientTemplate = transient.Template != ""; hasTransientTemplate {
-			transientTempRef, err := base.NewTableReference(transient.Template)
-			if err != nil {
-				return errors.Wrapf(err, "failed to create table from transient.Template: %v", transient.Template)
-			}
-			if table, err = service.Table(ctx, transientTempRef); err != nil {
-				return errors.Wrapf(err, "failed to get template table: %v", base.EncodeTableReference(transientTempRef, false))
-			}
-			j.TempSchema = table
-		}
-	}
-
 	if j.Rule.Dest.Schema.Template != "" {
 		templateRef, err := base.NewTableReference(j.Rule.Dest.Schema.Template)
 		if err != nil {
@@ -50,13 +31,32 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 		j.DestSchema = table
 	}
 
-	if transient != nil && transient.Autodetect {
+	if j.Rule.Dest.Schema.Autodetect {
 		j.Load.Schema = nil
-		j.Load.Autodetect = j.Rule.Dest.Schema.Autodetect
+		j.Load.DestinationTable = tableReference
+		j.Load.Autodetect = true
 		return nil
 	}
 
-	if table == nil && !hasTransientTemplate {
+	if transient != nil {
+		datasetRef := &bigquery.DatasetReference{ProjectId: j.ProjectID, DatasetId: transient.Dataset}
+		if err := service.CreateDatasetIfNotExist(ctx, transient.Region, datasetRef); err != nil {
+			return errors.Wrapf(err, "failed to create transient dataset: %v", transient.Dataset)
+		}
+		j.Load.WriteDisposition = shared.WriteDispositionTruncate
+		if hasTransientTemplate = transient.Template != ""; hasTransientTemplate {
+			transientTempRef, err := base.NewTableReference(transient.Template)
+			if err != nil {
+				return errors.Wrapf(err, "failed to create table from transient.Template: %v", transient.Template)
+			}
+			if table, err = service.Table(ctx, transientTempRef); err != nil {
+				return errors.Wrapf(err, "failed to get template table: %v", base.EncodeTableReference(transientTempRef, false))
+			}
+			j.TempSchema = table
+		}
+	}
+
+	if table == nil && !hasTransientTemplate && !j.Rule.Dest.Schema.Autodetect {
 		if table, err = service.Table(ctx, tableReference); err != nil {
 			return errors.Wrapf(err, "failed to get table: %v", base.EncodeTableReference(tableReference, false))
 		}
@@ -72,12 +72,6 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 }
 
 func (j *Job) updateSchema(table *bigquery.Table) {
-	if j.Rule.Dest.Schema.Autodetect {
-		j.Load.Schema = nil
-		j.Load.Autodetect = j.Rule.Dest.Schema.Autodetect
-		return
-	}
-
 	if table != nil {
 		j.Load.Schema = table.Schema
 		if table.TimePartitioning != nil {

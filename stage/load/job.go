@@ -87,8 +87,8 @@ func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window) (*J
 }
 
 //NewJobFromURL create a job from url
-func NewJobFromURL(ctx context.Context, rule *config.Rule, process *stage.Process, fs afs.Service) (*Job, error) {
-	reader, err := fs.DownloadWithURL(ctx, process.ProcessURL)
+func NewJobFromURL(ctx context.Context, rule *config.Rule, processURL string, fs afs.Service) (*Job, error) {
+	reader, err := fs.DownloadWithURL(ctx, processURL)
 	if err != nil {
 		return nil, err
 	}

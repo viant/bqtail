@@ -12,7 +12,7 @@ import (
 )
 
 type Options struct {
-	RuleURL string `short:"r" long:"rule" description:"rule URL"`
+	RuleURL string `short:"r" long:"rule" description:"rule ProcessURL"`
 
 	Validate bool `short:"V" long:"validate" description:"run validation"`
 
@@ -40,7 +40,7 @@ type Options struct {
 
 	MatchPattern string `short:"R" long:"reg expr pattern" description:"source match reg expr pattern"`
 
-	SourceURL string `short:"s" long:"src" description:"source data URL" `
+	SourceURL string `short:"s" long:"src" description:"source data ProcessURL" `
 
 	SourceFormat string `short:"f" long:"source-format" description:"load job format"  choice:"CSV" choice:"NEWLINE_DELIMITED_JSON" choice:"AVRO" choice:"PARQUET"`
 
@@ -53,6 +53,8 @@ type Options struct {
 	Stream bool `short:"X" long:"stream" description:"run constantly to stream changed/new datafile(s)"`
 
 	Client string `short:"c" long:"client" description:"GCP OAuth client url"`
+
+	Autodetect bool `short:"a" long:"autodetect" description:"auto detect schema"`
 }
 
 //ClientURI returns clientURL
@@ -63,7 +65,7 @@ func (r *Options) ClientURL() string {
 	return r.Client
 }
 
-//HistoryPathURL return history URL
+//HistoryPathURL return history ProcessURL
 func (r *Options) HistoryPathURL(URL string) string {
 	urlPath := url.Path(URL)
 	historyName := md5Hash(urlPath) + ".json"
