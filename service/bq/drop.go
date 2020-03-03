@@ -7,6 +7,7 @@ import (
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
+	"time"
 )
 
 //Drop drop source table
@@ -19,13 +20,23 @@ func (s *service) Drop(ctx context.Context, request *DropRequest, action *task.A
 	}
 	table := request.dropTable
 	call := bigquery.NewTablesService(s.Service).Delete(table.ProjectId, table.DatasetId, table.TableId)
-	call.Context(ctx)
-	err := call.Do()
-	if base.IsNotFoundError(err) {
-		err = nil
+	var err error
+	for i := 0; i < shared.MaxRetries; i++ {
+		call.Context(ctx)
+		if err = call.Do(); err == nil {
+			return err
+		}
+		if base.IsRetryError(err) {
+			//do extra sleep before retrying
+			time.Sleep(shared.RetrySleepInSec * time.Second)
+			continue
+		}
+		break
 	}
 	return err
 }
+
+
 
 //DropRequest represents a copy request
 type DropRequest struct {
