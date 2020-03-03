@@ -2,6 +2,7 @@
  * Added autodetect option cli options
  * Added cap to list operation in dispatcher
  * Minor patches
+ * Added drop table retry
   
 ## Feb 28 2020 2.0.0
   * Streamlined actions, introduced Process/Activity: BREAKING CHANGE - see [Migration](MIGRATION.md) 

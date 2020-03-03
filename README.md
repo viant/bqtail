@@ -29,7 +29,7 @@ Having a dedicated project only for loading data, allowed us to identify occasio
 In some cases, we've seen delays up to a few hours from average under minute baseline load completion time. BqTail addresses loading capacity issue by either using a transient BigQuery project with slot reservation, or by load balancing
 data ingestion across various projects.
 
-Note that free of charge data ingestion takes place on default-pipeline reservation which is govern by [fair scheduler](https://cloud.google.com/bigquery/docs/slots#fair_scheduling_in_bigquery) allocating resources among competing load job across various projects.
+Note that free of charge data ingestion takes place on default-pipeline reservation which is governed by [fair scheduler](https://cloud.google.com/bigquery/docs/slots#fair_scheduling_in_bigquery) allocating resources among competing load job across various projects.
 To guarantee ingestion speed for critical data it is recommended to use project with [slot reservation](https://cloud.google.com/bigquery/docs/slots)
 
 
