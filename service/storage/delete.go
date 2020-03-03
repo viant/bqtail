@@ -30,7 +30,11 @@ func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
 		processed[request.URLs[i]] = true
 		deleter.Schedule(request.URLs[i])
 	}
-	return deleter.Wait()
+	err = deleter.Wait()
+	if err != nil {
+		shared.LogF("[ERROR]: %v\n", err)
+	}
+	return nil
 }
 
 //DeleteRequest delete request
