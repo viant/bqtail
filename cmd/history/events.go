@@ -60,7 +60,7 @@ func (e *Events) Persist(ctx context.Context, fs afs.Service) error {
 	return fs.Upload(ctx, e.URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
-//FromURL creates events from ProcessURL
+//FromURL creates events from URL
 func FromURL(ctx context.Context, URL string, fs afs.Service) (*Events, error) {
 	exists, _ := fs.Exists(ctx, URL, option.NewObjectKind(true))
 	if !exists {

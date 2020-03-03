@@ -12,7 +12,7 @@ import (
 )
 
 type Options struct {
-	RuleURL string `short:"r" long:"rule" description:"rule ProcessURL"`
+	RuleURL string `short:"r" long:"rule" description:"rule URL"`
 
 	Validate bool `short:"V" long:"validate" description:"run validation"`
 
@@ -40,7 +40,7 @@ type Options struct {
 
 	MatchPattern string `short:"R" long:"reg expr pattern" description:"source match reg expr pattern"`
 
-	SourceURL string `short:"s" long:"src" description:"source data ProcessURL" `
+	SourceURL string `short:"s" long:"src" description:"source data URL" `
 
 	SourceFormat string `short:"f" long:"source-format" description:"load job format"  choice:"CSV" choice:"NEWLINE_DELIMITED_JSON" choice:"AVRO" choice:"PARQUET"`
 
@@ -65,7 +65,7 @@ func (r *Options) ClientURL() string {
 	return r.Client
 }
 
-//HistoryPathURL return history ProcessURL
+//HistoryPathURL return history URL
 func (r *Options) HistoryPathURL(URL string) string {
 	urlPath := url.Path(URL)
 	historyName := md5Hash(urlPath) + ".json"
