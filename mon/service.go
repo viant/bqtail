@@ -18,6 +18,7 @@ import (
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/sortable"
 	"github.com/viant/bqtail/stage/activity"
+	"github.com/viant/bqtail/stage/load"
 	"github.com/viant/bqtail/tail"
 	"github.com/viant/bqtail/task"
 	"github.com/viant/toolbox"
@@ -35,6 +36,7 @@ import (
 const (
 	maxErrors               = 40
 	maxLongRunningProcesses = 100
+	longRunningDuration     = 15 * time.Minute
 )
 
 //Service represents monitoring service
@@ -114,7 +116,7 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 		s.updateActiveLoads(active, infoDest)
 	}
 
-	s.updateLongRunningProcesses(ctx, active, request, response, infoDest)
+	s.updateLongRunningProcesses(ctx, active, response, infoDest)
 
 	if len(doneLoads) > 0 {
 		s.updateRecentlyDone(doneLoads, infoDest)
@@ -198,29 +200,30 @@ func (s *service) check(ctx context.Context, request *Request, response *Respons
 	return nil
 }
 
-func (s *service) updateLongRunningProcesses(ctx context.Context, active activeLoads, request *Request, response *Response, infoDest map[string]*Info) {
+func (s *service) updateLongRunningProcesses(ctx context.Context, active activeLoads, response *Response, infoDest map[string]*Info) {
 	if len(active) > 0 {
 		response.LongRunning = make([]*info.Process, 0)
-		for _, load := range active {
-			if len(response.LongRunning) > 100 {
+		for _, loadProcess := range active {
+			if len(response.LongRunning) > maxLongRunningProcesses {
 				break
 			}
-			inf := s.getInfo(load.dest, infoDest)
+			inf := s.getInfo(loadProcess.dest, infoDest)
 			if inf.rule == nil {
 				continue
 			}
-			elapsed := time.Now().Sub(load.started)
-			if elapsed < inf.rule.StalledDuration() {
+			elapsed := time.Now().Sub(loadProcess.started)
+			stalled := elapsed < inf.rule.StalledDuration()
+			if elapsed < longRunningDuration {
 				continue
 			}
 			process := &info.Process{
-				URL:     load.URL,
-				Created: load.started,
-				Age:     fmt.Sprintf("%s", time.Now().Sub(load.started)),
+				URL:     loadProcess.URL,
+				Created: loadProcess.started,
+				Age:     fmt.Sprintf("%s", time.Now().Sub(loadProcess.started)),
 				Error:   "",
 			}
 			response.LongRunning = append(response.LongRunning, process)
-			errorURL := load.ErrorURL()
+			errorURL := loadProcess.ErrorURL()
 			if reader, err := s.fs.DownloadWithURL(ctx, errorURL); err == nil {
 				data, err := ioutil.ReadAll(reader)
 				_ = reader.Close()
@@ -228,28 +231,32 @@ func (s *service) updateLongRunningProcesses(ctx context.Context, active activeL
 					process.Error = string(data)
 				}
 			}
-
-			if inf.traversed {
-				process.ActiveDatafiles = inf.activeDatafile
-				process.StalledDatafiles = inf.stalledDatafile
-			} else {
-				baseURL := fmt.Sprintf("gs://%v", s.TriggerBucket)
-				URL := url.Join(baseURL, inf.rule.When.Prefix)
-				if err := traverse(ctx, URL, s.fs, 1000, &inf.stalledDatafile, &inf.activeDatafile, inf.rule.StalledDuration()); err == nil {
-					inf.traversed = true
-					process.ActiveDatafiles = inf.activeDatafile
-					process.StalledDatafiles = inf.stalledDatafile
-				}
-			}
-
-			if inf.traversed {
-				if inf.activeDatafile > 0 && inf.stalledDatafile == 0 {
-					//remove process file since there are no data backlog
-					_ = s.fs.Delete(ctx, load.URL)
-				}
+			if stalled || process.Error != "" {
+				s.processLongRunningProcess(ctx, inf, process)
 			}
 		}
+	}
+}
 
+func (s *service) processLongRunningProcess(ctx context.Context, inf *Info, process *info.Process) {
+	if inf.traversed {
+		process.ActiveDatafiles = inf.activeDatafile
+		process.StalledDatafiles = inf.stalledDatafile
+	} else {
+		baseURL := fmt.Sprintf("gs://%v", s.TriggerBucket)
+		URL := url.Join(baseURL, inf.rule.When.Prefix)
+		if err := traverse(ctx, URL, s.fs, 1000, &inf.stalledDatafile, &inf.activeDatafile, inf.rule.StalledDuration()); err == nil {
+			inf.traversed = true
+			process.ActiveDatafiles = inf.activeDatafile
+			process.StalledDatafiles = inf.stalledDatafile
+		}
+	}
+	if inf.traversed {
+		if inf.stalledDatafile == 0 {
+			if projectJob, err := load.NewJobFromURL(ctx, nil, process.URL, s.fs); err == nil {
+				_ = s.fs.Move(ctx, process.URL, projectJob.FailedURL)
+			}
+		}
 	}
 }
 

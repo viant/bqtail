@@ -7,10 +7,10 @@ import (
 	"time"
 )
 
-type activeLoads []*load
+type activeLoads []*loadProcess
 
-func (l activeLoads) groupByDest() map[string]*load {
-	var result = make(map[string]*load)
+func (l activeLoads) groupByDest() map[string]*loadProcess {
+	var result = make(map[string]*loadProcess)
 	for i, ld := range l {
 		_, ok := result[ld.dest]
 		if !ok {
@@ -21,7 +21,7 @@ func (l activeLoads) groupByDest() map[string]*load {
 	return result
 }
 
-type load struct {
+type loadProcess struct {
 	URL     string
 	dest    string
 	eventID string
@@ -29,15 +29,15 @@ type load struct {
 	started time.Time
 }
 
-func (l load) ErrorURL() string {
+func (l loadProcess) ErrorURL() string {
 	errorURL := l.URL
-	errorURL = strings.Replace(errorURL, "Journal/Running", "error", 1)
+	errorURL = strings.Replace(errorURL, "Journal/Running", "errors", 1)
 	errorURL = strings.Replace(errorURL, ".run", ".err", 1)
 	errorURL = strings.Replace(errorURL, "--", "/", strings.Count(errorURL, "--"))
 	return errorURL
 }
 
-func parseLoad(baseURL string, URL string, modTime time.Time) *load {
+func parseLoad(baseURL string, URL string, modTime time.Time) *loadProcess {
 	relative := string(URL[len(baseURL):])
 	relative = strings.Replace(relative, shared.PathElementSeparator, "/", len(relative))
 	relative = strings.Trim(relative, "/")
@@ -49,7 +49,7 @@ func parseLoad(baseURL string, URL string, modTime time.Time) *load {
 	encoded := elements[len(elements)-1]
 	eventID := strings.Replace(encoded, shared.ProcessExt, "", 1)
 	dest := strings.Trim(elements[len(elements)-2], "/")
-	return &load{
+	return &loadProcess{
 		URL:     URL,
 		started: modTime,
 		eventID: eventID,
