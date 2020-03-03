@@ -100,13 +100,14 @@ func (s *service) OnDone(ctx context.Context, request *contract.Request, respons
 		if counter > s.config.MaxRetries {
 			response.RetryError = response.Error
 			response.Status = shared.StatusOK
-			response.Error = ""
 			location := url.Path(request.SourceURL)
 			retryDataURL := url.Join(s.config.JournalURL, shared.RetryDataSubpath, request.EventID, location)
 			if err := s.fs.Move(ctx, request.SourceURL, retryDataURL); err != nil {
 				response.MoveError = err.Error()
 			}
-			return
+			errorURL := url.Join(s.config.JournalURL, shared.RetryCounterSubpath, request.EventID+shared.ErrorExt)
+			_ = s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(response.Error))
+			response.Error = ""
 		}
 		//Put extra sleep otherwise retry may kick in immediately and service may no be back on
 		time.Sleep(3 * time.Second)
@@ -258,7 +259,7 @@ func (s *service) submitJob(ctx context.Context, job *load.Job, response *contra
 //runLoadProcess this method allows rerun Activity/Done job as long original data files are present
 func (s *service) runLoadProcess(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	process := &stage.Process{ProcessURL: request.SourceURL}
-	processJob, err := load.NewJobFromURL(ctx, nil, process, s.fs)
+	processJob, err := load.NewJobFromURL(ctx, nil, process.ProcessURL, s.fs)
 	if err != nil {
 		return err
 	}
@@ -275,9 +276,6 @@ func (s *service) runLoadProcess(ctx context.Context, request *contract.Request,
 	}
 
 	_, err = s.submitJob(ctx, processJob, response)
-	if err == nil {
-		_ = s.fs.Delete(ctx, processJob.ProcessURL)
-	}
 	return err
 }
 
@@ -370,7 +368,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 			shared.LogF("load error - reloading ...\n")
 		}
 		rule := s.config.Rule(ctx, action.Meta.RuleURL)
-		processJob, err := load.NewJobFromURL(ctx, rule, &action.Meta.Process, s.fs)
+		processJob, err := load.NewJobFromURL(ctx, rule, action.Meta.Process.ProcessURL, s.fs)
 		if err != nil {
 			return bqJobError
 		}
