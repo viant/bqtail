@@ -31,6 +31,7 @@ import (
 )
 
 var thinkTime = 1500 * time.Millisecond
+var maxBqJobListLoopback = 6 * time.Hour
 
 //Service represents event service
 type Service interface {
@@ -320,6 +321,11 @@ func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Respo
 	sorted := sortable.NewObjects(events.Items, sortable.ByModTime)
 	events.Items = sorted.Elements
 	minListTime := sorted.Elements[len(sorted.Elements)-1].ModTime()
+
+	//if the oldest event is more then maxBqJobListLoopback, cap it
+	if minListTime.Before(time.Now().Add(-maxBqJobListLoopback)) {
+		minListTime = time.Now().Add(-maxBqJobListLoopback)
+	}
 	startTime := time.Now()
 	waitGroup := &sync.WaitGroup{}
 	for {
@@ -360,7 +366,7 @@ func (s *service) notify(ctx context.Context, job *contract.Job, events *project
 	info.ProjectID = events.ProjectID
 	taskURL := s.config.BuildTaskURL(info) + shared.JSONExt
 	if shared.IsDebugLoggingLevel() {
-		shared.LogF("notyfying: %v -> %v\n", job.URL, taskURL)
+		shared.LogF("notify: %v -> %v\n", job.URL, taskURL)
 	}
 	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
 }
