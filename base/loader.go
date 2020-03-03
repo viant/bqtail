@@ -13,7 +13,7 @@ import (
 //Notify represent notify function
 type Notify func(ctx context.Context, fs afs.Service, URL string)
 
-//Loader represents URL changes notifier
+//Loader represents asset changes notifier
 type Loader struct {
 	fs             afs.Service
 	baseURL        string

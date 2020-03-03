@@ -45,12 +45,12 @@ type Config struct {
 	MaxRetries       int
 }
 
-//BuildLoadURL returns active action URL for supplied event id
+//BuildLoadURL returns active action ProcessURL for supplied event id
 func (c *Config) BuildLoadURL(info *stage.Process) string {
 	return url.Join(c.ActiveLoadProcessURL, info.DestTable+shared.PathElementSeparator+info.EventID+shared.ProcessExt)
 }
 
-//DoneLoadURL returns done action URL for supplied event id
+//DoneLoadURL returns done action ProcessURL for supplied event id
 func (c *Config) DoneLoadURL(info *stage.Process) string {
 	date := time.Now().Format(shared.DateLayout)
 	return url.Join(c.DoneLoadProcessURL, path.Join(info.DestTable, date, info.EventID+shared.ProcessExt))
