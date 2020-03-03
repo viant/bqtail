@@ -122,7 +122,7 @@ func (d Destination) Validate() error {
 		if err := d.Transient.Validate(); err != nil {
 			return err
 		}
-		if d.HasTransformation() && d.Transient.Autodetect {
+		if d.HasTransformation() && d.Schema.Autodetect {
 			return errors.Errorf("autodetect schema is not supported with transformation options")
 		}
 	}
@@ -148,6 +148,9 @@ func (d Destination) Validate() error {
 
 //Init initialises destination
 func (d *Destination) Init() error {
+	if d == nil {
+		return errors.Errorf("dest was nil")
+	}
 	if d.TransientDataset != "" {
 		if d.Transient == nil {
 			d.Transient = &Transient{Dataset: d.TransientDataset}
