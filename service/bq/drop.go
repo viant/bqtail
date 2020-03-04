@@ -20,6 +20,7 @@ func (s *service) Drop(ctx context.Context, request *DropRequest, action *task.A
 	}
 	table := request.dropTable
 	call := bigquery.NewTablesService(s.Service).Delete(table.ProjectId, table.DatasetId, table.TableId)
+	call.Context(ctx)
 	var err error
 	for i := 0; i < shared.MaxRetries; i++ {
 		if err = call.Do(); err == nil {
