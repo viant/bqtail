@@ -122,7 +122,7 @@
                     "Table": "temp.ad_20200227_6056467489517448"
                   }
                 }
-              ],
+              ] ,
               "Request": {
                 "Append": true,
                 "Dest": "logs.ad_impressions_20200227",

@@ -32,6 +32,9 @@ func (s *service) Drop(ctx context.Context, request *DropRequest, action *task.A
 		}
 		break
 	}
+	if base.IsNotFoundError(err) {
+		err = nil
+	}
 	return err
 }
 
