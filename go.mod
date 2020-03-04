@@ -12,7 +12,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sspencer/go-ini v0.0.0-20141212062048-adb75e3175bb // indirect
 	github.com/stretchr/testify v1.5.1
-	github.com/viant/afs v0.15.2
+	github.com/viant/afs v0.15.3
 	github.com/viant/afsc v0.14.6
 	github.com/viant/assertly v0.5.3
 	github.com/viant/toolbox v0.30.0
