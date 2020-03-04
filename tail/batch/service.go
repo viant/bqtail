@@ -48,7 +48,9 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error) {
 	parentURL, _ := url.Split(process.Source.URL, gs.Scheme)
 	windowDest := process.DestTable
+
 	suffixRaw := process.DestTable + rule.When.Suffix
+
 	if !rule.Batch.MultiPath {
 		suffixRaw += parentURL
 	}
@@ -71,7 +73,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 	}
 
 	if batch.RollOver && !batch.IsWithinFirstHalf(process.Source.Time) {
-		prevWindowURL := batch.WindowURL(taskURL, process.DestTable, process.Source.Time.Add(-(1 + batch.Window.Duration)))
+		prevWindowURL := batch.WindowURL(taskURL, windowDest, process.Source.Time.Add(-(1 + batch.Window.Duration)))
 		if exists, _ := s.fs.Exists(ctx, prevWindowURL, option.NewObjectKind(true)); !exists {
 			startTime = startTime.Add(-batch.Window.Duration)
 		}
