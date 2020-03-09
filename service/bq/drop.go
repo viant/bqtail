@@ -39,8 +39,6 @@ func (s *service) Drop(ctx context.Context, request *DropRequest, action *task.A
 	return err
 }
 
-
-
 //DropRequest represents a copy request
 type DropRequest struct {
 	ProjectID string

@@ -42,6 +42,11 @@ type Destination struct {
 	Override         *bool
 }
 
+//HasTemplate
+func (r *Destination) HasTemplate() bool {
+	return r.Schema.Template != "" || (r.Transient != nil && r.Transient.Template != "")
+}
+
 //Params build pattern paramters
 func (d Destination) Params(source string) (map[string]interface{}, error) {
 	var result = make(map[string]interface{})

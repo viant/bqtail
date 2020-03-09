@@ -3,7 +3,9 @@
  * Added cap to list operation in dispatcher
  * Minor patches
  * Added drop table retry
-  
+ * Added temp table creation when template option is used
+
+   
 ## Feb 28 2020 2.0.0
   * Streamlined actions, introduced Process/Activity: BREAKING CHANGE - see [Migration](MIGRATION.md) 
   * Added custom transient project(s) on rule level support (reservation/billing project, distributing load)

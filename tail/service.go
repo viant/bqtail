@@ -210,7 +210,7 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 	if !job.Recoverable() {
 		return err
 	}
-	return s.tryRecoverAndReport(ctx, job, response)
+	return s.tryRecover(ctx, job, response)
 }
 
 func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*stage.Process, error) {
@@ -274,7 +274,6 @@ func (s *service) runLoadProcess(ctx context.Context, request *contract.Request,
 		shared.LogF("replaying load process ...\n")
 		shared.LogLn(processJob)
 	}
-
 	_, err = s.submitJob(ctx, processJob, response)
 	return err
 }
@@ -376,7 +375,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		if !processJob.Recoverable() {
 			return err
 		}
-		return s.tryRecoverAndReport(ctx, processJob, response)
+		return s.tryRecover(ctx, processJob, response)
 	}
 	if base.IsRetryError(bqJobError) {
 		response.Retriable = true
@@ -422,7 +421,7 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 		}
 		return batchErr
 	}
-	return s.tryRecoverAndReport(ctx, loadJob, response)
+	return s.tryRecover(ctx, loadJob, response)
 }
 
 func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *batch.Window, response *contract.Response) (*load.Job, error) {
@@ -458,15 +457,11 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	return loadJob, err
 }
 
-func (s *service) tryRecoverAndReport(ctx context.Context, job *load.Job, response *contract.Response) error {
+func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contract.Response) error {
 	err := base.JobError(job.BqJob)
 	if err == nil {
 		return err
 	}
-	return s.tryRecover(ctx, job, response)
-}
-
-func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contract.Response) error {
 	configuration := job.BqJob.Configuration
 	response.Process = job.Process
 	if configuration.Load == nil || len(configuration.Load.SourceUris) == 0 {
@@ -522,7 +517,6 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 	if err == nil {
 		err = base.JobError(loadJob)
 	}
-
 	if err != nil && loadJob != nil {
 		job.BqJob = loadJob
 		return s.tryRecover(ctx, job, response)

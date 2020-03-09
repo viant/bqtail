@@ -5,10 +5,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/service/bq"
-	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
 )
 
+//updateSchemaIfNeeded, determine load job table schema fields
+// or in case of templates create/patch temp or dest table respectively
 func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery.TableReference, service bq.Service) error {
 	var err error
 	var table *bigquery.Table
@@ -16,24 +17,13 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 	transient := j.Rule.Dest.Transient
 
 	if j.Rule.Dest.Schema.Template != "" {
-		templateRef, err := base.NewTableReference(j.Rule.Dest.Schema.Template)
-		if err != nil {
-			return errors.Wrapf(err, "invalid template: %v", j.Rule.Dest.Schema.Template)
+		if table, err = j.applyDestTemplate(table, service, ctx, tableReference); err != nil {
+			return err
 		}
-		table, err = service.Table(ctx, templateRef)
-		if err != nil {
-			return errors.Wrapf(err, "fail to get template table: %v", j.Rule.Dest.Schema.Template)
-		}
-		table.TableReference, _ = base.NewTableReference(j.DestTable)
-		if err = service.CreateTableIfNotExist(ctx, table, true); err != nil {
-			return errors.Wrapf(err, "failed to create table: %v", base.EncodeTableReference(tableReference, false))
-		}
-		j.DestSchema = table
 	}
 
 	if j.Rule.Dest.Schema.Autodetect {
 		j.Load.Schema = nil
-		j.Load.DestinationTable = tableReference
 		j.Load.Autodetect = true
 		return nil
 	}
@@ -43,20 +33,28 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 		if err := service.CreateDatasetIfNotExist(ctx, transient.Region, datasetRef); err != nil {
 			return errors.Wrapf(err, "failed to create transient dataset: %v", transient.Dataset)
 		}
-		j.Load.WriteDisposition = shared.WriteDispositionTruncate
 		if hasTransientTemplate = transient.Template != ""; hasTransientTemplate {
-			transientTempRef, err := base.NewTableReference(transient.Template)
-			if err != nil {
-				return errors.Wrapf(err, "failed to create table from transient.Template: %v", transient.Template)
-			}
+			transientTempRef, _ := base.NewTableReference(transient.Template)
 			if table, err = service.Table(ctx, transientTempRef); err != nil {
-				return errors.Wrapf(err, "failed to get template table: %v", base.EncodeTableReference(transientTempRef, false))
+				return errors.Wrapf(err, "failed to get transient.template table: %v", base.EncodeTableReference(transientTempRef, false))
 			}
+		}
+		if table != nil {
 			j.TempSchema = table
+			table.TableReference, _ = base.NewTableReference(j.TempTable)
+			if err = service.CreateTableIfNotExist(ctx, table, false); err != nil {
+				return errors.Wrapf(err, "failed to create transient table: %v", base.EncodeTableReference(tableReference, false))
+			}
+			if j.Rule.Dest.HasSplit() {
+				table.TableReference, _ = base.NewTableReference(j.SplitTable())
+				if err = service.CreateTableIfNotExist(ctx, table, false); err != nil {
+					return errors.Wrapf(err, "failed to create transient table: %v", base.EncodeTableReference(tableReference, false))
+				}
+			}
 		}
 	}
 
-	if table == nil && !hasTransientTemplate && !j.Rule.Dest.Schema.Autodetect {
+	if table == nil && !hasTransientTemplate {
 		if table, err = service.Table(ctx, tableReference); err != nil {
 			return errors.Wrapf(err, "failed to get table: %v", base.EncodeTableReference(tableReference, false))
 		}
@@ -64,14 +62,33 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 	}
 
 	if j.TempSchema != nil {
-		j.updateSchema(j.TempSchema)
+		if err = j.updateSchema(j.TempSchema); err != nil {
+			return err
+		}
 	} else if j.DestSchema != nil {
-		j.updateSchema(j.DestSchema)
+		err = j.updateSchema(j.DestSchema)
 	}
-	return nil
+	return err
 }
 
-func (j *Job) updateSchema(table *bigquery.Table) {
+func (j *Job) applyDestTemplate(table *bigquery.Table, service bq.Service, ctx context.Context, tableReference *bigquery.TableReference) (*bigquery.Table, error) {
+	templateRef, err := base.NewTableReference(j.Rule.Dest.Schema.Template)
+	if err != nil {
+		return nil, errors.Wrapf(err, "invalid template: %v", j.Rule.Dest.Schema.Template)
+	}
+	table, err = service.Table(ctx, templateRef)
+	if err != nil {
+		return nil, errors.Wrapf(err, "fail to get template table: %v", j.Rule.Dest.Schema.Template)
+	}
+	table.TableReference, _ = base.NewTableReference(j.DestTable)
+	if err = service.CreateTableIfNotExist(ctx, table, true); err != nil {
+		return nil, errors.Wrapf(err, "failed to create table: %v", base.EncodeTableReference(tableReference, false))
+	}
+	j.DestSchema = table
+	return table, nil
+}
+
+func (j *Job) updateSchema(table *bigquery.Table) error {
 	if table != nil {
 		j.Load.Schema = table.Schema
 		if table.TimePartitioning != nil {
@@ -85,4 +102,5 @@ func (j *Job) updateSchema(table *bigquery.Table) {
 			j.Load.Clustering = table.Clustering
 		}
 	}
+	return nil
 }

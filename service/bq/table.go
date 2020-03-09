@@ -66,6 +66,9 @@ func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Tab
 		}
 		return nil
 	}
+	if shared.IsDebugLoggingLevel() {
+		shared.LogF("create table: %+v\n", table.TableReference)
+	}
 	insertTableCall := srv.Insert(ref.ProjectId, ref.DatasetId, table)
 	insertTableCall.Context(ctx)
 	_, err = insertTableCall.Do()

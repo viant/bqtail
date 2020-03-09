@@ -179,58 +179,6 @@
       "DatasetId": "temp",
       "TableId": "ad_20200227_s6056467489517448"
     },
-    "Schema": {
-      "Fields": [
-        {
-          "Name": "id",
-          "Type": "STRING"
-        },
-        {
-          "Name": "timestamp",
-          "Type": "TIMESTAMP"
-        },
-        {
-          "Name": "batch_id",
-          "Type": "INTEGER"
-        },
-        {
-          "Name": "event_id",
-          "Type": "INTEGER"
-        },
-        {
-          "Name": "sku_id",
-          "Type": "INTEGER"
-        },
-        {
-          "Name": "supply_entity_id",
-          "Type": "INTEGER"
-        },
-        {
-          "Name": "payment",
-          "Type": "FLOAT"
-        },
-        {
-          "Name": "demany_entity_id",
-          "Type": "INTEGER"
-        },
-        {
-          "Name": "charge",
-          "Type": "FLOAT"
-        },
-        {
-          "Name": "qty",
-          "Type": "FLOAT"
-        },
-        {
-          "Name": "fee_id",
-          "Type": "INTEGER"
-        },
-        {
-          "Name": "extra",
-          "Type": "INTEGER"
-        }
-      ]
-    },
     "SourceUris": [
       "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
     ],

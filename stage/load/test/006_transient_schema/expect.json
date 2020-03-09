@@ -102,24 +102,6 @@
       "DatasetId": "temp",
       "TableId": "dummy_v006_997788014280423"
     },
-    "Schema": {
-      "Fields": [
-        {
-          "Mode": "REQUIRED",
-          "Name": "id",
-          "Type": "INTEGER"
-        },
-        {
-          "Mode": "REQUIRED",
-          "Name": "type_id",
-          "Type": "INTEGER"
-        },
-        {
-          "Name": "name",
-          "Type": "STRING"
-        }
-      ]
-    },
     "SourceUris": [
       "gs://xx_e2e_bqtail/data/case006/dummy.csv"
     ],
