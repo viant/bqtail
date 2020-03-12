@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
 	"github.com/viant/bqtail/stage/activity"
@@ -154,23 +155,36 @@ func NewAction(action string, req interface{}) (*Action, error) {
 	return result, err
 }
 
+
+
 //NewActionFromURL create a new actions from URL
-func NewActionFromURL(ctx context.Context, fs afs.Service, URL string) (*Action, error) {
+func NewActionFromURL(ctx context.Context, fs afs.Service, URL string) (action *Action,err error) {
+	for i:=0;i<shared.MaxRetries;i++ {
+		action, err = newActionFromURL(fs, ctx, URL)
+		if ! base.IsRetryError(err) {
+			return
+		}
+	}
+	return action, err
+}
+
+
+func newActionFromURL(fs afs.Service, ctx context.Context, URL string) (*Action, error) {
 	result := &Action{}
 	reader, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to download: %v", URL)
 	}
 	defer func() {
 		_ = reader.Close()
 	}()
-	data, err := ioutil.ReadAll(reader)
+	actionData, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "fail to read post actions: %v", URL)
 	}
-	err = json.Unmarshal(data, &result)
+	err = json.Unmarshal(actionData, &result)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to unmarshal: %s", data)
+		err = errors.Wrapf(err, "failed to unmarshal: %s", actionData)
 	}
 	return result, err
 }

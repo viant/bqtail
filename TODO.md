@@ -1,3 +1,4 @@
 - Update documentation/examples
 - Add bqtail docker image
 - Add conditional action
+- Integrate with authly

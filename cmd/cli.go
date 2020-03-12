@@ -15,8 +15,6 @@ import (
 	"os"
 )
 
-var Version string
-
 //RunClient run client
 func RunClient(Version string, args []string) {
 	options := &option.Options{}
@@ -29,9 +27,7 @@ func RunClient(Version string, args []string) {
 	}
 	client, err := auth.ClientFromURL(options.ClientURL())
 	if err != nil {
-		if err != nil {
-			log.Fatal(err)
-		}
+		log.Fatal(err)
 	}
 	useGsUtilAuth := toolbox.AsBoolean(os.Getenv("GCLOUD_AUTH"))
 	authService := auth.New(client, useGsUtilAuth, options.ProjectID, auth.Scopes...)
