@@ -16,14 +16,14 @@ By default only streaming mode stores history file in file:///${env.HOME}/.bqtai
 
 ##### OSX
 
-wget https://github.com/viant/bqtail/releases/download/v2.0.1/bqtail_osx_2.0.1.tar.gz
-tar -xvzf bqtail_osx_2.0.1.tar.gz
+wget https://github.com/viant/bqtail/releases/download/v2.0.2/bqtail_osx_2.0.2.tar.gz
+tar -xvzf bqtail_osx_2.0.2.tar.gz
 cp bqtail /usr/local/bin/
 
 ##### Linux
 
-wget https://github.com/viant/bqtail/releases/download/v2.0.1/bqtail_linux_2.0.1.tar.gz
-tar -xvzf bqtail_linux_2.0.1.tar.gz
+wget https://github.com/viant/bqtail/releases/download/v2.0.2/bqtail_linux_2.0.2.tar.gz
+tar -xvzf bqtail_linux_2.0.2.tar.gz
 cp bqtail /usr/local/bin/
 
 

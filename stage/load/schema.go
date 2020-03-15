@@ -41,15 +41,13 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 		}
 		if table != nil {
 			j.TempSchema = table
-			table.TableReference, _ = base.NewTableReference(j.TempTable)
+			tableRef, _ := base.NewTableReference(j.TempTable)
+			if j.Rule.Dest.HasSplit() {
+				tableRef, _ = base.NewTableReference(j.SplitTable())
+			}
+			table.TableReference = tableRef
 			if err = service.CreateTableIfNotExist(ctx, table, false); err != nil {
 				return errors.Wrapf(err, "failed to create transient table: %v", base.EncodeTableReference(tableReference, false))
-			}
-			if j.Rule.Dest.HasSplit() {
-				table.TableReference, _ = base.NewTableReference(j.SplitTable())
-				if err = service.CreateTableIfNotExist(ctx, table, false); err != nil {
-					return errors.Wrapf(err, "failed to create transient table: %v", base.EncodeTableReference(tableReference, false))
-				}
 			}
 		}
 	}
