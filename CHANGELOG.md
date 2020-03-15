@@ -1,5 +1,5 @@
 ## March 14 2020 2.0.2
- * Patch transient table clustering and partitioning  with table split option
+ * Patch transient table auto clustering and partitioning  with table split option
 
 ## March 12 2020 2.0.1
  * Added autodetect option cli options
