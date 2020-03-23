@@ -9,8 +9,10 @@ Min required endly version: 0.47.1
 1. Install latest [runner](https://github.com/viant/endly/releases) or use [endly docker image](https://github.com/viant/endly/tree/master/docker)
 2. Create dedicated GCP project for  end to end testing.
 3. Create e2e service account with admin permission on e2e test project
-4. Generate and download [google secrets](https://github.com/viant/endly/tree/master/doc/secrets#gc) to ~/.secret/gcp-e2e.json
-5. Create slack OAuth token and store in the ~/secret/slack-e2e.json in the following format:
+4. Setup credentials
+a). [SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh
+b). [Google Secrets for service account](https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials)
+c). Optionally create slack OAuth token and store in the ~/secret/slack-e2e.json in the following format:
 
 ```json
 {
@@ -21,7 +23,7 @@ Min required endly version: 0.47.1
 
 If you do not have slack testing token just create a file with dummy data.
  
-6. Checkout the this project:
+5. Checkout the this project:
 ```bash
 git clone https://github.com/viant/bqtail.git
 cd bqtail/e2e

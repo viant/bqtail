@@ -75,6 +75,16 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 
 # Deployment
 
+### Install endly
+
+[Download](https://github.com/viant/endly/releases/) latest binary
+
+### Credentials setup
+1. SSH credentials
+https://github.com/viant/endly/tree/master/doc/secrets#ssh
+2. Google Secrets for service account.
+https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials
+
 ## BqTail/BqDispatch
 
 You can deploy the described infrastructure with BqTail and BqDispatch cloud function with [endly](https://github.com/viant/endly/) automation runner.
