@@ -17,6 +17,11 @@ init:
   dispatchBucket: ${prefix}_bqdispatch
   mirrorBucket: ${prefix}_trigger
 
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+
+
 pipeline:
   init:
     action: run
