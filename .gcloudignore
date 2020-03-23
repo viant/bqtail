@@ -1,8 +1,13 @@
 e2e
+e2e/
 .idea
 .gcloudignore
 .git
 .gitignore
+deployment/
+deployment
+replay
+replay/
 node_modules
 main
 go.mod

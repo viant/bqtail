@@ -1,6 +1,7 @@
 ## March 14 2020 2.0.2
  * Patch transient table auto clustering and partitioning  with table split option
-
+ * Added expiry time exclusion, when create table from a template
+ 
 ## March 12 2020 2.0.1
  * Added autodetect option cli options
  * Added cap to list operation in dispatcher

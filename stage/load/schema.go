@@ -46,6 +46,7 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 				tableRef, _ = base.NewTableReference(j.SplitTable())
 			}
 			table.TableReference = tableRef
+			resetExpiryTime(table)
 			if err = service.CreateTableIfNotExist(ctx, table, false); err != nil {
 				return errors.Wrapf(err, "failed to create transient table: %v", base.EncodeTableReference(tableReference, false))
 			}
@@ -79,11 +80,18 @@ func (j *Job) applyDestTemplate(table *bigquery.Table, service bq.Service, ctx c
 		return nil, errors.Wrapf(err, "fail to get template table: %v", j.Rule.Dest.Schema.Template)
 	}
 	table.TableReference, _ = base.NewTableReference(j.DestTable)
+	resetExpiryTime(table)
 	if err = service.CreateTableIfNotExist(ctx, table, true); err != nil {
 		return nil, errors.Wrapf(err, "failed to create table: %v", base.EncodeTableReference(tableReference, false))
 	}
 	j.DestSchema = table
 	return table, nil
+}
+
+func resetExpiryTime(table *bigquery.Table) {
+	if table.ExpirationTime > 0 {
+		table.ExpirationTime = 0
+	}
 }
 
 func (j *Job) updateSchema(table *bigquery.Table) error {
