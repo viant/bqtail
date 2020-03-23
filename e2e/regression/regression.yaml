@@ -2,7 +2,7 @@ pipeline:
   set_sdk:
     action: sdk.set
     target: $target
-    sdk: go:1.12
+    sdk: go:1.14
 
   test:
     tag: $pathMatch
