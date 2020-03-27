@@ -13,7 +13,8 @@ import (
 //LoadRequest represents a load job
 type LoadRequest struct {
 	*bigquery.JobConfigurationLoad
-	Append bool
+	Append    bool
+	DMLAppend bool
 }
 
 const maxJobLoadURIs = 10000

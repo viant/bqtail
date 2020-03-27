@@ -1,0 +1,12 @@
+{
+  "DestTable": "bqtail.dummy_v009",
+  "DoneProcessURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v009/2020-03-27_12/14156123207295228.run",
+  "EventID": "14156123207295228",
+  "FailedURL": "mem://localhost/operation/journal/failed",
+  "ProcessURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v009--14156123207295228.run",
+  "RuleURL": "mem://localhost/BqTail/config/rule/rule.yaml",
+  "Source": {
+    "Time": "2020-03-27T19:18:35Z",
+    "URL": "gs://xx_bqtail/data/case009/path2/dummy2.json"
+  }
+}

@@ -35,8 +35,16 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 		mapping := split.Mapping[i]
 		destTable, _ := dest.CustomTableReference(mapping.Then, j.Process.Source)
 		where := replaceWithMap(mapping.When, clusterColumnMap)
-		SQL := strings.Replace(selectSQL, "$WHERE", " WHERE  "+where+" ", 1)
-		query := bq.NewQueryAction(SQL, destTable, destTemplate, j.Rule.IsAppend(), next)
+		var query *task.Action
+		tempRef, _ := base.NewTableReference(j.TempTable)
+		if j.Rule.IsDMLAppend() {
+			SQL := sql.BuilAppendDML(tempRef, destTable, j.Load.Schema, dest)
+			SQL = strings.Replace(SQL, "$WHERE", " WHERE  "+where+" ", 1)
+			query = bq.NewQueryAction(SQL, nil, "", true, next)
+		} else {
+			SQL := strings.Replace(selectSQL, "$WHERE", " WHERE  "+where+" ", 1)
+			query = bq.NewQueryAction(SQL, destTable, destTemplate, j.Rule.IsAppend(), next)
+		}
 		group := task.NewActions(nil, nil)
 		group.AddOnSuccess(query)
 		next = group

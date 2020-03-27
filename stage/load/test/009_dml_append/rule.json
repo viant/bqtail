@@ -1,0 +1,26 @@
+{
+  "Dest": {
+    "DMLAppend": true,
+    "Table": "bqtail.dummy_v009",
+    "Transient": {
+      "Alias": "t",
+      "Dataset": "temp"
+    }
+  },
+  "Info": {
+    "URL": "mem://localhost/BqTail/config/rule/rule.yaml",
+    "Workflow": "rule"
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": "$LoadURIs"
+      }
+    }
+  ],
+  "When": {
+    "Prefix": "/data/case009",
+    "Suffix": ".json"
+  }
+}

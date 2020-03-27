@@ -62,7 +62,10 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, action *task
 		if len(source) > 40 {
 			source = strings.Replace(string(source[:40]), "\n", "", len(source))
 		}
-		dest := base.EncodeTableReference(job.Configuration.Query.DestinationTable, true)
+		dest := ""
+		if job.Configuration.Query.DestinationTable != nil {
+			dest = base.EncodeTableReference(job.Configuration.Query.DestinationTable, true)
+		}
 		shared.LogF("[%v] runing query %v ... into %v\n", action.Meta.DestTable, source, dest)
 	}
 

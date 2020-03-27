@@ -40,6 +40,7 @@ type Destination struct {
 	Transform        map[string]string `json:",omitempty"`
 	SideInputs       []*SideInput      `json:",omitempty"`
 	Override         *bool
+	DMLAppend        bool `json:",omitempty"`
 }
 
 //HasTemplate
@@ -147,6 +148,9 @@ func (d Destination) Validate() error {
 		if _, err := base.NewTableReference(d.Schema.Template); err != nil {
 			return errors.Wrapf(err, "invalid schema.template: %v", d.Schema.Template)
 		}
+	}
+	if d.DMLAppend && d.Transient == nil {
+		return errors.Errorf("DMLAppend is only supported with transient dataset option set")
 	}
 	return nil
 }

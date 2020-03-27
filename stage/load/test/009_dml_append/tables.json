@@ -1,0 +1,25 @@
+{
+  "bqtail.dummy_v009": {
+    "TableReference": {
+
+    },
+    "Schema": {
+      "Fields": [
+        {
+          "Mode": "REQUIRED",
+          "Name": "id",
+          "Type": "INTEGER"
+        },
+        {
+          "Mode": "REQUIRED",
+          "Name": "type_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "name",
+          "Type": "STRING"
+        }
+      ]
+    }
+  }
+}

@@ -107,7 +107,7 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 		return err
 	})
 
-	if  base.IsDuplicateJobError(err) {
+	if base.IsDuplicateJobError(err) {
 		if shared.IsDebugLoggingLevel() {
 			shared.LogF("duplicate job: [%v]: %v\n", job.Id, err)
 		}

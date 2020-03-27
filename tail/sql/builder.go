@@ -31,6 +31,14 @@ FROM (
 WHERE row_number = 1`, strings.Join(innerProjection, ", "), strings.Join(projection, ", "), strings.Join(dest.UniqueColumns, ","), sourceTable, dest.Transient.Alias)
 }
 
+func columnNames(schema *bigquery.TableSchema) []string {
+	var result = make([]string, 0)
+	for _, field := range schema.Fields {
+		result = append(result, field.Name)
+	}
+	return result
+}
+
 func buildDedupeSQL(sourceTable string, schema Schema, unique map[string]bool, dest *config.Destination) string {
 	var projection = make([]string, 0)
 	var groupBy = make([]string, 0)
@@ -82,6 +90,14 @@ func getTransformExpression(dest *config.Destination, field *bigquery.TableField
 		expression, ok = dest.Transform[strings.ToLower(field.Name)]
 	}
 	return expression, ok
+}
+
+//BuilAppendDML returns INSERT INTO table () SELECT ...
+func BuilAppendDML(source, destination *bigquery.TableReference, tableScheme *bigquery.TableSchema, dest *config.Destination) string {
+	selectALL := BuildSelect(source, tableScheme, dest)
+	columns := columnNames(tableScheme)
+	destTable := base.EncodeTableReference(destination, true)
+	return fmt.Sprintf("INSERT INTO %v(%v) %v", destTable, strings.Join(columns, ","), selectALL)
 }
 
 //BuildSelect returns select SQL statement for specified parameter, if uniqueColumns SQL de-duplicates data

@@ -70,6 +70,14 @@ func (r *Rule) IsAppend() bool {
 	return r.Dest.WriteDisposition == "" || r.Dest.WriteDisposition == "WRITE_APPEND"
 }
 
+//IsDMLAppend returns true if dml append flag is true
+func (r *Rule) IsDMLAppend() bool {
+	if r.Dest == nil {
+		return true
+	}
+	return r.Dest.DMLAppend
+}
+
 //DestTable returns dest table
 func (r *Rule) DestTable(URL string, modTime time.Time) string {
 	table, _ := r.Dest.ExpandTable(r.Dest.Table, stage.NewSource(URL, modTime))

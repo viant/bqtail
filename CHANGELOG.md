@@ -1,4 +1,7 @@
-## March 14 2020 2.0.3
+## March 30 2020 2.1.0
+ * Added DMLAppend option
+
+## March 27  2020 2.0.3
  * Refactored retries
 
 ## March 14 2020 2.0.2

@@ -1,0 +1,123 @@
+{
+  "Action": "load",
+  "Meta": {
+    "Action": "load",
+    "Async": false,
+    "DestTable": "bqtail.dummy_v009",
+    "DoneProcessURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v009/2020-03-27_12/14156123207295228.run",
+    "EventID": "14156123207295228",
+    "FailedURL": "mem://localhost/operation/journal/failed",
+    "Mode": "tail",
+    "ProcessURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v009--14156123207295228.run",
+    "RuleURL": "mem://localhost/BqTail/config/rule/rule.yaml",
+    "Source": {
+      "Time": "2020-03-27T19:18:35Z",
+      "URL": "gs://xx_bqtail/data/case009/path2/dummy2.json"
+    },
+    "Step": 1,
+    "StepCount": 1,
+    "TempTable": "`temp.dummy_v009_14156123207295228`"
+  },
+  "OnSuccess": [
+    {
+      "Action": "query",
+      "Meta": {
+        "Action": "query",
+        "Async": false,
+        "DestTable": "bqtail.dummy_v009",
+        "DoneProcessURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v009/2020-03-27_12/14156123207295228.run",
+        "EventID": "14156123207295228",
+        "FailedURL": "mem://localhost/operation/journal/failed",
+        "Mode": "tail",
+        "ProcessURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v009--14156123207295228.run",
+        "RuleURL": "mem://localhost/BqTail/config/rule/rule.yaml",
+        "Source": {
+          "Time": "2020-03-27T19:18:35Z",
+          "URL": "gs://xx_bqtail/data/case009/path2/dummy2.json"
+        },
+        "Step": 2,
+        "StepCount": 2,
+        "TempTable": "`temp.dummy_v009_14156123207295228`"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete",
+          "Request": {
+            "URLs": [
+              "gs://xx_bqtail/data/case009/path2/dummy2.json"
+            ]
+          }
+        },
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v009/2020-03-27_12/14156123207295228.run",
+            "IsDestAbsoluteURL": true,
+            "SourceURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v009--14156123207295228.run"
+          }
+        },
+        {
+          "Action": "drop",
+          "Meta": {
+            "Action": "drop",
+            "Async": false,
+            "DestTable": "bqtail.dummy_v009",
+            "DoneProcessURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v009/2020-03-27_12/14156123207295228.run",
+            "EventID": "14156123207295228",
+            "FailedURL": "mem://localhost/operation/journal/failed",
+            "Mode": "nop",
+            "ProcessURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v009--14156123207295228.run",
+            "RuleURL": "mem://localhost/BqTail/config/rule/rule.yaml",
+            "Source": {
+              "Time": "2020-03-27T19:18:35Z",
+              "URL": "gs://xx_bqtail/data/case009/path2/dummy2.json"
+            },
+            "Step": 5,
+            "StepCount": 5,
+            "TempTable": "`temp.dummy_v009_14156123207295228`"
+          },
+          "Request": {
+            "Table": "temp.dummy_v009_14156123207295228"
+          }
+        }
+      ],
+      "Request": {
+        "Append": true,
+        "SQL": "INSERT INTO bqtail.dummy_v009(id,type_id,name) SELECT t.id AS id, t.type_id AS type_id, t.name AS name \nFROM `temp.dummy_v009_14156123207295228` t  ",
+        "UseLegacy": false
+      }
+    }
+  ],
+  "Request": {
+    "Append": true,
+    "DestinationTable": {
+      "DatasetId": "temp",
+      "TableId": "dummy_v009_14156123207295228"
+    },
+    "MaxBadRecords": 0,
+    "Schema": {
+      "Fields": [
+        {
+          "Mode": "REQUIRED",
+          "Name": "id",
+          "Type": "INTEGER"
+        },
+        {
+          "Mode": "REQUIRED",
+          "Name": "type_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "name",
+          "Type": "STRING"
+        }
+      ]
+    },
+    "SkipLeadingRows": 0,
+    "SourceUris": [
+      "gs://xx_bqtail/data/case009/path2/dummy2.json"
+    ],
+    "UseAvroLogicalTypes": false,
+    "WriteDisposition": "WRITE_TRUNCATE"
+  }
+}
