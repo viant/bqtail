@@ -3,7 +3,6 @@ package bq
 import (
 	"context"
 	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
 	"time"
 )
@@ -14,17 +13,11 @@ func (s *service) GetJob(ctx context.Context, location, projectID, jobID string)
 	call := jobService.Get(projectID, jobID)
 	call.Location(location)
 	call.Context(ctx)
-	for i := 0; i < shared.MaxRetries; i++ {
+
+	err = base.RunWithRetries(func() error {
 		job, err = call.Do()
-		if err == nil {
-			break
-		}
-		if base.IsRetryError(err) {
-			//do extra sleep before retrying
-			time.Sleep(shared.RetrySleepInSec * time.Second)
-			continue
-		}
-	}
+		return err
+	})
 	return job, err
 }
 

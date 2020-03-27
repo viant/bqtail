@@ -13,7 +13,6 @@ import (
 	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
-	"time"
 )
 
 func (s *service) setJobID(action *task.Action) (*bigquery.JobReference, error) {
@@ -102,28 +101,25 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 	call := jobService.Insert(projectID, job)
 	call.Context(ctx)
 	var callJob *bigquery.Job
-	for i := 0; i < shared.MaxRetries; i++ {
-		if callJob, err = call.Do(); err == nil {
-			break
+
+	err = base.RunWithRetries(func() error {
+		callJob, err = call.Do()
+		return err
+	})
+
+	if  base.IsDuplicateJobError(err) {
+		if shared.IsDebugLoggingLevel() {
+			shared.LogF("duplicate job: [%v]: %v\n", job.Id, err)
 		}
-		if base.IsRetryError(err) {
-			//do extra sleep before retrying
-			time.Sleep(shared.RetrySleepInSec * time.Second)
-			continue
-		}
-		if i > 0 && base.IsDuplicateJobError(err) {
-			if shared.IsDebugLoggingLevel() {
-				shared.LogF("duplicate job: [%v]: %v\n", job.Id, err)
-			}
-			err = nil
-			callJob, _ = s.GetJob(ctx, job.JobReference.Location, job.JobReference.ProjectId, job.JobReference.JobId)
-			break
-		}
-		if err != nil {
-			detail, _ := json.Marshal(job)
-			err = errors.Wrapf(err, "failed to submit: %T %s", call, detail)
-		}
+		err = nil
+		callJob, _ = s.GetJob(ctx, job.JobReference.Location, job.JobReference.ProjectId, job.JobReference.JobId)
 	}
+
+	if err != nil {
+		detail, _ := json.Marshal(job)
+		err = errors.Wrapf(err, "failed to submit: %T %s", call, detail)
+	}
+
 	if err != nil || (callJob != nil && base.JobError(callJob) != nil) {
 		if shared.IsDebugLoggingLevel() && callJob != nil && callJob.Status != nil {
 			shared.LogLn(callJob.Status)

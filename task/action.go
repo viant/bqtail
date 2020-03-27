@@ -157,12 +157,10 @@ func NewAction(action string, req interface{}) (*Action, error) {
 
 //NewActionFromURL create a new actions from URL
 func NewActionFromURL(ctx context.Context, fs afs.Service, URL string) (action *Action, err error) {
-	for i := 0; i < shared.MaxRetries; i++ {
+	err = base.RunWithRetries(func() error {
 		action, err = newActionFromURL(fs, ctx, URL)
-		if !base.IsRetryError(err) {
-			return
-		}
-	}
+		return err
+	})
 	return action, err
 }
 

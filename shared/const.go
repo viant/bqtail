@@ -98,6 +98,9 @@ const (
 	ErrorKey = "Error"
 	//ConfigEnvKey config env key
 	ConfigEnvKey = "CONFIG"
+
+	//MaxRetriesEnvKey max reties env key
+	MaxRetriesEnvKey = "MAX_RETRIES"
 )
 
 //BigQuery job status
@@ -170,9 +173,7 @@ const (
 //Waits and retries
 const (
 	//MaxRetries defines max retries
-	MaxRetries = 3
-	//RetrySleepInSec sleep between retries
-	RetrySleepInSec = 3
+	MaxRetries = 4
 	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
 	StorageListVisibilityDelay = 5000
 )

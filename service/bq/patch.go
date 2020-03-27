@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/bqtail/base"
-	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
-	"time"
 )
 
 //Patch patch temp table
@@ -36,22 +34,13 @@ func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.T
 			return nil, errors.Wrapf(err, "invalid get template table: %v", request.Table)
 		}
 	}
-
+	var table *bigquery.Table
 	call := s.Service.Tables.Patch(tableRef.ProjectId, tableRef.DatasetId, tableRef.TableId, request.TemplateTable)
 	call.Context(ctx)
-	var table *bigquery.Table
-	for i := 0; i < shared.MaxRetries; i++ {
-		call.Context(ctx)
-		if table, err = call.Do(); err == nil {
-			return nil, err
-		}
-		if base.IsRetryError(err) {
-			//do extra sleep before retrying
-			time.Sleep(shared.RetrySleepInSec * time.Second)
-			continue
-		}
-		break
-	}
+	err = base.RunWithRetries(func() error {
+		table, err = call.Do()
+		return err
+	})
 	return table, err
 }
 

@@ -144,11 +144,15 @@ func (s *service) getBaseURLS(ctx context.Context, rule *config.Rule, window *Wi
 }
 
 //MatchWindowData matches window data, it waits for window to ends if needed
-func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) error {
-	before := window.End           //inclusive
-	afeter := window.Start.Add(-1) //exclusive
-	modFilter := matcher.NewModification(&before, &afeter)
-	baseURLS, err := s.getBaseURLS(ctx, rule, window)
+func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) (err error) {
+	before := window.End          //inclusive
+	after := window.Start.Add(-1) //exclusive
+	modFilter := matcher.NewModification(&before, &after)
+	var baseURLS []string
+	err = base.RunWithRetries(func() error {
+		baseURLS, err = s.getBaseURLS(ctx, rule, window)
+		return err
+	})
 	if err != nil {
 		return errors.Wrapf(err, "failed get batch location: %v", window.URL)
 	}

@@ -6,7 +6,6 @@ import (
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
-	"time"
 )
 
 //Table returns bif query table
@@ -16,19 +15,13 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	}
 	tableID := base.TableID(reference.TableId)
 	call := bigquery.NewTablesService(s.Service).Get(reference.ProjectId, reference.DatasetId, tableID)
-
-	for i := 0; i < shared.MaxRetries; i++ {
-		call.Context(ctx)
-		if table, err = call.Do(); err == nil {
-			return table, err
-		}
-		if base.IsRetryError(err) {
-			//do extra sleep before retrying
-			time.Sleep(shared.RetrySleepInSec * time.Second)
-			continue
-		}
+	call.Context(ctx)
+	err = base.RunWithRetries(func() error {
+		table, err = call.Do()
+		return err
+	})
+	if err != nil {
 		err = errors.Wrapf(err, "failed to lookup table schema: %v:%v.%v", reference.ProjectId, reference.DatasetId, tableID)
-		break
 	}
 	return table, err
 }
@@ -66,14 +59,17 @@ func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Tab
 		}
 		return nil
 	}
+
 	if shared.IsDebugLoggingLevel() {
 		shared.LogF("create table: %+v\n", table.TableReference)
 		shared.LogLn(table)
 	}
 	insertTableCall := srv.Insert(ref.ProjectId, ref.DatasetId, table)
 	insertTableCall.Context(ctx)
-	_, err = insertTableCall.Do()
-	return err
+	return base.RunWithRetries(func() error {
+		_, err = insertTableCall.Do()
+		return err
+	})
 }
 
 func isSchemaEqual(source []*bigquery.TableFieldSchema, template []*bigquery.TableFieldSchema) bool {

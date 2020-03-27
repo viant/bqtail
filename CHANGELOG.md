@@ -1,3 +1,6 @@
+## March 14 2020 2.0.3
+ * Refactored retries
+
 ## March 14 2020 2.0.2
  * Patch transient table auto clustering and partitioning  with table split option
  * Added expiry time exclusion, when create table from a template
