@@ -158,7 +158,10 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 	}
 	var result = make([]string, 0)
 	for _, baseURL := range baseURLS {
-		if err := s.matchData(ctx, window, rule, baseURL, modFilter, &result); err != nil {
+		err = base.RunWithRetries(func() error {
+			return s.matchData(ctx, window, rule, baseURL, modFilter, &result)
+		})
+		if err != nil {
 			return err
 		}
 	}
@@ -167,6 +170,7 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 }
 
 func (s *service) matchData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, matcher option.Matcher, result *[]string) error {
+
 	objects, err := s.fs.List(ctx, baseURL)
 	if err != nil {
 		return errors.Wrapf(err, "failed to list batch %v data files", baseURL)
