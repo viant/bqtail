@@ -259,3 +259,34 @@ endly -t=init
 ```bash
     endly -t=test -i=partition_override
 ```
+
+
+- [CLI single file ingestion](regression/cases/034_cli_single)
+
+```bash
+    endly -t=test -i=cli_single
+```
+
+- [CLI batch ingestion](regression/cases/035_cli_batch)
+
+```bash
+    endly -t=test -i=cli_batch
+```
+
+- [CLI dynamic rule ingestion](regression/cases/036_cli_dynamic_rule)
+
+```bash
+    endly -t=test -i=cli_dynamic_rule
+```
+
+- [Ingestion with DML append](regression/cases/037_cli_dml_append)
+
+```bash
+    endly -t=test -i=cli_dml_append
+```
+
+- [Ingestion ALLowFieldAddition for JSON](regression/cases/038_cli_json_field_addition)
+
+```bash
+    endly -t=test -i=cli_json_field_addition
+```
