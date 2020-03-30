@@ -63,13 +63,10 @@ This files will be automatically add to transient table and Dest.Table
 {"id": 118, "name": "dummy 18", "type_id": 1}
 ```
 
-
 This test runs BqTail with CLI command.
 
 ```
  export GOOGLE_APPLICATION_CREDENTIALS='${env.HOME}/.secret/${gcpCredentials}.json'
  bqtail -s='${parent.path}/data/' -r=rule/rule.yaml 
 ```
-
-
 
