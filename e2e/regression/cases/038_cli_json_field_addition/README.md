@@ -2,7 +2,7 @@
 
 ### Scenario:
 
-This scenario tests client dynamic schema field addition from JSON source files.
+This scenario tests dynamic schema field addition from JSON source files.
 
 Initial schema is defined as
 
