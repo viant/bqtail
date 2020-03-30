@@ -12,8 +12,8 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Usage](#usage)
 - [Data ingestion rule](tail/README.md#data-ingestion-rules)
 - [End to end testing](#end-to-end-testing)
-
-
+- [Contibution](#contributing-to-bqtail)
+- [License](#license)
 
 ## Motivation
 
@@ -275,11 +275,13 @@ You can try on all data ingestion by simply running e2e test cases:
 - [Use cases](e2e/README.md#use-cases)
 
 
-## Contributing to bqtail
+## Contributing to BqTail
 
 BqTail is an open source project and contributors are welcome!
 
 See [TODO](TODO.md) list
+
+Join discussion on [#bqtail](https://gophers.slack.com) slack channel.
 
 ## License
 
