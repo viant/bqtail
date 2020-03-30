@@ -1,0 +1,20 @@
+When:
+  Prefix: /data/case038
+  Suffix: .json
+
+Dest:
+  Table: bqtail.dummy_v038
+  AllowFieldAddition: true
+  Transient:
+    Template: bqtail.dummy_v038_tmpl
+    Dataset: temp
+
+
+Batch:
+  MultiPath: true
+  Window:
+    DurationInSec: 15
+
+Async: true
+OnSuccess:
+  - Action: delete

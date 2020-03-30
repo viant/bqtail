@@ -12,6 +12,7 @@ func TestURIs_Classify(t *testing.T) {
 	var useCases = []struct {
 		description         string
 		job                 string
+		expectFields        []*Field
 		expectMissing       []string
 		expectCorrupted     []string
 		expectInvalidSchema []string
@@ -316,6 +317,62 @@ func TestURIs_Classify(t *testing.T) {
   "user_email": "myproject-cloud-function@myproject.iam.gserviceaccount.com"
 }`,
 		},
+		{
+			description:         "missing schema field",
+			expectCorrupted:     []string{},
+			expectInvalidSchema: []string{"gs://viant_e2e_bqtail/data/case038/path2/dummy2.json"},
+			expectMissing:       []string{},
+			expectedValid:       []string{"gs://viant_e2e_bqtail/data/case038/path2/dummy1.json"},
+			expectFields: []*Field{
+				{
+					Row:      1,
+					Name:     "name",
+					Location: "gs://viant_e2e_bqtail/data/case038/path2/dummy2.json",
+				},
+			},
+			job: `{
+  "configuration": {
+    "jobType": "LOAD",
+    "load": {
+      "createDisposition": "CREATE_IF_NEEDED",
+      "destinationTable": {
+        "datasetId": "temp",
+        "projectId": "myproject",
+        "tableId": "mytable"
+      },
+      "sourceUris": [
+        "gs://viant_e2e_bqtail/data/case038/path2/dummy1.json",
+        "gs://viant_e2e_bqtail/data/case038/path2/dummy2.json"
+      ],
+      "writeDisposition": "WRITE_TRUNCATE"
+    }
+  },
+  "etag": "CPmxTyCVv2jOT55WwdVweg==",
+  "id": "myproject:US.temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch",
+  "jobReference": {
+    "jobId": "temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch",
+    "location": "US",
+    "projectId": "myproject"
+  },
+  "kind": "bigquery#jobID",
+  "selfLink": "https://www.googleapis.com/bigquery/v2/projects/myproject/jobs/temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch?location=US",
+  "statistics": {
+    "creationTime": "1574193994917",
+    "endTime": "1574193995142",
+    "startTime": "1574193995061"
+  },
+  "status": {
+	"errorResult":{"location":"gs://viant_e2e_bqtail/data/case038/path2/dummy2.json","message":"Error while reading data, error message: JSON table encountered too many errors, giving up. Rows: 1; errors: 1. Please look into the errors[] collection for more details.",
+	"reason":"invalid"},
+	"errors":[{"Location":"gs://viant_e2e_bqtail/data/case038/path2/dummy2.json","Message":"Error while reading data, error message: JSON table encountered too many errors, giving up. Rows: 1; errors: 1. Please look into the errors[] collection for more details.","Reason":"invalid"},
+             {"Message":"Error while reading data, error message: JSON processing encountered too many errors, giving up. Rows: 1; errors: 1; max bad: 0; error percent: 0","Reason":"invalid"},
+			 {"Location":"gs://viant_e2e_bqtail/data/case038/path2/dummy2.json","Message":"Error while reading data, error message: JSON parsing error in row starting at position 0: No such field: name.","Reason":"invalid"}],
+	"state":"DONE"
+
+  },
+  "user_email": "myproject-cloud-function@myproject.iam.gserviceaccount.com"
+}`,
+		},
 	}
 	for _, useCase := range useCases {
 		job := &bigquery.Job{}
@@ -332,6 +389,10 @@ func TestURIs_Classify(t *testing.T) {
 		assert.EqualValues(t, useCase.expectCorrupted, uris.Corrupted, useCase.description)
 		assert.EqualValues(t, useCase.expectInvalidSchema, uris.InvalidSchema, useCase.description)
 		assert.EqualValues(t, useCase.expectedValid, uris.Valid, useCase.description)
+		if len(useCase.expectFields) > 0 {
+			assert.EqualValues(t, useCase.expectFields, uris.MissingFields, useCase.description)
+
+		}
 	}
 
 }

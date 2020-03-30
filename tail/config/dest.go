@@ -6,6 +6,7 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
 	"github.com/viant/bqtail/tail/config/pattern"
 	"github.com/viant/toolbox/data"
@@ -30,17 +31,18 @@ type Destination struct {
 	Partition string `json:"partition,omitempty"`
 	//Pattern uses URI relative path (without leading backslash)
 	bigquery.JobConfigurationLoad
-	Pattern          string           `json:",omitempty"`
-	Parameters       []*pattern.Param `json:",omitempty"`
-	compiled         *regexp.Regexp
-	Schema           Schema            `json:",omitempty"`
-	TransientDataset string            `json:",omitempty"`
-	Transient        *Transient        `json:",omitempty"`
-	UniqueColumns    []string          `json:",omitempty"`
-	Transform        map[string]string `json:",omitempty"`
-	SideInputs       []*SideInput      `json:",omitempty"`
-	Override         *bool
-	DMLAppend        bool `json:",omitempty"`
+	Pattern            string           `json:",omitempty"`
+	Parameters         []*pattern.Param `json:",omitempty"`
+	compiled           *regexp.Regexp
+	Schema             Schema            `json:",omitempty"`
+	TransientDataset   string            `json:",omitempty"`
+	Transient          *Transient        `json:",omitempty"`
+	UniqueColumns      []string          `json:",omitempty"`
+	Transform          map[string]string `json:",omitempty"`
+	SideInputs         []*SideInput      `json:",omitempty"`
+	Override           *bool
+	DMLAppend          bool `json:",omitempty"`
+	AllowFieldAddition bool `json:",omitempty"`
 }
 
 //HasTemplate
@@ -173,6 +175,13 @@ func (d *Destination) Init() error {
 	}
 	if len(d.Transform) == 0 {
 		d.Transform = make(map[string]string)
+	}
+
+	if d.AllowFieldAddition && (d.SourceFormat == "AVRO" || d.SourceFormat == "PARQUET") {
+		if len(d.SchemaUpdateOptions) == 0 {
+			d.SchemaUpdateOptions = []string{"ALLOW_FIELD_ADDITION", "ALLOW_FIELD_RELAXATION"}
+		}
+		d.WriteDisposition = shared.WriteDispositionAppend
 	}
 	return nil
 }

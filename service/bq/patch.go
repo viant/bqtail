@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
 )
 
@@ -23,7 +24,6 @@ func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.T
 	if tableRef.ProjectId == "" {
 		tableRef.ProjectId = s.ProjectID
 	}
-
 	if request.TemplateTable == nil {
 		templateRef, err := base.NewTableReference(request.Template)
 		if err != nil {
@@ -34,6 +34,10 @@ func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.T
 			return nil, errors.Wrapf(err, "invalid get template table: %v", request.Table)
 		}
 	}
+	if shared.IsDebugLoggingLevel() {
+		shared.LogF("patching table: %+v\n", tableRef)
+	}
+
 	var table *bigquery.Table
 	call := s.Service.Tables.Patch(tableRef.ProjectId, tableRef.DatasetId, tableRef.TableId, request.TemplateTable)
 	call.Context(ctx)

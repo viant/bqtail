@@ -4,12 +4,15 @@ import (
 	"context"
 	"github.com/viant/afs"
 	"github.com/viant/afs/option"
+	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
 )
 
 const (
-	notFoundReason = "notFound"
+	notFoundReason      = "notFound"
+	noSuchFieldFragment = "No such field:"
+	rowsFragment        = "Rows:"
 )
 
 //URIs represents error classified URIs
@@ -18,6 +21,7 @@ type URIs struct {
 	InvalidSchema []string `json:",omitempty"`
 	Missing       []string `json:",omitempty"`
 	Corrupted     []string `json:",omitempty"`
+	MissingFields []*Field `json:",omitempty"`
 }
 
 //Classify classify uri
@@ -31,6 +35,11 @@ func (u *URIs) Classify(ctx context.Context, fs afs.Service, job *bigquery.Job) 
 		return
 	}
 	schemaErrors := getInvalidSchemaLocations(job)
+
+	if len(schemaErrors) > 0 {
+		u.addMissingFields(job)
+	}
+
 	for _, element := range job.Status.Errors {
 		isMissing := false
 		if element.Reason == notFoundReason && element.Location == "" {
@@ -72,6 +81,29 @@ func (u *URIs) Classify(ctx context.Context, fs afs.Service, job *bigquery.Job) 
 	u.Valid = valid
 }
 
+func (u *URIs) addMissingFields(job *bigquery.Job) {
+	rows := 0
+	for _, element := range job.Status.Errors {
+		if index := strings.Index(element.Message, rowsFragment); index != -1 {
+			rowsInfo := string(element.Message[index+1+len(rowsFragment):])
+			if index := strings.Index(rowsInfo, ";"); index != -1 {
+				rowsInfo = string(rowsInfo[:index])
+				rows = toolbox.AsInt(strings.TrimSpace(rowsInfo))
+			}
+		}
+		if index := strings.Index(element.Message, noSuchFieldFragment); index != -1 {
+			field := strings.Trim(string(element.Message[index+1+len(noSuchFieldFragment):]), ".")
+			u.MissingFields = append(u.MissingFields, &Field{
+				Name:     field,
+				Location: element.Location,
+				Row:      rows,
+				Type:     "",
+			})
+			break
+		}
+	}
+}
+
 func getInvalidSchemaLocations(job *bigquery.Job) map[string]bool {
 	var schemaError = make(map[string]bool)
 	for _, element := range job.Status.Errors {
@@ -92,5 +124,6 @@ func NewURIs() *URIs {
 		InvalidSchema: make([]string, 0),
 		Missing:       make([]string, 0),
 		Corrupted:     make([]string, 0),
+		MissingFields: make([]*Field, 0),
 	}
 }

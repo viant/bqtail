@@ -24,7 +24,7 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 
 	next := onDone
 	dest := j.Rule.Dest.Clone()
-	destTemplate := ""
+	destTemplate := dest.Table
 	if dest.Schema.Template != "" {
 		destTemplate = dest.Schema.Template
 	}
@@ -36,6 +36,7 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 		destTable, _ := dest.CustomTableReference(mapping.Then, j.Process.Source)
 		where := replaceWithMap(mapping.When, clusterColumnMap)
 		var query *task.Action
+
 		tempRef, _ := base.NewTableReference(j.TempTable)
 		if j.Rule.IsDMLAppend() {
 			SQL := sql.BuilAppendDML(tempRef, destTable, j.Load.Schema, dest)

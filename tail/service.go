@@ -473,14 +473,24 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 	response.LoadError = base.JobError(job.BqJob).Error()
 	uris := status.NewURIs()
 	uris.Classify(ctx, s.fs, job.BqJob)
-	corruptedFileURL, invalidSchemaURL := s.getDataErrorsURLs(job.Rule)
 
+	if len(uris.InvalidSchema) > 0 {
+		if job.Rule.Dest.AllowFieldAddition {
+			uris.Valid = append(uris.Valid, uris.InvalidSchema...)
+			uris.InvalidSchema = []string{}
+			if err := s.addMissingFields(ctx, job, uris); err != nil {
+				return err
+			}
+		}
+	}
+
+	corruptedFileURL, invalidSchemaURL := s.getDataErrorsURLs(job.Rule)
 	if shared.IsInfoLoggingLevel() {
 		if len(uris.Corrupted) > 0 || len(uris.InvalidSchema) > 0 {
 			shared.LogF("[%v] excluding corrupted: %v, incompatible schema: %v file(s)\n", job.DestTable, len(uris.Corrupted), len(uris.InvalidSchema))
 		}
 	}
-	if len(uris.InvalidSchema) == 0 && len(uris.Corrupted) == 0 {
+	if len(uris.InvalidSchema) == 0 && len(uris.Corrupted) == 0 && len(uris.MissingFields) == 0 {
 		return base.JobError(job.BqJob)
 	}
 
@@ -616,6 +626,61 @@ func (s *service) logJobInfo(ctx context.Context, bqjob *bigquery.Job, action *t
 		return err
 	}
 	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
+}
+
+func (s *service) addMissingFields(ctx context.Context, job *load.Job, uris *status.URIs) error {
+	for _, field := range uris.MissingFields {
+		if err := field.AdjustType(ctx, s.fs); err != nil {
+			return err
+		}
+	}
+
+	if job.TempTable != "" {
+		if err := s.PatchedTable(ctx, uris.MissingFields, job.TempTable); err != nil {
+			return err
+		}
+	}
+	if job.DestTable != "" {
+		if err := s.PatchedTable(ctx, uris.MissingFields, job.DestTable); err != nil {
+			return err
+		}
+	}
+	if job.Rule.Dest.Schema.Template != "" {
+		if err := s.PatchedTable(ctx, uris.MissingFields, job.Rule.Dest.Schema.Template); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *service) PatchedTable(ctx context.Context, fields []*status.Field, tableName string) error {
+	tableRef, _ := base.NewTableReference(tableName)
+	table, err := s.bq.Table(ctx, tableRef)
+	if err != nil {
+		return err
+	}
+	fieldNames := make(map[string]bool)
+	for _, field := range table.Schema.Fields {
+		fieldNames[field.Name] = true
+	}
+	for _, field := range fields {
+		if fieldNames[field.Name] {
+			continue
+		}
+		table.Schema.Fields = append(table.Schema.Fields, &bigquery.TableFieldSchema{
+			Categories:  nil,
+			Description: fmt.Sprint("Added auto: from location: %v, time: %v", field.Location, time.Now()),
+			Name:        field.Name,
+			Type:        field.Type,
+		})
+		table.ExpirationTime = 0
+	}
+	_, err = s.bq.Patch(ctx, &bq.PatchRequest{
+		Template:      "",
+		Table:         tableName,
+		TemplateTable: table,
+	})
+	return err
 }
 
 //New creates a new service
