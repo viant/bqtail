@@ -1,5 +1,5 @@
 ## March 30 2020 2.1.0
- * Added DMLAppend option
+ * Added DMLAppend option (since DML has no more limits, it is possible to reduce the batch frequency with that option)
  * Added AllowFieldAddition that works also with JSON/CSV source format
 
 ## March 27  2020 2.0.3
