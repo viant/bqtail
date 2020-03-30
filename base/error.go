@@ -23,12 +23,14 @@ func IsRetryError(err error) bool {
 		return false
 	}
 	if apiError, ok := err.(*googleapi.Error); ok {
-		if apiError.Code == http.StatusServiceUnavailable {
+		if apiError.Code == http.StatusServiceUnavailable || apiError.Code == http.StatusBadGateway {
 			return true
 		}
 	}
 	message := err.Error()
-	return strings.Contains(message, fmt.Sprintf(" %v ", http.StatusServiceUnavailable)) || strings.Contains(message, resetError)
+	return strings.Contains(message, fmt.Sprintf(" %v ", http.StatusServiceUnavailable)) ||
+		strings.Contains(message, fmt.Sprintf(" %v ", http.StatusBadGateway)) ||
+		strings.Contains(message, resetError)
 }
 
 //IsBackendError returns true if backend errr
