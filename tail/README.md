@@ -132,7 +132,9 @@ It extends bigquery.JobConfigurationLoad load job configuration.
 
 - **Pattern**
 
-    To derive table name from source path you can use pattern to define regular expression groups referenced by **$X** expression, X is the pattern occurence sequence.   
+    To derive table name from source path you can use pattern to define regular expression groups referenced by **$X** expression, X is the pattern occurrence sequence.   
+
+    You can use the following [RegExpr](https://github.com/google/re2/wiki/Syntax) syntax.
     
     For example the following pattern: "data/(\\d{4})/(\\d{2})/(\\d{2})/.+", extracts 3 groups with $1, $2, and $3 respectively. 
     
@@ -140,6 +142,7 @@ It extends bigquery.JobConfigurationLoad load job configuration.
     
     
     "/nobid/adlog.request/(\\d{4})/(\\d{2})/(\\d{2})/.+"
+
 
 - **Parameters** name pattern substitution parameters 
  
