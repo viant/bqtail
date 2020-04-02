@@ -82,9 +82,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 	}
 	window = NewWindow(process, startTime, endTime, windowURL)
 	windowData, _ := json.Marshal(window)
-	err = base.RunWithRetries(func() error {
-		 return s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
-	})
+	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
 	if isPreConditionError(err) || isRateError(err) {
 		window := NewWindow(process, startTime, endTime, windowURL)
 		if rule.Batch.MultiPath {
@@ -101,7 +99,6 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 	}
 	return &Info{Window: window}, err
 }
-
 
 func (s *service) readLocation(ctx context.Context, URL string) (string, error) {
 	reader, err := s.fs.DownloadWithURL(ctx, URL)
