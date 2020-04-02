@@ -83,8 +83,9 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 1. SSH credentials
     - [Create SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh)
 2. Google Secrets for service account.
-    - **TODO** add list of permission required to deploy CF
     - [Create service account secrets](https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials)
+    - Set role required by cloud function/scheduler deployment
+         - **TODO** add list of permission required
     - Copy google secret to ~/.secret/myProjectSecret.json 
 
 ## BqTail/BqDispatch
