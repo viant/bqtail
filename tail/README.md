@@ -117,8 +117,17 @@ Post actions can use predefined [Cloud Service](../service/README.md) operation.
 
 #### Data destination  
 
-Dest types is defined by [config/dest.go](config/dest.go) with the following attributes: 
-It extends bigquery.JobConfigurationLoad load job configuration.
+Dest supports the following attributes:
+
+Besides you can also specify and attributes from [bigquery.JobConfigurationLoad](https://cloud.google.com/bigquery/docs/reference/rest/v2/Job#JobConfigurationLoad) load job configuration.
+For example:
+```yaml
+dest:
+   table: myproject:mydataset.myTable
+   allowJaggedRows: true
+   allowQuotedNewlines: true
+```
+
 
 
 - **Table**
