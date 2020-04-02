@@ -63,13 +63,12 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
 
 #### Building first rule
 
-The following command creates default ingestion rule to ingest data directly from Google Storage
+The following command ingests data to the dest table and produces the following rule:
 
 ```bash
 bqtail -s=gs://myBuckey/folder/mydatafile.csv -d='myProject:mydataset.mytable' 
 ```
 
-The command ingests data to the dest table and produces the following rule:
 
 ```yaml
 Async: true
