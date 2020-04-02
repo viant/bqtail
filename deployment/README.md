@@ -162,7 +162,7 @@ Deploy monitor with scheduler
 ```bash
 git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment/monitor
-endly deploy authWith=myGoogleSecret.json region=us-central1
+endly deploy authWith=myProjectSecret region=us-central1
 ```
 
 
