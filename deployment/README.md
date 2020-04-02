@@ -115,10 +115,10 @@ endly run authWith=myProjectSecret region='us-central1'
 
 Once deployment is successful you can check
 1. The following buckets are created/present
- - ${PROJECT_ID}_config (configuration bucket)
- - ${PROJECT_ID}_operation (journal bucket)
- - ${PROJECT_ID}_bqtail (cloud functiontrigger bucket)
- - ${PROJECT_ID}_bqdispatch (bqdispatch bucket)
+ - **${PROJECT_ID}_config** (configuration bucket)
+ - **${PROJECT_ID}_operation** (journal bucket)
+ - **${PROJECT_ID}_bqtail** (cloud functiontrigger bucket)
+ - **${PROJECT_ID}_bqdispatch** (bqdispatch bucket)
 2. The following cloud functions are create/present (check logs for error)
  - BqTail
  - BqDispatch
