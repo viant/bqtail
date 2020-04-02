@@ -8,34 +8,34 @@ init:
 
 pipeline:
 
-#  createBuckets:
-#    configBucket:
-#      action: storage:create
-#      isDir: true
-#      dest:
-#        URL: gs://${config.configBucket}/
-#        credentials: $gcpCredentials
-#
-#    opsBucket:
-#      action: storage:create
-#      isDir: true
-#      dest:
-#        URL: gs://${config.opsBucket}/
-#        credentials: $gcpCredentials
-#
-#    triggerBucket:
-#      action: storage:create
-#      isDir: true
-#      dest:
-#        URL: gs://${config.triggerBucket}/
-#        credentials: $gcpCredentials
-#
-#    dispatchBucket:
-#      action: storage:create
-#      isDir: true
-#      dest:
-#        URL: gs://${config.dispatchBucket}/
-#        credentials: $gcpCredentials
+  createBuckets:
+    configBucket:
+      action: storage:create
+      isDir: true
+      dest:
+        URL: gs://${config.configBucket}/
+        credentials: $gcpCredentials
+
+    opsBucket:
+      action: storage:create
+      isDir: true
+      dest:
+        URL: gs://${config.opsBucket}/
+        credentials: $gcpCredentials
+
+    triggerBucket:
+      action: storage:create
+      isDir: true
+      dest:
+        URL: gs://${config.triggerBucket}/
+        credentials: $gcpCredentials
+
+    dispatchBucket:
+      action: storage:create
+      isDir: true
+      dest:
+        URL: gs://${config.dispatchBucket}/
+        credentials: $gcpCredentials
 
   uploadConfigs:
     bqTail:
