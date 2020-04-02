@@ -53,11 +53,13 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, action *tas
 	}
 
 	if action.Meta.IsSyncMode() {
-		err = base.JobError(job)
-		if err == nil && !base.IsJobDone(job) {
-			job, err = s.Wait(ctx, job.JobReference)
-			if err == nil {
-				err = base.JobError(job)
+		if err == nil {
+			err = base.JobError(job)
+			if err == nil && !base.IsJobDone(job) {
+				job, err = s.Wait(ctx, job.JobReference)
+				if err == nil {
+					err = base.JobError(job)
+				}
 			}
 		}
 		if shared.IsDebugLoggingLevel() && job != nil && job.Status != nil {
@@ -83,6 +85,8 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, action *tas
 	return job, err
 }
 
+
+
 func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Action) (*bigquery.Job, error) {
 	var err error
 	if job.JobReference, err = s.setJobID(action); err != nil {
@@ -107,6 +111,7 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 		return err
 	})
 
+
 	if base.IsDuplicateJobError(err) {
 		if shared.IsDebugLoggingLevel() {
 			shared.LogF("duplicate job: [%v]: %v\n", job.Id, err)
@@ -118,6 +123,9 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 	if err != nil {
 		detail, _ := json.Marshal(job)
 		err = errors.Wrapf(err, "failed to submit: %T %s", call, detail)
+		if callJob == nil {
+			return nil, err
+		}
 	}
 
 	if err != nil || (callJob != nil && base.JobError(callJob) != nil) {

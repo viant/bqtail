@@ -67,7 +67,9 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 	if exists {
 		window = NewWindow(process, startTime, endTime, windowURL)
 		if rule.Batch.MultiPath {
-			err = s.addLocationFile(ctx, window, parentURL)
+			err = base.RunWithRetries(func() error {
+				return s.addLocationFile(ctx, window, parentURL)
+			})
 		}
 		return &Info{OwnerEventID: window.EventID, WindowURL: windowURL}, err
 	}
@@ -80,22 +82,26 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 	}
 	window = NewWindow(process, startTime, endTime, windowURL)
 	windowData, _ := json.Marshal(window)
-	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
-
+	err = base.RunWithRetries(func() error {
+		 return s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
+	})
 	if isPreConditionError(err) || isRateError(err) {
 		window := NewWindow(process, startTime, endTime, windowURL)
 		if rule.Batch.MultiPath {
-			if err = s.addLocationFile(ctx, window, parentURL); err != nil {
-				return nil, err
-			}
+			err = base.RunWithRetries(func() error {
+				return s.addLocationFile(ctx, window, parentURL)
+			})
 		}
-		return &Info{OwnerEventID: window.EventID, WindowURL: windowURL}, nil
+		return &Info{OwnerEventID: window.EventID, WindowURL: windowURL}, err
 	}
 	if rule.Batch.MultiPath {
-		err = s.addLocationFile(ctx, window, parentURL)
+		err = base.RunWithRetries(func() error {
+			return s.addLocationFile(ctx, window, parentURL)
+		})
 	}
 	return &Info{Window: window}, err
 }
+
 
 func (s *service) readLocation(ctx context.Context, URL string) (string, error) {
 	reader, err := s.fs.DownloadWithURL(ctx, URL)

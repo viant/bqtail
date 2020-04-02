@@ -1,42 +1,42 @@
-[
-  {
-    "When": {
-      "Prefix": "/deployment_test/override/",
-      "Suffix": ".csv"
+{
+  "When": {
+    "Prefix": "/deployment_test/override/",
+    "Suffix": ".csv"
+  },
+  "Async": true,
+  "Dest": {
+    "Override": true,
+    "Table": "${gcp.ProjectID}:test.dummy_v1",
+    "Partition": "$Date",
+    "Transient": {
+      "Dataset": "temp"
     },
-    "Async": true,
-    "Dest": {
-      "Override": true,
-      "Table": "${gcp.ProjectID}:test.dummy_v1",
-      "Partition": "$Date",
-      "Transient":{"Dataset": "temp"},
-      "SkipLeadingRows": 1,
-      "MaxBadRecords": 3,
-      "FieldDelimiter": ",",
-      "IgnoreUnknownValues": true
+    "SkipLeadingRows": 1,
+    "MaxBadRecords": 3,
+    "FieldDelimiter": ",",
+    "IgnoreUnknownValues": true
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete"
+    }
+  ],
+  "OnFailure": [
+    {
+      "Action": "move",
+      "Request": {
+        "DestURL": "gs://${opsBucket}/BqTail/errors"
+      }
     },
-    "OnSuccess": [
-      {
-        "Action": "delete"
+    {
+      "Action": "notify",
+      "Request": {
+        "Channels": [
+          "#e2e"
+        ],
+        "Title": "Failed to load $Source to ${gcp.ProjectID}:test.dummy",
+        "Message": "$Error"
       }
-    ],
-    "OnFailure": [
-      {
-        "Action": "move",
-        "Request": {
-          "DestURL": "gs://${opsBucket}/BqTail/errors"
-        }
-      },
-      {
-        "Action": "notify",
-        "Request": {
-          "Channels": [
-            "#e2e"
-          ],
-          "Title": "Failed to load $Source to ${gcp.ProjectID}:test.dummy",
-          "Message": "$Error"
-        }
-      }
-    ]
-  }
-]
+    }
+  ]
+}

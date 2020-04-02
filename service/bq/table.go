@@ -6,6 +6,8 @@ import (
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"google.golang.org/api/bigquery/v2"
+	"google.golang.org/api/googleapi"
+	"net/http"
 )
 
 //Table returns bif query table
@@ -18,6 +20,11 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	call.Context(ctx)
 	err = base.RunWithRetries(func() error {
 		table, err = call.Do()
+		if apiError, ok := err.(*googleapi.Error); ok {
+			if apiError.Code == http.StatusConflict {//already exists
+				err = nil
+			}
+		}
 		return err
 	})
 	if err != nil {

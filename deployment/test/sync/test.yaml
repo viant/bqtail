@@ -8,9 +8,6 @@ init:
   opsBucket: ${prefix}_operation
 
 
-
-
-
 pipeline:
 
   init:
@@ -23,6 +20,16 @@ pipeline:
         datasetId: test
     scripts:
       - URL: schema.sql
+
+
+  cleanUp:
+    action: storage:remove
+    sleepTimeMs: 1000
+    assets:
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
+        credentials: $gcpCredentials
+      - URL: 'gs://${configBucket}/BqTail/Rules/deployment_sync_test.json'
+        credentials: $gcpCredentials
 
   setupRule:
     action: storage:copy

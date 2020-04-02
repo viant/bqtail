@@ -1,25 +1,23 @@
-[
-  {
-    "When": {
-      "Prefix": "/deployment_test/async/",
-      "Suffix": ".json"
-    },
-    "Async": true,
-    "Dest": {
-      "Table": "${gcp.ProjectID}:test.dummy",
-      "Transient":{
-          "Dataset": "temp"
-      }
-    },
-    "Batch": {
-      "Window": {
-        "DurationInSec": 30
-      }
-    },
-    "OnSuccess": [
-      {
-        "Action": "delete"
-      }
-    ]
-  }
-]
+{
+  "When": {
+    "Prefix": "/deployment_test/async/",
+    "Suffix": ".json"
+  },
+  "Async": true,
+  "Dest": {
+    "Table": "${gcp.ProjectID}:test.dummy",
+    "Transient": {
+      "Dataset": "temp"
+    }
+  },
+  "Batch": {
+    "Window": {
+      "DurationInSec": 30
+    }
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete"
+    }
+  ]
+}

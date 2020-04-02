@@ -2,3 +2,5 @@
 - Add bqtail docker image
 - Add conditional action
 - Integrate with authly
+- ADD mock test with failed to submit bigquery.JobsInsertCall wiht googleapi: Error 500: An internal error occurred and the request could not be completed., internalError goroutine 26180 
+- Function error: failed to acquire batch window: failed to upload: gs://viant_dataflow_bqdispatch/BqDispatch/Tasks/viant-adelphic:adrtbnobid.ad_rtb_nobids_14_20200402_9140736971569597741_1585803940/3669759814013174907.loc: googleapi: got HTTP response code 502 with body:
