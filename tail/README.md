@@ -122,10 +122,10 @@ Dest supports the following attributes:
 Besides you can also specify and attributes from [bigquery.JobConfigurationLoad](https://cloud.google.com/bigquery/docs/reference/rest/v2/Job#JobConfigurationLoad) load job configuration.
 For example:
 ```yaml
-dest:
-   table: myproject:mydataset.myTable
-   allowJaggedRows: true
-   allowQuotedNewlines: true
+Dest:
+   Table: myproject:mydataset.myTable
+   AllowJaggedRows: true
+   AllowQuotedNewlines: true
 ```
 
 
