@@ -138,7 +138,7 @@ When you test a new rule manually,  remove cache file _gs://${configBucket}/BqTa
 ```bash
 git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment/test/async
-endly test authWith=myTestProjectSecrets.json
+endly test authWith=myTestProjectSecrets
 ```
 Where:
 - [@rule.json](test/sync/rule.json)
@@ -150,7 +150,7 @@ Where:
 ```bash
 git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment/test/async
-endly test authWith=myTestProjectSecrets.json
+endly test authWith=myTestProjectSecrets
 ```
 Where:
 - [@rule.json](test/async/rule.json)
@@ -162,7 +162,7 @@ Where:
 ```bash
 git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment/test/override
-endly test authWith=myTestProjectSecrets.json
+endly test authWith=myTestProjectSecrets
 ```
 
 Where:
