@@ -119,7 +119,7 @@ Post actions can use predefined [Cloud Service](../service/README.md) operation.
 
 Dest supports the following attributes:
 
-Besides you can also specify and attributes from [bigquery.JobConfigurationLoad](https://cloud.google.com/bigquery/docs/reference/rest/v2/Job#JobConfigurationLoad) load job configuration.
+Besides you can also specify any attribute from [bigquery.JobConfigurationLoad](https://cloud.google.com/bigquery/docs/reference/rest/v2/Job#JobConfigurationLoad) load job configuration contract.
 For example:
 ```yaml
 Dest:
