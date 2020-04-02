@@ -49,6 +49,9 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
 
 [BqTail command](cmd/README.md) is great place to start to start building and validating ingestion rule locally.
 ```bash
+    ## note that you can use service account auth
+    ##export GOOGLE_APPLICATION_CREDENTIALS=myGoogle.secret
+
     ## to validate
     bqtail -s=localSourceFolder -d='myproject:mydataset.mytable' -w=90 -p=myproject -V 
     ## to load data
@@ -61,12 +64,13 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
     bqtail -s='s3://bybucket/dataxx/' -r='myrule.yaml' -X
 ```
 
+
 #### Building first rule
 
-The following command ingests data to the dest table and produces the following rule:
+The following command produces the following rule:
 
 ```bash
-bqtail -s=gs://myBuckey/folder/mydatafile.csv -d='myProject:mydataset.mytable' 
+bqtail -s=gs://myBuckey/folder/mydatafile.csv -d='myProject:mydataset.mytable' -a  -V
 ```
 
 
