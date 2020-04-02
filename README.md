@@ -62,7 +62,7 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
 
 #### Building first rule
 
-The following line creates default ingestion rule to ingest data directly from Google Storage
+The following command creates default ingestion rule to ingest data directly from Google Storage
 
 ```bash
 bqtail -s=gs://myBuckey/folder/mydatafile.csv -d='myProject:mydataset.mytable' 
@@ -90,7 +90,7 @@ When:
   Prefix: /folder/
 ```
 
-You can save it as rule.yaml to extend/customize the rule, then you can ingest data with updated rule:
+You can save it as rule.yaml to [extend/customize](https://github.com/viant/bqtail/tree/master/tail#data-ingestion-rules) the rule, then you can ingest data with updated rule:
 
 ```yaml
 bqtail -s=gs://myBuckey/folder/mydatafile.csv -r=rule.yaml
