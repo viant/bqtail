@@ -64,6 +64,7 @@ This bucket stores all data that needs to be ingested to Big Query,
 
 ```
 
+##### Dispatcher bucket
 
 ##### Export bucket
 
@@ -97,6 +98,11 @@ git checkout https://github.com/viant/bqtail.git
 cd bqtail/deployment
 endly run authWith=myProjectSecret region='us-central1'
 ```
+
+
+#### Deployment checklist
+
+
 
 
 ### Testing deployments

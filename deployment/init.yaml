@@ -12,12 +12,14 @@ pipeline:
     configBucket:
       action: storage:create
       isDir: true
+      comments: 'Creating config bucket: ${config.configBucket}'
       dest:
         URL: gs://${config.configBucket}/
         credentials: $gcpCredentials
 
     opsBucket:
       action: storage:create
+      comments: 'Creating operational bucket: ${config.opsBucket}'
       isDir: true
       dest:
         URL: gs://${config.opsBucket}/
@@ -25,6 +27,7 @@ pipeline:
 
     triggerBucket:
       action: storage:create
+      comments: 'Creating trigger bucket: ${config.triggerBucket}'
       isDir: true
       dest:
         URL: gs://${config.triggerBucket}/
@@ -32,6 +35,7 @@ pipeline:
 
     dispatchBucket:
       action: storage:create
+      comments: 'Creating dispatch bucket: ${config.dispatchBucket}'
       isDir: true
       dest:
         URL: gs://${config.dispatchBucket}/
