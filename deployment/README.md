@@ -29,12 +29,21 @@ This bucket stores all configuration files:
     | - BqTail
     |      |- config.json
     |      |- Rules
-    |      |     | - rule1.json
+    |      |     | - rule1.yaml
+    |      |     | - group_folder 
+    |      |     |      - rule2.yaml        
     |      |     | - ruleN.json        
     | - BqDispatch    
     |      |- config.json        
         
 ```            
+
+Configuration bucket stores
+  - [BqTail configuration](https://github.com/viant/bqtail/tree/master/tail#configuration) 
+  - [BqDispatch configuation](https://github.com/viant/bqtail/tree/master/dispatch#configuration)
+  - [Data ingestion rule](https://github.com/viant/bqtail/tree/master/tail#data-ingestion-rules)
+
+Once data arrives to trigger bucket, BqTail matches datafile with a rule to start ingestion process.
 
 ##### Operations bucket
 
@@ -66,12 +75,13 @@ This bucket stores all data that needs to be ingested to Big Query,
 
 ##### Dispatcher bucket
 
+This bucket is used by BqDispatcher to manges scheduled async batches and BigQuery running jobs.
+
 ##### Export bucket
 
 This bucket stores data exported from BigQuery, it can be source for [Storage Mirror FaaS](https://github.com/viant/smirror/) cloud function. 
 
 **${exportBucket}**
-
 
 
 # Deployment
@@ -86,7 +96,8 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 2. Google Secrets for service account.
     - [Create service account secrets](https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials)
     - Set role required by cloud function/scheduler deployment
-         - **TODO** add list of permission required
+         - Cloud Function admin 
+         - Editor
     - Copy google secret to ~/.secret/myProjectSecret.json 
 
 ## BqTail/BqDispatch
@@ -102,9 +113,18 @@ endly run authWith=myProjectSecret region='us-central1'
 
 #### Deployment checklist
 
-
-
-
+Once deployment is successful you can check
+1. The following buckets are created/present
+ - ${PROJECT_ID}_config (configuration bucket)
+ - ${PROJECT_ID}_operation (journal bucket)
+ - ${PROJECT_ID}_bqtail (cloud functiontrigger bucket)
+ - ${PROJECT_ID}_bqdispatch (bqdispatch bucket)
+2. The following cloud functions are create/present (check logs for error)
+ - BqTail
+ - BqDispatch
+3. The following Cloud Scheduler is present (check for successful run)
+  - BqDispatch
+   
 ### Testing deployments
 
 All automation testing workflow copy rule to  gs://${configBucket}/BqTail/Rules/, 
@@ -112,7 +132,6 @@ followed by uploading data file to gs://${triggerBucket}/xxxxxx matching the rul
 In the final step the workflow waits and validate that data exists in dest tables.
 
 When you test a new rule manually,  remove cache file _gs://${configBucket}/BqTail/_.cache_
-
 
 ###### Synchronous CSV data ingestion test
 
