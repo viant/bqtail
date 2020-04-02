@@ -59,9 +59,13 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
     ## to load with rule file
     bqtail -s=localSourceFolder -r='myrule.yaml' -b=myGSBucket
 
+    
+    ## to load data from GCS
+    bqtail -s=gs://myBucket/folder -r='myrule.yaml' 
+
     ### to stream data from s3
     export AWS_SDK_LOAD_CONFIG=true
-    bqtail -s='s3://bybucket/dataxx/' -r='myrule.yaml' -X
+    bqtail -s='s3://myBucket/dataxx/' -r='myrule.yaml' -b=myGSBucket -X
 ```
 
 
