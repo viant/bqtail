@@ -20,11 +20,25 @@ import (
 )
 
 func (s *service) Build(ctx context.Context, request *build.Request) error {
+	if request.ProjectID == "" {
+		ref, _ := base.NewTableReference(request.Destination)
+		request.ProjectID = ref.ProjectId
+	}
+	if request.Bucket == "" {
+		if url.Scheme(request.SourceURL, file.Scheme) == "gs" {
+			request.Bucket = url.Host(request.SourceURL)
+		}
+	}
+	if request.MatchPrefix == "" {
+		if url.Scheme(request.SourceURL, file.Scheme) == "gs" {
+			URLPath := url.Path(request.SourceURL)
+			request.MatchPrefix ,_ = path.Split(URLPath)
+		}
+	}
 	request.Init(s.config)
 	if request.RuleURL == "" {
 		request.RuleURL = url.Join(ruleBaseURL, "rule.yaml")
 	}
-
 	rule := &config.Rule{
 		Async: true,
 		Dest: &config.Destination{
@@ -43,8 +57,7 @@ func (s *service) Build(ctx context.Context, request *build.Request) error {
 		return err
 	}
 	s.initDestination(rule, request)
-	s.initdBatch(request, rule)
-
+	s.initBatch(request, rule)
 	if !(request.SourceURL != "" || request.Validate) {
 		s.reportRule(rule)
 		return nil
@@ -61,7 +74,8 @@ func (s *service) Build(ctx context.Context, request *build.Request) error {
 	return err
 }
 
-func (s *service) initdBatch(request *build.Request, rule *config.Rule) {
+
+func (s *service) initBatch(request *build.Request, rule *config.Rule) {
 	if request.Window > 0 {
 		if rule.Batch == nil {
 			rule.Batch = &config.Batch{Window: &config.Window{}}

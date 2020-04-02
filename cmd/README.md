@@ -16,19 +16,25 @@ By default only streaming mode stores history file in file:///${env.HOME}/.bqtai
 
 ##### OSX
 
+
+```bash
 wget https://github.com/viant/bqtail/releases/download/v2.1.0/bqtail_osx_2.1.0.tar.gz
 tar -xvzf bqtail_osx_2.1.0.tar.gz
 cp bqtail /usr/local/bin/
+```
+
 
 ##### Linux
 
+```bash
 wget https://github.com/viant/bqtail/releases/download/v2.1.0/bqtail_linux_2.1.0.tar.gz
 tar -xvzf bqtail_linux_2.1.0.tar.gz
 cp bqtail /usr/local/bin/
-
+```
 
 ### Usage  
 
+Make sure that you have **temp** dataset in the project.
 
 **Data ingestion rule validation**
 
@@ -40,28 +46,69 @@ bqtail -s=mydatafile -d='myProject:mydataset.mytable' -V
 bqtail -r=gs://MY_CONFIG_BUCKET/BqTail/Rules/sys/bqjob.yaml -V
 ```
 
+
 **Local data file ingestion**
 
 ```bash
-bqtail -s=mydatafile -d='myProject:mydataset.mytable'
+bqtail -s=mydatafile -d='myProject:mydataset.mytable' -b=myGCSBucket
 ```
+
+**Google storage file ingestion**
+
+
+The following line creates default ingestion rule to ingest data directly from Google Storage
+
+```bash
+bqtail -s=gs://myBuckey/folder/mydatafile.csv -d='myProject:mydataset.mytable' 
+```
+
+The command ingests data to the dest table and produces the following rule:
+
+```yaml
+Async: true
+Dest:
+  Table: myProject:mydataset.mytable
+  Transient:
+    Alias: t
+    Dataset: temp
+    ProjectID: myProject
+Info:
+  LeadEngineer: awitas
+  URL: mem://localhost/BqTail/config/rule/rule.yaml
+  Workflow: rule
+OnSuccess:
+- Action: delete
+  Request:
+    URLs: $LoadURIs
+When:
+  Prefix: /folder/
+```
+
+You can save it as rule.yaml to extend/customize the rule, then you can ingest data with updated rule:
+
+```yaml
+bqtail -s=gs://myBuckey/folder/mydatafile.csv -r=rule.yaml
+```
+
+
+
 
 **Local data ingestion with data ingestion rule**
 
 ```bash
-bqtail -s=mydatafile -r='myRuleURL' 
+bqtail -s=mydatafile -r='myRuleURL'  -b=myGCSBucket
 ```
 
 **Local data files ingestion**
 
 ```bash
-bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable'
+bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -b=myGCSBucket
 ```
 
 **Local data files ingestion in batch with 120 sec window**
 
 ```bash
-bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120
+bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120  -b=myGCSBucket
 ```
 
 **Local data files streaming ingestion with rule**
@@ -75,7 +122,6 @@ bqtail -s=mylocaldatafolder -r='myRuleURL' -X
 ```bash
 bqtail -s=mylocaldatafolder -d='myProject:mydataset.mytable' -w=120 -h=~/.bqtail
 ```
-
 
 
 ### Authentication

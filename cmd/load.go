@@ -35,6 +35,7 @@ func (s *service) Load(ctx context.Context, request *tail.Request) (*tail.Respon
 	if err != nil {
 		return nil, errors.Wrapf(err, "source location not found: %v", request.SourceURL)
 	}
+
 	response := tail.NewResponse()
 	ctx, cancel := context.WithCancel(ctx)
 	go s.tailInBackground(ctx, cancel)
