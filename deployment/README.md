@@ -99,6 +99,22 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
          - Cloud Function admin 
          - Editor
     - Copy google secret to ~/.secret/myProjectSecret.json 
+3. Slack credentials (optionally)
+The slack credentials uses the following JSON format
+
+@slack.json
+```json
+{
+  "Token": "MY_VALID_OAUTH_SLACK_TOKEN"
+}
+```
+To encrypt slack in google storage with KMS you can run the following command
+```bash
+git checkout https://github.com/viant/bqtail.git
+cd bqtail/deployment
+endly secure_slack authWith=myProjectSecret slackOAuth=slack.json
+```
+
 
 ## BqTail/BqDispatch
 
