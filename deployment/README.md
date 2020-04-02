@@ -82,10 +82,11 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 ### Credentials setup
 1. SSH credentials
 https://github.com/viant/endly/tree/master/doc/secrets#ssh
+
+
 2. Google Secrets for service account.
 
-
-TODO add list of permission required to deploy CF
+**TODO** add list of permission required to deploy CF
 
 
 https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials
