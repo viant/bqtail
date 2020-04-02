@@ -49,11 +49,11 @@ BqTail process can ingest data in async mode using serverless cloud functions ba
 [BqTail command](cmd/README.md) is great place to start to start building and validating ingestion rule locally.
 ```bash
     ## to validate
-    bqtail -s=localSourceFolder -d='myproject:mydataset.mytable' -w=90 -p=myproject -V
+    bqtail -s=localSourceFolder -d='myproject:mydataset.mytable' -w=90 -p=myproject -V 
     ## to load data
-    bqtail -s=localSourceFolder -d='myproject:mydataset.mytable' -w=90
+    bqtail -s=localSourceFolder -d='myproject:mydataset.mytable' -w=90 -b=myGSBucket
     ## to load with rule file
-    bqtail -s=localSourceFolder -r='myrule.yaml'
+    bqtail -s=localSourceFolder -r='myrule.yaml' -b=myGSBucket
 
     ### to stream data from s3
     export AWS_SDK_LOAD_CONFIG=true
