@@ -104,7 +104,8 @@ endly run authWith=myProjectSecret region='us-central1'
 All automation testing workflow copy rule to  gs://${configBucket}/BqTail/Rules/, 
 followed by uploading data file to gs://${triggerBucket}/xxxxxx matching the rule, to trigger data ingestion.
 In the final step the workflow waits and validate that data exists in dest tables.
-TODO: remove cache file after adding a new rule
+
+When you test a new rule manually,  remove cache file _gs://${configBucket}/BqTail/_.cache_
 
 
 ###### Synchronous CSV data ingestion test
