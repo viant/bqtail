@@ -9,6 +9,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Tail Service](tail/README.md)
 - [Dispatch Service](dispatch/README.md)
 - [Getting Started](#getting-started)
+    - [Building first rule](#building-first-rule)
 - [Usage](#usage)
 - [Data ingestion rule](tail/README.md#data-ingestion-rules)
 - [End to end testing](#end-to-end-testing)
