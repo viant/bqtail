@@ -16,7 +16,7 @@ regular SQL usage pricing applies.
 
 ### Google Storage layout:
 
-The following google storage layout is used to deploy and operation BqTail/BqDispatch:
+The following google storage layout is used to deploy and operate serverless data ingestion with  BqTail:
 
 ##### Configuration bucket
 
