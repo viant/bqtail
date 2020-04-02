@@ -10,14 +10,16 @@ init:
   prefix: $Replace(${projectID},'-','_')
   configBucket: ${prefix}_config
   tirggerBucket: ${prefix}_bqtail
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
 
 pipeline:
 
   set_sdk:
     action: sdk.set
     target: $target
-    sdk: go:1.12
-
+    sdk: go:1.14
 
   deploy:
     checkOut:
