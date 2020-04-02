@@ -100,6 +100,7 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
          - Editor
     - Copy google secret to ~/.secret/myProjectSecret.json 
 3. Slack credentials (optionally)
+
 The slack credentials uses the following JSON format
 
 @slack.json

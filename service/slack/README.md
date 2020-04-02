@@ -24,6 +24,8 @@ The following action are supported:
 }
 ```
 
+See how to [Securing slack](https://github.com/viant/bqtail/tree/master/deployment#credentials-setup).
+
 2. Notify example with inline token 
 
 ```json
