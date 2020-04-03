@@ -45,7 +45,17 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 }
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
-func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error) {
+func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (info *Info, err error) {
+	err = base.RunWithRetries(func() error {
+		info, err = s.tryAcquireWindow(ctx, process, rule)
+		return err
+	})
+	return info, err
+
+}
+
+//TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
+func (s *service) tryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error) {
 	parentURL, _ := url.Split(process.Source.URL, gs.Scheme)
 	windowDest := process.DestTable
 
@@ -67,9 +77,7 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 	if exists {
 		window = NewWindow(process, startTime, endTime, windowURL)
 		if rule.Batch.MultiPath {
-			err = base.RunWithRetries(func() error {
-				return s.addLocationFile(ctx, window, parentURL)
-			})
+			err = s.addLocationFile(ctx, window, parentURL)
 		}
 		return &Info{OwnerEventID: window.EventID, WindowURL: windowURL}, err
 	}
@@ -83,19 +91,18 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 	window = NewWindow(process, startTime, endTime, windowURL)
 	windowData, _ := json.Marshal(window)
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
+
 	if isPreConditionError(err) || isRateError(err) {
 		window := NewWindow(process, startTime, endTime, windowURL)
 		if rule.Batch.MultiPath {
-			err = base.RunWithRetries(func() error {
-				return s.addLocationFile(ctx, window, parentURL)
-			})
+			if err = s.addLocationFile(ctx, window, parentURL); err != nil {
+				return nil, err
+			}
 		}
-		return &Info{OwnerEventID: window.EventID, WindowURL: windowURL}, err
+		return &Info{OwnerEventID: window.EventID, WindowURL: windowURL}, nil
 	}
 	if rule.Batch.MultiPath {
-		err = base.RunWithRetries(func() error {
-			return s.addLocationFile(ctx, window, parentURL)
-		})
+		err = s.addLocationFile(ctx, window, parentURL)
 	}
 	return &Info{Window: window}, err
 }
@@ -161,10 +168,7 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 	}
 	var result = make([]string, 0)
 	for _, baseURL := range baseURLS {
-		err = base.RunWithRetries(func() error {
-			return s.matchData(ctx, window, rule, baseURL, modFilter, &result)
-		})
-		if err != nil {
+		if err := s.matchData(ctx, window, rule, baseURL, modFilter, &result); err != nil {
 			return err
 		}
 	}
