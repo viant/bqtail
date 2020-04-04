@@ -96,5 +96,5 @@ pipeline:
         credentials: $gcpCredentials
       - URL: 'gs://${configBucket}/BqTail/_.cache'
         credentials: $gcpCredentials
-      - URL: 'gs://${configBucket}/BqTail/Rules'
-        credentials: $gcpCredentials
+#      - URL: 'gs://${configBucket}/BqTail/Rules'
+#        credentials: $gcpCredentials

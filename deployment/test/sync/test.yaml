@@ -26,19 +26,25 @@ pipeline:
     action: storage:remove
     sleepTimeMs: 1000
     assets:
-      - URL: 'gs://${configBucket}/BqTail/_.cache'
-        credentials: $gcpCredentials
-      - URL: 'gs://${configBucket}/BqTail/Rules/deployment_sync_test.json'
+      - URL: 'gs://${configBucket}/BqTail/Rules/deployment_sync_test.yaml'
         credentials: $gcpCredentials
 
   setupRule:
     action: storage:copy
     expand: true
     source:
-      URL: rule.json
+      URL: rule.yaml
     dest:
       credentials: $gcpCredentials
-      URL: gs://${configBucket}/BqTail/Rules/deployment_sync_test.json
+      URL: gs://${configBucket}/BqTail/Rules/deployment_sync_test.yaml
+
+  removeRuleCache:
+    action: storage:remove
+    sleepTimeMs: 1000
+    assets:
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
+        credentials: $gcpCredentials
+
 
   trigger:
     action: storage:copy
@@ -46,7 +52,7 @@ pipeline:
     source:
       URL: data/
     dest:
-      URL: gs://${triggerBucket}/deployment_test/${tzTime.now}
+      URL: gs://${triggerBucket}/deployment_test/sync/${tzTime.now}
       credentials: $gcpCredentials
 
   validate:

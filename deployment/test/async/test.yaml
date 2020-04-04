@@ -23,8 +23,6 @@ pipeline:
     action: storage:remove
     sleepTimeMs: 1000
     assets:
-      - URL: 'gs://${configBucket}/BqTail/_.cache'
-        credentials: $gcpCredentials
       - URL: 'gs://${configBucket}/BqTail/Rules/deployment_async_test.json'
         credentials: $gcpCredentials
 
@@ -36,6 +34,14 @@ pipeline:
     dest:
       credentials: $gcpCredentials
       URL: gs://${configBucket}/BqTail/Rules/deployment_async_test.json
+
+  removeRuleCache:
+    action: storage:remove
+    sleepTimeMs: 1000
+    assets:
+      - URL: 'gs://${configBucket}/BqTail/_.cache'
+        credentials: $gcpCredentials
+
 
   trigger:
     action: storage:copy

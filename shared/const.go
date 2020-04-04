@@ -86,6 +86,11 @@ const (
 	LoadURIsVar = "$LoadURIs"
 	//LoadURIsKey load uris key
 	LoadURIsKey = "LoadURIs"
+	//SourceURLsKey SourceURLs key
+	SourceURLsKey = "SourceURLs"
+
+	//SourceURLKey source URL key
+	SourceURLKey = "SourceURL"
 
 	//ResponseKey response key
 	ResponseKey = "Response"

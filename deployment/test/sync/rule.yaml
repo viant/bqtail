@@ -1,0 +1,13 @@
+When:
+  Prefix: "/deployment_test/sync"
+  Suffix: ".csv"
+Dest:
+  Table: "${gcp.ProjectID}:test.dummy"
+  Transient:
+    Dataset: temp
+  SkipLeadingRows: 1
+  MaxBadRecords: 3
+  FieldDelimiter: ","
+  IgnoreUnknownValues: true
+OnSuccess:
+  - Action: delete

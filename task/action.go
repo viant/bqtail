@@ -33,7 +33,7 @@ func (a *Action) Init(ctx context.Context, fs afs.Service) error {
 	isEmptyRequest := len(a.Request) == 0
 	if isEmptyRequest {
 		switch a.Action {
-		case shared.ActionDelete, shared.ActionMove:
+		case shared.ActionDelete:
 			_, hasURL := a.Request[shared.URLsKey]
 			_, hasURLs := a.Request[shared.URLKey]
 			if !(hasURL || hasURLs) {
@@ -41,10 +41,19 @@ func (a *Action) Init(ctx context.Context, fs afs.Service) error {
 			}
 		}
 	} else {
+
 		if request, err := toolbox.NormalizeKVPairs(a.Request); err == nil {
 			a.Request = toolbox.AsMap(request)
 		}
 	}
+	if a.Action == shared.ActionMove {
+		if _, ok := a.Request[shared.SourceURLsKey]; !ok {
+			if _, ok := a.Request[shared.SourceURLKey]; !ok {
+				a.Request[shared.SourceURLsKey] = shared.LoadURIsVar
+			}
+		}
+	}
+
 	if a.Action == shared.ActionCall {
 		if err := loadResource(ctx, a, fs, "Body", "BodyURL"); err != nil {
 			return err

@@ -4,14 +4,12 @@ The following document describes generic shared deployments for various rules, w
 BqTail and BqDispatch cloud functions per project.
 
 
-
 It is highly recommended to use transient project just for bqtail ingestion with transient dataset option. 
 In this case you do not count load/query/copy jobs towards project level quota, and still have ability
 to ingest data to your final project's dataset.
 If there is no transformation option used, after loading data to transient table, data is appended to dest project table with 
 If no transformation option is used data is appended with copy operation which is free of charge, otherwise
 regular SQL usage pricing applies.
-
 
 
 ### Google Storage layout:
@@ -93,6 +91,11 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 ### Credentials setup
 1. SSH credentials
     - [Create SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh)
+    
+    On OSX make sure that you have SSH remote loging enable
+    ```bash
+    sudo systemsetup -setremotelogin on
+    ```
 2. Google Secrets for service account.
     - [Create service account secrets](https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials)
     - Set role required by cloud function/scheduler deployment
@@ -127,7 +130,6 @@ cd bqtail/deployment
 endly run authWith=myProjectSecret region='us-central1'
 ```
 
-
 #### Deployment checklist
 
 Once deployment is successful you can check
@@ -148,18 +150,9 @@ All automation testing workflow copy rule to  gs://${configBucket}/BqTail/Rules/
 followed by uploading data file to gs://${triggerBucket}/xxxxxx matching the rule, to trigger data ingestion.
 In the final step the workflow waits and validate that data exists in dest tables.
 
-When you test a new rule manually,  remove cache file _gs://${configBucket}/BqTail/_.cache_
+When you test a new rule manually, upload the rule to gs://${configBucket}/BqTail/Rules/.
+Make sure to remove **gs://${configBucket}/BqTail/_.cache** if it is present before uploading datafile to trigger bucket. 
 
-###### Synchronous CSV data ingestion test
-
-```bash
-git checkout https://github.com/viant/bqtail.git
-cd bqtail/deployment/test/async
-endly test authWith=myTestProjectSecrets
-```
-Where:
-- [@rule.json](test/sync/rule.json)
-- [@test.yaml](test/sync/test.yaml)
 
 
 ###### Asynchronous batched JSON data ingestion test
@@ -172,6 +165,30 @@ endly test authWith=myTestProjectSecrets
 Where:
 - [@rule.json](test/async/rule.json)
 - [@test.yaml](test/async/test.yaml)
+
+What to expect:
+
+In the Cloud function Log you should be able to see the following:
+
+- Successful batching events (BqTail log stream) for each file (2 files):
+
+```json
+{"Batched":true,"EventID":"1086565206770154","IsDataFile":true,,"Matched":true,"MatchedURL":"gs://xx_bqtail/deployment_test/async/2020-04-04T11:43:30-07:00/dummy_1.json","Retriable":true,"RuleCount":34,"Started":"2020-04-04T18:43:31Z","Status":"ok","TimeTakenMs":5291,"TriggerURL":"gs://xx_bqtail/deployment_test/async/2020-04-04T11:43:30-07:00/dummy_1.json","Window":{"Async":true,"DestTable":"xx:test.dummy","DoneProcessURL":"gs://xx_operation/BqTail/Journal/Done/xx:test.dummy/2020-04-04_18/1086565206770154.run","End":"2020-04-04T18:44:00Z","EventID":"1086565206770154","FailedURL":"gs://xx_operation/BqTail/Journal/failed","ProcessURL":"gs://xx_operation/BqTail/Journal/Running/xx:test.dummy--1086565206770154.run","RuleURL":"gs://xx_config/BqTail/Rules/deployment_async_test.json","Source":{"Status":"pending","Time":"2020-04-04T18:43:30Z","URL":"gs://xx_bqtail/deployment_test/async/2020-04-04T11:43:30-07:00/dummy_1.json"},"Start":"2020-04-04T18:43:30Z","URL":"gs://xx_bqdispatch/BqDispatch/Tasks/xx:test.dummy_1179878484004789046_1586025840.win"}}
+```
+
+```json
+{"Batched":true,"BatchingEventID":"1086562538339341","EventID":"1086562538339341","IsDataFile":true,"ListOpCount":34,"Matched":true,"MatchedURL":"gs://xx_bqtail/deployment_test/async/2020-04-04T11:43:30-07:00/dummy_2.json","Retriable":true,"RuleCount":34,"Started":"2020-04-04T18:43:40Z","Status":"ok","TimeTakenMs":269,"TriggerURL":"gs://xx_bqtail/deployment_test/async/2020-04-04T11:43:30-07:00/dummy_2.json","WindowURL":"gs://xx_bqdispatch/BqDispatch/Tasks/xx:test.dummy_1179878484004789046_1586025840.win"} BqTail 1086562538339341 
+```
+- Successful batch scheduling (BqDispatch log stream)
+- Load job submission with batch runner (BqTail log stream)
+- BigQuery Load job completion notification (BqDispatch log stream) 
+- Big Query copy job submission from transient table to dest table (BqTail  log stream)
+- BigQuery Copy job completion notification (BqDispatch log stream)
+
+
+
+**Note that**, When datafile is not matched with ingestion rule it returns "Status":"noMatch" 
+
 
 
 ###### Asynchronous partition override CSV data ingestion test
