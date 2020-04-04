@@ -318,7 +318,7 @@ BqTail classify errors into retriable, recoverable and non-recoverable.
  - Network errors (i.e connection reset by per)
  
 Within cloud function execution,  number of retries is controlled by MAX_RETRIES env variable. 
-If all retries fail, cloud function failed.
+If all retries fail, the cloud function fails.
 Since Cloud Function has retry flag set, any failed execution will be rescheduled to run again later till
 function return no error.
 Number of Cloud Function retries is controlled by config.MaxRetries (3 by default).
