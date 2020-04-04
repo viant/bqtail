@@ -139,10 +139,10 @@ Once deployment is successful you can check
      - **${PROJECT_ID}_bqtail** (cloud functiontrigger bucket)
      - **${PROJECT_ID}_bqdispatch** (bqdispatch bucket)
 2. The following cloud functions are present (check logs for error)
-     - BqTail
-     - BqDispatch
+     - **BqTail**
+     - **BqDispatch**
 3. The following Cloud Scheduler is present (check for successful run)
-      - BqDispatch
+      - **BqDispatch** with successful run
    
 ### Testing deployments
 
