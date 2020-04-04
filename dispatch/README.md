@@ -5,6 +5,10 @@ BqDispatch service is responsible for
  - triggering scheduled batch load jobs that are due to run
 
 
+BqDispatcher never submits Big Query job, but detect job completion submitted by BqTail by checking job status.
+When BqTail submit BiqQuery job, it create a trace file in AsyncTaskURL, with success or failure post action tasks.
+Once BigQuery job is done, BqDispatcher move a trace file to BqTail Trigger bucket.
+
 Dispatch service is a HTTP cloud function that is scheduled to run every minutes.
 
 During each run dispatcher matches scheduled batched load jobs and completed Big Query job with with post action file [${AsyncTaskURL}/${JobID}.json]
