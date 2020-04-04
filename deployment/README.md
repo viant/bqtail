@@ -151,7 +151,8 @@ followed by uploading data file to gs://${triggerBucket}/xxxxxx matching the rul
 In the final step the workflow waits and validate that data exists in dest tables.
 
 When you test a new rule manually, upload the rule to gs://${configBucket}/BqTail/Rules/.
-Make sure to remove **gs://${configBucket}/BqTail/_.cache** if it is present before uploading datafile to trigger bucket. 
+
+**Make sure to remov**e _gs://${configBucket}/BqTail/_.cache_ file if it is present before uploading datafile to trigger bucket. 
 
 
 
