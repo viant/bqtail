@@ -312,7 +312,7 @@ The following [link](deployment/README.md) details generic deployment.
 
 BqTail classify errors into retriable, recoverable and non-recoverable.
 
-**Retriable** are any exception caused by
+**Retriable** are any exceptions caused by
  - 503 Service Unavailable
  - 502 Bad Gateway
  - Network errors (i.e connection reset by per)
@@ -323,7 +323,7 @@ Since Cloud Function has retry flag set, any failed execution will be reschedule
 function return no error.
 Number of Cloud Function retries is controlled by config.MaxRetries (3 by default).
   
-**Recoverable** are error caused by datafile corruption or schema related issue.
+**Recoverable** are any errors caused by datafile corruption or schema related issue.
 When any corrupted related issued are detected, affected files are excluded from the batch and move to CorruptedFileURL location (defined on  rule or global config level), 
 the remaining files in the batch are reloaded. 
 
@@ -343,7 +343,7 @@ in the deduplication logic.
 
 TODO: add documentation about restarting ingestion process.
  
-**Non Recoverable** are errors when there is permission issue, or template table is missing or rule is invalid.
+**Non Recoverable** are any errors when there is permission issue, or template table is missing or rule is invalid.
 In this case all datafile will stay in trigger bucket you can replay them with **replay service** later, once underlying issue is address
 Replay simply move datafile back and forth to the trigger location, using temp folder in the bqtail bucket.
 
