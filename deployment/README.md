@@ -188,6 +188,13 @@ In the Cloud function Log you should be able to see the following:
 - Data should be present in destination table.
 
 
+BqDispatch Log example:
+```json
+{"BatchCount":1,"Batched":{"gs://xx_bqdispatch/BqDispatch/Tasks/xx:test.dummy_1179878484004789046_1586025840.win":"2020-04-04T22:13:00Z"},
+"Cycles":17,
+"Jobs":{"Jobs":{"gs://xx_bqdispatch/BqDispatch/Tasks/proj:xx:US/xx:test.dummy-1179878484004789046_00001_load--dispatch":{"Project":"","Region":"","ID":"xx_test_dummy--1179878484004789046_00001_load--dispatch","URL":"gs://xx_bqdispatch/BqDispatch/Tasks/proj:xx:US/xx:test.dummy--1179878484004789046_00001_load--dispatch","Status":"DONE"},"gs://xx_bqdispatch/BqDispatch/Tasks/proj:xx:US/xx:test.dummy--1179878484004789046_00002_copy--dispatch":{"Project":"","Region":"","ID":"xx_test_dummy--1179878484004789046_00002_copy--dispatch","URL":"gs://xx_bqdispatch/BqDispatch/Tasks/proj:xx:US/xx:test.dummy--1179878484004789046_00002_copy--dispatch","Status":"DONE"}}},
+"Performance":{"xx":{"ProjectID":"xx","Running":{"LoadJobs":1,"BatchJobs":1},"Pending":{},"Dispatched":{"CopyJobs":1,"LoadJobs":1},"Throttled":{}}},"Started":"2020-04-04T22:13:04Z","Status":"ok","TimeTakenMs":55000}
+```
 
 **Note that**, When datafile is not matched with ingestion rule it returns "Status":"noMatch" 
 
