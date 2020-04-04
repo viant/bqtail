@@ -320,7 +320,7 @@ BqTail classify errors into retriable, recoverable and non-recoverable.
 Within cloud function execution,  number of retries is controlled by MAX_RETRIES env variable. 
 If all retries fail, the cloud function fails.
 Since Cloud Function has retry flag set, any failed execution will be rescheduled to run again later till
-function return no error.
+function completes without error.
 Number of Cloud Function retries is controlled by config.MaxRetries (3 by default).
   
 **Recoverable** are any errors caused by datafile corruption or schema related issue.
