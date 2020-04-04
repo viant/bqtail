@@ -108,7 +108,9 @@ bqtail -s=gs://myBuckey/folder/mydatafile.csv -r=rule.yaml
 ```
 
 
-[Deploying serverless stack](deployment/README.md) 
+_Next steps:_ 
+
+- [Deploying serverless stack](deployment/README.md) 
 
 ## Usage
 
