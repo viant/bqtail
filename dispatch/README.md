@@ -49,7 +49,8 @@ Configuration is defined as [config.go](config.go)
 - TimeToLiveInMin: time to live in sec (1 second by default)
 - MaxConcurrentSQL: if specified control number of dispatched SQL events
 - MaxConcurrentJobs: if specified control number of dispatched Load/Copy events
-     Note that there is undocumented Big Query quota of 20 concurrent load/export jobs, affecting load performance till quota is cleared (hourly).  
+     
+     **Note that** there is undocumented Big Query quota of 20 concurrent load/export jobs, affecting load performance till quota is cleared (hourly).  
 
 
 Example configuration

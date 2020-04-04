@@ -37,7 +37,7 @@ Configuration is defined as [config.go](config.go)
 
 
 **Note:**
-To reduce Storage Class A operations: cache file is used for config files:  delete cache file alongside adding a new rule.
+To reduce Storage Class A operations cost: cache file is used for config files:  delete cache file alongside adding a new rule.
 
 
 ### Data ingestion rules
