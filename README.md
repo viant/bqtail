@@ -12,6 +12,9 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
     - [Building first rule](#building-first-rule)
 - [Usage](#usage)
 - [Data ingestion rule](tail/README.md#data-ingestion-rules)
+- [Deployment](#deployment)
+- [Error Handling](#error-handling)
+- [Monitoring](#monitoring)
 - [End to end testing](#end-to-end-testing)
 - [Contibution](#contributing-to-bqtail)
 - [License](#license)
@@ -304,10 +307,52 @@ Note that actual data ingestion with load and copy BigQuery operations are free 
 
 The following [link](deployment/README.md) details generic deployment.
 
+
+## Error Handling
+
+BqTail classify errors into retriable, recoverable and non-recoverable.
+
+**Retriable** are any exception caused by
+ - 503 Service Unavailable
+ - 502 Bad Gateway
+ - Network errors (i.e connection reset by per)
+ 
+Within cloud function execution,  number of retries is controlled by MAX_RETRIES env variable. 
+If all retries fail, cloud function failed.
+Since Cloud Function has retry flag set, any failed execution will be rescheduled to run again later till
+function return no error.
+Number of Cloud Function retries is controlled by config.MaxRetries (3 by default).
+  
+**Recoverable** are error caused by datafile corruption or schema related issue.
+When any corrupted related issued are detected, affected files are excluded from the batch and move to CorruptedFileURL location (defined on  rule or global config level), 
+the remaining files in the batch are reloaded. 
+
+When any schema related issue are detected, affected files are excluded from the batch and move to InvalidSchemaURL location (defined on  rule or global config level), 
+the remaining files in the batch are reloaded. 
+
+At current moment in case of multiple issued within a batch, BigQuery only reports one invalid location at a time, so technically
+if 20 files are corrupted in 500 URIs load job, it would take 20 attempts to successfully load remaining file.
+This 'problematic' behaviour was discuss with BigQuery team, and will be address down the line.
+
+All this attempt count toward project max daily jobs quota (100K)
+To protect from reaching that limit maximum number of reload is configured on rule level with MaxReload options (default 15)
+
+In case of Big Query internal server error, we've seen in practice retrying JOB does not help, in that case BqTail would
+try to restart the whole ingestion process from scratch. In ingestion process fails in later stage, you cas use $EventID
+in the deduplication logic.
+
+TODO: add documentation about restarting ingestion process.
+ 
+**Non Recoverable** are errors when there is permission issue, or template table is missing or rule is invalid.
+In this case all datafile will stay in trigger bucket you can replay them with **replay service** later, once underlying issue is address
+Replay simply move datafile back and forth to the trigger location, using temp folder in the bqtail bucket.
+
+TODO add documentation how to deploy and how to run replay service
+
+
 ## Monitoring
 
 The following [link](mon/README.md) details bqtail monitoring.
-
 
 ## End to end testing
 
