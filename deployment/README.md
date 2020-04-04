@@ -166,7 +166,8 @@ Where:
 - [@rule.json](test/async/rule.json)
 - [@test.yaml](test/async/test.yaml)
 
-What to expect:
+
+**Post run check**
 
 In the Cloud function Log you should be able to see the following:
 
@@ -184,6 +185,7 @@ In the Cloud function Log you should be able to see the following:
 - BigQuery Load job completion notification (BqDispatch log stream) 
 - Big Query copy job submission from transient table to dest table (BqTail  log stream)
 - BigQuery Copy job completion notification (BqDispatch log stream)
+- Data should be present in destination table.
 
 
 
