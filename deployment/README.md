@@ -153,7 +153,7 @@ In the final step the workflow waits and validate that data exists in dest table
 When you test a new rule manually, upload the rule to gs://${configBucket}/BqTail/Rules/.
 
 Make sure to **remove** _gs://${configBucket}/BqTail/_.cache_ file if it is present before uploading datafile to trigger bucket. 
-It will get recreated with a BqTail execution trigger by datafile upload to trigger bucket.
+It will get recreated with a BqTail execution, trigger by datafile upload to trigger bucket.
 
 
 ###### Asynchronous batched JSON data ingestion test
