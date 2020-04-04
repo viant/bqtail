@@ -337,7 +337,7 @@ This 'problematic' behaviour was discuss with BigQuery team, and will be address
 All this attempt count toward project max daily jobs quota (100K)
 To protect from reaching that limit maximum number of reload is configured on rule level with MaxReload options (default 15)
 
-In case of Big Query internal server error, we've seen in practice retrying JOB does not help, in that case BqTail would
+In case of Big Query internal server error, we've seen in practice, that retrying JOB does not help, in that case BqTail would
 try to restart the whole ingestion process from scratch. In ingestion process fails in later stage, you cas use $EventID
 in the deduplication logic.
 
