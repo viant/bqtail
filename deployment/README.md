@@ -92,7 +92,7 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 1. SSH credentials
     - [Create SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh)
     
-    On OSX make sure that you have SSH remote loging enable
+    On OSX make sure that you have SSH remote login enabled
     ```bash
     sudo systemsetup -setremotelogin on
     ```

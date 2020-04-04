@@ -302,7 +302,7 @@ The following snapshot show serverless cost overhead per one day data ingestion 
 
 ![BqTail](images/serverless_cost.png)
 
-Note that actual data ingestion with load and copy BigQuery operations are free of charge with flat-rate pricing model.
+Note that actual data ingestion with load and copy BigQuery operations are free of charge with flat-rate pricing model  .
 
 
 ## Deployment

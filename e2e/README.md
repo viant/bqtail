@@ -11,7 +11,7 @@ Min required endly version: 0.47.1
 3. Create e2e service account with admin permission on e2e test project
 4. Setup credentials
 - [Set SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh)
- On OSX make sure that you have SSH remote loging enable
+    On OSX make sure that you have SSH remote login enabled
     ```bash
     sudo systemsetup -setremotelogin on
     ```
