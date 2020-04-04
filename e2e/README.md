@@ -14,15 +14,12 @@ Min required endly version: 0.47.1
 - [Set Google service account secrets](https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials)
     * Store main test project service account google secrets in  ~/.secret/gcp-e2e.json
     * Optionally for multi project load balancer tests store second test project service account in  ~/.secret/bq-e2e.json
- Optionally create slack OAuth token and store in the ~/secret/slack-e2e.json in the following format:
-
+- Optionally create slack OAuth token and store in the ~/secret/slack-e2e.json in the following format:
 ```json
 {
   "Token": "MY_OAUTH_SLACK_TOKEN"
 }
 ```
-
-
 If you do not have slack testing token just create a file with dummy data.
  
 5. Checkout the this project:
