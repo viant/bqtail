@@ -10,8 +10,8 @@ Min required endly version: 0.47.1
 2. Create dedicated GCP project for  end to end testing.
 3. Create e2e service account with admin permission on e2e test project
 4. Setup credentials
--  [SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh)
-- [Google Secrets for service account](https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials)
+- [Set SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh)
+- [Set Google service account secrets](https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials)
     * Store main test project service account google secrets in  ~/.secret/gcp-e2e.json
     * Optionally for multi project load balancer tests store second test project service account in  ~/.secret/bq-e2e.json
  Optionally create slack OAuth token and store in the ~/secret/slack-e2e.json in the following format:
