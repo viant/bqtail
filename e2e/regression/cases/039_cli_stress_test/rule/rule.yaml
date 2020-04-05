@@ -18,7 +18,7 @@ Dest:
         - event_id
       Mapping:
         - Then: bqtail.dummy_v039_v1
-          When: event_id = 1
+          When: event_type = 1
   Transient:
     Alias: t
     Dataset: temp
