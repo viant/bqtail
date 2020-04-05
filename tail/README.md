@@ -10,11 +10,11 @@ Tail service ingests data to Big Query with Load/Copy or Query API.
 
 Tail service is a google storage triggered cloud function that: 
 
-- matches incoming data files with specified ingestion rules
-- batches matches incoming data files 
-- matches async batching tasks triggered by the dispatch service
-- matches async post load actions triggered  by the dispatch service 
-- submitting BigQuery job
+- Matches incoming data files with specified ingestion rules
+- Batches matched incoming data files 
+- Submit BigQuery Load Job for matched async batch tasks triggered by the dispatch service
+- Run post actions (on success or failure) for matched post BigQuery Job actions triggered by the dispatch service 
+
 
 
 ## Configuration
