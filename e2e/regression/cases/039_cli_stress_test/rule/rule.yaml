@@ -1,0 +1,28 @@
+When:
+  Prefix: /data/case039
+  Suffix: .json
+
+
+Batch:
+  MultiPath: true
+  Window:
+    DurationInSec: 15
+
+
+Dest:
+  Table: bqtail.dummy_v039_tmpl
+  Schema:
+    Template: bqtail.dummy_v039_tmpl
+    Split:
+      ClusterColumns:
+        - event_id
+      Mapping:
+        - Then: bqtail.dummy_v039_v1
+          When: event_id = 1
+  Transient:
+    Alias: t
+    Dataset: temp
+
+OnSuccess:
+  - Action: delete
+

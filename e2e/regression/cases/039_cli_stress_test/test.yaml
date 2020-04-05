@@ -1,0 +1,75 @@
+init:
+  doneCounter: 0
+  parentIndex: ${parent.index}
+  bqtailCmd: ${appPath}/cmd/bqtail/bqtail
+  'self.i': 0
+  self.cnt: 0
+  unique: $rand
+
+pipeline:
+  prepare:
+    init-db:
+      action: dsunit:init
+      datastore: bqtail
+      expand: true
+      config:
+        driverName: bigquery
+        credentials: $gcpCredentials
+        parameters:
+          datasetId: bqtail
+      scripts:
+        - URL: ${parent.path}/bqtail/schema.sql
+    populate:
+      bqtail:
+        action: dsunit:prepare
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/prepare
+
+
+  cleanUp:
+    action: storage:remove
+    sleepTimeMs: 1000
+    assets:
+      - URL: 'gs://${triggerBucket}/data/case039/'
+        credentials: $gcpCredentials
+
+
+  trigger:
+    generate:
+      action: storage:generate
+      fileCount: 20
+      inBackground: true
+      indexVariable: id
+      lines: 1
+      index: ${self.i}
+      lineTemplate: '{"id": ${id}, "name": "dummy ${id}", "type_id": 1, "event_type": ${id % 3} }'
+      dest:
+        URL: gs://${triggerBucket}/data/case039/dummy_${unique}_${self.cnt++}_$fileNo.json
+        credentials: $gcpCredentials
+    inc:
+      action: nop
+      sleepTimeMs: 200
+      logging: false
+      init:
+        'self.i': ${self.i+20}
+
+    goto:
+      when: ${self.i} < 100
+      action: goto
+      task: trigger
+
+  run:
+    action: exec:run
+    checkError: true
+    commands:
+      - export GOOGLE_APPLICATION_CREDENTIALS='${env.HOME}/.secret/${gcpCredentials}.json'
+      - ${bqtailCmd} -r='${parent.path}/rule/rule.yaml' -s='gs://${triggerBucket}/data/case039'
+
+
+#
+#  validate:
+#    check-db:
+#      bqtail:
+#        action: dsunit:expect
+#        datastore: bqtail
+#        URL:  ${parent.path}/bqtail/expect
