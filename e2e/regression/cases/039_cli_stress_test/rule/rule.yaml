@@ -15,7 +15,7 @@ Dest:
     Template: bqtail.dummy_v039_tmpl
     Split:
       ClusterColumns:
-        - event_id
+        - event_type
       Mapping:
         - Then: bqtail.dummy_v039_v1
           When: event_type = 1
