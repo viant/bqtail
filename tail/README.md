@@ -14,7 +14,12 @@ Tail service is a google storage triggered cloud function that:
 - Batches matched incoming data files 
 - Submit BigQuery Load Job for matched async batch tasks triggered by the dispatch service
 - Run post actions (on success or failure) for matched post BigQuery Job actions triggered by the dispatch service 
-
+- Post actions 
+    - BigQuery (copy/load/query/export)
+    - Storage (move/delete)
+    - Slack (notify)
+    - Pubsub (publish)
+    - HTTP API (call)
 
 
 ## Configuration
