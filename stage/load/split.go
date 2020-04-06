@@ -21,14 +21,12 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 	if split == nil {
 		return nil
 	}
-
 	next := onDone
 	dest := j.Rule.Dest.Clone()
 	destTemplate := dest.Table
 	if dest.Schema.Template != "" {
 		destTemplate = dest.Schema.Template
 	}
-
 	clusterColumnMap := j.clusterColumnMap()
 
 	for i := range split.Mapping {
@@ -69,10 +67,24 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 			}
 		}
 	}
+
+	//When template schema is already partition - do not apply extract copy
+	if j.IsTablePartitioned {
+		result.AddOnSuccess(next.OnSuccess...)
+		result.AddOnFailure(next.OnFailure...)
+		return nil
+	}
+	//When template is not partition -> load data to non partition table, then copy to transient partition table
+	//then apply split query
+	//the reason behind it when dealing with nested schema, non of nested field can be partition/clustered, thus
+	//if cluster field is defined as nested reference, in this extra step we would create extra transition
+	//otherwise load job would fail
+
 	sourceRef, _ := base.NewTableReference(j.SplitTable())
 	selectAll := sql.BuildSelect(sourceRef, j.SplitSchema.Schema, dest)
 	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
 	destRef, _ := base.NewTableReference(j.TempTable)
+
 	dropTable := bq.NewDropAction(j.ProjectID, j.SplitTable())
 	next.AddOnSuccess(dropTable)
 	result.AddOnSuccess(bq.NewQueryAction(selectAll, destRef, "", false, next))
@@ -115,6 +127,21 @@ func (j *Job) initTableSplit(ctx context.Context, service bq.Service) error {
 	}
 	splitColumns := []*bigquery.TableFieldSchema{}
 	schema := tempTable.Schema
+
+	if j.IsTablePartitioned {
+
+		j.TempSchema.Clustering = &bigquery.Clustering{
+			Fields: split.ClusterColumns,
+		}
+		for i, name := range split.ClusterColumns {
+			column := getColumn(schema.Fields, split.ClusterColumns[i])
+			if column == nil {
+				return errors.Errorf("failed to lookup cluster column: %v", name)
+			}
+		}
+
+	}
+
 	if len(split.ClusterColumns) > 0 {
 		if split.TimeColumn == "" {
 			split.TimeColumn = "ts"
@@ -126,10 +153,12 @@ func (j *Job) initTableSplit(ctx context.Context, service bq.Service) error {
 				Type: timestampDataType,
 			})
 		}
+
 		tempTable.TimePartitioning = &bigquery.TimePartitioning{
 			Field: split.TimeColumn,
 			Type:  timePartitionType,
 		}
+
 		var clusterColumn = make([]string, 0)
 		for i, name := range split.ClusterColumns {
 			if strings.Contains(split.ClusterColumns[i], ".") {

@@ -54,9 +54,14 @@ pipeline:
         'self.i': ${self.i+20}
 
     goto:
-      when: ${self.i} < 100
+      when: ${self.i} < 1000
       action: goto
       task: trigger
+
+
+  wait:
+    action: nop
+    SleepTimeMs: 10000
 
   run:
     action: exec:run
@@ -66,10 +71,10 @@ pipeline:
       - ${bqtailCmd} -r='${parent.path}/rule/rule.yaml' -s='gs://${triggerBucket}/data/case039'
 
 
-#
-#  validate:
-#    check-db:
-#      bqtail:
-#        action: dsunit:expect
-#        datastore: bqtail
-#        URL:  ${parent.path}/bqtail/expect
+
+  validate:
+    check-db:
+      bqtail:
+        action: dsunit:expect
+        datastore: bqtail
+        URL:  ${parent.path}/bqtail/expect

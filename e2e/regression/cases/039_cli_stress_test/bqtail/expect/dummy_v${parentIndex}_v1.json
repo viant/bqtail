@@ -3,6 +3,6 @@
     "@fromQuery@": "SELECT COUNT(1) AS cnt  FROM bqtail.dummy_v${parentIndex}_v1"
   },
   {
-    "cnt": 1000
+    "cnt": 333
   }
 ]

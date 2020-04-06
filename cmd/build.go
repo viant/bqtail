@@ -32,7 +32,7 @@ func (s *service) Build(ctx context.Context, request *build.Request) error {
 	if request.MatchPrefix == "" {
 		if url.Scheme(request.SourceURL, file.Scheme) == "gs" {
 			URLPath := url.Path(request.SourceURL)
-			request.MatchPrefix ,_ = path.Split(URLPath)
+			request.MatchPrefix, _ = path.Split(URLPath)
 		}
 	}
 	request.Init(s.config)
@@ -73,7 +73,6 @@ func (s *service) Build(ctx context.Context, request *build.Request) error {
 	}
 	return err
 }
-
 
 func (s *service) initBatch(request *build.Request, rule *config.Rule) {
 	if request.Window > 0 {
@@ -123,7 +122,7 @@ func (s *service) initSourceMatch(ctx context.Context, rule *config.Rule, reques
 	if request.MatchPattern == "" && (request.MatchPrefix == "" || request.MatchPrefix == shared.DefaultPrefix) && request.SourceURL != "" {
 		objects, err := s.fs.List(ctx, request.SourceURL, foption.NewRecursive(true))
 		if err != nil {
-			return errors.Wrapf(err, "invalid source: %v", request.SourceURL)
+			return errors.Wrapf(err, "failed to list: %v", request.SourceURL)
 		}
 		folderCount := 0
 		var extension = make(map[string]int)

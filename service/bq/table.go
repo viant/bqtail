@@ -21,7 +21,7 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	err = base.RunWithRetries(func() error {
 		table, err = call.Do()
 		if apiError, ok := err.(*googleapi.Error); ok {
-			if apiError.Code == http.StatusConflict {//already exists
+			if apiError.Code == http.StatusConflict { //already exists
 				err = nil
 			}
 		}

@@ -71,9 +71,13 @@ func TestJob_NewLoadRequest(t *testing.T) {
 			description: "dml append request",
 			caseURL:     path.Join(baseURL, "009_dml_append"),
 		},
+		{
+			description: "clustered_table_split request",
+			caseURL:     path.Join(baseURL, "010_clustered_table_split"),
+		},
 	}
 
-	for _, useCase := range useCases {
+	for _, useCase := range useCases[9:] {
 		ctx := context.Background()
 		err := loadTestAsset(ctx, &useCase.process, path.Join(useCase.caseURL, "process.json"))
 		if !assert.Nil(t, err, useCase.description) {

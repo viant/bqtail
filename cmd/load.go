@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/afs/file"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
@@ -14,6 +15,8 @@ import (
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/bqtail/tail/contract"
+
+	"log"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -21,8 +24,12 @@ import (
 )
 
 func (s *service) Load(ctx context.Context, request *tail.Request) (*tail.Response, error) {
+	if request.Bucket == "" {
+		if url.Scheme(request.SourceURL, file.Scheme) == "gs" {
+			request.Bucket = url.Host(request.SourceURL)
+		}
+	}
 	request.Init(s.config)
-
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -30,7 +37,9 @@ func (s *service) Load(ctx context.Context, request *tail.Request) (*tail.Respon
 	if err != nil {
 		return nil, err
 	}
+	s.reportSettings(request, s.config)
 	s.reportRule(rule)
+
 	object, err := s.fs.Object(ctx, request.SourceURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "source location not found: %v", request.SourceURL)
@@ -56,10 +65,10 @@ func (s *service) Load(ctx context.Context, request *tail.Request) (*tail.Respon
 			time.Sleep(time.Second)
 		}
 	}
-
 	s.Stop()
 	return response, err
 }
+
 
 func (s *service) loadDatafiles(waitGroup *sync.WaitGroup, ctx context.Context, object storage.Object, rule *config.Rule, request *tail.Request, response *tail.Response) {
 	waitGroup.Add(1)
@@ -104,6 +113,7 @@ func (s *service) handleResponse(ctx context.Context, response *tail.Response) {
 			return
 		case resp := <-s.responseChan:
 			if resp.Error != "" {
+				log.Printf("got error response -> stopping servce: %v\n", resp.Error)
 				s.Stop()
 				response.AddError(errors.New(resp.Error))
 				return

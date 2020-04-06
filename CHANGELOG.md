@@ -2,7 +2,10 @@
  * Added DMLAppend option (since DML has no more limits, it is possible to reduce the batch frequency with that option)
  * Added AllowFieldAddition that works also with JSON source format
  * Streamline bqtail CLI with bucket/project extraction
-
+ * Patched mem fs race condition
+ * Patched dest split with partitioned template
+ * Added cli batching stress test
+ * 
 ## March 27  2020 2.0.3
  * Refactored retries
 

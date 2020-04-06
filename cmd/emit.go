@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/cmd/tail"
@@ -16,7 +17,7 @@ func (s *service) emit(ctx context.Context, object storage.Object, response *tai
 	if object.IsDir() {
 		objects, err := s.fs.List(ctx, object.URL())
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to list: %v", object.URL())
 		}
 		for i := range objects {
 			if url.Equals(object.URL(), objects[i].URL()) {

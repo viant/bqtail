@@ -85,8 +85,6 @@ func (s *service) Post(ctx context.Context, callerJob *bigquery.Job, action *tas
 	return job, err
 }
 
-
-
 func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Action) (*bigquery.Job, error) {
 	var err error
 	if job.JobReference, err = s.setJobID(action); err != nil {
@@ -110,7 +108,6 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 		callJob, err = call.Do()
 		return err
 	})
-
 
 	if base.IsDuplicateJobError(err) {
 		if shared.IsDebugLoggingLevel() {

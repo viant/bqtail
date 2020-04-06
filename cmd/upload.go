@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afs/url"
@@ -20,7 +21,7 @@ func (s *service) upload(ctx context.Context, destURL string, object storage.Obj
 	if object.IsDir() {
 		objects, err := s.fs.List(ctx, object.URL())
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to list: %v", object.URL())
 		}
 		eventsHistory, err := history.FromURL(ctx, request.HistoryPathURL(object.URL()), s.fs)
 		if err != nil {
@@ -69,9 +70,15 @@ func (s *service) onUpload(ctx context.Context, response *tail.Response) func(UR
 		var object storage.Object
 		if err == nil {
 			atomic.AddInt32(&response.Info.Uplodaded, 1)
-			if object, err = s.fs.Object(ctx, URL, option.NewObjectKind(true)); err == nil {
+			object, err = s.fs.Object(ctx, URL, option.NewObjectKind(true))
+			if err != nil {
+				errors.Wrapf(err, "failed get object: %v", URL)
+
+			}
+			if err == nil {
 				err = s.emit(ctx, object, response)
 			}
+
 		}
 		if err != nil {
 			response.AddError(err)

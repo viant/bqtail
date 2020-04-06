@@ -1,0 +1,39 @@
+{
+  "Dest": {
+    "Schema": {
+      "Split": {
+        "ClusterColumns": [
+          "event_type"
+        ],
+        "Mapping": [
+          {
+            "Then": "bqtail.dummy_v039_v1",
+            "When": "event_type = 1"
+          }
+        ]
+      },
+      "Template": "bqtail.dummy_v039_tmpl"
+    },
+    "Table": "bqtail.dummy_v039_tmpl",
+    "Transient": {
+      "Alias": "t",
+      "Dataset": "temp"
+    }
+  },
+  "Info": {
+    "URL": "mem://localhost/BqTail/config/rule/rule.yaml",
+    "Workflow": "rule"
+  },
+  "OnSuccess": [
+    {
+      "Action": "delete",
+      "Request": {
+        "URLs": "$LoadURIs"
+      }
+    }
+  ],
+  "When": {
+    "Prefix": "/data/case039",
+    "Suffix": ".json"
+  }
+}

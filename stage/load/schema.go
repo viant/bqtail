@@ -20,6 +20,7 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 		if table, err = j.applyDestTemplate(table, service, ctx, tableReference); err != nil {
 			return err
 		}
+		j.IsTablePartitioned = table.TimePartitioning != nil || table.RangePartitioning != nil
 	}
 
 	if transient != nil {
@@ -41,10 +42,23 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 				return errors.Wrapf(err, "failed to get transient.template table: %v", base.EncodeTableReference(transientTempRef, false))
 			}
 		}
+
+		j.IsTablePartitioned = table.TimePartitioning != nil || table.RangePartitioning != nil
 		if table != nil {
-			j.TempSchema = table
+			j.TempSchema = &bigquery.Table{
+				Clustering:        table.Clustering,
+				RangePartitioning: table.RangePartitioning,
+				Schema:            table.Schema,
+				TimePartitioning:  table.TimePartitioning,
+			}
+
+			if j.Rule.Dest.Schema.Split != nil && j.IsTablePartitioned && len(j.Rule.Dest.Schema.Split.ClusterColumns) > 0 {
+				table.Clustering = &bigquery.Clustering{
+					Fields: j.Rule.Dest.Schema.Split.ClusterColumns,
+				}
+			}
 			tableRef, _ := base.NewTableReference(j.TempTable)
-			if j.Rule.Dest.HasSplit() {
+			if j.Rule.Dest.HasSplit() && !j.IsTablePartitioned {
 				tableRef, _ = base.NewTableReference(j.SplitTable())
 			}
 			table.TableReference = tableRef

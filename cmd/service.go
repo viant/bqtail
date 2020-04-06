@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/bqtail/cmd/rule/build"
@@ -41,6 +42,13 @@ func (s *service) Stop() {
 		}
 	}
 }
+
+func (s *service) reportSettings(request *ctail.Request, config *tail.Config) {
+	fmt.Printf("==== SETTINGS ====\n")
+	fmt.Printf("GCP Project: '%v'\n", config.ProjectID)
+	fmt.Printf("GCS Bucket: '%v'\n", request.Bucket)
+}
+
 
 //New creates a service
 func New(projectID string) (Service, error) {

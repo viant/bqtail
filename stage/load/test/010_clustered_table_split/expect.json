@@ -1,0 +1,104 @@
+{
+  "Action": "load",
+  "Meta": {
+    "Action": "load",
+    "Async": false,
+    "DestTable": "bqtail.dummy_v039_tmpl",
+    "DoneProcessURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v039_tmpl/2020-04-05_18/16686809008064552.run",
+    "EventID": "16686809008064552",
+    "FailedURL": "mem://localhost/operation/journal/failed",
+    "Mode": "tail",
+    "ProcessURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v039_tmpl--16686809008064552.run",
+    "RuleURL": "mem://localhost/BqTail/config/rule/rule.yaml",
+    "Source": {
+      "Status": "pending",
+      "Time": "2020-04-06T01:51:33Z",
+      "URL": "gs://viant_e2e_bqtail/data/case039/dummy_4884884111666667309_4_0015.json"
+    },
+    "Step": 1,
+    "StepCount": 1,
+    "TempTable": "`temp.dummy_v039_tmpl_16686809008064552`"
+  },
+  "OnSuccess": [
+    {
+      "Action": "query",
+      "Meta": {
+        "Action": "query",
+        "Async": false,
+        "DestTable": "bqtail.dummy_v039_tmpl",
+        "DoneProcessURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v039_tmpl/2020-04-05_18/16686809008064552.run",
+        "EventID": "16686809008064552",
+        "FailedURL": "mem://localhost/operation/journal/failed",
+        "Mode": "tail",
+        "ProcessURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v039_tmpl--16686809008064552.run",
+        "RuleURL": "mem://localhost/BqTail/config/rule/rule.yaml",
+        "Source": {
+          "Status": "pending",
+          "Time": "2020-04-06T01:51:33Z",
+          "URL": "gs://viant_e2e_bqtail/data/case039/dummy_4884884111666667309_4_0015.json"
+        },
+        "Step": 2,
+        "StepCount": 2,
+        "TempTable": "`temp.dummy_v039_tmpl_16686809008064552`"
+      },
+      "OnSuccess": [
+        {
+          "Action": "delete",
+          "Request": {
+            "URLs": [
+              "gs://viant_e2e_bqtail/data/case039/dummy_4884884111666667309_4_0015.json"
+            ]
+          }
+        },
+        {
+          "Action": "move",
+          "Request": {
+            "DestURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v039_tmpl/2020-04-05_18/16686809008064552.run",
+            "IsDestAbsoluteURL": true,
+            "SourceURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v039_tmpl--16686809008064552.run"
+          }
+        },
+        {
+          "Action": "drop",
+          "Meta": {
+            "Action": "drop",
+            "DestTable": "bqtail.dummy_v039_tmpl",
+            "DoneProcessURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v039_tmpl/2020-04-05_18/16686809008064552.run",
+            "EventID": "16686809008064552",
+            "FailedURL": "mem://localhost/operation/journal/failed",
+            "Mode": "nop",
+            "ProcessURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v039_tmpl--16686809008064552.run",
+            "RuleURL": "mem://localhost/BqTail/config/rule/rule.yaml",
+            "Source": {
+              "Status": "pending",
+              "Time": "2020-04-06T01:51:33Z",
+              "URL": "gs://viant_e2e_bqtail/data/case039/dummy_4884884111666667309_4_0015.json"
+            },
+            "Step": 5,
+            "StepCount": 5,
+            "TempTable": "`temp.dummy_v039_tmpl_16686809008064552`"
+          },
+          "Request": {
+            "Table": "temp.dummy_v039_tmpl_16686809008064552"
+          }
+        }
+      ],
+      "Request": {
+        "Append": true,
+        "Dest": "bqtail.dummy_v039_v1",
+        "SQL": "SELECT t.id AS id, t.type_id AS type_id, t.event_type AS event_type, t.event_time AS event_time, t.name AS name \nFROM `temp.dummy_v039_tmpl_16686809008064552` t   WHERE  event_type = 1 ",
+        "Template": "bqtail.dummy_v039_tmpl"
+      }
+    }
+  ],
+  "Request": {
+    "DestinationTable": {
+      "DatasetId": "temp",
+      "TableId": "dummy_v039_tmpl_s16686809008064552"
+    },
+    "SourceUris": [
+      "gs://viant_e2e_bqtail/data/case039/dummy_4884884111666667309_4_0015.json"
+    ],
+    "WriteDisposition": "WRITE_TRUNCATE"
+  }
+}

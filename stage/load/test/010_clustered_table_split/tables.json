@@ -1,0 +1,45 @@
+{
+  "bqtail.dummy_v039_tmpl": {
+    "Clustering": {
+      "Fields": [
+        "type_id"
+      ]
+    },
+    "Schema": {
+      "Fields": [
+        {
+          "Mode": "REQUIRED",
+          "Name": "id",
+          "Type": "INTEGER"
+        },
+        {
+          "Mode": "REQUIRED",
+          "Name": "type_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Mode": "REQUIRED",
+          "Name": "event_type",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "event_time",
+          "Type": "TIMESTAMP"
+        },
+        {
+          "Name": "name",
+          "Type": "STRING"
+        }
+      ]
+    },
+    "TableReference": {
+      "DatasetId": "temp",
+      "ProjectId": "viant-e2e",
+      "TableId": "dummy_v039_tmpl_10596207477744908"
+    },
+    "TimePartitioning": {
+      "Field": "ts",
+      "Type": "DAY"
+    }
+  }
+}

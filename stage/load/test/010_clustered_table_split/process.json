@@ -1,0 +1,13 @@
+{
+  "DestTable": "bqtail.dummy_v039_tmpl",
+  "DoneProcessURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v039_tmpl/2020-04-05_18/16686809008064552.run",
+  "EventID": "16686809008064552",
+  "FailedURL": "mem://localhost/operation/journal/failed",
+  "ProcessURL": "mem://localhost/operation/journal/Running/bqtail.dummy_v039_tmpl--16686809008064552.run",
+  "RuleURL": "mem://localhost/BqTail/config/rule/rule.yaml",
+  "Source": {
+    "Status": "pending",
+    "Time": "2020-04-06T01:51:33Z",
+    "URL": "gs://viant_e2e_bqtail/data/case039/dummy_4884884111666667309_4_0015.json"
+  }
+}

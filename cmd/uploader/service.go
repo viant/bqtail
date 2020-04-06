@@ -2,6 +2,7 @@ package uploader
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"sync"
 	"sync/atomic"
@@ -28,6 +29,9 @@ type service struct {
 func (d *service) upload(ctx context.Context, upload *Request) {
 	defer d.Done()
 	e := d.fs.Copy(ctx, upload.src, upload.dest)
+	if e != nil {
+		e = errors.Wrapf(e, "failed to copy %v to %v", upload.src, upload.dest)
+	}
 	if d.OnDone != nil {
 		d.OnDone(upload.dest, e)
 	}

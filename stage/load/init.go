@@ -33,6 +33,9 @@ func (j *Job) Init(ctx context.Context, service bq.Service) error {
 
 	if j.Rule.Dest.HasTemplate() {
 		j.Load.Schema = nil
+		j.Load.TimePartitioning = nil
+		j.Load.Clustering = nil
+		j.Load.RangePartitioning = nil
 	}
 	return nil
 }
