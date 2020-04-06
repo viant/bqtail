@@ -47,13 +47,14 @@ func (s *service) reportSettings(request *ctail.Request, config *tail.Config) {
 	fmt.Printf("==== SETTINGS ====\n")
 	fmt.Printf("GCP Project: '%v'\n", config.ProjectID)
 	fmt.Printf("GCS Bucket: '%v'\n", request.Bucket)
+	fmt.Printf("Operations URL: '%v'\n", request.BaseOperationURL)
 }
 
 
 //New creates a service
-func New(projectID string) (Service, error) {
+func New(projectID string, baseOpsURL string) (Service, error) {
 	ctx := context.Background()
-	cfg, err := NewConfig(ctx, projectID)
+	cfg, err := NewConfig(ctx, projectID, baseOpsURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create config")
 	}

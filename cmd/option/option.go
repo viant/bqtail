@@ -55,6 +55,8 @@ type Options struct {
 	Client string `short:"c" long:"client" description:"GCP OAuth client url"`
 
 	Autodetect bool `short:"a" long:"autodetect" description:"auto detect schema"`
+
+	BaseOperationURL  string `short:"i" long:"ops" description:"operation base URL"`
 }
 
 //ClientURI returns clientURL

@@ -20,8 +20,8 @@ var configURL = url.Join(shared.InMemoryStorageBaseURL, "/BqTail/config/")
 var ruleBaseURL = url.Join(configURL, "rule")
 
 //NewConfig creates bqtail config
-func NewConfig(ctx context.Context, projectID string) (*tail.Config, error) {
-	cfg, err := newConfig(ctx, projectID)
+func NewConfig(ctx context.Context, projectID string, baseOpsURL string) (*tail.Config, error) {
+	cfg, err := newConfig(ctx, projectID, baseOpsURL)
 	if err != nil {
 		return cfg, err
 	}
@@ -36,7 +36,7 @@ func NewConfig(ctx context.Context, projectID string) (*tail.Config, error) {
 	return cfg, err
 }
 
-func newConfig(ctx context.Context, projectID string) (*tail.Config, error) {
+func newConfig(ctx context.Context, projectID, baseOpsURL string) (*tail.Config, error) {
 	var err error
 	if projectID == "" {
 		if projectID, err = auth.DefaultProjectProvider(ctx, auth.Scopes); err != nil {
@@ -46,12 +46,16 @@ func newConfig(ctx context.Context, projectID string) (*tail.Config, error) {
 	cfg := &tail.Config{}
 	cfg.Async = &async
 	cfg.ProjectID = projectID
-	cfg.ErrorURL = url.Join(operationURL, "errors")
-	cfg.CorruptedFileURL = url.Join(operationURL, "corrupted")
-	cfg.InvalidSchemaURL = url.Join(operationURL, "invalid_schema")
+
+	if baseOpsURL == "" {
+		baseOpsURL = operationURL
+	}
+	cfg.ErrorURL = url.Join(baseOpsURL, "errors")
+	cfg.CorruptedFileURL = url.Join(baseOpsURL, "corrupted")
+	cfg.InvalidSchemaURL = url.Join(baseOpsURL, "invalid_schema")
+	cfg.JournalURL = url.Join(baseOpsURL, "journal")
 	cfg.SyncTaskURL = url.Join(operationURL, "tasks")
 	cfg.AsyncTaskURL = url.Join(operationURL, "tasks")
-	cfg.JournalURL = url.Join(operationURL, "journal")
 	cfg.Ruleset.RulesURL = ruleBaseURL
 	cfg.MaxRetries = 3
 	cfg.Ruleset.CheckInMs = 1

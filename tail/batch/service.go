@@ -58,8 +58,8 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 func (s *service) tryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error) {
 	parentURL, _ := url.Split(process.Source.URL, gs.Scheme)
 	windowDest := process.DestTable
-
-	suffixRaw := process.DestTable + rule.When.Suffix
+	ext := path.Ext(process.Source.URL)
+	suffixRaw := process.DestTable + rule.When.Suffix + ext
 
 	if !rule.Batch.MultiPath {
 		suffixRaw += parentURL

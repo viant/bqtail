@@ -15,6 +15,8 @@ import (
 	"os"
 )
 
+const defaultOperationURL = "file:///tmp/bqtail/operation"
+
 //RunClient run client
 func RunClient(Version string, args []string) {
 	options := &option.Options{}
@@ -33,6 +35,10 @@ func RunClient(Version string, args []string) {
 	authService := auth.New(client, useGsUtilAuth, options.ProjectID, auth.Scopes...)
 	setDefaultAuth(authService)
 
+	if options.BaseOperationURL == "" {
+		options.BaseOperationURL = defaultOperationURL
+	}
+
 	if options.Version {
 		shared.LogF("BqTail: Version: %v\n", Version)
 		return
@@ -48,7 +54,7 @@ func RunClient(Version string, args []string) {
 		os.Exit(1)
 	}
 
-	srv, err := New(options.ProjectID)
+	srv, err := New(options.ProjectID, options.BaseOperationURL)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -15,7 +15,7 @@ func (s *service) Validate(ctx context.Context, request *validate.Request) error
 		return errors.Errorf("ruleURL was empty")
 	}
 	parent, _ := url.Split(request.RuleURL, file.Scheme)
-	cfg, err := newConfig(ctx, s.config.ProjectID)
+	cfg, err := newConfig(ctx, s.config.ProjectID, request.BaseOperationURL)
 	if err != nil {
 		return errors.Wrap(err, "failed to create config for validation")
 	}
