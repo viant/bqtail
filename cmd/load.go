@@ -69,7 +69,6 @@ func (s *service) Load(ctx context.Context, request *tail.Request) (*tail.Respon
 	return response, err
 }
 
-
 func (s *service) loadDatafiles(waitGroup *sync.WaitGroup, ctx context.Context, object storage.Object, rule *config.Rule, request *tail.Request, response *tail.Response) {
 	waitGroup.Add(1)
 	go s.scanFiles(ctx, waitGroup, object, rule, request, response)
@@ -88,8 +87,9 @@ func (s *service) loadDatafiles(waitGroup *sync.WaitGroup, ctx context.Context, 
 
 func (s *service) scanFiles(ctx context.Context, waitGroup *sync.WaitGroup, object storage.Object, rule *config.Rule, request *tail.Request, response *tail.Response) {
 	defer waitGroup.Done()
-
 	isGCS := url.Scheme(object.URL(), "") == gs.Scheme
+	dataPrefix := prefix.Extract(rule)
+	destURL := fmt.Sprintf("%v://%v/%v", gs.Scheme, request.Bucket, strings.Trim(dataPrefix, "/"))
 	if isGCS {
 		if rule.HasMatch(object.URL()) {
 			if err := s.emit(ctx, object, response); err != nil {
@@ -98,11 +98,27 @@ func (s *service) scanFiles(ctx context.Context, waitGroup *sync.WaitGroup, obje
 			}
 			return
 		}
-
+		if url.Equals(object.URL(), destURL) {//transient bucket is the same as source URL, when rule matched data,
+			//no need to upload, just emit events
+			matched := 0
+			if objects, err := s.fs.List(ctx, object.URL()); err == nil {
+				for _, object := range objects {
+					if rule.HasMatch(object.URL()) {
+						matched++
+						if err := s.emit(ctx, object, response); err != nil {
+							response.AddError(err)
+						}
+					}
+				}
+			}
+			if matched > 0 {
+				return
+			}
+		}
 	}
+
+
 	uploadService := uploader.New(ctx, s.fs, s.onUpload(ctx, response), processingRoutines)
-	dataPrefix := prefix.Extract(rule)
-	destURL := fmt.Sprintf("%v://%v/%v", gs.Scheme, request.Bucket, strings.Trim(dataPrefix, "/"))
 	if !object.IsDir() {
 		destURL = url.Join(destURL, object.Name())
 	}
