@@ -88,12 +88,17 @@ func (s *service) loadDatafiles(waitGroup *sync.WaitGroup, ctx context.Context, 
 
 func (s *service) scanFiles(ctx context.Context, waitGroup *sync.WaitGroup, object storage.Object, rule *config.Rule, request *tail.Request, response *tail.Response) {
 	defer waitGroup.Done()
-	if rule.HasMatch(object.URL()) {
-		if err := s.emit(ctx, object, response); err != nil {
-			response.AddError(err)
-			s.Stop()
+
+	isGCS := url.Scheme(object.URL(), "") == gs.Scheme
+	if isGCS {
+		if rule.HasMatch(object.URL()) {
+			if err := s.emit(ctx, object, response); err != nil {
+				response.AddError(err)
+				s.Stop()
+			}
+			return
 		}
-		return
+
 	}
 	uploadService := uploader.New(ctx, s.fs, s.onUpload(ctx, response), processingRoutines)
 	dataPrefix := prefix.Extract(rule)

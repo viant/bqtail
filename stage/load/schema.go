@@ -43,8 +43,9 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 			}
 		}
 
-		j.IsTablePartitioned = table.TimePartitioning != nil || table.RangePartitioning != nil
+
 		if table != nil {
+			j.IsTablePartitioned = table.TimePartitioning != nil || table.RangePartitioning != nil
 			j.TempSchema = &bigquery.Table{
 				Clustering:        table.Clustering,
 				RangePartitioning: table.RangePartitioning,
@@ -57,6 +58,7 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 					Fields: j.Rule.Dest.Schema.Split.ClusterColumns,
 				}
 			}
+
 			tableRef, _ := base.NewTableReference(j.TempTable)
 			if j.Rule.Dest.HasSplit() && !j.IsTablePartitioned {
 				tableRef, _ = base.NewTableReference(j.SplitTable())
