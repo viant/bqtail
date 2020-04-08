@@ -9,7 +9,7 @@ Nice Have:
 - Add conditional action
 - ADD mock test with failed to submit bigquery.JobsInsertCall wiht googleapi: Error 500: An internal error occurred and the request could not be completed., internalError goroutine 26180 
 - ADD datafile replay function to bqtail CLI
-
+- ADD check transform  with destination table table columns 
 
 Blocked:
-- Integrate with universal auth/security library (authly is during developement)
+- Integrate with universal auth/security library (authly is during dev)
