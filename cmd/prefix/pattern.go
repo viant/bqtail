@@ -61,6 +61,10 @@ func patternReplacements() []*replacement {
 			once: true,
 		},
 		{
+			from: "(\\d+)",
+			to:   fmt.Sprintf("%10d", now.Unix()),
+		},
+		{
 			from: "\\d+",
 			to:   fmt.Sprintf("%10d", now.Unix()),
 		},

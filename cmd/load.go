@@ -15,6 +15,7 @@ import (
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/bqtail/tail/contract"
+	"path"
 
 	"log"
 	"strings"
@@ -88,7 +89,9 @@ func (s *service) loadDatafiles(waitGroup *sync.WaitGroup, ctx context.Context, 
 func (s *service) scanFiles(ctx context.Context, waitGroup *sync.WaitGroup, object storage.Object, rule *config.Rule, request *tail.Request, response *tail.Response) {
 	defer waitGroup.Done()
 	isGCS := url.Scheme(object.URL(), "") == gs.Scheme
+
 	dataPrefix := prefix.Extract(rule)
+
 	destURL := fmt.Sprintf("%v://%v/%v", gs.Scheme, request.Bucket, strings.Trim(dataPrefix, "/"))
 	if isGCS {
 		if rule.HasMatch(object.URL()) {
@@ -98,7 +101,7 @@ func (s *service) scanFiles(ctx context.Context, waitGroup *sync.WaitGroup, obje
 			}
 			return
 		}
-		if url.Equals(object.URL(), destURL) {//transient bucket is the same as source URL, when rule matched data,
+		if url.Equals(object.URL(), destURL) { //transient bucket is the same as source URL, when rule matched data,
 			//no need to upload, just emit events, in that case original modification time will be used for batching
 			matched := 0
 			if objects, err := s.fs.List(ctx, object.URL()); err == nil {
@@ -117,6 +120,11 @@ func (s *service) scanFiles(ctx context.Context, waitGroup *sync.WaitGroup, obje
 		}
 	}
 
+	if rule.HasMatch(object.URL()) {
+		sourcePath := url.Path(object.URL())
+		dataPrefix, _ = path.Split(sourcePath)
+		destURL = fmt.Sprintf("%v://%v/%v", gs.Scheme, request.Bucket, strings.Trim(dataPrefix, "/"))
+	}
 
 	uploadService := uploader.New(ctx, s.fs, s.onUpload(ctx, response), processingRoutines)
 	if !object.IsDir() {
