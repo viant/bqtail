@@ -26,7 +26,7 @@ func (j *Job) updateSchemaIfNeeded(ctx context.Context, tableReference *bigquery
 	if transient != nil {
 		datasetRef := &bigquery.DatasetReference{ProjectId: j.ProjectID, DatasetId: transient.Dataset}
 		if err := service.CreateDatasetIfNotExist(ctx, transient.Region, datasetRef); err != nil {
-			return errors.Wrapf(err, "failed to create transient dataset: %v", transient.Dataset)
+			return errors.Wrapf(err, "failed to check transient dataset: %v:%v", j.ProjectID,  transient.Dataset)
 		}
 	}
 	if j.Rule.Dest.Schema.Autodetect {

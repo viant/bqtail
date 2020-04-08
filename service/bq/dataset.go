@@ -2,6 +2,7 @@ package bq
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
@@ -32,7 +33,7 @@ func (s *service) CreateDatasetIfNotExist(ctx context.Context, region string, da
 	datasetCall.Context(ctx)
 	_, err := datasetCall.Do()
 	if !base.IsNotFoundError(err) {
-		return err
+		return errors.Wrapf(err, "failed to get %v:%v", dataset.ProjectId, dataset.DatasetId)
 	}
 	insertDatasetCall := s.Service.Datasets.Insert(dataset.ProjectId, &bigquery.Dataset{
 		DatasetReference: dataset,

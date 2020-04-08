@@ -20,6 +20,10 @@ func expandPattern(pattern string) string {
 		}
 		pattern = strings.Replace(pattern, rule.from, rule.to, count)
 	}
+
+	if index := strings.Index(pattern, "(") ; index !=-1 {
+		pattern = string(pattern[:index])
+	}
 	return pattern
 }
 

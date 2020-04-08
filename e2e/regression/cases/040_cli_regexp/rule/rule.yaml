@@ -1,0 +1,14 @@
+When:
+  Prefix: /data/case040
+  Suffix: .json
+Dest:
+  Schema:
+    Template: bqtail.dummy_v040
+  Table: bqtail.${fileName}
+  Pattern: /data/case040/([\w]+)
+  Parameters:
+    - Expression: $1
+      Name: fileName
+Async: true
+OnSuccess:
+  - Action: delete
