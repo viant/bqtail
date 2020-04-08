@@ -8,6 +8,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/googleapi"
 	"net/http"
+	"strings"
 )
 
 //Table returns bif query table
@@ -20,10 +21,8 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	call.Context(ctx)
 	err = base.RunWithRetries(func() error {
 		table, err = call.Do()
-		if apiError, ok := err.(*googleapi.Error); ok {
-			if apiError.Code == http.StatusConflict { //already exists
-				err = nil
-			}
+		if isAlreadyExistError(err) {
+			err = nil
 		}
 		return err
 	})
@@ -32,6 +31,20 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	}
 	return table, err
 }
+
+
+func isAlreadyExistError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if apiError, ok := err.(*googleapi.Error); ok {
+		if apiError.Code == http.StatusConflict { //already exists
+			return true
+		}
+	}
+	return strings.Contains(err.Error(), "Already Exists")
+}
+
 
 //CreateTableIfNotExist creates a table if does not exist
 func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Table, patchIfDifferent bool) error {

@@ -84,24 +84,49 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 
 # Deployment
 
+
+
 ### Install endly
+
+Use endly docker container
+
+
+```bash
+mkdir -p  ~/e2e
+docker run --name endly -v /var/run/docker.sock:/var/run/docker.sock -v ~/e2e:/e2e -v ~/e2e/.secret/:/root/.secret/ -p 7722:22  -d endly/endly:latest-ubuntu16.04  
+ssh root@127.0.0.1 -p 7722 ## password is dev
+
+## create localhost endly secret with
+endly -l=localhost
+## type user root, and password dev  (you can skip SSH setup)
+apt-get install vim
+```
+
+
+
+Or run it on the localhost 
 
 [Download](https://github.com/viant/endly/releases/) latest binary
 
 ### Credentials setup
-1. SSH credentials
+
+
+
+1. SSH credentials (you can skip this test if you are using endly container)
     - [Create SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh)
     
     On OSX make sure that you have SSH remote login enabled
     ```bash
     sudo systemsetup -setremotelogin on
     ```
+   
+   
 2. Google Secrets for service account.
     - [Create service account secrets](https://github.com/viant/endly/tree/master/doc/secrets#google-cloud-credentials)
     - Set role required by cloud function/scheduler deployment
          - Cloud Function admin 
          - Editor
-    - Copy google secret to ~/.secret/myProjectSecret.json 
+    - Copy google secret to ~/.secret/myProjectSecret.json (note that in endly container it is /root/.secret/myProjectSecret.json)
 3. Slack credentials (optionally)
 
 The slack credentials uses the following JSON format
@@ -114,7 +139,7 @@ The slack credentials uses the following JSON format
 ```
 To encrypt slack in google storage with KMS you can run the following command
 ```bash
-git checkout https://github.com/viant/bqtail.git
+git clone https://github.com/viant/bqtail.git
 cd bqtail/deployment
 endly secure_slack authWith=myProjectSecret slackOAuth=slack.json
 ```
@@ -125,7 +150,7 @@ endly secure_slack authWith=myProjectSecret slackOAuth=slack.json
 You can deploy the described infrastructure with BqTail and BqDispatch cloud function with [endly](https://github.com/viant/endly/) automation runner.
 
 ```bash
-git checkout https://github.com/viant/bqtail.git
+git clone https://github.com/viant/bqtail.git
 cd bqtail/deployment
 endly run authWith=myProjectSecret region='us-central1'
 ```
@@ -159,7 +184,7 @@ It will get recreated with a BqTail execution, triggered by datafile upload to t
 ###### Asynchronous batched JSON data ingestion test
 
 ```bash
-git checkout https://github.com/viant/bqtail.git
+git clone https://github.com/viant/bqtail.git
 cd bqtail/deployment/test/async
 endly test authWith=myTestProjectSecrets
 ```
@@ -243,7 +268,7 @@ BqDispatch Log example:
 ###### Asynchronous partition override CSV data ingestion test
 
 ```bash
-git checkout https://github.com/viant/bqtail.git
+git clone https://github.com/viant/bqtail.git
 cd bqtail/deployment/test/override
 endly test authWith=myTestProjectSecrets
 ```
@@ -264,7 +289,7 @@ You can find more example for various configuration setting in [end to end tetst
 Deploy monitor with scheduler
 
 ```bash
-git checkout https://github.com/viant/bqtail.git
+git clone https://github.com/viant/bqtail.git
 cd bqtail/deployment/monitor
 endly deploy authWith=myProjectSecret region=us-central1
 ```
