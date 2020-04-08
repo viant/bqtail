@@ -4,13 +4,25 @@
 
 This project uses [endly](https://github.com/viant/endly/) end to end test runner.
 
-Min required endly version: 0.47.1
+You can use  [endly docker](https://github.com/viant/endly/tree/master/docker) container
+```bash
+mkdir -p  ~/e2e
+docker run --name endly -v /var/run/docker.sock:/var/run/docker.sock -v ~/e2e:/e2e -v ~/e2e/.secret/:/root/.secret/ -p 7722:22  -d endly/endly:latest-ubuntu16.04  
+ssh root@127.0.0.1 -p 7722 ## password is dev
 
-1. Install latest [runner](https://github.com/viant/endly/releases) or use [endly docker image](https://github.com/viant/endly/tree/master/docker)
+## create localhost endly secret with
+endly -l=localhost
+## type user root, and password dev  (you can skip SSH setup)
+apt-get install vim
+```
+
+Or run [Download](https://github.com/viant/endly/releases/) latest binary to run on the localhost 
+
+
 2. Create dedicated GCP project for  end to end testing.
 3. Create e2e service account with admin permission on e2e test project
 4. Setup credentials
-- [Set SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh)
+- [Set SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh) (you can skip this step with dockerized endly)
     On OSX make sure that you have SSH remote login enabled
     ```bash
     sudo systemsetup -setremotelogin on

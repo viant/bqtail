@@ -6,7 +6,6 @@ Must have:
     
 Nice Have:
 - Add bqtail docker image
-- Instruction for dockerized endly how to deploy run e2e test
 - Add conditional action
 - ADD mock test with failed to submit bigquery.JobsInsertCall wiht googleapi: Error 500: An internal error occurred and the request could not be completed., internalError goroutine 26180 
 - ADD datafile replay function to bqtail CLI
