@@ -88,8 +88,7 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 
 ### Install endly
 
-Use endly docker container
-
+You can use  [endly docker](https://github.com/viant/endly/tree/master/docker) container
 
 ```bash
 mkdir -p  ~/e2e
@@ -102,11 +101,8 @@ endly -l=localhost
 apt-get install vim
 ```
 
+Or run [Download](https://github.com/viant/endly/releases/) latest binary to run on the localhost 
 
-
-Or run it on the localhost 
-
-[Download](https://github.com/viant/endly/releases/) latest binary
 
 ### Credentials setup
 
