@@ -1,6 +1,7 @@
 ## April 10 2020 2.1.1
  * Extended batch grouping to datafile extension
  * Added BaseOperationURL CLI option
+ * Patched regexp grouping in the pattern with CLI
  
 ## April 6 2020 2.1.0
  * Added DMLAppend option (since DML has no more limits, it is possible to reduce the batch frequency with that option)

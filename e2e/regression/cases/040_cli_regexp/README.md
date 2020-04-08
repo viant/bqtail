@@ -5,7 +5,6 @@
 This scenario tests client side bqtail with rule that extract fileName as table name.
 
 
-
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS='${env.HOME}/.secret/${gcpCredentials}.json'
 bqtail -r=rule/rule.yaml -s=data/trigger/
@@ -28,6 +27,4 @@ Dest:
 Async: true
 OnSuccess:
   - Action: delete
-
-
 ```
