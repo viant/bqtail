@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/viant/afs"
 	"github.com/viant/afs/option"
+	"github.com/viant/bqtail/base"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -35,7 +36,6 @@ func (u *URIs) Classify(ctx context.Context, fs afs.Service, job *bigquery.Job) 
 		return
 	}
 	schemaErrors := getInvalidSchemaLocations(job)
-
 	if len(schemaErrors) > 0 {
 		u.addMissingFields(job)
 	}
@@ -71,8 +71,14 @@ func (u *URIs) Classify(ctx context.Context, fs afs.Service, job *bigquery.Job) 
 
 	var valid = make([]string, 0)
 	for URI := range URIs {
+		var err error
 		if fs != nil {
-			if ok, _ := fs.Exists(ctx, URI, option.NewObjectKind(true)); !ok {
+			exists := true
+			err = base.RunWithRetries(func() error {
+				exists, err = fs.Exists(ctx, URI, option.NewObjectKind(true))
+				return err
+			})
+			if !exists && err == nil {
 				continue
 			}
 		}

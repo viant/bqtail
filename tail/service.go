@@ -86,77 +86,12 @@ func (s *service) Init(ctx context.Context) error {
 	return err
 }
 
-func (s *service) OnDone(ctx context.Context, request *contract.Request, response *contract.Response) {
-	response.ListOpCount = gs.GetListCounter(true)
-	response.StorageRetries = gs.GetRetryCodes(true)
-	response.SetTimeTaken(response.Started)
-
-	if response.Error != "" {
-		errorCounterURL := url.Join(s.config.JournalURL, shared.RetryCounterSubpath, request.EventID+shared.CounterExt)
-		counter, err := s.getCounterAndIncrease(ctx, errorCounterURL)
-		if err != nil {
-			response.CounterError = err.Error()
-		}
-
-		if counter > s.config.MaxRetries {
-			response.RetryError = response.Error
-			response.Status = shared.StatusOK
-			location := url.Path(request.SourceURL)
-			retryDataURL := url.Join(s.config.JournalURL, shared.RetryDataSubpath, request.EventID, location)
-			if err := s.fs.Move(ctx, request.SourceURL, retryDataURL); err != nil {
-				response.MoveError = err.Error()
-			}
-			errorURL := url.Join(s.config.JournalURL, shared.RetryCounterSubpath, request.EventID+shared.ErrorExt)
-			_ = s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(response.Error))
-			response.Error = ""
-		}
-		//Put extra sleep otherwise retry may kick in immediately and service may no be back on
-		time.Sleep(3 * time.Second)
-	}
-
-	if response.Retriable {
-		response.RetryError = response.Error
-		return
-	}
-
-	if response.IsDataFile {
-		return
-	}
-
-	if e := s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true)); e != nil && response.NotFoundError == "" {
-		response.NotFoundError = fmt.Sprintf("failed to delete: %v, %v", request.SourceURL, e)
-	}
-}
-
-func (s *service) getCounterAndIncrease(ctx context.Context, URL string) (int, error) {
-	ok, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true))
-	counter := 0
-	if ok {
-		reader, err := s.fs.DownloadWithURL(ctx, URL)
-		if err != nil {
-			return 0, errors.Wrapf(err, "failed to download counter :%v", URL)
-		}
-		data, err := ioutil.ReadAll(reader)
-		if err != nil {
-			return 0, errors.Wrapf(err, "failed to read counter :%v", URL)
-		}
-		counter = toolbox.AsInt(string(data))
-
-	}
-	counter++
-	err := s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(fmt.Sprintf("%v", counter)))
-	if err != nil {
-		return counter, errors.Wrapf(err, "failed to update counter: %v", URL)
-	}
-	return counter, nil
-}
-
 func (s *service) Tail(ctx context.Context, request *contract.Request) *contract.Response {
 	response := contract.NewResponse(request.EventID)
 	response.TriggerURL = request.SourceURL
 
-	defer s.OnDone(ctx, request, response)
 	var err error
+	defer s.OnDone(ctx, request, response)
 	if request.HasURLPrefix(s.config.LoadProcessPrefix) {
 		err = s.runLoadProcess(ctx, request, response)
 	} else if request.HasURLPrefix(s.config.PostJobPrefix) {
@@ -170,14 +105,6 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 
 	if err != nil {
 		response.SetIfError(err)
-		if !response.Retriable {
-			err = s.handlerProcessError(ctx, err, request, response)
-		}
-		//if storage event is duplicated, you some asset being already removed, that said do not clear table no found error
-		if base.IsNotFoundError(err) && !strings.Contains(err.Error(), base.TableFragment) {
-			response.NotFoundError = err.Error()
-			err = nil
-		}
 	}
 	return response
 }
@@ -212,6 +139,134 @@ func (s *service) tail(ctx context.Context, request *contract.Request, response 
 		return err
 	}
 	return s.tryRecover(ctx, job, response)
+}
+
+func (s *service) OnDone(ctx context.Context, request *contract.Request, response *contract.Response) {
+	response.ListOpCount = gs.GetListCounter(true)
+	response.StorageRetries = gs.GetRetryCodes(true)
+	response.SetTimeTaken(response.Started)
+	if response.Error != "" {
+		s.handlerProcessError(ctx, request, response)
+	}
+
+	if response.Retriable {
+		if response.Error != "" {
+			response.RetryError = response.Error
+		}
+		return
+	}
+	if response.IsDataFile {
+		return
+	}
+	if e := s.fs.Delete(ctx, request.SourceURL, option.NewObjectKind(true)); e != nil && response.NotFoundError == "" {
+		response.NotFoundError = fmt.Sprintf("failed to delete: %v, %v", request.SourceURL, e)
+	}
+}
+
+func (s *service) handlerProcessError(ctx context.Context, request *contract.Request, response *contract.Response) {
+	info := response.Process
+	if info == nil {
+		return
+	}
+	err := errors.New(response.Error)
+
+	//if storage event is duplicated, you some asset being already removed, that said do not clear table no found error
+	if base.IsNotFoundError(err) && !strings.Contains(err.Error(), base.TableFragment) {
+		response.NotFoundError = err.Error()
+		response.Retriable = false
+		return
+	}
+
+	//Dump response to error URL
+	if data, e := json.Marshal(response); e == nil {
+		errorResponseURL := url.Join(s.config.ErrorURL, info.DestTable, fmt.Sprintf("%v%v", request.EventID, shared.ResponseErrorExt))
+		if e := s.fs.Upload(ctx, errorResponseURL, file.DefaultFileOsMode, bytes.NewReader(data)); e != nil {
+			response.UploadError = e.Error()
+		}
+	}
+
+	//Check number of the error per event
+	errorCounterURL := url.Join(s.config.JournalURL, shared.RetryCounterSubpath, info.EventID+shared.CounterExt)
+	canRetry := s.canRetryEvent(ctx, errorCounterURL, response)
+	if !canRetry {
+		//if can not retry move process to done, and error location
+		s.failProcess(ctx, info, request)
+		//move current source file to retry location
+		s.moveToRetryLocation(response, request, ctx)
+		response.Retriable = true
+		response.Error = ""
+		response.RetryError = response.Error
+		response.Status = shared.StatusOK
+		return
+	}
+
+	//In case you can still retry, if retriable wait and then fail CF
+	if base.IsRetryError(err) {
+		//Put extra sleep otherwise retry may kick in immediately and service may no be back on
+		time.Sleep(3 * time.Second)
+		response.Retriable = true
+		return
+	}
+
+	//Replay the whole load process - some individual BigQuery job can not be recovered
+	if base.IsInternalError(err) || base.IsBackendError(err) {
+		//Put extra sleep otherwise retry may kick in immediately and service may no be back on
+		time.Sleep(3 * time.Second)
+		if exists, _ := s.fs.Exists(ctx, info.ProcessURL); exists {
+			err := s.restartProcess(ctx, info, request, response)
+			response.Retriable = err != nil
+			return
+		}
+	}
+}
+
+//failProcess  copy a a failed process to error location, and moves it to done location
+func (s *service) failProcess(ctx context.Context, info *stage.Process, request *contract.Request) {
+	processErrorURL := url.Join(s.config.ErrorURL, "proc", info.DestTable, fmt.Sprintf("%v%v", request.EventID, shared.ProcessExt))
+	_ = s.fs.Copy(ctx, info.ProcessURL, processErrorURL)
+	doneURL := s.config.DoneLoadURL(info)
+	_ = s.fs.Move(ctx, info.ProcessURL, doneURL)
+}
+
+func (s *service) moveToRetryLocation(response *contract.Response, request *contract.Request, ctx context.Context) {
+	location := url.Path(request.SourceURL)
+	retryDataURL := url.Join(s.config.JournalURL, shared.RetryDataSubpath, request.EventID, location)
+	if err := s.fs.Move(ctx, request.SourceURL, retryDataURL); err != nil {
+		response.MoveError = err.Error()
+	}
+	errorURL := url.Join(s.config.JournalURL, shared.RetryCounterSubpath, request.EventID+shared.ErrorExt)
+	_ = s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(response.Error))
+}
+
+func (s *service) canRetryEvent(ctx context.Context, errorCounterURL string, response *contract.Response) bool {
+	counter, err := s.getCounterAndIncrease(ctx, errorCounterURL)
+	if err != nil {
+		response.CounterError = err.Error()
+	}
+	return counter < s.config.MaxRetries
+}
+
+func (s *service) getCounterAndIncrease(ctx context.Context, URL string) (int, error) {
+	ok, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true))
+	counter := 0
+	if ok {
+		reader, err := s.fs.DownloadWithURL(ctx, URL)
+		if err != nil {
+			return 0, errors.Wrapf(err, "failed to download counter :%v", URL)
+		}
+		data, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return 0, errors.Wrapf(err, "failed to read counter :%v", URL)
+		}
+		counter = toolbox.AsInt(string(data))
+
+	}
+	counter++
+	err := s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(fmt.Sprintf("%v", counter)))
+	if err != nil {
+		return counter, errors.Wrapf(err, "failed to update counter: %v", URL)
+	}
+	return counter, nil
 }
 
 func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*stage.Process, error) {
@@ -271,8 +326,10 @@ func (s *service) runLoadProcess(ctx context.Context, request *contract.Request,
 	if processJob.Rule = s.config.Rule(ctx, processJob.RuleURL); processJob.Rule == nil {
 		return errors.Errorf("failed to lookup rule: '%v'", processJob.RuleURL)
 	}
+	if shared.IsInfoLoggingLevel() {
+		shared.LogF("\nreplaying load process %v ...\n", process.EventID)
+	}
 	if shared.IsDebugLoggingLevel() {
-		shared.LogF("replaying load process ...\n")
 		shared.LogLn(processJob)
 	}
 	_, err = s.submitJob(ctx, processJob, response)
@@ -465,6 +522,7 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 	}
 	configuration := job.BqJob.Configuration
 	response.Process = job.Process
+
 	if configuration.Load == nil || len(configuration.Load.SourceUris) == 0 {
 		err := base.JobError(job.BqJob)
 		response.Retriable = base.IsRetryError(err)
@@ -491,7 +549,8 @@ func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contr
 			shared.LogF("[%v] excluding corrupted: %v, incompatible schema: %v file(s)\n", job.DestTable, len(uris.Corrupted), len(uris.InvalidSchema))
 		}
 	}
-	if len(uris.InvalidSchema) == 0 && len(uris.Corrupted) == 0 && len(uris.MissingFields) == 0 {
+
+	if len(uris.InvalidSchema) == 0 && len(uris.Corrupted) == 0 && len(uris.Missing) == 0 && len(uris.MissingFields) == 0 {
 		return base.JobError(job.BqJob)
 	}
 
@@ -572,43 +631,26 @@ func (s *service) moveAssets(ctx context.Context, URLs []string, baseDestURL str
 	return err
 }
 
-func (s *service) handlerProcessError(ctx context.Context, err error, request *contract.Request, response *contract.Response) error {
-	info := response.Process
-	if info == nil || err == nil {
-		return err
-	}
-	activeURL := s.config.BuildLoadURL(info)
-
-	//Replay the whole load process - some individual BigQuery job can not be recovered
-	if base.IsInternalError(err) || base.IsBackendError(err) {
-		if exists, _ := s.fs.Exists(ctx, activeURL); exists {
-			return s.replayLoadProcess(ctx, activeURL, request)
+//restartProcess restart process, start ingestion process from scratch using original process execution plan
+func (s *service) restartProcess(ctx context.Context, process *stage.Process, request *contract.Request, response *contract.Response) error {
+	if !process.Async {
+		resp := contract.NewResponse(request.EventID)
+		err := s.runLoadProcess(ctx, &contract.Request{
+			SourceURL: process.ProcessURL,
+			EventID:   fmt.Sprintf("%10d", int32(time.Now().Unix())),
+		}, resp)
+		if err == nil {
+			response.RetryError = response.Error
+			response.Error = resp.Error
+			response.Status = resp.Status
 		}
+		return nil
 	}
-	response.SetIfError(err)
-	if data, e := json.Marshal(response); e == nil {
-		errorResponseURL := url.Join(s.config.ErrorURL, info.DestTable, fmt.Sprintf("%v%v", request.EventID, shared.ResponseErrorExt))
-		if e := s.fs.Upload(ctx, errorResponseURL, file.DefaultFileOsMode, bytes.NewReader(data)); e != nil {
-			response.UploadError = e.Error()
-		}
-
-	}
-	errorURL := url.Join(s.config.ErrorURL, info.DestTable, fmt.Sprintf("%v%v", request.EventID, shared.ErrorExt))
-	if e := s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(err.Error())); e != nil {
-		response.UploadError = e.Error()
-	}
-	processErrorURL := url.Join(s.config.ErrorURL, info.DestTable, fmt.Sprintf("%v%v", request.EventID, shared.ProcessExt))
-	_ = s.fs.Copy(ctx, activeURL, processErrorURL)
-	doneURL := s.config.DoneLoadURL(info)
-	_ = s.fs.Move(ctx, activeURL, doneURL)
-	return err
-}
-
-func (s *service) replayLoadProcess(ctx context.Context, sourceURL string, request *contract.Request) error {
+	processURL := process.ProcessURL
 	bucket := url.Host(request.SourceURL)
-	_, name := url.Split(sourceURL, gs.Scheme)
+	_, name := url.Split(processURL, gs.Scheme)
 	loadJobURL := fmt.Sprintf("gs://%v/%v/%v", bucket, s.config.LoadProcessPrefix, name)
-	return s.fs.Copy(ctx, sourceURL, loadJobURL)
+	return s.fs.Copy(ctx, processURL, loadJobURL)
 }
 
 func (s *service) logJobInfo(ctx context.Context, bqjob *bigquery.Job, action *task.Action) error {
@@ -633,6 +675,9 @@ func (s *service) addMissingFields(ctx context.Context, job *load.Job, uris *sta
 	for _, field := range uris.MissingFields {
 		if err := field.AdjustType(ctx, s.fs); err != nil {
 			return err
+		}
+		if shared.IsInfoLoggingLevel() {
+			shared.LogF("Adding field: %v %v\n", field.Name, field.Type)
 		}
 	}
 

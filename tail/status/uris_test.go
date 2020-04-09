@@ -373,6 +373,61 @@ func TestURIs_Classify(t *testing.T) {
   "user_email": "myproject-cloud-function@myproject.iam.gserviceaccount.com"
 }`,
 		},
+
+		{
+			description:         "missing bigstore file",
+			expectCorrupted:     []string{},
+			expectInvalidSchema: []string{},
+			expectMissing:       []string{"gs://viant_e2e_bqtail/data/case038/path2/dummy2.json"},
+			expectedValid:       []string{"gs://viant_e2e_bqtail/data/case038/path2/dummy1.json"},
+			expectFields:        []*Field{},
+			job: `{
+  "configuration": {
+    "jobType": "LOAD",
+    "load": {
+      "createDisposition": "CREATE_IF_NEEDED",
+      "destinationTable": {
+        "datasetId": "temp",
+        "projectId": "myproject",
+        "tableId": "mytable"
+      },
+      "sourceUris": [
+        "gs://viant_e2e_bqtail/data/case038/path2/dummy1.json",
+        "gs://viant_e2e_bqtail/data/case038/path2/dummy2.json"
+      ],
+      "writeDisposition": "WRITE_TRUNCATE"
+    }
+  },
+  "etag": "CPmxTyCVv2jOT55WwdVweg==",
+  "id": "myproject:US.temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch",
+  "jobReference": {
+    "jobId": "temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch",
+    "location": "US",
+    "projectId": "myproject"
+  },
+  "kind": "bigquery#jobID",
+  "selfLink": "https://www.googleapis.com/bigquery/v2/projects/myproject/jobs/temp--x_zzz_39_20191119_439770381788305--439770381788305--dispatch?location=US",
+  "statistics": {
+    "creationTime": "1574193994917",
+    "endTime": "1574193995142",
+    "startTime": "1574193995061"
+  },
+ "status": {
+				"errorResult": {
+					"message": "Not found: Files /bigstore/viant_e2e_bqtail/data/case038/path2/dummy2.json",
+					"reason": "notFound"
+				},
+				"errors": [
+					{
+						"message": "Not found: Files /bigstore/viant_e2e_bqtail/data/case038/path2/dummy2.json",
+						"reason": "notFound"
+					}
+				],
+				"state": "DONE"
+			},
+  "user_email": "myproject-cloud-function@myproject.iam.gserviceaccount.com"
+}`,
+		},
 	}
 	for _, useCase := range useCases {
 		job := &bigquery.Job{}

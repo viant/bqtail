@@ -25,7 +25,7 @@ func buildNestedDedupeSQL(sourceTable string, schema Schema, dest *config.Destin
 	}
 	for _, key := range transformKeys {
 		expression, ok := transform[strings.ToLower(key)]
-		if ! ok {
+		if !ok {
 			continue
 		}
 		projection = append(projection, key)
@@ -67,7 +67,6 @@ func buildDedupeSQL(sourceTable string, schema Schema, unique map[string]bool, d
 	var projection = make([]string, 0)
 	var groupBy = make([]string, 0)
 
-
 	transform, transformKeys := getTransform(dest)
 
 	for i, field := range schema.Fields {
@@ -86,7 +85,7 @@ func buildDedupeSQL(sourceTable string, schema Schema, unique map[string]bool, d
 
 	for _, key := range transformKeys {
 		expression, ok := transform[strings.ToLower(key)]
-		if ! ok {
+		if !ok {
 			continue
 		}
 		projection = append(projection, fmt.Sprintf("MAX(%v) AS %v", expression, key))
@@ -116,7 +115,7 @@ func buildSelectAll(sourceTable string, schema Schema, dest *config.Destination)
 	}
 	for _, key := range transformKeys {
 		expression, ok := transform[strings.ToLower(key)]
-		if ! ok {
+		if !ok {
 			continue
 		}
 		projection = append(projection, fmt.Sprintf("%v AS %v", expression, key))
