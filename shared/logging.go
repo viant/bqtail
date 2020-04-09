@@ -32,7 +32,7 @@ func IsDebugLoggingLevel() bool {
 
 //IsDebugLoggingLevel returns true if logging enabled
 func IsInfoLoggingLevel() bool {
-	return isLoggingLevel(LoggingEnvKey, LoggingLevelInfo)
+	return isLoggingLevel(LoggingEnvKey, LoggingLevelInfo) || IsDebugLoggingLevel()
 }
 
 //isLoggingLevel returns true if logging is enabled
