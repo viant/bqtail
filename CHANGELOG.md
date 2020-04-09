@@ -2,7 +2,10 @@
  * Extended batch grouping to datafile extension
  * Added BaseOperationURL CLI option
  * Patched regexp grouping in the pattern with CLI
- 
+ * Patch missing file retry error
+ * Added process restart to sync mode
+ * Added limit on process restart per the same ingestion process 
+  
 ## April 6 2020 2.1.0
  * Added DMLAppend option (since DML has no more limits, it is possible to reduce the batch frequency with that option)
  * Added AllowFieldAddition that works also with JSON source format

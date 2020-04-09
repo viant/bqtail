@@ -343,8 +343,11 @@ In case of Big Query internal server error, we've seen in practice, that retryin
 try to restart the whole ingestion process from scratch. In ingestion process fails in later stage, you cas use $EventID
 in the deduplication logic.
 
-TODO: add documentation about restarting ingestion process.
- 
+_Restarting_ process is possible since each process creates an ingestion workflow execution plan, 
+which is stored in config.ActiveURL location. The last step of execution plan is to moves this file to config.DoneURL location.
+Restarting is done by placing process execution file to gs://${triggerBucket}/_load_/ location.
+
+
 **Non Recoverable** are any errors when there is permission issue, or template table is missing or rule is invalid.
 In this case all datafile will stay in trigger bucket you can replay them with **replay service** later, once underlying issue is address
 Replay simply move datafile back and forth to the trigger location, using temp folder in the bqtail bucket.
