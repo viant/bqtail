@@ -34,6 +34,7 @@ func (s *service) Load(ctx context.Context, request *LoadRequest, action *task.A
 			Load: request.JobConfigurationLoad,
 		},
 	}
+
 	job.JobReference = action.JobReference()
 	job.Configuration.Load.SourceUris = s.getUniqueURIs(ctx, job.Configuration.Load.SourceUris)
 	s.adjustRegion(ctx, action, job.Configuration.Load.DestinationTable)

@@ -32,7 +32,6 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	return table, err
 }
 
-
 func isAlreadyExistError(err error) bool {
 	if err == nil {
 		return false
@@ -44,7 +43,6 @@ func isAlreadyExistError(err error) bool {
 	}
 	return strings.Contains(err.Error(), "Already Exists")
 }
-
 
 //CreateTableIfNotExist creates a table if does not exist
 func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Table, patchIfDifferent bool) error {
