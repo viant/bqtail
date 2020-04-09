@@ -17,7 +17,6 @@ import (
 	"github.com/viant/bqtail/tail/contract"
 	"path"
 
-	"log"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -142,7 +141,6 @@ func (s *service) handleResponse(ctx context.Context, response *tail.Response) {
 			return
 		case resp := <-s.responseChan:
 			if resp.Error != "" {
-				log.Printf("got error response -> stopping servce: %v\n", resp.Error)
 				s.Stop()
 				response.AddError(errors.New(resp.Error))
 				return

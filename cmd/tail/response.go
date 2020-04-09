@@ -59,7 +59,7 @@ func (r *Response) AddError(err error) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
 	//DO NOT report context cancellation again:
-	if strings.Contains(err.Error() ,"context canceled") && len(r.Errors) > 0 {
+	if strings.Contains(err.Error(), "context canceled") && len(r.Errors) > 0 {
 		return
 	}
 	r.Status = shared.StatusError

@@ -56,7 +56,7 @@ type Options struct {
 
 	Autodetect bool `short:"a" long:"autodetect" description:"auto detect schema"`
 
-	BaseOperationURL  string `short:"i" long:"ops" description:"operation base URL"`
+	BaseOperationURL string `short:"i" long:"ops" description:"operation base URL"`
 }
 
 //ClientURI returns clientURL

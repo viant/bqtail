@@ -20,8 +20,6 @@ var minAgeUpload = 5 * time.Second
 func (s *service) upload(ctx context.Context, destURL string, object storage.Object, uploadService uploader.Service, request *tail.Request, response *tail.Response) error {
 	if object.IsDir() {
 
-
-
 		objects, err := s.fs.List(ctx, object.URL())
 		if err != nil {
 			return errors.Wrapf(err, "failed to list: %v", object.URL())
