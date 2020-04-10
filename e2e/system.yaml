@@ -13,18 +13,22 @@ pipeline:
   createTriggerBucket:
     bqTail:
       action: storage:create
+      region: $region
       isDir: true
       dest:
         URL: gs://${triggerBucket}
         credentials: $gcpCredentials
+
     operation:
       action: storage:create
+      region: $region
       isDir: true
       dest:
         URL: gs://${opsBucket}
         credentials: $gcpCredentials
     export:
       action: storage:create
+      region: $region
       isDir: true
       dest:
         URL: gs://${exportBucket}

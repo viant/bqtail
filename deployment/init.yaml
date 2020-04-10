@@ -11,6 +11,7 @@ pipeline:
   createBuckets:
     configBucket:
       action: storage:create
+      region: $region
       isDir: true
       comments: 'Creating config bucket: ${config.configBucket}'
       dest:
@@ -19,6 +20,7 @@ pipeline:
 
     opsBucket:
       action: storage:create
+      region: $region
       comments: 'Creating operational bucket: ${config.opsBucket}'
       isDir: true
       dest:
@@ -27,6 +29,7 @@ pipeline:
 
     triggerBucket:
       action: storage:create
+      region: $region
       comments: 'Creating trigger bucket: ${config.triggerBucket}'
       isDir: true
       dest:
@@ -35,6 +38,7 @@ pipeline:
 
     dispatchBucket:
       action: storage:create
+      region: $region
       comments: 'Creating dispatch bucket: ${config.dispatchBucket}'
       isDir: true
       dest:
@@ -44,6 +48,7 @@ pipeline:
   uploadConfigs:
     bqTail:
       action: storage:upload
+      region: $region
       sourceKey: bqTailConfig
       dest:
         URL: gs://${configBucket}/BqTail/config.json
@@ -51,6 +56,7 @@ pipeline:
 
     bqDispatch:
       action: storage:upload
+      region: $region
       sourceKey: bqDispatchConfig
       dest:
         URL: gs://${configBucket}/BqDispatch/config.json
