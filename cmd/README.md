@@ -13,8 +13,8 @@ Otherwise all files are copied from sourceURL to gs://${bucket}/$filterPath, and
 **$filterPath** can be derived from source path when it matches rule filter, or constructed from rule prefix and pattern.
 
 In **direct eventing mode** all data source files are govern by BqTail ingestion rule. For example if rule uses batching window, 
-datafile last modification is used to allocate corresponding batches. 
-Take another example when a rule uses delete action on Success, all matched file would be deleted. 
+datafile last modification is used to allocate corresponding batch. 
+Take another example when a rule uses delete action on Success, all source matched data files would be deleted. 
 
 For non direct mode, original data files are never deleted, to avoid the same file processing between a separate
 bqtail commands run, you can use -h or -X parameter to store all successfully processed file in a history file.
