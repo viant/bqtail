@@ -5,6 +5,7 @@
  * Patch missing file retry error
  * Added process restart to sync mode
  * Added limit on process restart per the same ingestion process 
+ * Extended direct eventing mode in bqtail CLI
   
 ## April 6 2020 2.1.0
  * Added DMLAppend option (since DML has no more limits, it is possible to reduce the batch frequency with that option)
