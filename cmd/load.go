@@ -85,33 +85,44 @@ func (s *service) loadDatafiles(waitGroup *sync.WaitGroup, ctx context.Context, 
 	}
 }
 
+func (s *service) emitDirectEvents(ctx context.Context, rule *config.Rule, object storage.Object, response *tail.Response) (int, error) {
+	result := 0
+	var err error
+	if ! object.IsDir() {
+		if rule.HasMatch(object.URL()) {
+			err = s.emit(ctx, object, response)
+		}
+		return 1, err
+	}
+	objects, err := s.fs.List(ctx, object.URL())
+	for _, obj := range objects {
+		if url.Equals(obj.URL(), object.URL()) {
+			continue
+		}
+		matched, err := s.emitDirectEvents(ctx, rule, obj, response)
+		if err != nil {
+			return matched, err
+		}
+		result += matched
+	}
+	return result, nil
+}
+
 func (s *service) scanFiles(ctx context.Context, waitGroup *sync.WaitGroup, object storage.Object, rule *config.Rule, request *tail.Request, response *tail.Response) {
 	defer waitGroup.Done()
 	isGCS := url.Scheme(object.URL(), "") == gs.Scheme
-
 	dataPrefix := prefix.Extract(rule)
-
 	destURL := fmt.Sprintf("%v://%v/%v", gs.Scheme, request.Bucket, strings.Trim(dataPrefix, "/"))
 	if isGCS {
-		if rule.HasMatch(object.URL()) {
-			if err := s.emit(ctx, object, response); err != nil {
+		URLPath := url.Path(object.URL())
+		fmt.Printf("%v %v\n", URLPath, rule.When)
+		isDirectMode := strings.Contains(URLPath, rule.When.Prefix) && rule.When.Prefix != ""
+		fmt.Printf("Direct eventing mode: %v\n", isDirectMode)
+		if isDirectMode {
+			matched, err := s.emitDirectEvents(ctx, rule, object, response)
+			if err != nil {
 				response.AddError(err)
-				s.Stop()
-			}
-			return
-		}
-		if url.Equals(object.URL(), destURL) { //transient bucket is the same as source URL, when rule matched data,
-			//no need to upload, just emit events, in that case original modification time will be used for batching
-			matched := 0
-			if objects, err := s.fs.List(ctx, object.URL()); err == nil {
-				for _, object := range objects {
-					if rule.HasMatch(object.URL()) {
-						matched++
-						if err := s.emit(ctx, object, response); err != nil {
-							response.AddError(err)
-						}
-					}
-				}
+				return
 			}
 			if matched > 0 {
 				return

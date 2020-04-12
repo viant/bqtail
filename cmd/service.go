@@ -50,6 +50,10 @@ func (s *service) reportSettings(request *ctail.Request, config *tail.Config) {
 	fmt.Printf("Operations URL: '%v'\n", request.BaseOperationURL)
 }
 
+
+
+
+
 //New creates a service
 func New(projectID string, baseOpsURL string) (Service, error) {
 	ctx := context.Background()

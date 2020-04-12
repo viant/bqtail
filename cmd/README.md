@@ -5,11 +5,18 @@ Stand alone Google Storage based BigQuery loader.
 ### Introduction
 
 BqTail command loader manages ingestion process as stand along process using [Data ingestion rules](../../bqtail/tail/README.md#data-ingestion-rules).
-For each source datafile an event is triggered to local BqTail process.
-For any source where URL is not Google Storage (gs://), the tail process copies data file to Google Storage bucket followed by triggering local events.
-BqTail client supports all feature of serverless BqTail with exception that is always run in sync mode, on top of that it also support constant data streaming option.
+For each source datafile an event is triggered to local BqTail process. 
+Event can be trigger directly to the process if source URL is Google Cloud Storage URL where path matches bucket and rule filter.
+Otherwise all files are uploaded from sourceURL to gs://${bucket}/$filterPath, and then event is fired.
 
-When ingesting data bqtail process manages history for all successfully process file, to avoid processing the same file more than once.
+
+For direct triggering mode all data files are govern by BqTail ingestion rule. For example if rule uses batching window, 
+datafile last modification is used to allocate corresponding batches. 
+Take another example when a rule uses delete action on Success, all matched file would be deleted. 
+
+For non direct mode, original data files are never deleted, to avoid the same file processing between a separate
+bqtail commands run, you can use -h or -X parameter to store all successfully processed file in a history file.
+
 By default only streaming mode stores history file in file:///${env.HOME}/.bqtail location, otherwise memory filesystem is used.
 
 ### Installation

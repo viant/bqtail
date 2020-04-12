@@ -23,12 +23,22 @@ pipeline:
         URL:  ${parent.path}/bqtail/prepare
 
 
+  uploadData:
+    action: storage:copy
+    source:
+      URL: ${parent.path}/data/trigger/
+    dest:
+      URL: gs://${triggerBucket}/data/case${parent.index}/
+      credentials: $gcpCredentials
+
+
+
   trigger:
     action: exec:run
-    #checkError: true
+    checkError: true
     commands:
       - export GOOGLE_APPLICATION_CREDENTIALS='${env.HOME}/.secret/${gcpCredentials}.json'
-      - ${bqtailCmd} -r='${parent.path}/rule/rule.yaml' -s='${parent.path}/data/trigger'
+      - ${bqtailCmd} -r='${parent.path}/rule/rule.yaml' -s='gs://${triggerBucket}/data/case${parent.index}/'
 
   validate:
     check-db:
