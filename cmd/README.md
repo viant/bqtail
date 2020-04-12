@@ -9,7 +9,7 @@ For each source datafile an event is triggered to local BqTail process.
 Event can be **trigger directly** to the bqtail process if source URL is Google Cloud Storage URL where path matches bucket and rule filter.
 Otherwise all files are copied from sourceURL to gs://${bucket}/$filterPath, and then event is fired.
 
-If **direct triggering mode** all data files are govern by BqTail ingestion rule. For example if rule uses batching window, 
+In **direct triggering mode** all data files are govern by BqTail ingestion rule. For example if rule uses batching window, 
 datafile last modification is used to allocate corresponding batches. 
 Take another example when a rule uses delete action on Success, all matched file would be deleted. 
 
