@@ -6,7 +6,9 @@ Stand alone Google Storage based BigQuery loader.
 
 BqTail command loader manages ingestion process as stand along process using [Data ingestion rules](../../bqtail/tail/README.md#data-ingestion-rules).
 For each source datafile an event is triggered to local BqTail process. 
-Event can be **trigger directly** to the bqtail process if source URL is Google Cloud Storage URL and source path matches bucket and rule filter.
+Since BigQuery Load API accept URI that are valid Google Cloud Storage location, all data events also have to valid GCS locations.
+
+Data event can be **trigger directly** to the bqtail process if source URL is valid Google Cloud Storage URL and source path matches bucket and rule filter.
 Otherwise all files are copied from sourceURL to gs://${bucket}/$filterPath, and then event is fired.
 
 In **direct eventing mode** all data files are govern by BqTail ingestion rule. For example if rule uses batching window, 
