@@ -10,8 +10,7 @@ Since BigQuery Load API accepts URI that is valid Google Cloud Storage location,
 
 Data event can be **trigger directly** to the bqtail process if source URL is valid Google Cloud Storage URL and source path matches bucket and rule filter.
 Otherwise all files are copied from sourceURL to gs://${bucket}/$filterPath, and then event is fired.
-**$filterPath** can be derived from source path when it matches rule filter, or constructed from rule prefix and pattern with RegExpr reverse engineering. 
-
+**$filterPath** can be derived from source path when it matches rule filter, or constructed from rule prefix and pattern.
 
 In **direct eventing mode** all data files are govern by BqTail ingestion rule. For example if rule uses batching window, 
 datafile last modification is used to allocate corresponding batches. 
