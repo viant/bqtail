@@ -12,7 +12,7 @@ Data event can be **trigger directly** to the bqtail process if source URL is va
 Otherwise all files are copied from sourceURL to gs://${bucket}/$filterPath, and then event is fired.
 **$filterPath** can be derived from source path when it matches rule filter, or constructed from rule prefix and pattern.
 
-In **direct eventing mode** all data files are govern by BqTail ingestion rule. For example if rule uses batching window, 
+In **direct eventing mode** all data source files are govern by BqTail ingestion rule. For example if rule uses batching window, 
 datafile last modification is used to allocate corresponding batches. 
 Take another example when a rule uses delete action on Success, all matched file would be deleted. 
 
