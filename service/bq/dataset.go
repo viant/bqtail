@@ -21,7 +21,7 @@ func (s *service) adjustRegion(ctx context.Context, actionable *task.Action, ref
 }
 
 //CreateDatasetIfNotExist cretes a dataset if does not exist
-func (s *service) CreateDatasetIfNotExist(ctx context.Context, region string, dataset *bigquery.DatasetReference) error {
+func (s *service) CreateDatasetIfNotExist(ctx context.Context, region string, dataset *bigquery.DatasetReference) (err error) {
 	//read dest dataset location
 	if region == "" {
 		region = defaultRegion
@@ -31,7 +31,11 @@ func (s *service) CreateDatasetIfNotExist(ctx context.Context, region string, da
 	}
 	datasetCall := s.Service.Datasets.Get(dataset.ProjectId, dataset.DatasetId)
 	datasetCall.Context(ctx)
-	_, err := datasetCall.Do()
+
+	err = base.RunWithRetries(func() error {
+		_, err = datasetCall.Do()
+		return err
+	})
 	if !base.IsNotFoundError(err) {
 		return errors.Wrapf(err, "failed to get %v:%v", dataset.ProjectId, dataset.DatasetId)
 	}
