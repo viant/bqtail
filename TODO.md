@@ -1,5 +1,6 @@
 Must have:
 - Add BqMonitor auto refresh with rule
+- Add nested field addition
 - Update documentation/examples
     - How to test new rule
     

@@ -13,7 +13,7 @@ const internalError = "internal error"
 const noFound = "Not found"
 const accessDenied = "Error 403"
 const resetError = "connection reset by peer"
-
+const eofError = "unexpected EOF"
 //TableFragment table fragment
 const TableFragment = "Table"
 
@@ -30,7 +30,8 @@ func IsRetryError(err error) bool {
 	message := err.Error()
 	return strings.Contains(message, fmt.Sprintf(" %v ", http.StatusServiceUnavailable)) ||
 		strings.Contains(message, fmt.Sprintf(" %v ", http.StatusBadGateway)) ||
-		strings.Contains(message, resetError)
+		strings.Contains(message, resetError) ||
+		strings.Contains(message, eofError)
 }
 
 //IsBackendError returns true if backend errr

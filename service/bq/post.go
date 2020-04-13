@@ -36,7 +36,9 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 	}
 	filename := action.Meta.JobFilename()
 	URL := url.Join(s.Config.AsyncTaskURL, filename)
-	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
+	return base.RunWithRetries(func() error {
+		return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
+	})
 }
 
 //Post post big query job
