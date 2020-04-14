@@ -1,6 +1,5 @@
 Must have:
 - Add BqMonitor auto refresh with rule
-- Add nested field addition
 - Update documentation/examples
     - How to test new rule
     
@@ -11,6 +10,7 @@ Nice Have:
 - ADD datafile replay function to bqtail CLI
 - ADD check transform  with destination table table columns 
 - Test internal error with complex ingestion workflow
+- Add arbitrary nested/complex field addition with AllowFieldAddition option
 
 Blocked:
 - Integrate with universal auth/security library (authly is during dev)

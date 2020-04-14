@@ -1,3 +1,8 @@
+## April 14 2020 2.2.0
+ * Extended direct eventing mode in bqtail CLI                                           
+ * Added arbitrary schema field addition with JSON format
+ * Added expiry option 
+
 ## April 10 2020 2.1.1
  * Extended batch grouping to datafile extension
  * Added BaseOperationURL CLI option
@@ -6,6 +11,7 @@
  * Added process restart to sync mode
  * Added limit on process restart per the same ingestion process                
  * Extended direct eventing mode in bqtail CLI                                           
+
   
 ## April 6 2020 2.1.0
  * Added DMLAppend option (since DML has no more limits, it is possible to reduce the batch frequency with that option)
