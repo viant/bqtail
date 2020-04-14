@@ -41,9 +41,11 @@ type Destination struct {
 	Transform          map[string]string `json:",omitempty"`
 	SideInputs         []*SideInput      `json:",omitempty"`
 	Override           *bool
-	DMLAppend          bool `json:",omitempty"`
-	AllowFieldAddition bool `json:",omitempty"`
+	DMLAppend          bool   `json:",omitempty"`
+	AllowFieldAddition bool   `json:",omitempty"`
+	Expiry             string `json:",omitempty"`
 }
+
 
 //HasTemplate
 func (r *Destination) HasTemplate() bool {

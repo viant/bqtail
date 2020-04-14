@@ -3,6 +3,7 @@ When:
   Suffix: .json
 Dest:
   Table: bqtail.dummy_v034
+  Expiry: 2min
 Async: true
 OnSuccess:
   - Action: delete

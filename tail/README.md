@@ -190,12 +190,28 @@ OnSuccess:
 ```    
 
 
-- **Override** dest table override flag (append by default)
+- **AllowFieldAddition**: flag to enable automatic failed addition, 
+    - For JSON source format, bqtail detect and patched template and dest table 
+    - For AVRO/PARQUET format: bqtail set the following Load job options: 
+        - Dest.SchemaUpdateOptions: ["ALLOW_FIELD_ADDITION", "ALLOW_FIELD_RELAXATION"]
+  **Override** dest table override flag (append by default)
 - **Partition** dest table partition.
 - **Schema** defines dest table schema
   * **Template**: destination table template, when specified destination table will be created if it does not exists
   * **Autodetect**: flag to autodetect schema during load 
   * **Split**: dynamic destination split rules based on data content
+
+
+- **Expiry**:  optional destination table expiry expression like: 1min, 2hours, 3months, 1 year etc ...
+Note that this option would **expire/remove a table** once expiry duration is counted from the last ingestion process start time.
+
+For example:
+```yaml
+Dest:
+   Table: myproject:mydataset.myTable
+   Expiry: 1hour
+```
+
    
 
 - **Transient** transient settings (for dedicated ingesting project settings)

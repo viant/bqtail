@@ -6,7 +6,9 @@ import (
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/shared"
+	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
+	"time"
 )
 
 //Init initialises job
@@ -20,12 +22,15 @@ func (j *Job) Init(ctx context.Context, service bq.Service) error {
 	if err = j.updateSchemaIfNeeded(ctx, tableReference, service); err != nil {
 		return err
 	}
-
 	if j.Rule.Dest.HasSplit() {
 		if err = j.initTableSplit(ctx, service); err != nil {
 			return errors.Wrapf(err, "failed to apply split schema optimization: %+v", j.Rule.Dest.Schema.Split)
 		}
 	}
+	if err = j.updateTableExpiryIfNeeded(ctx, service, tableReference); err != nil {
+		return err
+	}
+
 	j.Actions, err = j.buildActions()
 	if err != nil {
 		return errors.Wrapf(err, "failed to build actions")
@@ -36,6 +41,33 @@ func (j *Job) Init(ctx context.Context, service bq.Service) error {
 		j.Load.TimePartitioning = nil
 		j.Load.Clustering = nil
 		j.Load.RangePartitioning = nil
+	}
+	return nil
+}
+
+func (j *Job) updateTableExpiryIfNeeded(ctx context.Context, service bq.Service, tableReference *bigquery.TableReference) error {
+	if j.Rule.Dest.Expiry == "" {
+		return nil
+	}
+	destTable := base.EncodeTableReference(tableReference, false)
+	expiry, err := toolbox.TimeAt(j.Rule.Dest.Expiry + " ahead in UTC")
+	if err != nil {
+		return errors.Wrapf(err, "invalid expiry expression: %v", j.Rule.Dest.Expiry)
+	}
+	if shared.IsInfoLoggingLevel() {
+		shared.LogF("Setting %v to expire at: %v", destTable, expiry.Format(time.RFC3339))
+	}
+	table, err := service.Table(ctx, tableReference)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get table %v for setting expiry: %v", destTable, j.Rule.Dest.Expiry)
+	}
+	table.ExpirationTime = expiry.Unix() * 1000
+	_, err = service.Patch(ctx, &bq.PatchRequest{
+		Table:         destTable,
+		TemplateTable: table,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to set expiry: %v, on ", destTable, j.Rule.Dest.Expiry)
 	}
 	return nil
 }
