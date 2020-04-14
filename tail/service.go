@@ -16,6 +16,7 @@ import (
 	"github.com/viant/bqtail/auth"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/base/job"
+	"github.com/viant/bqtail/schema"
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/service/http"
 	"github.com/viant/bqtail/service/pubsub"
@@ -705,22 +706,18 @@ func (s *service) PatchedTable(ctx context.Context, fields []*status.Field, tabl
 	if err != nil {
 		return err
 	}
-	fieldNames := make(map[string]bool)
-	for _, field := range table.Schema.Fields {
-		fieldNames[field.Name] = true
-	}
+
+
+	schemaFields := table.Schema.Fields
 	for _, field := range fields {
-		if fieldNames[field.Name] {
-			continue
+		if len(field.Fields)  == 0 {
+			return errors.Errorf("failed to detect schema for %v", field.Name)
 		}
-		table.Schema.Fields = append(table.Schema.Fields, &bigquery.TableFieldSchema{
-			Categories:  nil,
-			Description: fmt.Sprint("Added auto: from location: %v, time: %v", field.Location, time.Now()),
-			Name:        field.Name,
-			Type:        field.Type,
-		})
-		table.ExpirationTime = 0
+		schemaFields = schema.MergeFields(schemaFields, field.Fields)
 	}
+
+	table.Schema.Fields = schemaFields
+	table.ExpirationTime = 0
 	_, err = s.bq.Patch(ctx, &bq.PatchRequest{
 		Template:      "",
 		Table:         tableName,
@@ -728,6 +725,10 @@ func (s *service) PatchedTable(ctx context.Context, fields []*status.Field, tabl
 	})
 	return err
 }
+
+
+
+
 
 //New creates a new service
 func New(ctx context.Context, config *Config) (Service, error) {
