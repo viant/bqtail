@@ -34,6 +34,9 @@ func (s *service) CreateDatasetIfNotExist(ctx context.Context, region string, da
 
 	err = base.RunWithRetries(func() error {
 		_, err = datasetCall.Do()
+		if isAlreadyExistError(err) {
+			err = nil
+		}
 		return err
 	})
 	if !base.IsNotFoundError(err) {
