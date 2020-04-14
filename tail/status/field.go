@@ -4,8 +4,13 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
+	"github.com/viant/bqtail/schema"
+	"github.com/viant/toolbox"
+	"google.golang.org/api/bigquery/v2"
+	"strings"
 )
 
 //Field represents schema missing field
@@ -14,6 +19,8 @@ type Field struct {
 	Location string
 	Row      int
 	Type     string
+	Mode     string
+	Fields   []*bigquery.TableFieldSchema
 }
 
 func (f *Field) AdjustType(ctx context.Context, fs afs.Service) error {
@@ -23,43 +30,62 @@ func (f *Field) AdjustType(ctx context.Context, fs afs.Service) error {
 	}
 	defer reader.Close()
 	scanner := bufio.NewScanner(reader)
-	rowCount := 0
-	f.Type = "STRING"
-	for scanner.Scan() {
-		rowCount++
+	rowNo := 1
+	fName := f.Name
+	for ; scanner.Scan(); rowNo++ {
 		data := scanner.Bytes()
-		if rowCount < f.Row {
+		if rowNo < f.Row {
 			continue
 		}
 		var record = map[string]interface{}{}
 		if err := json.Unmarshal(data, &record); err != nil {
 			return err
 		}
-		value, ok := record[f.Name]
+		if err != nil {
+			return errors.Wrapf(err, "unable to extract schema from %v", record)
+		}
+		fName, values := f.getFieldWithRecord(fName, record)
+		value, ok := values[fName]
 		if !ok || value == nil {
 			continue
 		}
-		switch v := value.(type) {
-		case float64:
-			f.Type = "FLOAT64"
-			if (v/10)*10 == v {
-				f.Type = "INT64"
-				return nil
-			}
-			return nil
-		case int:
-			f.Type = "INT64"
-			return nil
-		case bool:
-			f.Type = "BOOLEAN"
-			return nil
-		case string:
-			f.Type = "STRING"
-			return nil
-		default:
-			//TODO add more data type support
-			return errors.Errorf("unable to add filed, unsupported type: %T", value)
+		f.Fields, err = schema.New(record, "Added auto: from location:"+f.Location+fmt.Sprintf(", row: %v,", rowNo)+" at: %s")
+		isRepeated := false
+		f.Type, isRepeated = schema.FieldType(value)
+		if isRepeated {
+			f.Mode = schema.ModeRepeated
 		}
+		break;
 	}
 	return nil
+}
+
+func (f *Field) getFieldWithRecord(fName string, record map[string]interface{}) (string, map[string]interface{}) {
+
+	for ; strings.Contains(fName, "."); {
+		if index := strings.Index(fName, "."); index != -1 {
+			parent := fName[:index]
+			value, ok := record[parent]
+			if ok {
+				fName = fName[index+1:]
+				if toolbox.IsSlice(value) {
+					aSlice := toolbox.AsSlice(value)
+					for _, val := range aSlice {
+						if val == nil {
+							continue
+						}
+						if toolbox.IsMap(val) {
+							record = toolbox.AsMap(val)
+							if v, ok := record[fName]; ok && v != nil {
+								break
+							}
+						}
+					}
+				} else if toolbox.IsMap(value) {
+					record = toolbox.AsMap(value)
+				}
+			}
+		}
+	}
+	return fName, record
 }
