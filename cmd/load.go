@@ -88,7 +88,7 @@ func (s *service) loadDatafiles(waitGroup *sync.WaitGroup, ctx context.Context, 
 func (s *service) emitDirectEvents(ctx context.Context, rule *config.Rule, object storage.Object, response *tail.Response) (int, error) {
 	result := 0
 	var err error
-	if ! object.IsDir() {
+	if !object.IsDir() {
 		if rule.HasMatch(object.URL()) {
 			err = s.emit(ctx, object, response)
 		}
