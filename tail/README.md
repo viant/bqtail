@@ -232,7 +232,7 @@ otherwise QueryJob with destination table is used. You can control this behavior
    * **Balancer** multi projects balancer settings
    * **Template** transient table template
    * **Criteria** optional criteria added where coping data from temp to dest without Split option
-   * **CopyMethod** 
+   * **CopyMethod** control transient to dest table data copy with one of the following
         - COPY (BigQueryCopyJob), 
         - QUERY (BigQueryQueryJob with destination table)
         - DML(BigQueryQueryJob with INSERT AS SELECT DML)
