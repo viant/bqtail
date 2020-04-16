@@ -230,12 +230,15 @@ otherwise QueryJob with destination table is used. You can control this behavior
    * **ProjectID** transient project
    * **Balancer** multi projects balancer settings
    * **Template** transient table template
-   * **CopyMethod** Copy (BigQueryCopyJob), Query (BigQueryQueryJob with destination table), DML(BigQueryQueryJob with INSERT AS SELECT DML)
+   * **Criteria** optional criteria added where coping data from temp to dest without Split option
+   * **CopyMethod** 
+        - COPY (BigQueryCopyJob), 
+        - QUERY (BigQueryQueryJob with destination table)
+        - DML(BigQueryQueryJob with INSERT AS SELECT DML)
 
         When transformation options is used or transient template has extra column that not exists in destination 
         you can only used Query or DML CopyMethod (Query is default).
 
- 
 
 - **UniqueColumns** deduplication unique columns
 - **Transform** map of dest table column with transformation expression

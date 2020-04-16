@@ -81,8 +81,8 @@ func (j Job) addDMLCopy(load *bigquery.JobConfigurationLoad, destinationTable *b
 
 func (j Job) getDMLWhereClause() string {
 	where := ""
-	if j.Rule.Dest.DMLCriteria != "" {
-		where = " WHERE " + j.Rule.Dest.DMLCriteria
+	if j.Rule.Dest.Transient.Criteria != "" {
+		where = " WHERE " + j.Rule.Dest.Transient.Criteria
 	}
 	return where
 }

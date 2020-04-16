@@ -15,7 +15,8 @@ type Transient struct {
 	Alias      string
 	Template   string
 	CopyMethod *string
-	Balancer   *transient.Balancer
+	Criteria   string `json:",omitempty" description:"optional dml copy criteria "`
+	Balancer *transient.Balancer
 }
 
 //Validate checks if transient is valid

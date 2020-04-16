@@ -42,7 +42,6 @@ type Destination struct {
 	SideInputs       []*SideInput      `json:",omitempty"`
 	Override         *bool
 
-	DMLCriteria        string `json:",omitempty" description:"optional dml copy criteria "`
 	AllowFieldAddition bool   `json:",omitempty"`
 	Expiry             string `json:",omitempty"`
 }
