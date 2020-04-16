@@ -1,0 +1,15 @@
+When:
+  Prefix: /data/case034
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v042
+  Schema:
+    Template: bqtail.dummy_v042_tmpl
+  Transient:
+    Alias: t
+    Template: bqtail.dummy_v042_temp_tmpl
+    Dataset: temp
+
+  Async: true
+OnSuccess:
+  - Action: delete

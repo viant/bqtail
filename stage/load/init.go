@@ -22,6 +22,7 @@ func (j *Job) Init(ctx context.Context, service bq.Service) error {
 	if err = j.updateSchemaIfNeeded(ctx, tableReference, service); err != nil {
 		return err
 	}
+
 	if j.Rule.Dest.HasSplit() {
 		if err = j.initTableSplit(ctx, service); err != nil {
 			return errors.Wrapf(err, "failed to apply split schema optimization: %+v", j.Rule.Dest.Schema.Split)

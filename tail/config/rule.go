@@ -12,6 +12,7 @@ import (
 	"github.com/viant/bqtail/stage"
 	"github.com/viant/bqtail/task"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -70,12 +71,15 @@ func (r *Rule) IsAppend() bool {
 	return r.Dest.WriteDisposition == "" || r.Dest.WriteDisposition == "WRITE_APPEND"
 }
 
-//IsDMLAppend returns true if dml append flag is true
-func (r *Rule) IsDMLAppend() bool {
-	if r.Dest == nil {
-		return true
+//IsDMLCopy returns true if dml append flag is true
+func (r *Rule) IsDMLCopy() bool {
+	if r.Dest == nil || r.Dest.Transient == nil {
+		return false
 	}
-	return r.Dest.DMLAppend
+	if r.Dest.Transient.CopyMethod == nil {
+		return false
+	}
+	return strings.ToUpper(*r.Dest.Transient.CopyMethod) == shared.CopyMethodDML
 }
 
 //DestTable returns dest table

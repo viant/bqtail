@@ -707,10 +707,9 @@ func (s *service) PatchedTable(ctx context.Context, fields []*status.Field, tabl
 		return err
 	}
 
-
 	schemaFields := table.Schema.Fields
 	for _, field := range fields {
-		if len(field.Fields)  == 0 {
+		if len(field.Fields) == 0 {
 			return errors.Errorf("failed to detect schema for %v", field.Name)
 		}
 		schemaFields = schema.MergeFields(schemaFields, field.Fields)
@@ -725,10 +724,6 @@ func (s *service) PatchedTable(ctx context.Context, fields []*status.Field, tabl
 	})
 	return err
 }
-
-
-
-
 
 //New creates a new service
 func New(ctx context.Context, config *Config) (Service, error) {

@@ -28,7 +28,7 @@ func New(aMap map[string]interface{}, description string) ([]*bigquery.TableFiel
 			field.Description = fmt.Sprintf(description, timeLiteral)
 		}
 		if field.Type == FieldTypeRecord {
-			if ! isRepeated {
+			if !isRepeated {
 				fields, err := New(v.(map[string]interface{}), description)
 				if err != nil {
 					return nil, err
@@ -51,6 +51,31 @@ func New(aMap map[string]interface{}, description string) ([]*bigquery.TableFiel
 	return result, nil
 }
 
+//CanCopy returns true if can copy to dest
+func CanCopy(source, dest *bigquery.Table) bool {
+	if dest == nil || source == nil || dest.Schema == nil || source.Schema == nil {
+		return true
+	}
+	sourceColumns := IndexFields(source.Schema.Fields)
+	destColumns := IndexFields(dest.Schema.Fields)
+	for k := range destColumns {
+		delete(sourceColumns, k)
+	}
+	return len(sourceColumns) == 0
+}
+
+//IndexFields index fields
+func IndexFields(schemaFields []*bigquery.TableFieldSchema) map[string]bool {
+	result := make(map[string]bool)
+	if len(schemaFields) == 0 {
+		return result
+	}
+	for _, field := range schemaFields {
+		result[field.Name] = true
+	}
+	return result
+}
+
 //MergeFields merge multi schema fields
 func MergeFields(schemaFields ...[]*bigquery.TableFieldSchema) []*bigquery.TableFieldSchema {
 	var merged = make(map[string]int)
@@ -61,7 +86,7 @@ func MergeFields(schemaFields ...[]*bigquery.TableFieldSchema) []*bigquery.Table
 	for k := range schemaFields {
 		for i, field := range schemaFields[k] {
 			index, ok := merged[field.Name]
-			if ! ok {
+			if !ok {
 				merged[field.Name] = i
 				result = append(result, schemaFields[k][i])
 				continue

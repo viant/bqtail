@@ -1,6 +1,5 @@
 package schema
 
-
 const (
 	ModeRepeated    = "REPEATED"
 	FieldTypeFloat  = "FLOAT64"

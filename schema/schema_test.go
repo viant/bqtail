@@ -13,11 +13,11 @@ func TestNew(t *testing.T) {
 	useCases := []struct {
 		description string
 		data        string
-		expect interface{}
+		expect      interface{}
 	}{
 		{
-			description:"basic record",
-			data:`{
+			description: "basic record",
+			data: `{
 	"k1":"test",
 	"k2": true,
 	"k3": 1,
@@ -25,7 +25,7 @@ func TestNew(t *testing.T) {
     "k5": null
 }`,
 
-		expect:`[
+			expect: `[
     {"@indexBy@":"name"},
 	{
 		"name": "k1",
@@ -137,15 +137,15 @@ func TestNew(t *testing.T) {
 	for _, useCase := range useCases {
 		data := map[string]interface{}{}
 		err := json.Unmarshal([]byte(useCase.data), &data)
-		if ! assert.Nil(t, err, useCase.description) {
+		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
 		schema, err := New(data, "")
-		if ! assert.Nil(t, err, useCase.description) {
+		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
 		actual, _ := json.Marshal(schema)
-		if ! assertly.AssertValues(t, useCase.expect, string(actual), useCase.description) {
+		if !assertly.AssertValues(t, useCase.expect, string(actual), useCase.description) {
 			toolbox.DumpIndent(schema, true)
 		}
 	}

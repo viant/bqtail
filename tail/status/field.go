@@ -55,14 +55,14 @@ func (f *Field) AdjustType(ctx context.Context, fs afs.Service) error {
 		if isRepeated {
 			f.Mode = schema.ModeRepeated
 		}
-		break;
+		break
 	}
 	return nil
 }
 
 func (f *Field) getFieldWithRecord(fName string, record map[string]interface{}) (string, map[string]interface{}) {
 
-	for ; strings.Contains(fName, "."); {
+	for strings.Contains(fName, ".") {
 		if index := strings.Index(fName, "."); index != -1 {
 			parent := fName[:index]
 			value, ok := record[parent]

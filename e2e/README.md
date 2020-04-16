@@ -295,7 +295,7 @@ endly -t=init
     endly -t=test -i=cli_dynamic_rule
 ```
 
-- [Ingestion with DML append](regression/cases/037_cli_dml_append)
+- [Ingestion with DML append](regression/cases/037_cli_dml_copy)
 
 ```bash
     endly -t=test -i=cli_dml_append

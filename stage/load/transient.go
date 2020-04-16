@@ -2,6 +2,7 @@ package load
 
 import (
 	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/schema"
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/bqtail/tail/sql"
@@ -25,11 +26,12 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	load := j.Load
 
 	destinationTable, _ := j.Rule.Dest.CustomTableReference(j.DestTable, j.Source)
+
 	if dest.Schema.Autodetect {
 		source := base.EncodeTableReference(load.DestinationTable, false)
 		destRef := base.EncodeTableReference(destinationTable, false)
-		if j.Rule.IsDMLAppend() && load.Schema != nil {
-			j.addAppendDML(load, destinationTable, dest, actions, result)
+		if j.Rule.IsDMLCopy() && load.Schema != nil {
+			j.addDMLCopy(load, destinationTable, dest, actions, result)
 			return result, nil
 		}
 		copyRequest := bq.NewCopyAction(source, destRef, j.Rule.IsAppend(), actions)
@@ -37,24 +39,28 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 		return result, nil
 	}
 
-	selectAll := sql.BuildSelect(load.DestinationTable, load.Schema, dest)
+	selectAll := sql.BuildSelect(load.DestinationTable, load.Schema, dest, j.getDestTableSchema())
 	if dest.HasSplit() {
 		tempRef, _ := base.NewTableReference(j.TempTable)
-		selectAll := sql.BuildSelect(tempRef, load.Schema, dest)
+		selectAll := sql.BuildSelect(tempRef, load.Schema, dest, j.getDestTableSchema())
 		return result, j.addSplitActions(selectAll, result, actions)
 	}
-	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
+
+	selectAll = strings.Replace(selectAll, "$WHERE", j.getDMLWhereClause(), 1)
 	partition := base.TablePartition(destinationTable.TableId)
 	destTemplate := ""
+
 	if dest.Schema.Template != "" {
 		destTemplate = dest.Schema.Template
 	}
-	if j.Rule.IsDMLAppend() {
-		j.addAppendDML(load, destinationTable, dest, actions, result)
+
+	if j.Rule.IsDMLCopy() {
+		j.addDMLCopy(load, destinationTable, dest, actions, result)
 		return result, nil
 	}
+	canCopy := schema.CanCopy(j.TempSchema, j.DestSchema)
 
-	if len(dest.UniqueColumns) > 0 || partition != "" || len(dest.Transform) > 0 {
+	if j.Rule.Dest.IsCopyMethodQuery() || partition != "" || !canCopy {
 		query := bq.NewQueryAction(selectAll, destinationTable, destTemplate, j.Rule.IsAppend(), actions)
 		result.AddOnSuccess(query)
 	} else {
@@ -66,9 +72,17 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	return result, nil
 }
 
-func (j Job) addAppendDML(load *bigquery.JobConfigurationLoad, destinationTable *bigquery.TableReference, dest *config.Destination, actions *task.Actions, result *task.Actions) {
-	SQL := sql.BuilAppendDML(load.DestinationTable, destinationTable, load.Schema, dest)
-	SQL = strings.Replace(SQL, "$WHERE", "", 1)
+func (j Job) addDMLCopy(load *bigquery.JobConfigurationLoad, destinationTable *bigquery.TableReference, dest *config.Destination, actions *task.Actions, result *task.Actions) {
+	SQL := sql.BuildAppendDML(load.DestinationTable, destinationTable, load.Schema, dest, j.getDestTableSchema())
+	SQL = strings.Replace(SQL, "$WHERE", j.getDMLWhereClause(), 1)
 	query := bq.NewQueryAction(SQL, nil, "", true, actions)
 	result.AddOnSuccess(query)
+}
+
+func (j Job) getDMLWhereClause() string {
+	where := ""
+	if j.Rule.Dest.DMLCriteria != "" {
+		where = " WHERE " + j.Rule.Dest.DMLCriteria
+	}
+	return where
 }

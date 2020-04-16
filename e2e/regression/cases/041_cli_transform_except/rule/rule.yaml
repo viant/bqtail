@@ -1,0 +1,17 @@
+When:
+  Prefix: /data/case034
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v041
+  Schema:
+    Template: bqtail.dummy_v041_tmpl
+  Transient:
+    Alias: t
+    Template: bqtail.dummy_v041_temp_tmpl
+    Dataset: temp
+  Transform:
+    segments: SPLIT(t.encoded_segments, ",")
+
+  Async: true
+OnSuccess:
+  - Action: delete

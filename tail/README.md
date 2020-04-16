@@ -212,13 +212,29 @@ Dest:
    Expiry: 1hour
 ```
 
-   
+## Transient data flow
+
+When transient option is used data is load to transient project and dataset to temp table.
+The temp table name is formed from destination table suffixed with event ID, which makes is always unique. 
+Note that load jobs NEVER count against destination table quota.
+In addition with project **Balancer** option bqtail is not a subject to 100K jobs per day quota.
+
+Only if data is successfully load, is is copied to destination table (in append mode by default).
+At this point it is possible to apply various data transformation with UniqueColumns, Transform expressions or Split options.
+If rule does not specify any transformation option bqtail use CopyJob to transfer data from temp table to destination, 
+otherwise QueryJob with destination table is used.
 
 - **Transient** transient settings (for dedicated ingesting project settings)
    * **Dataset** transient dataset. (It is recommended to always used transient dataset)
    * **ProjectID** transient project
    * **Balancer** multi projects balancer settings
    * **Template** transient table template
+   * **CopyMethod** Copy (BigQueryCopyJob), Query (BigQueryQueryJob with destination table), DML(BigQueryQueryJob with INSERT AS SELECT DML)
+
+        When transformation options is used or transient template has extra column that not exists in destination 
+        you can only used Query or DML CopyMethod (Query is default).
+
+ 
 
 - **UniqueColumns** deduplication unique columns
 - **Transform** map of dest table column with transformation expression

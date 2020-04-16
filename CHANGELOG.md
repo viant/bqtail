@@ -1,8 +1,11 @@
 ## April 14 2020 2.2.0
  * Extended direct eventing mode in bqtail CLI                                           
  * Added arbitrary schema field addition with JSON format
- * Added expiry option 
+ * Added expiry option
+ * Added Transient.CopyMethod to control copy strategy.
+ * Removed Dest.DMLAppend 
 
+ 
 ## April 10 2020 2.1.1
  * Extended batch grouping to datafile extension
  * Added BaseOperationURL CLI option

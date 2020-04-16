@@ -115,7 +115,6 @@ func (s *service) scanFiles(ctx context.Context, waitGroup *sync.WaitGroup, obje
 	destURL := fmt.Sprintf("%v://%v/%v", gs.Scheme, request.Bucket, strings.Trim(dataPrefix, "/"))
 	if isGCS {
 		URLPath := url.Path(object.URL())
-		fmt.Printf("%v %v\n", URLPath, rule.When)
 		isDirectMode := strings.Contains(URLPath, rule.When.Prefix) && rule.When.Prefix != ""
 		fmt.Printf("Direct eventing mode: %v\n", isDirectMode)
 		if isDirectMode {

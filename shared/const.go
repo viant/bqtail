@@ -209,3 +209,12 @@ const (
 
 //ClientSecretURL client secret
 const ClientSecretURL = "mem://github.com/viant/bqtail/auth/key.json"
+
+//CopyMethodCopy represents a copy with Copy job
+var CopyMethodCopy = "COPY"
+
+//CopyMethodQuery represents a copy with Query job and dest table
+var CopyMethodQuery = "QUERY"
+
+//CopyMethodDML represents a copy with Query job and INSERT INTO AS SELECT DML
+var CopyMethodDML = "DML"

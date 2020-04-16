@@ -19,8 +19,8 @@ When:
   Suffix: .json
 Dest:
   Table: bqtail.dummy_v037
-  DMLAppend: true
 Transient:
+  CopyMethod: DML
   Dataset: temp
 Batch:
   MultiPath: true

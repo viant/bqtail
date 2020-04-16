@@ -36,8 +36,8 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 		var query *task.Action
 
 		tempRef, _ := base.NewTableReference(j.TempTable)
-		if j.Rule.IsDMLAppend() {
-			SQL := sql.BuilAppendDML(tempRef, destTable, j.Load.Schema, dest)
+		if j.Rule.IsDMLCopy() {
+			SQL := sql.BuildAppendDML(tempRef, destTable, j.Load.Schema, dest, j.getDestTableSchema())
 			SQL = strings.Replace(SQL, "$WHERE", " WHERE  "+where+" ", 1)
 			query = bq.NewQueryAction(SQL, nil, "", true, next)
 		} else {
@@ -81,14 +81,22 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 	//otherwise load job would fail
 
 	sourceRef, _ := base.NewTableReference(j.SplitTable())
-	selectAll := sql.BuildSelect(sourceRef, j.SplitSchema.Schema, dest)
-	selectAll = strings.Replace(selectAll, "$WHERE", "", 1)
+	selectAll := sql.BuildSelect(sourceRef, j.SplitSchema.Schema, dest, j.getDestTableSchema())
+	selectAll = strings.Replace(selectAll, "$WHERE", j.getDMLWhereClause(), 1)
 	destRef, _ := base.NewTableReference(j.TempTable)
 
 	dropTable := bq.NewDropAction(j.ProjectID, j.SplitTable())
 	next.AddOnSuccess(dropTable)
 	result.AddOnSuccess(bq.NewQueryAction(selectAll, destRef, "", false, next))
 	return nil
+}
+
+func (j *Job) getDestTableSchema() *bigquery.TableSchema {
+	var destSchema *bigquery.TableSchema
+	if j.DestSchema != nil {
+		destSchema = j.DestSchema.Schema
+	}
+	return destSchema
 }
 
 func replaceWithMap(when string, columnMap map[string]string) string {

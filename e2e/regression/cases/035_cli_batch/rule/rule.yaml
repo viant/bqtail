@@ -3,6 +3,8 @@ When:
   Suffix: .json
 Dest:
   Table: bqtail.dummy_v035
+  Transient:
+    Dataset: temp
 Batch:
   MultiPath: true
   Window:

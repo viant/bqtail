@@ -3,8 +3,8 @@ When:
   Suffix: .json
 Dest:
   Table: bqtail.dummy_v037
-  DMLAppend: true
   Transient:
+    DMLMethod: DML
     Dataset: temp
 
 Batch:

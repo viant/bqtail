@@ -31,21 +31,21 @@ type Destination struct {
 	Partition string `json:"partition,omitempty"`
 	//Pattern uses URI relative path (without leading backslash)
 	bigquery.JobConfigurationLoad
-	Pattern            string           `json:",omitempty"`
-	Parameters         []*pattern.Param `json:",omitempty"`
-	compiled           *regexp.Regexp
-	Schema             Schema            `json:",omitempty"`
-	TransientDataset   string            `json:",omitempty"`
-	Transient          *Transient        `json:",omitempty"`
-	UniqueColumns      []string          `json:",omitempty"`
-	Transform          map[string]string `json:",omitempty"`
-	SideInputs         []*SideInput      `json:",omitempty"`
-	Override           *bool
-	DMLAppend          bool   `json:",omitempty"`
+	Pattern          string           `json:",omitempty"`
+	Parameters       []*pattern.Param `json:",omitempty"`
+	compiled         *regexp.Regexp
+	Schema           Schema            `json:",omitempty"`
+	TransientDataset string            `json:",omitempty"`
+	Transient        *Transient        `json:",omitempty"`
+	UniqueColumns    []string          `json:",omitempty"`
+	Transform        map[string]string `json:",omitempty" description:"optional map of the source column to dest expression"`
+	SideInputs       []*SideInput      `json:",omitempty"`
+	Override         *bool
+
+	DMLCriteria        string `json:",omitempty" description:"optional dml copy criteria "`
 	AllowFieldAddition bool   `json:",omitempty"`
 	Expiry             string `json:",omitempty"`
 }
-
 
 //HasTemplate
 func (r *Destination) HasTemplate() bool {
@@ -135,6 +135,16 @@ func (d Destination) Validate() error {
 		if d.HasTransformation() && d.Schema.Autodetect {
 			return errors.Errorf("autodetect schema is not supported with transformation options")
 		}
+
+		if d.Transient.CopyMethod != nil {
+			switch *d.Transient.CopyMethod {
+			case shared.CopyMethodCopy, shared.CopyMethodDML, shared.CopyMethodQuery:
+			default:
+				return errors.Errorf("invalid Transient.CopyMethod: %v, valid:[]", *d.Transient.CopyMethod, []string{
+					shared.CopyMethodCopy, shared.CopyMethodDML, shared.CopyMethodQuery,
+				})
+			}
+		}
 	}
 
 	if d.Table != "" {
@@ -152,9 +162,6 @@ func (d Destination) Validate() error {
 		if _, err := base.NewTableReference(d.Schema.Template); err != nil {
 			return errors.Wrapf(err, "invalid schema.template: %v", d.Schema.Template)
 		}
-	}
-	if d.DMLAppend && d.Transient == nil {
-		return errors.Errorf("DMLAppend is only supported with transient dataset option set")
 	}
 	return nil
 }
@@ -178,14 +185,41 @@ func (d *Destination) Init() error {
 	if len(d.Transform) == 0 {
 		d.Transform = make(map[string]string)
 	}
-
 	if d.AllowFieldAddition && (d.SourceFormat == "AVRO" || d.SourceFormat == "PARQUET") {
 		if len(d.SchemaUpdateOptions) == 0 {
 			d.SchemaUpdateOptions = []string{"ALLOW_FIELD_ADDITION", "ALLOW_FIELD_RELAXATION"}
 		}
 		d.WriteDisposition = shared.WriteDispositionAppend
 	}
+
+	if d.HasTransformation() {
+		if d.Transient.CopyMethod == nil || *d.Transient.CopyMethod == shared.CopyMethodCopy {
+			d.Transient.CopyMethod = &shared.CopyMethodQuery
+		}
+	} else if d.Transient != nil && d.Transient.CopyMethod == nil {
+		d.Transient.CopyMethod = &shared.CopyMethodCopy
+	}
 	return nil
+}
+
+//IsCopyMethodCopy returns true if copy method
+func (d *Destination) IsCopyMethodCopy() bool {
+	if d.Transient == nil || d.Transient.CopyMethod == nil {
+		return true
+	}
+	return *d.Transient.CopyMethod == shared.CopyMethodCopy
+}
+
+//IsQueryCopyMethod returns true if query copy method
+func (d *Destination) IsCopyMethodQuery() bool {
+	if d.Transient == nil || d.Transient.CopyMethod == nil {
+		return false
+	}
+	switch *d.Transient.CopyMethod {
+	case shared.CopyMethodQuery, shared.CopyMethodDML:
+		return true
+	}
+	return false
 }
 
 //HasTransformation returns true if dest requires transformation
