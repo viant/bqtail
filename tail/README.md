@@ -203,7 +203,8 @@ OnSuccess:
 
 
 - **Expiry**:  optional destination table expiry expression like: 1min, 2hours, 3months, 1 year etc ...
-Note that this option would **expire/remove a table** once expiry duration is counted from the last ingestion process start time.
+Note that this option would **expire/remove a table** once expiry is passed,  expiry is calculated based on ingestion process start.
+For example if your batch window is 2 min, and expiry is less, load job may fail, since dest table would expiry before batch start.
 
 For example:
 ```yaml
