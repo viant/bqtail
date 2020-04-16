@@ -1,4 +1,4 @@
-## April 14 2020 2.2.0
+## April 17 2020 2.2.0
  * Extended direct eventing mode in bqtail CLI                                           
  * Added arbitrary schema field addition with JSON format
  * Added expiry option
