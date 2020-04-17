@@ -11,7 +11,9 @@ import (
 type Batch struct {
 	//Window batch time window
 	Window *Window `json:",omitempty"`
+
 	//RollOver if this flag is set, if the first event of the batch fall outside of the first half time, the window can be expanded if previous window had not existed.
+	//Do not use on prod, it was intended for testing only
 	RollOver bool `json:",omitempty"`
 
 	//MultiPath is one batch can collect files from various folder

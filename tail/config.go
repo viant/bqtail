@@ -147,7 +147,7 @@ func NewConfig(ctx context.Context, keyOrURL string) (*Config, error) {
 	if keyOrURL == "" {
 		return nil, fmt.Errorf("config keyOrURL was empty")
 	}
-	if strings.Contains(keyOrURL, "://") {
+	if strings.Contains(keyOrURL, "://")  {
 		return NewConfigFromURL(ctx, keyOrURL)
 	}
 	value := os.Getenv(keyOrURL)
