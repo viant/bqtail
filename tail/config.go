@@ -9,7 +9,6 @@ import (
 	"github.com/viant/afs/cache"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/tail/config"
-	"net/url"
 	"os"
 	"strings"
 )
@@ -148,8 +147,7 @@ func NewConfig(ctx context.Context, keyOrURL string) (*Config, error) {
 	if keyOrURL == "" {
 		return nil, fmt.Errorf("config keyOrURL was empty")
 	}
-	_, err := url.Parse(keyOrURL)
-	if err == nil {
+	if strings.Contains(keyOrURL, "://") {
 		return NewConfigFromURL(ctx, keyOrURL)
 	}
 	value := os.Getenv(keyOrURL)
