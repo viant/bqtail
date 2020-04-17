@@ -234,7 +234,7 @@ otherwise QueryJob with destination table is used. You can control this behavior
    * **Criteria** optional criteria added where coping data from temp to dest without Split option
    * **CopyMethod** control transient to dest table data copy with one of the following
         - COPY (BigQueryCopyJob), 
-        - QUERY (BigQueryQueryJob with destination table)
+        - QUERY (BigQueryQueryJob with SELECT FROM and destination table)
         - DML(BigQueryQueryJob with INSERT AS SELECT DML)
 
         When transformation options is used or transient template has extra column that not exists in destination 
