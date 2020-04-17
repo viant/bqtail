@@ -9,6 +9,7 @@ import (
 	"github.com/viant/afs/cache"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/tail/config"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -143,13 +144,17 @@ func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 }
 
 //NewConfig creates a new config from env (json or URL)
-func NewConfig(ctx context.Context, key string) (*Config, error) {
-	if key == "" {
-		return nil, fmt.Errorf("config key was empty")
+func NewConfig(ctx context.Context, keyOrURL string) (*Config, error) {
+	if keyOrURL == "" {
+		return nil, fmt.Errorf("config keyOrURL was empty")
 	}
-	value := os.Getenv(key)
+	_, err := url.Parse(keyOrURL)
+	if err == nil {
+		return NewConfigFromURL(ctx, keyOrURL)
+	}
+	value := os.Getenv(keyOrURL)
 	if json.Valid([]byte(value)) {
-		return NewConfigFromEnv(ctx, key)
+		return NewConfigFromEnv(ctx, keyOrURL)
 	}
 	return NewConfigFromURL(ctx, value)
 }
