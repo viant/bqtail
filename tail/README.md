@@ -4,6 +4,17 @@ Tail service ingests data to Big Query with Load/Copy or Query API.
 
 - [Introduction](#introduction)
 - [Usage](#usage)
+- [Data ingestion rules](#data-ingestion-rules)
+    - [Data destination](#data-destination)
+    - [Transient Data-Flow](#transient-data-flow)
+- [Partition override](#partition-override)
+- [Data deduplication](#data-destination)
+- [Template table](#template-table)
+
+- [Transient Dataset](#transient-dataset)
+    - [Data deduplication](#data-deduplication)
+    - [Dynamic dest table](#dynamic-table-destination-based-on-source-data)
+    - [Side inputs](#data-transformation-with-side-inputs)
 - [Deployment](#deployment)
 
 ## Introduction 
@@ -213,7 +224,8 @@ Dest:
    Expiry: 1hour
 ```
 
-## Transient data flow
+
+#### Transient data flow
 
 When transient option is used data is load to transient table in transient dataset and project.
 The transient table name is formed from destination table suffixed by event ID, which makes is always unique. 
@@ -351,6 +363,7 @@ The following configuration specify transient dataset.
 
 
 
+
 #### Data deduplication
 
 When using transient table you can specify unique columns to deduplicate data while moving to destination table.
@@ -426,7 +439,6 @@ To dynamically rule data based on source data values you can use the following r
   }
  }
  ```
-
 
 ### Data transformation with side inputs
 
