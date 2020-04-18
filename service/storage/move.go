@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/viant/afs/file"
-	"github.com/viant/afs/option"
 	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/shared"
 )
+
+const moveRoutines = 8
+
 
 //Move move source to destination
 func (s *service) Move(ctx context.Context, request *MoveRequest) error {
@@ -16,22 +18,21 @@ func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 		return err
 	}
 
+	mover := newMover(s.fs)
+	mover.Run(ctx, moveRoutines)
+
 	if request.SourceURL != "" {
-		if moveErr := s.move(ctx, request.IsDestAbsoluteURL, request.SourceURL, request.DestURL); moveErr != nil {
-			err = moveErr
-		}
+		s.move(ctx, mover, request.IsDestAbsoluteURL, request.SourceURL, request.DestURL)
 	}
 	if len(request.SourceURLs) > 0 {
 		for _, sourceURL := range request.SourceURLs {
-			if moveErr := s.move(ctx, request.IsDestAbsoluteURL, sourceURL, request.DestURL); moveErr != nil {
-				err = moveErr
-			}
+			s.move(ctx, mover, request.IsDestAbsoluteURL, sourceURL, request.DestURL)
 		}
 	}
-	return err
+	return mover.Wait()
 }
 
-func (s *service) move(ctx context.Context, isDestAbsoluteURL bool, sourceURL, destURL string) error {
+func (s *service) move(ctx context.Context, mover *mover, isDestAbsoluteURL bool, sourceURL, destURL string) {
 	_, sourceLocation := url.Base(sourceURL, file.Scheme)
 	if !isDestAbsoluteURL {
 		destURL = url.Join(destURL, sourceLocation)
@@ -39,15 +40,10 @@ func (s *service) move(ctx context.Context, isDestAbsoluteURL bool, sourceURL, d
 	if shared.IsDebugLoggingLevel() {
 		shared.LogLn(fmt.Sprintf("moving: %v -> %v\n", sourceURL, destURL))
 	}
-
-	err := s.fs.Move(ctx, sourceURL, destURL)
-	if err != nil {
-		if exists, existErr := s.fs.Exists(ctx, sourceURL, option.NewObjectKind(true)); !exists && existErr == nil {
-			err = nil
-		}
-	}
-	return err
+	mover.Schedule(&move{src: sourceURL, dest: destURL})
 }
+
+
 
 //MoveRequest represnets a move resource request
 type MoveRequest struct {

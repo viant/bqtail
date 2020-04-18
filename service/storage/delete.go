@@ -6,7 +6,7 @@ import (
 	"github.com/viant/bqtail/shared"
 )
 
-const deleteRoutines = 6
+const deleteRoutines = 8
 
 //Delete deletes supplied URLs
 func (s *service) Delete(ctx context.Context, request *DeleteRequest) error {
