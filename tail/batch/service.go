@@ -35,14 +35,22 @@ type service struct {
 	fs               afs.Service
 }
 
+
+//addLocationFile tracks parent locations for a batch
 func (s *service) addLocationFile(ctx context.Context, window *Window, location string) error {
 	locationFile := fmt.Sprintf("%v%v", base.Hash(location), shared.LocationExt)
 	URL := strings.Replace(window.URL, shared.WindowExt, "/"+locationFile, 1)
 	if ok, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true)); ok {
 		return nil
 	}
-	return s.fs.Upload(ctx, URL, file.DefaultDirOsMode, strings.NewReader(location))
+	err := s.fs.Upload(ctx, URL, file.DefaultDirOsMode, strings.NewReader(location), option.NewGeneration(true, 0))
+	if isPreConditionError(err) || isRateError(err) {
+		err = nil
+	}
+	return nil
 }
+
+
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (info *Info, err error) {
@@ -92,6 +100,8 @@ func (s *service) tryAcquireWindow(ctx context.Context, process *stage.Process, 
 	windowData, _ := json.Marshal(window)
 	err = s.fs.Upload(ctx, windowURL, file.DefaultFileOsMode, bytes.NewReader(windowData), option.NewGeneration(true, 0))
 
+	//If file does exists by  Exists operation, try to upload batch file,
+	//if there is a race condition ignore precondition or rate limit it means batch file exists, - ignore error and quite
 	if isPreConditionError(err) || isRateError(err) {
 		window := NewWindow(process, startTime, endTime, windowURL)
 		if rule.Batch.MultiPath {

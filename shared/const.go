@@ -180,7 +180,7 @@ const (
 	//MaxRetries defines max retries
 	MaxRetries = 4
 	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
-	StorageListVisibilityDelay = 5000
+	StorageListVisibilityDelay = 7000
 )
 
 //MaxReload default max load attempts (excluding corrupted files)
