@@ -4,6 +4,8 @@ When:
 Async: true
 Dest:
   Table: bqtail.bqbatch
+  AllowFieldAddition: true
+
 Batch:
   Window:
     DurationInSec: 120
