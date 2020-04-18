@@ -35,7 +35,6 @@ type service struct {
 	fs               afs.Service
 }
 
-
 //addLocationFile tracks parent locations for a batch
 func (s *service) addLocationFile(ctx context.Context, window *Window, location string) error {
 	locationFile := fmt.Sprintf("%v%v", base.Hash(location), shared.LocationExt)
@@ -49,8 +48,6 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 	}
 	return nil
 }
-
-
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (info *Info, err error) {
@@ -168,6 +165,8 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 	before := window.End          //inclusive
 	after := window.Start.Add(-1) //exclusive
 	modFilter := matcher.NewModification(&before, &after)
+	window.Resources = make([]*Resource, 0)
+
 	var baseURLS []string
 	err = base.RunWithRetries(func() error {
 		baseURLS, err = s.getBaseURLS(ctx, rule, window)
@@ -209,6 +208,7 @@ func (s *service) matchData(ctx context.Context, window *Window, rule *config.Ru
 				continue
 			}
 			*result = append(*result, object.URL())
+			window.Resources = append(window.Resources, &Resource{URL: object.URL(), ModTime: object.ModTime()})
 		}
 	}
 	return nil

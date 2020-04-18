@@ -24,5 +24,7 @@ Dest:
     Dataset: temp
 
 OnSuccess:
-  - Action: delete
+  - Action: move
+    Request:
+      DestURL: gs://viant_e2e_operation/test
 

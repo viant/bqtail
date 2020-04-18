@@ -5,6 +5,7 @@
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqDispatch/Rules/",
   "CheckInMs": 10,
+
   "TimeToLiveInMin": 1,
   "TriggerBucket": "${triggerBucket}",
   "SlackCredentials": {

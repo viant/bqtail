@@ -1,0 +1,11 @@
+When:
+  Prefix: "/sys/bqmon/"
+  Suffix: ".json"
+Async: true
+Dest:
+  Table: bqtail.bqmon
+Batch:
+  Window:
+    DurationInSec: 120
+OnSuccess:
+  - Action: delete

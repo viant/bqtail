@@ -504,6 +504,7 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	if err != nil || len(window.URIs) == 0 {
 		return nil, err
 	}
+	s.logBatchInfo(ctx, window)
 	loadJob, jobErr := load.NewJob(rule, window.Process, window)
 	if jobErr != nil {
 		return nil, jobErr
@@ -652,6 +653,19 @@ func (s *service) restartProcess(ctx context.Context, process *stage.Process, re
 	_, name := url.Split(processURL, gs.Scheme)
 	loadJobURL := fmt.Sprintf("gs://%v/%v/%v", bucket, s.config.LoadProcessPrefix, name)
 	return s.fs.Copy(ctx, processURL, loadJobURL)
+}
+
+func (s *service) logBatchInfo(ctx context.Context, window *batch.Window) error {
+	if s.config.BqBatchInfoPath == "" {
+		return nil
+	}
+	URL := url.Join(fmt.Sprintf("gs://%v/", s.config.TriggerBucket), s.config.BqBatchInfoPath, window.EventID+shared.JSONExt)
+	data, err := json.Marshal(window)
+	if err != nil {
+		return err
+	}
+	window.Resources = nil
+	return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 }
 
 func (s *service) logJobInfo(ctx context.Context, bqjob *bigquery.Job, action *task.Action) error {

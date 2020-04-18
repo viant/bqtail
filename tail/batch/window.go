@@ -17,15 +17,22 @@ type Info struct {
 	OwnerEventID string
 }
 
+type Resource struct {
+	URL     string
+	ModTime time.Time
+}
+
 //Window represent batching window
 type Window struct {
 	*stage.Process
-	URL       string    `json:",omitempty"`
-	Start     time.Time `json:",omitempty"`
-	End       time.Time `json:",omitempty"`
-	URIs      []string  `json:",omitempty"`
-	Locations []string  `json:",omitempty"`
+	URL       string      `json:",omitempty"`
+	Start     time.Time   `json:",omitempty"`
+	End       time.Time   `json:",omitempty"`
+	URIs      []string    `json:",omitempty"`
+	Resources []*Resource `json:",omitempty"`
+	Locations []string    `json:",omitempty"`
 }
+
 
 //NewWindow create a stage batch window
 func NewWindow(process *stage.Process, startTime, endTime time.Time, windowURL string) *Window {
@@ -37,7 +44,7 @@ func NewWindow(process *stage.Process, startTime, endTime time.Time, windowURL s
 	}
 }
 
-//GetWindow returns a batch window or erro
+//GetWindow returns a batch window or error
 func GetWindow(ctx context.Context, URL string, fs afs.Service) (*Window, error) {
 	reader, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
