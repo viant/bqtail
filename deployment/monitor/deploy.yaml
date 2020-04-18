@@ -53,6 +53,7 @@ pipeline:
     upload:
       action: gcp/cloudfunctions:deploy
       credentials: $gcpCredentials
+      region: $region
       public: true
       '@name': $functionName
       entryPoint: Monitor
@@ -70,6 +71,7 @@ pipeline:
     scheduleMonitor:
       action: gcp/cloudscheduler:deploy
       credentials: $gcpCredentials
+      region: $region
       name: BqMonitor
       schedule: '*/1 * * * *'
       timeZone: GMT
