@@ -656,17 +656,10 @@ func (s *service) restartProcess(ctx context.Context, process *stage.Process, re
 }
 
 func (s *service) logBatchInfo(ctx context.Context, window *batch.Window) error {
-
 	if s.config.BqBatchInfoPath == "" {
-		if shared.IsInfoLoggingLevel() {
-			shared.LogF("BqBatchInfoPath not set, skipping batch logging\n ")
-		}
 		return nil
 	}
 	URL := url.Join(fmt.Sprintf("gs://%v/", s.config.TriggerBucket), s.config.BqBatchInfoPath, window.EventID+shared.JSONExt)
-	if shared.IsInfoLoggingLevel() {
-		shared.LogF("logging batch details %v\n", URL)
-	}
 	data, err := json.Marshal(window)
 	if err != nil {
 		return err
