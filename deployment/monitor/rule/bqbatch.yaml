@@ -1,9 +1,9 @@
 When:
-  Prefix: "/sys/bqmon/"
+  Prefix: "/sys/bqbatch/"
   Suffix: ".json"
 Async: true
 Dest:
-  Table: bqtail.bqmon
+  Table: bqtail.bqbatch
 Batch:
   Window:
     DurationInSec: 120

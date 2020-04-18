@@ -151,3 +151,19 @@ CREATE OR REPLACE  TABLE bqtail.bqmon (
             >
         >
 ) PARTITION BY DATE(Timestamp);
+
+
+CREATE OR REPLACE TABLE bqtail.bqbatch (
+Resources ARRAY<STRUCT<ModTime TIMESTAMP, URL STRING>>,
+End TIMESTAMP,
+Start TIMESTAMP,
+URL STRING,
+EventID INT64,
+DoneProcessURL STRING,
+RuleURL STRING,
+ProjectID STRING,
+URIs ARRAY<STRING>,
+FailedURL STRING,
+ProcessURL STRING,
+DestTable STRING,
+Source STRUCT<Time TIMESTAMP, Status STRING, URL STRING>) PARTITION BY DATE(Start);
