@@ -4,7 +4,10 @@
  * Added expiry option
  * Added Transient.CopyMethod to control copy strategy.
  * Removed Dest.DMLAppend 
-
+ * Added batch source location generation to upload file only once
+ * Added mover to run move operation concurrently
+ * Added config.BqJobInfoPath to log batches logging
+ 
  
 ## April 10 2020 2.1.1
  * Extended batch grouping to datafile extension
