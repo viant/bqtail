@@ -20,12 +20,11 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	call := bigquery.NewTablesService(s.Service).Get(reference.ProjectId, reference.DatasetId, tableID)
 	call.Context(ctx)
 	err = base.RunWithRetries(func() error {
-		var createErr error
-		table, createErr = call.Do()
-		if isAlreadyExistError(createErr) {
-			createErr = nil
+		table, err = call.Do()
+		if isAlreadyExistError(err) {
+			err = nil
 		}
-		return createErr
+		return err
 	})
 	if err != nil {
 		err = errors.Wrapf(err, "failed to lookup table schema: %v:%v.%v", reference.ProjectId, reference.DatasetId, tableID)
@@ -87,6 +86,9 @@ func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Tab
 	insertTableCall.Context(ctx)
 	return base.RunWithRetries(func() error {
 		_, err = insertTableCall.Do()
+		if isAlreadyExistError(err) {
+			err = nil
+		}
 		return err
 	})
 }

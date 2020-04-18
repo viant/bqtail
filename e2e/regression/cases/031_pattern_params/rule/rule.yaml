@@ -1,6 +1,11 @@
 When:
   Prefix: "/data/case${parentIndex}/"
   Suffix: ".json"
+
+Batch:
+  Window:
+    DurationInSec: 15
+
 Dest:
   Transient:
     Dataset: temp
