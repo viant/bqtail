@@ -300,5 +300,6 @@ To ingest monitoring status:
 2. Add the bqtail ingestion rule to gs://${opsConfig}/BqTail/Rules/sys/
     - [@bqmon.yaml](monitor/rule/bqmon.yaml)
     - [@bqjob.yaml](monitor/rule/bqjob.yaml)
+    - [@bqbatch.yaml](monitor/rule/bqbatch.yaml)
 
 

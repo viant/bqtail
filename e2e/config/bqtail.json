@@ -7,7 +7,6 @@
   "CorruptedFileURL": "gs://${opsBucket}/BqTail/Corrupted/",
   "RulesURL": "gs://${configBucket}/BqTail/Rules/",
   "TriggerBucket": "${triggerBucket}",
-  "BqBatchInfoPath": "/sys/bqbatch/",
   "CheckInMs": 2,
   "SlackCredentials": {
     "URL": "gs://${configBucket}/Secrets/slack.json.enc",
