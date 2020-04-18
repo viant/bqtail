@@ -153,6 +153,7 @@ CREATE OR REPLACE  TABLE bqtail.bqmon (
 ) PARTITION BY DATE(Timestamp);
 
 
+
 CREATE OR REPLACE TABLE bqtail.bqbatch (
 Resources ARRAY<STRUCT<ModTime TIMESTAMP, URL STRING>>,
 `End` TIMESTAMP,
@@ -160,6 +161,7 @@ Start TIMESTAMP,
 Async BOOL,
 Locations ARRAY<STRING>,
 URL STRING,
+Region STRING,
 EventID INT64,
 DoneProcessURL STRING,
 RuleURL STRING,
