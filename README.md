@@ -345,7 +345,7 @@ in the deduplication logic.
 
 _Restarting_ process is possible since each process creates an ingestion workflow execution plan, 
 which is stored in config.ActiveURL location. The last step of execution plan is to moves this file to config.DoneURL location.
-Restarting is done by placing process execution file to gs://${triggerBucket}/_load_/ location.
+Restarting is done by placing process execution file to gs://${triggerBucket}/\_load\_/ location.
 
 
 **Non Recoverable** are any errors when there is permission issue, or template table is missing or rule is invalid.
