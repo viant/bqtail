@@ -32,6 +32,7 @@ func (f *Field) AdjustType(ctx context.Context, fs afs.Service) error {
 	scanner := bufio.NewScanner(reader)
 	rowNo := 1
 	fName := f.Name
+	var schemaRecord map[string]interface{}
 	for ; scanner.Scan(); rowNo++ {
 		data := scanner.Bytes()
 		if rowNo < f.Row {
@@ -44,18 +45,27 @@ func (f *Field) AdjustType(ctx context.Context, fs afs.Service) error {
 		if err != nil {
 			return errors.Wrapf(err, "unable to extract schema from %v", record)
 		}
+		if len(schemaRecord) == 0 {
+			schemaRecord = record
+		}
 		fName, values := f.getFieldWithRecord(fName, record)
 		value, ok := values[fName]
 		if !ok || value == nil {
 			continue
 		}
 		f.Fields, err = schema.New(record, "Added auto: from location:"+f.Location+fmt.Sprintf(", row: %v,", rowNo)+" at: %s")
+		if err != nil {
+			return err
+		}
 		isRepeated := false
 		f.Type, isRepeated = schema.FieldType(value)
 		if isRepeated {
 			f.Mode = schema.ModeRepeated
 		}
 		break
+	}
+	if len(f.Fields) == 0{
+		return errors.Errorf("failed to extract schema from field: %v at row: %v, %v ", f.Name, f.Row, schemaRecord)
 	}
 	return nil
 }
