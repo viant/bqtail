@@ -73,6 +73,9 @@ func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Tab
 				TemplateTable: table,
 				ProjectID:     ref.ProjectId,
 			})
+			if err != nil {
+				err = errors.Wrapf(err, "failed to patch table: %v", base.EncodeTableReference(table.TableReference, false))
+			}
 			return err
 		}
 		return nil
