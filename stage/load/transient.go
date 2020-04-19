@@ -75,7 +75,7 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 func (j Job) addDMLCopy(load *bigquery.JobConfigurationLoad, destinationTable *bigquery.TableReference, dest *config.Destination, actions *task.Actions, result *task.Actions) {
 	SQL := sql.BuildAppendDML(load.DestinationTable, destinationTable, load.Schema, dest, j.getDestTableSchema())
 	SQL = strings.Replace(SQL, "$WHERE", j.getDMLWhereClause(), 1)
-	query := bq.NewQueryAction(SQL, nil, "", true, actions)
+	query := bq.NewDMLAction(SQL, destinationTable, j.TempTable, true, actions)
 	result.AddOnSuccess(query)
 }
 

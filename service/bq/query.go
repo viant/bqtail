@@ -36,13 +36,17 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, action *task
 				_ = s.CreateTableIfNotExist(ctx, template, true)
 			}
 		}
-
 		if request.Append {
 			job.Configuration.Query.WriteDisposition = "WRITE_APPEND"
 		} else {
 			job.Configuration.Query.WriteDisposition = "WRITE_TRUNCATE"
 		}
 		s.adjustRegion(ctx, action, job.Configuration.Query.DestinationTable)
+	}
+
+	if request.DML {
+		job.Configuration.Query.WriteDisposition = ""
+		job.Configuration.Query.DestinationTable = nil
 	}
 
 	if request.UseLegacy {
@@ -80,6 +84,7 @@ type QueryRequest struct {
 	UseLegacy        bool
 	Append           bool
 	Dest             string
+	DML              bool
 	Template         string
 	destinationTable *bigquery.TableReference
 }
@@ -111,6 +116,27 @@ func (r *QueryRequest) Validate() error {
 //NewQueryAction creates a new query request
 func NewQueryAction(SQL string, dest *bigquery.TableReference, template string, append bool, finally *task.Actions) *task.Action {
 	query := &QueryRequest{
+		SQL:              SQL,
+		destinationTable: dest,
+		Append:           append,
+		Template:         template,
+	}
+	if dest != nil {
+		query.Dest = base.EncodeTableReference(dest, false)
+	}
+	result := &task.Action{
+		Action:  shared.ActionQuery,
+		Actions: finally,
+		Meta:    nil,
+	}
+	_ = result.SetRequest(query)
+	return result
+}
+
+//NewDMLAction creates a new DML query request
+func NewDMLAction(SQL string, dest *bigquery.TableReference, template string, append bool, finally *task.Actions) *task.Action {
+	query := &QueryRequest{
+		DML:              true,
 		SQL:              SQL,
 		destinationTable: dest,
 		Append:           append,

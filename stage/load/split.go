@@ -39,7 +39,8 @@ func (j *Job) addSplitActions(selectSQL string, result, onDone *task.Actions) er
 		if j.Rule.IsDMLCopy() {
 			SQL := sql.BuildAppendDML(tempRef, destTable, j.Load.Schema, dest, j.getDestTableSchema())
 			SQL = strings.Replace(SQL, "$WHERE", " WHERE  "+where+" ", 1)
-			query = bq.NewQueryAction(SQL, nil, "", true, next)
+			query = bq.NewDMLAction(SQL, destTable, destTemplate, true, next)
+
 		} else {
 			SQL := strings.Replace(selectSQL, "$WHERE", " WHERE  "+where+" ", 1)
 			query = bq.NewQueryAction(SQL, destTable, destTemplate, j.Rule.IsAppend(), next)
