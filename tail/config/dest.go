@@ -10,6 +10,7 @@ import (
 	"github.com/viant/bqtail/stage"
 	"github.com/viant/bqtail/tail/config/pattern"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/data/udf"
 	"google.golang.org/api/bigquery/v2"
 	"regexp"
 	"strconv"
@@ -139,7 +140,7 @@ func (d Destination) Validate() error {
 			switch *d.Transient.CopyMethod {
 			case shared.CopyMethodCopy, shared.CopyMethodDML, shared.CopyMethodQuery:
 			default:
-				return errors.Errorf("invalid Transient.CopyMethod: %v, valid:[]", *d.Transient.CopyMethod, []string{
+				return errors.Errorf("invalid Transient.CopyMethod: %v, valid:[%v]", *d.Transient.CopyMethod, []string{
 					shared.CopyMethodCopy, shared.CopyMethodDML, shared.CopyMethodQuery,
 				})
 			}
@@ -259,6 +260,11 @@ func (d *Destination) Expand(dest string, source *stage.Source) (string, error) 
 	if len(params) > 0 {
 		paramsMap := data.Map(params)
 		dest = paramsMap.ExpandAsText(dest)
+		udfs := data.NewMap()
+		udf.Register(udfs)
+		dest = udfs.ExpandAsText(dest)
+
+
 	}
 	return dest, err
 }

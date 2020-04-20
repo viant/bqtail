@@ -15,7 +15,7 @@ require (
 	github.com/viant/afs v0.16.3
 	github.com/viant/afsc v0.15.1
 	github.com/viant/assertly v0.5.3
-	github.com/viant/toolbox v0.30.0
+	github.com/viant/toolbox v0.31.1
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	google.golang.org/api v0.17.0

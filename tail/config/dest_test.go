@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/bqtail/stage"
+	"github.com/viant/bqtail/tail/config/pattern"
 	"google.golang.org/api/bigquery/v2"
 	"testing"
 	"time"
@@ -73,6 +74,25 @@ func TestDestination_ExpandTable(t *testing.T) {
 				Pattern: "/data/(\\d{4}/(\\d{2})/(\\d{2})/.+",
 			},
 			hasError: true,
+		},
+
+
+		{
+			description: "sourceURL invalid expression",
+			created:     inThePast.Add(1),
+			sourceURI:   "gs://bucket/data/2019/02/04/logs_XXX.avro",
+			dest: &Destination{
+				Table:   "proj:dataset:$MyTable",
+				Pattern: "/data/(\\d{4})/(\\d{2})/(\\d{2})/([\\w]+)",
+				Parameters:[]*pattern.Param{
+					{
+						Name:"MyTable",
+						Expression:"'$Replace($ToLower($4),'_', '')_$1$2$3",
+					},
+				},
+
+			},
+			expect:"proj:dataset:'logsxxx_20190204",
 		},
 	}
 
