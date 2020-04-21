@@ -44,7 +44,7 @@ func (d *mover) Schedule(schedule *move) {
 }
 
 func (d *mover) Wait() (err error) {
-	time.Sleep(30 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 	d.WaitGroup.Wait()
 	atomic.StoreInt32(&d.closed, 1)
 	for i := 0; i < d.routines; i++ {
