@@ -93,7 +93,7 @@ To manage low CF latency (under 100ms at 50%) the following buckets need to be d
 * [dispatch bucket](#dispatcher-bucket)
    
  
-It is recommended to deploy [Trigger bucket](#trigger-bucket) as Multi region, so data to BigQuery flows even if one region goes down.
+It is recommended to deploy [trigger bucket](#trigger-bucket) as Multi region, so data to BigQuery flows even if one region goes down.
 In case of emergency you can easily redeploy BqTail to unaffected region and resume data ingestion with Multi region trigger bucket.   
 
 
