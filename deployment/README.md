@@ -86,7 +86,7 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 
 # Deployment
 
-Note that to manage low CF latency (under 100ms at 50%) the following buckets have to be in the same location as **BqTail/BqDispatch** cloud functions
+To manage low CF latency (under 100ms at 50%) the following buckets need to be deployed in the same location as **BqTail/BqDispatch** cloud functions.
 
 * [config](#configuration-bucket)
 * [operational](#operations-bucket) 
