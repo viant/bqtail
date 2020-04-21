@@ -16,9 +16,6 @@ regular SQL usage pricing applies.
 
 The following google storage layout is used to deploy and operate serverless data ingestion with  BqTail:
 
-To manage low CF latency (under 100ms at 50%): config, operational and dispatch bucket have to be in the same location as BqTail/BqDispatch cloud function.
-Trigger bucket should be Multi region, so data to BigQuery flows even if one region goes down.
-In case of emergency you can easily redeploy BqTail to unaffected region and resume data ingestion with Multi region trigger bucket.   
 
 
 ##### Configuration bucket
@@ -89,6 +86,13 @@ This bucket stores data exported from BigQuery, it can be source for [Storage Mi
 
 # Deployment
 
+Note that to manage low CF latency (under 100ms at 50%) the following buckets have to be in the same location as **BqTail/BqDispatch** cloud functions
+    - [config](#configuration-bucket),
+    - [operational](#operations-bucket) 
+    - [dispatch](#dispatcher-bucket)
+   
+It is recommended to deploy [Trigger bucket](#trigger-bucket) as Multi region, so data to BigQuery flows even if one region goes down.
+In case of emergency you can easily redeploy BqTail to unaffected region and resume data ingestion with Multi region trigger bucket.   
 
 
 ### Install endly
