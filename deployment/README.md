@@ -119,7 +119,7 @@ Or run [Download](https://github.com/viant/endly/releases/) latest binary to run
 
 
 
-1. SSH credentials (you can skip this test if you are using endly container)
+1. SSH credentials (you can skip this step if you are using endly container)
     - [Create SSH credentials](https://github.com/viant/endly/tree/master/doc/secrets#ssh)
     
     On OSX make sure that you have SSH remote login enabled
