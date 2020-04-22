@@ -306,3 +306,43 @@ endly -t=init
 ```bash
     endly -t=test -i=cli_json_field_addition
 ```
+
+- [CLI bqtail stress test](regression/cases/039_cli_stress_test)
+
+Remove skip.txt
+
+```bash
+    endly -t=test -i=cli_stress_test
+```
+
+- [Regexp matching wih CLI](regression/cases/040_cli_regexp)
+
+```bash
+    endly -t=test -i=cli_regexp
+```
+
+- [Data transformation with CLI](regression/cases/041_cli_transform_except)
+
+```bash
+    endly -t=test -i=cli_transform_except
+```
+
+- [Transient schema with CLI](regression/cases/042_cli_transient_schema)
+
+```bash
+    endly -t=test -i=cli_transient_schema
+```
+
+- [DML split with  CLI](regression/cases/043_split_dml)
+
+```bash
+    endly -t=test -i=split_dml
+```
+
+- [Load Journal with Stream API](regression/cases/043_load_journal)
+
+```bash
+    endly -t=test -i=load_journal
+```
+
+
