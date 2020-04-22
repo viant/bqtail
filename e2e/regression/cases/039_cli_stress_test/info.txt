@@ -1,1 +1,1 @@
-cli_batch_async
+cli_stress_test

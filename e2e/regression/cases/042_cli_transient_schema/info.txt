@@ -1,1 +1,1 @@
-cli_single_ingestion
+cli_transient_schema
