@@ -74,3 +74,19 @@ Query task can use the following substitution variables:
 - $URLs: coma separated list of load URIs
 - $SourceURI: one of load URI
 - $RuleURL: transfer rule URL
+
+
+# insert
+
+Insert action uses streaming API to load data returned by SQL.
+In case or large or long running  SQL, execution can fail due Cloud Function allocation memory and execution time.
+
+```json
+{
+   "Action": "insert",
+   "Request": {
+      "SQL" :"SELECT '$JobID' AS job_id, COUNT(1) AS row_count, CURRENT_TIMESTAMP() AS completed FROM $DestTable",
+      "Dest": "mydataset.ingestion_summary"
+   }
+}
+```

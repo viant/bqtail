@@ -24,10 +24,12 @@ func (s *service) Run(ctx context.Context, request *task.Action) (task.Response,
 		job, err = s.Query(ctx, req, request)
 	case *LoadRequest:
 		job, err = s.Load(ctx, req, request)
+	case *InsertRequest:
+		_, err = s.Insert(ctx, req, request)
 	default:
 		return nil, errors.Errorf("unsupported request type:%T", request)
 	}
-	if err != nil {
+	if err != nil || job == nil {
 		return nil, err
 	}
 	return job, base.JobError(job)

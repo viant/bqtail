@@ -18,4 +18,5 @@ The following services and actions are currently supported.
     - [export](bq/README.md#export)
     - [copy](bq/README.md#copy)
     - [query](bq/README.md#query)
+    - [INSERT](bq/README.md#insert)
 

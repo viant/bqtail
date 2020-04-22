@@ -10,7 +10,6 @@ import (
 
 const moveRoutines = 8
 
-
 //Move move source to destination
 func (s *service) Move(ctx context.Context, request *MoveRequest) error {
 	err := request.Validate()
@@ -42,8 +41,6 @@ func (s *service) move(ctx context.Context, mover *mover, isDestAbsoluteURL bool
 	}
 	mover.Schedule(&move{src: sourceURL, dest: destURL})
 }
-
-
 
 //MoveRequest represnets a move resource request
 type MoveRequest struct {

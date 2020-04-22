@@ -30,6 +30,8 @@ type Service interface {
 	Patch(ctx context.Context, request *PatchRequest) (*bigquery.Table, error)
 
 	CreateTableIfNotExist(ctx context.Context, table *bigquery.Table, patchIfDifferent bool) error
+
+	Insert(ctx context.Context, request *InsertRequest, action *task.Action) (response *bigquery.TableDataInsertAllResponse, err error)
 }
 
 type service struct {

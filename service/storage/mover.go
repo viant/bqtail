@@ -36,7 +36,6 @@ func (d *mover) move(ctx context.Context, sourceURL, destURL string) {
 	}
 }
 
-
 func (d *mover) Schedule(schedule *move) {
 	d.WaitGroup.Add(1)
 	d.moves <- schedule

@@ -29,13 +29,7 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, action *task
 	}
 
 	if job.Configuration.Query.DestinationTable != nil {
-		if request.Template != "" { //Try to update template, otherwise try run regular path
-			tempRef, _ := base.NewTableReference(request.Template)
-			if template, err := s.Table(ctx, tempRef); err == nil {
-				template.TableReference = job.Configuration.Query.DestinationTable
-				_ = s.CreateTableIfNotExist(ctx, template, true)
-			}
-		}
+		s.createFromTemplate(ctx, request.Template, job.Configuration.Query.DestinationTable)
 		if request.Append {
 			job.Configuration.Query.WriteDisposition = "WRITE_APPEND"
 		} else {
