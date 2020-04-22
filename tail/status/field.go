@@ -64,7 +64,7 @@ func (f *Field) AdjustType(ctx context.Context, fs afs.Service) error {
 		}
 		break
 	}
-	if len(f.Fields) == 0{
+	if len(f.Fields) == 0 {
 		return errors.Errorf("failed to extract schema from field: %v at row: %v, %v ", f.Name, f.Row, schemaRecord)
 	}
 	return nil

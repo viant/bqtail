@@ -33,7 +33,6 @@ type Window struct {
 	Locations []string    `json:",omitempty"`
 }
 
-
 //NewWindow create a stage batch window
 func NewWindow(process *stage.Process, startTime, endTime time.Time, windowURL string) *Window {
 	return &Window{

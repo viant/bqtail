@@ -47,6 +47,9 @@ const (
 	ActionCopy = "copy"
 	//ActionQuery query action
 	ActionQuery = "query"
+	//ActionInsert action insert
+	ActionInsert = "insert"
+
 	//ActionExport action export
 	ActionExport = "export"
 	//ActionMove move storage file
@@ -70,6 +73,7 @@ var Actionable = map[string]bool{
 	ActionCopy:   true,
 	ActionQuery:  true,
 	ActionExport: true,
+	ActionInsert: true,
 	ActionDrop:   true,
 	ActionCall:   true,
 	ActionPush:   true,

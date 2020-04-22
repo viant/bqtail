@@ -69,7 +69,7 @@ func (d Destination) Params(source string) (map[string]interface{}, error) {
 	udf.Register(udfs)
 	for _, param := range d.Parameters {
 		paramValue := expandWithPattern(d.compiled, source, param.Expression)
-		result[param.Name] =  udfs.ExpandAsText(paramValue)
+		result[param.Name] = udfs.ExpandAsText(paramValue)
 	}
 	return result, nil
 }
@@ -263,7 +263,6 @@ func (d *Destination) Expand(dest string, source *stage.Source) (string, error) 
 	if len(params) > 0 {
 		paramsMap := data.Map(params)
 		dest = paramsMap.ExpandAsText(dest)
-
 
 	}
 	return dest, err

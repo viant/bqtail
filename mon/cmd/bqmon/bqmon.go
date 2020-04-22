@@ -8,7 +8,6 @@ import (
 //Version app version
 var Version string
 
-
 func main() {
 	cmd.RunClient(Version, os.Args[1:])
 }

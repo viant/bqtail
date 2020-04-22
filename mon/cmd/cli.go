@@ -53,14 +53,12 @@ func RunClient(Version string, args []string) {
 	toolbox.DumpIndent(response, true)
 }
 
-
 func setDefaultAuth(authService auth.Service) {
 	auth.DefaultHTTPClientProvider = authService.AuthHTTPClient
 	auth.DefaultProjectProvider = authService.ProjectID
 	gs.DefaultHTTPClientProvider = authService.AuthHTTPClient
 	gs.DefaultProjectProvider = authService.ProjectID
 }
-
 
 func isHelOption(args []string) bool {
 	for _, arg := range args {

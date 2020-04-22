@@ -76,7 +76,6 @@ func TestDestination_ExpandTable(t *testing.T) {
 			hasError: true,
 		},
 
-
 		{
 			description: "sourceURL invalid expression",
 			created:     inThePast.Add(1),
@@ -84,15 +83,14 @@ func TestDestination_ExpandTable(t *testing.T) {
 			dest: &Destination{
 				Table:   "proj:dataset:$MyTable",
 				Pattern: "/data/(\\d{4})/(\\d{2})/(\\d{2})/([\\w]+)",
-				Parameters:[]*pattern.Param{
+				Parameters: []*pattern.Param{
 					{
-						Name:"MyTable",
-						Expression:"'$Replace($ToLower($4),'_', '')_$1$2$3",
+						Name:       "MyTable",
+						Expression: "'$Replace($ToLower($4),'_', '')_$1$2$3",
 					},
 				},
-
 			},
-			expect:"proj:dataset:'logsxxx_20190204",
+			expect: "proj:dataset:'logsxxx_20190204",
 		},
 	}
 
