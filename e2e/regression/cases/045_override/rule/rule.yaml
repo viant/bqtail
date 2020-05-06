@@ -1,0 +1,16 @@
+When:
+  Prefix: /data/case045
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v045
+  Override: true
+  Transient:
+    Dataset: temp
+
+Batch:
+  MultiPath: true
+  Window:
+    DurationInSec: 15
+Async: true
+OnSuccess:
+  - Action: delete
