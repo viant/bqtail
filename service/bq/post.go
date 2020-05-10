@@ -106,10 +106,17 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 	call.Context(ctx)
 	var callJob *bigquery.Job
 
-	err = base.RunWithRetries(func() error {
-		callJob, err = call.Do()
-		return err
-	})
+	if job.Configuration.Load != nil {// retry load job even with internal server error
+		err = base.RunWithRetriesOnRetryOrInternalError(func() error {
+			callJob, err = call.Do()
+			return err
+		})
+	} else {
+		base.RunWithRetries(func() error {
+			callJob, err = call.Do()
+			return err
+		})
+	}
 
 	if base.IsDuplicateJobError(err) {
 		if shared.IsDebugLoggingLevel() {

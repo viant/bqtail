@@ -95,6 +95,7 @@ func (s *service) Tail(ctx context.Context, request *contract.Request) *contract
 	defer s.OnDone(ctx, request, response)
 	if request.HasURLPrefix(s.config.LoadProcessPrefix) {
 		err = s.runLoadProcess(ctx, request, response)
+
 	} else if request.HasURLPrefix(s.config.PostJobPrefix) {
 		err = s.runPostLoadActions(ctx, request, response)
 	} else if request.HasURLPrefix(s.config.BatchPrefix) {
@@ -313,12 +314,14 @@ func (s *service) submitJob(ctx context.Context, job *load.Job, response *contra
 	return job, err
 }
 
+
 //runLoadProcess this method allows rerun Activity/Done job as long original data files are present
 func (s *service) runLoadProcess(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	process := &stage.Process{ProcessURL: request.SourceURL}
 	processJob, err := load.NewJobFromURL(ctx, nil, process.ProcessURL, s.fs)
 	if err != nil {
-		return err
+		response.NotFoundError = err.Error()
+		return nil
 	}
 	processJob.EventID = request.EventID
 	if processJob.RuleURL == "" {

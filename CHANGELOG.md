@@ -1,3 +1,6 @@
+## May 8 2020 2.4.1
+ * Extended retry for load job, get job status with internal server error checks 
+
 ## April 24 2020 2.4.0
  * Added Insert action (StreamingAPI)
  * Added bqmonitor CLI

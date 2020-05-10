@@ -60,6 +60,20 @@ func RunWithRetries(f func() error) (err error) {
 	return err
 }
 
+//RunWithRetriesOnRetryOrInternalError run with retries
+func RunWithRetriesOnRetryOrInternalError(f func() error) (err error) {
+	maxRetries := GetMaxRetries()
+	retry := NewRetry()
+	for i := 0; i < maxRetries; i++ {
+		err = f()
+		if !  (IsInternalError(err)  || IsRetryError(err)) {
+			return err
+		}
+		time.Sleep(retry.Pause())
+	}
+	return err
+}
+
 func GetMaxRetries() int {
 	maxRetries := toolbox.AsInt(os.Getenv(shared.MaxRetriesEnvKey))
 	if maxRetries == 0 {

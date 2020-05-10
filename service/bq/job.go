@@ -14,7 +14,7 @@ func (s *service) GetJob(ctx context.Context, location, projectID, jobID string)
 	call.Location(location)
 	call.Context(ctx)
 
-	err = base.RunWithRetries(func() error {
+	err = base.RunWithRetriesOnRetryOrInternalError(func() error {
 		job, err = call.Do()
 		return err
 	})
