@@ -66,15 +66,3 @@ pipeline:
     source:
       URL: ${appPath}
 
-  schedule:
-    action: gcp/cloudscheduler:deploy
-    credentials: $gcpCredentials
-    name: BqDispatch
-    schedule: '*/1 * * * *'
-    body: {}
-    timeZone: GMT
-    httpTarget:
-      headers:
-        User-Agent: Google-Cloud-Scheduler
-      httpMethod: POST
-      uri: https://${region}-${gcp.ProjectID}.cloudfunctions.net/BqDispatch

@@ -1,7 +1,5 @@
 init:
   appPath: /tmp/build/bqtail
-#  appPath: $Pwd('..')
-
   '!region': $params.region
   '!gcpCredentials': $params.authWith
   gcp: ${secrets.$gcpCredentials}
@@ -34,3 +32,16 @@ pipeline:
   deploy:
     action: run
     request: '@deploy'
+
+  cron:
+    action: gcp/cloudscheduler:deploy
+    credentials: $gcpCredentials
+    name: BqDispatch
+    schedule: '*/1 * * * *'
+    body: {}
+    timeZone: GMT
+    httpTarget:
+      headers:
+        User-Agent: Google-Cloud-Scheduler
+      httpMethod: POST
+      uri: https://${region}-${gcp.ProjectID}.cloudfunctions.net/BqDispatch

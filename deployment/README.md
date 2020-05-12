@@ -150,15 +150,24 @@ endly secure_slack authWith=myProjectSecret slackOAuth=slack.json
 ```
 
 
-## BqTail/BqDispatch
+## Deployment
 
-You can deploy the described infrastructure with BqTail and BqDispatch cloud function with [endly](https://github.com/viant/endly/) automation runner.
+To deploy the described infrastructure use [endly](https://github.com/viant/endly/) automation runner.
 
 ```bash
 git clone https://github.com/viant/bqtail.git
 cd bqtail/deployment
 endly run authWith=myProjectSecret region='us-central1'
 ```
+
+To redeploy only BqTail and BqDispatch cloud functions run the following command.
+
+```bash
+git clone https://github.com/viant/bqtail.git
+cd bqtail/deployment
+endly run -t='build,deploy' authWith=viant-dataflow region='us-cetnral1'
+```
+
 
 #### Deployment checklist
 
@@ -283,10 +292,10 @@ Where:
 - [@test.yaml](test/override/test.yaml)
 
 
-
 ##### More rules examples
 
 You can find more example for various configuration setting in [end to end tetst cases](https://github.com/viant/bqtail/tree/master/e2e)
+
 
 
 ## Monitoring
