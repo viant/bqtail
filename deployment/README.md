@@ -165,7 +165,7 @@ To redeploy only BqTail and BqDispatch cloud functions run the following command
 ```bash
 git clone https://github.com/viant/bqtail.git
 cd bqtail/deployment
-endly run -t='build,deploy' authWith=viant-dataflow region='us-cetnral1'
+endly run -t='build,deploy' authWith=myProjectSecret region='us-cetnral1'
 ```
 
 
