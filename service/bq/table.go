@@ -19,11 +19,8 @@ func (s *service) Table(ctx context.Context, reference *bigquery.TableReference)
 	tableID := base.TableID(reference.TableId)
 	call := bigquery.NewTablesService(s.Service).Get(reference.ProjectId, reference.DatasetId, tableID)
 	call.Context(ctx)
-	err = base.RunWithRetries(func() error {
+	err = base.RunWithRetriesOnRetryOrInternalError(func() error {
 		table, err = call.Do()
-		if isAlreadyExistError(err) {
-			err = nil
-		}
 		return err
 	})
 	if err != nil {
@@ -87,7 +84,7 @@ func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Tab
 	}
 	insertTableCall := srv.Insert(ref.ProjectId, ref.DatasetId, table)
 	insertTableCall.Context(ctx)
-	return base.RunWithRetries(func() error {
+	return base.RunWithRetriesOnRetryOrInternalError(func() error {
 		_, err = insertTableCall.Do()
 		if isAlreadyExistError(err) {
 			err = nil

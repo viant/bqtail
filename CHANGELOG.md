@@ -4,7 +4,7 @@
 ## April 24 2020 2.4.0
  * Added Insert action (StreamingAPI)
  * Added bqmonitor CLI
- 
+
  
 ## April 17 2020 2.2.0
  * Extended direct eventing mode in bqtail CLI                                           

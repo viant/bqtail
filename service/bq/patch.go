@@ -41,7 +41,7 @@ func (s *service) Patch(ctx context.Context, request *PatchRequest) (*bigquery.T
 	var table *bigquery.Table
 	call := s.Service.Tables.Patch(tableRef.ProjectId, tableRef.DatasetId, tableRef.TableId, request.TemplateTable)
 	call.Context(ctx)
-	err = base.RunWithRetries(func() error {
+	err = base.RunWithRetriesOnRetryOrInternalError(func() error {
 		table, err = call.Do()
 		return err
 	})
