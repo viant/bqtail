@@ -10,17 +10,18 @@
     "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v004--997103877432306.run",
     "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_004/rule.yaml",
     "Source": {
-      "URL": "gs://xx_e2e_bqtail/data/case004/dummy2.json",
-      "Time": "2020-02-18T23:33:37Z"
-    },    "Step": 1,
+      "Time": "2020-02-18T23:33:37Z",
+      "URL": "gs://xx_e2e_bqtail/data/case004/dummy2.json"
+    },
+    "Step": 1,
     "StepCount": 1,
     "TempTable": "`temp.dummy_v004_997103877432306`"
   },
   "OnSuccess": [
     {
-      "Action": "query",
+      "Action": "copy",
       "Meta": {
-        "Action": "query",
+        "Action": "copy",
         "Async": true,
         "DestTable": "bqtail.dummy_v004",
         "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v004/2020-02-18_23/997103877432306.run",
@@ -29,8 +30,8 @@
         "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v004--997103877432306.run",
         "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_004/rule.yaml",
         "Source": {
-          "URL": "gs://xx_e2e_bqtail/data/case004/dummy2.json",
-          "Time": "2020-02-18T23:33:37Z"
+          "Time": "2020-02-18T23:33:37Z",
+          "URL": "gs://xx_e2e_bqtail/data/case004/dummy2.json"
         },
         "Step": 2,
         "StepCount": 2,
@@ -74,8 +75,8 @@
             "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v004--997103877432306.run",
             "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_004/rule.yaml",
             "Source": {
-              "URL": "gs://xx_e2e_bqtail/data/case004/dummy2.json",
-              "Time": "2020-02-18T23:33:37Z"
+              "Time": "2020-02-18T23:33:37Z",
+              "URL": "gs://xx_e2e_bqtail/data/case004/dummy2.json"
             },
             "Step": 6,
             "StepCount": 6,
@@ -89,17 +90,21 @@
       "Request": {
         "Append": true,
         "Dest": "bqtail.dummy_v004",
-        "SQL": "SELECT id, MAX(t.type_id) AS type_id, MAX(t.name) AS name \nFROM `temp.dummy_v004_997103877432306` t \n\nGROUP BY 1",
-        "UseLegacy": false
+        "Source": "temp.dummy_v004_997103877432306"
       }
     }
   ],
   "Request": {
+    "AllowJaggedRows": false,
+    "AllowQuotedNewlines": false,
     "Append": true,
+    "Autodetect": false,
+    "DMLAppend": false,
     "DestinationTable": {
       "DatasetId": "temp",
       "TableId": "dummy_v004_997103877432306"
     },
+    "IgnoreUnknownValues": false,
     "Schema": {
       "Fields": [
         {
@@ -122,6 +127,7 @@
       "gs://xx_e2e_bqtail/data/case004/dummy1.json",
       "gs://xx_e2e_bqtail/data/case004/dummy2.json"
     ],
+    "UseAvroLogicalTypes": false,
     "WriteDisposition": "WRITE_TRUNCATE"
   }
 }

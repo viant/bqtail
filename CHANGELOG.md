@@ -1,3 +1,6 @@
+## May 8 2020 2.4.2
+ * Delayed temp table deletion after last SQL chain action for post SQL execution action
+  
 ## May 8 2020 2.4.1
  * Extended retry for load job, get job status with internal server error checks 
 

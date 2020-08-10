@@ -75,6 +75,10 @@ func TestJob_NewLoadRequest(t *testing.T) {
 			description: "clustered_table_split request",
 			caseURL:     path.Join(baseURL, "010_clustered_table_split"),
 		},
+		{
+			description: "query chain",
+			caseURL:     path.Join(baseURL, "011_query_chain_async"),
+		},
 	}
 
 	for _, useCase := range useCases {

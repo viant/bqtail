@@ -68,7 +68,7 @@ func (j *Job) updateTableExpiryIfNeeded(ctx context.Context, service bq.Service,
 		TemplateTable: table,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "failed to set expiry: %v, on ", destTable, j.Rule.Dest.Expiry)
+		return errors.Wrapf(err, "failed to set expiry: %v, on %v", destTable, j.Rule.Dest.Expiry)
 	}
 	return nil
 }

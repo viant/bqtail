@@ -159,6 +159,23 @@ func (a *Actions) AddOnFailure(actions ...*Action) {
 	}
 }
 
+//AddOnSuccess adds on sucess action
+func (a *Actions) FinalizeOnSuccess(actions ...*Action) {
+	if len(a.OnSuccess) == 0 {
+		a.OnSuccess = make([]*Action, 0)
+	}
+	finalized := false
+	for _, action := range a.OnSuccess {
+		if action.Action == shared.ActionQuery {
+			finalized = true
+			action.FinalizeOnSuccess(actions...)
+		}
+	}
+	if ! finalized {
+		a.OnSuccess = append(a.OnSuccess, actions...)
+	}
+}
+
 //NewActions creates an actions
 func NewActions(onSuccess, onFailure []*Action) *Actions {
 	if len(onSuccess) == 0 {

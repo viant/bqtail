@@ -21,7 +21,9 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	}
 	tempRef, _ := base.NewTableReference(j.TempTable)
 	dropAction := bq.NewDropAction(j.ProjectID, base.EncodeTableReference(tempRef, false))
-	actions.AddOnSuccess(dropAction)
+
+	actions.FinalizeOnSuccess(dropAction)
+
 	dest := j.Rule.Dest
 	load := j.Load
 

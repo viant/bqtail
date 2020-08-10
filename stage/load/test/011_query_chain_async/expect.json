@@ -65,22 +65,14 @@
           },
           "OnSuccess": [
             {
-              "Action": "delete",
-              "Request": {
-                "URLs": [
-                  "gs://xx_e2e_bqtail/data/case005/transactions.json"
-                ]
-              }
-            },
-            {
-              "Action": "drop",
+              "Action": "query",
               "Meta": {
-                "Action": "drop",
+                "Action": "query",
                 "Async": true,
                 "DestTable": "bqtail.transactions",
                 "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions/2020-02-19_15/997782008735915.run",
                 "EventID": "997782008735915",
-                "Mode": "nop",
+                "Mode": "dispatch",
                 "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions--997782008735915.run",
                 "ProjectID": "xx-e2e",
                 "Region": "US",
@@ -89,13 +81,50 @@
                   "Time": "2020-02-19T15:03:37Z",
                   "URL": "gs://xx_e2e_bqtail/data/case005/transactions.json"
                 },
-                "Step": 5,
-                "StepCount": 5,
+                "Step": 4,
+                "StepCount": 4,
                 "TempTable": "`xx-e2e.temp.transactions_997782008735915`"
               },
+              "OnSuccess": [
+                {
+                  "Action": "delete",
+                  "Request": {
+                    "URLs": [
+                      "gs://xx_e2e_bqtail/data/case005/transactions.json"
+                    ]
+                  }
+                },
+                {
+                  "Action": "drop",
+                  "Meta": {
+                    "Action": "drop",
+                    "Async": true,
+                    "DestTable": "bqtail.transactions",
+                    "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions/2020-02-19_15/997782008735915.run",
+                    "EventID": "997782008735915",
+                    "Mode": "nop",
+                    "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions--997782008735915.run",
+                    "ProjectID": "xx-e2e",
+                    "Region": "US",
+                    "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_005/rule.yaml",
+                    "Source": {
+                      "Time": "2020-02-19T15:03:37Z",
+                      "URL": "gs://xx_e2e_bqtail/data/case005/transactions.json"
+                    },
+                    "Step": 6,
+                    "StepCount": 6,
+                    "TempTable": "`xx-e2e.temp.transactions_997782008735915`"
+                  },
+                  "Request": {
+                    "ProjectID": "xx-e2e",
+                    "Table": "xx-e2e:temp.transactions_997782008735915"
+                  }
+                }
+              ],
               "Request": {
-                "ProjectID": "xx-e2e",
-                "Table": "xx-e2e:temp.transactions_997782008735915"
+                "Append": true,
+                "Dest": "bqtail.supply_performance_v2",
+                "SQL": "SELECT DATE(timestamp) AS date, sku_id, supply_entity_id, MAX(997782008735915) AS batch_id, SUM( payment) payment, SUM((CASE WHEN type_id = 1 THEN t.payment + f.value WHEN type_id = 2 THEN t.payment * (1 + f.value) END)) charge, SUM(COALESCE(qty, 1.0)) AS qty FROM `xx-e2e.temp.transactions_997782008735915` t LEFT JOIN bqtail.fees f ON f.id = t.fee_id GROUP BY 1, 2, 3"
               }
             }
           ],

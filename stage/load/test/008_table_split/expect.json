@@ -122,11 +122,12 @@
                     "Table": "temp.ad_20200227_6056467489517448"
                   }
                 }
-              ] ,
+              ],
               "Request": {
                 "Append": true,
+                "DML": false,
                 "Dest": "logs.ad_impressions_20200227",
-                "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id, t.extra AS extra \nFROM `temp.ad_20200227_6056467489517448` t   WHERE  id in (43,73) AND adMeta.campaignId \u003e 0 ",
+                "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id \nFROM `temp.ad_20200227_6056467489517448` t   WHERE  id in (43,73) AND adMeta.campaignId \u003e 0 ",
                 "Template": "logs.ad_v1",
                 "UseLegacy": false
               }
@@ -134,8 +135,9 @@
           ],
           "Request": {
             "Append": true,
+            "DML": false,
             "Dest": "logs.ad_default_impressions_3_20200227",
-            "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id, t.extra AS extra \nFROM `temp.ad_20200227_6056467489517448` t   WHERE  id in (43,73) AND adMeta.campaignId is null ",
+            "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id \nFROM `temp.ad_20200227_6056467489517448` t   WHERE  id in (43,73) AND adMeta.campaignId is null ",
             "Template": "logs.ad_v1",
             "UseLegacy": false
           }
@@ -167,18 +169,24 @@
       ],
       "Request": {
         "Append": false,
+        "DML": false,
         "Dest": "temp.ad_20200227_6056467489517448",
-        "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id, t.extra AS extra, TIMESTAMP(NULL) AS ts \nFROM `temp.ad_20200227_s6056467489517448` t  ",
+        "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id, TIMESTAMP(NULL) AS ts \nFROM `temp.ad_20200227_s6056467489517448` t  ",
         "UseLegacy": false
       }
     }
   ],
   "Request": {
+    "AllowJaggedRows": false,
+    "AllowQuotedNewlines": false,
     "Append": true,
+    "Autodetect": false,
+    "DMLAppend": false,
     "DestinationTable": {
       "DatasetId": "temp",
       "TableId": "ad_20200227_s6056467489517448"
     },
+    "IgnoreUnknownValues": false,
     "SourceUris": [
       "gs://xx_bqtail/unison/1582819488/1582819488/2020/02/27/1582819488/unison_impressions_us-west1_2020_02_26_17_pdx1-servepias003-core-impressions.2020-02-26-17-00.log-v0.avro"
     ],

@@ -20,9 +20,9 @@
   },
   "OnSuccess": [
     {
-      "Action": "query",
+      "Action": "copy",
       "Meta": {
-        "Action": "query",
+        "Action": "copy",
         "Async": false,
         "DestTable": "bqtail.dummy_v009",
         "DoneProcessURL": "mem://localhost/operation/journal/Done/bqtail.dummy_v009/2020-03-27_12/14156123207295228.run",
@@ -83,18 +83,22 @@
       ],
       "Request": {
         "Append": true,
-        "SQL": "INSERT INTO bqtail.dummy_v009(id,type_id,name) SELECT t.id AS id, t.type_id AS type_id, t.name AS name \nFROM `temp.dummy_v009_14156123207295228` t  ",
-        "UseLegacy": false
+        "Dest": "bqtail.dummy_v009",
+        "Source": "temp.dummy_v009_14156123207295228"
       }
     }
   ],
   "Request": {
+    "AllowJaggedRows": false,
+    "AllowQuotedNewlines": false,
     "Append": true,
+    "Autodetect": false,
+    "DMLAppend": false,
     "DestinationTable": {
       "DatasetId": "temp",
       "TableId": "dummy_v009_14156123207295228"
     },
-    "MaxBadRecords": 0,
+    "IgnoreUnknownValues": false,
     "Schema": {
       "Fields": [
         {
@@ -113,7 +117,6 @@
         }
       ]
     },
-    "SkipLeadingRows": 0,
     "SourceUris": [
       "gs://xx_bqtail/data/case009/path2/dummy2.json"
     ],

@@ -1,4 +1,6 @@
+
 Must have:
+- Add Version batch grouping option (to address AVRO schema incompatibility)
 - Add BqMonitor auto refresh with rule
 - Update documentation/examples
     - How to chain multi step action workflow
