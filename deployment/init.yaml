@@ -8,42 +8,42 @@ init:
 
 pipeline:
 
-#  createBuckets:
-#    configBucket:
-#      action: storage:create
-#      region: $region
-#      isDir: true
-#      comments: 'Creating config bucket: ${config.configBucket}'
-#      dest:
-#        URL: gs://${config.configBucket}/
-#        credentials: $gcpCredentials
-#
-#    opsBucket:
-#      action: storage:create
-#      region: $region
-#      comments: 'Creating operational bucket: ${config.opsBucket}'
-#      isDir: true
-#      dest:
-#        URL: gs://${config.opsBucket}/
-#        credentials: $gcpCredentials
-#
-#    triggerBucket:
-#      action: storage:create
-#      region: $region
-#      comments: 'Creating trigger bucket: ${config.triggerBucket}'
-#      isDir: true
-#      dest:
-#        URL: gs://${config.triggerBucket}/
-#        credentials: $gcpCredentials
-#
-#    dispatchBucket:
-#      action: storage:create
-#      region: $region
-#      comments: 'Creating dispatch bucket: ${config.dispatchBucket}'
-#      isDir: true
-#      dest:
-#        URL: gs://${config.dispatchBucket}/
-#        credentials: $gcpCredentials
+  createBuckets:
+    configBucket:
+      action: storage:create
+      region: $region
+      isDir: true
+      comments: 'Creating config bucket: ${config.configBucket}'
+      dest:
+        URL: gs://${config.configBucket}/
+        credentials: $gcpCredentials
+
+    opsBucket:
+      action: storage:create
+      region: $region
+      comments: 'Creating operational bucket: ${config.opsBucket}'
+      isDir: true
+      dest:
+        URL: gs://${config.opsBucket}/
+        credentials: $gcpCredentials
+
+    triggerBucket:
+      action: storage:create
+      region: $region
+      comments: 'Creating trigger bucket: ${config.triggerBucket}'
+      isDir: true
+      dest:
+        URL: gs://${config.triggerBucket}/
+        credentials: $gcpCredentials
+
+    dispatchBucket:
+      action: storage:create
+      region: $region
+      comments: 'Creating dispatch bucket: ${config.dispatchBucket}'
+      isDir: true
+      dest:
+        URL: gs://${config.dispatchBucket}/
+        credentials: $gcpCredentials
 
   uploadConfigs:
     bqTail:
