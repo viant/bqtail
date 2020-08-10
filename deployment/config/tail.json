@@ -8,7 +8,6 @@
   "InvalidSchemaURL": "gs://${opsBucket}/BqTail/invalid_schema/",
   "RulesURL": "gs://${configBucket}/BqTail/Rules/",
   "BqJobInfoPath": "/sys/bqjob/",
-  "BqBatchInfoPath": "/sys/bqbatch/",
   "TriggerBucket": "${triggerBucket}",
   "CheckInMs": 15000,
   "SlackCredentials": {
