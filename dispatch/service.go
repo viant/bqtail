@@ -89,9 +89,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 func (s *service) dispatch(ctx context.Context, response *contract.Response) error {
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
-	//timeoutDuration := s.config.TimeToLive()
-
-	timeoutDuration := remainingDuration
+	timeoutDuration := s.config.TimeToLive()
 	if timeoutDuration > remainingDuration && remainingDuration > 0 {
 		timeoutDuration = remainingDuration
 	}
