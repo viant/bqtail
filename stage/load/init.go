@@ -31,7 +31,6 @@ func (j *Job) Init(ctx context.Context, service bq.Service) error {
 	if err = j.updateTableExpiryIfNeeded(ctx, service, tableReference); err != nil {
 		return err
 	}
-
 	j.Actions, err = j.buildActions()
 	if err != nil {
 		return errors.Wrapf(err, "failed to build actions")

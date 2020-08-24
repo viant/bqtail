@@ -25,6 +25,20 @@ type Action struct {
 	*Actions       `json:",omitempty"`
 }
 
+//Clone clones actions
+func (a Action) Clone() *Action {
+	result :=  &Action{
+		Action:         a.Action,
+		Meta:           a.Meta,
+		Request:        a.Request,
+		serviceRequest: a.serviceRequest,
+	}
+	if a.Actions != nil {
+		result.Actions = a.Actions.Clone()
+	}
+	return result
+}
+
 //Init initialises action
 func (a *Action) Init(ctx context.Context, fs afs.Service) error {
 	if a.Request == nil {

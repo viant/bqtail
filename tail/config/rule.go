@@ -60,6 +60,7 @@ func (r *Rule) Actions() *task.Actions {
 	return result
 }
 
+
 //IsAppend returns true if appends
 func (r *Rule) IsAppend() bool {
 	if r.Dest == nil {

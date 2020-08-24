@@ -19,6 +19,25 @@ type Actions struct {
 	OnFailure []*Action     `json:",omitempty"`
 }
 
+func (a Actions) Clone() *Actions {
+	result := &Actions{
+		Job: a.Job,
+	}
+	if len(a.OnFailure) > 0 {
+		result.OnFailure = make([]*Action, len(a.OnFailure))
+		for i := range a.OnFailure {
+			result.OnFailure[i] = a.OnFailure[i].Clone()
+		}
+	}
+	if len(a.OnSuccess) > 0 {
+		result.OnSuccess = make([]*Action, len(a.OnSuccess))
+		for i := range a.OnSuccess {
+			result.OnSuccess[i] = a.OnSuccess[i].Clone()
+		}
+	}
+	return result
+}
+
 //Init initialises actions
 func (a *Actions) Init(ctx context.Context, fs afs.Service) error {
 	if a == nil {

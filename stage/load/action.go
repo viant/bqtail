@@ -7,7 +7,7 @@ import (
 )
 
 func (j *Job) buildActions() (*task.Actions, error) {
-	actions := j.Rule.Actions()
+	actions := j.Rule.Actions().Clone()
 	if j.Window != nil {
 		buildBatchActions(j.Window, actions)
 	}
