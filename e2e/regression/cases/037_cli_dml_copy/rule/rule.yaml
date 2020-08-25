@@ -4,7 +4,7 @@ When:
 Dest:
   Table: bqtail.dummy_v037
   Transient:
-    DMLMethod: DML
+    CopyMethod: DML
     Dataset: temp
 
 Batch:
