@@ -1,5 +1,5 @@
 ## August 25 2020 2.5.0
- * Upgraded cloud function to g113 environment
+ * Upgraded cloud function to g113 runtime
  * Upgraded CLI to go1.15
  * Patched post action sharing nodes related intermittent issue 
  * Requires endly v0.49.2+
