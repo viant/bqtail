@@ -2,7 +2,7 @@
  * Upgraded cloud function to g113 environment
  * Upgraded CLI to go1.15
  * Patched post action sharing nodes related intermittent issue 
- * Required endly v0.49.2+
+ * Requires endly v0.49.2+
 
 
 ## August 8 2020 2.4.2

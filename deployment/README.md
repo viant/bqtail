@@ -97,7 +97,9 @@ It is recommended to deploy [trigger bucket](#trigger-bucket) as Multi region, s
 In case of emergency you can easily redeploy BqTail to unaffected region and resume data ingestion with Multi region trigger bucket.   
 
 
-### Install endly
+### Install 
+
+Endly min version required: v0.49.2
 
 You can use  [endly docker](https://github.com/viant/endly/tree/master/docker) container
 
@@ -113,6 +115,7 @@ apt-get install vim
 ```
 
 Or run [Download](https://github.com/viant/endly/releases/) latest binary to run on the localhost 
+
 
 
 ### Credentials setup
