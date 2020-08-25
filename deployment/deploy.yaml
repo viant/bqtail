@@ -3,7 +3,7 @@ pipeline:
   set_sdk:
     action: sdk.set
     target: $target
-    sdk: go:1.14
+    sdk: go:1.15
 
   package:
     action: exec:run
@@ -15,7 +15,7 @@ pipeline:
       - unset GOPATH
       - cd ${appPath}/
       - go mod vendor
-      - echo 'apply cloud functiion hack'
+      - echo 'apply cloud function vendor optimization'
       - mkdir -p vendor/github.com/viant/bqtail
       - cp -rf base vendor/github.com/viant/bqtail
       - cp -rf dispatch vendor/github.com/viant/bqtail
@@ -25,6 +25,7 @@ pipeline:
       - cp -rf t* vendor/github.com/viant/bqtail/
       - cp -rf a* vendor/github.com/viant/bqtail/
       - go build
+      - rm -rf vendor/cloud.google.com
 
   bqtail:
     action: gcp/cloudfunctions:deploy

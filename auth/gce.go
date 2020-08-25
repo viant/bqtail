@@ -2,7 +2,7 @@ package auth
 
 import "os"
 
-var computeKeys = []string{"GCLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT"}
+var computeKeys = []string{"GCLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT", "GCP_PROJECT"}
 
 func isInGCE() bool {
 	for _, key := range computeKeys {

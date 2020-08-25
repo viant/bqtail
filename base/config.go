@@ -18,7 +18,7 @@ const (
 	defaultRegion = "us-central1"
 )
 
-var cloudFunctionProjectEnvKeys = []string{"GCLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT"}
+var cloudFunctionProjectEnvKeys = []string{"GCLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT", "GCP_PROJECT"}
 var cloudFunctionRegionEnvKeys = []string{"FUNCTION_REGION", "GOOGLE_CLOUD_REGION"}
 
 //Config represents base config
