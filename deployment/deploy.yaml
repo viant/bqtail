@@ -36,7 +36,7 @@ pipeline:
     availableMemoryMb: 256
     entryPoint: BqTail
     retry: true
-    runtime: go111
+    runtime: go113
     serviceAccountEmail: ${gcp.serviceAccount}
     environmentVariables:
       CONFIG: gs://${configBucket}/BqTail/config.json
@@ -58,7 +58,7 @@ pipeline:
     serviceAccountEmail: ${gcp.serviceAccount}
     availableMemoryMb: 256
     entryPoint: BqDispatch
-    runtime: go111
+    runtime: go113
     environmentVariables:
       CONFIG: gs://${configBucket}/BqDispatch/config.json
       LOGGING: false
