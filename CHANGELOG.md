@@ -1,3 +1,7 @@
+## August 31 2020 2.6.0
+ * Extended export request with UseAvroLogicalTypes (default true for avro format export)
+ * Added $TriggerBucket variable
+
 ## August 25 2020 2.5.0
  * Upgraded cloud function to g113 runtime
  * Upgraded CLI to go1.15 SDK

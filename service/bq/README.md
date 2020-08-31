@@ -13,11 +13,18 @@ When use with dispatch service, source value is populated from event destination
    "Action": "export",
    "Request": {
       "Source": "mydataset:source_table",
-      "Dest": "mydataset.dest_table"
+      "Dest": "gs://${TriggerBucket}/data/supply_performance/transient-*.avro",
+      "Format": "AVRO"
    }
 }
 ```
 
+Export task can use the following substitution variables:
+
+- $DestTable: destination table
+- $TempTable: temp table
+- $EventID: storage event id triggering load or batch
+- $TriggerBucket: trigger bucket
 
 
 #### copy
@@ -74,6 +81,7 @@ Query task can use the following substitution variables:
 - $URLs: coma separated list of load URIs
 - $SourceURI: one of load URI
 - $RuleURL: transfer rule URL
+- $TriggerBucket: trigger bucket
 
 
 # insert

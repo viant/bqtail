@@ -93,6 +93,9 @@ const (
 	//SourceURLsKey SourceURLs key
 	SourceURLsKey = "SourceURLs"
 
+	//TriggerBucket represents trigger bucket
+	TriggerBucket = "TriggerBucket"
+
 	//SourceURLKey source URL key
 	SourceURLKey = "SourceURL"
 

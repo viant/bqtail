@@ -30,20 +30,24 @@ func (s *service) Export(ctx context.Context, request *ExportRequest, action *ta
 			},
 		},
 	}
+	if request.UseAvroLogicalTypes != nil {
+		job.Configuration.Extract.UseAvroLogicalTypes = *request.UseAvroLogicalTypes
+	}
 	job.JobReference = action.JobReference()
 	return s.Post(ctx, job, action)
 }
 
 //ExportRequest represents an export request
 type ExportRequest struct {
-	Source         string
-	sourceTable    *bigquery.TableReference
-	DestURL        string
-	ProjectID      string
-	IncludeHeader  *bool
-	Compression    string
-	FieldDelimiter string
-	Format         string
+	Source              string
+	sourceTable         *bigquery.TableReference
+	DestURL             string
+	ProjectID           string
+	IncludeHeader       *bool
+	Compression         string
+	FieldDelimiter      string
+	Format              string
+	UseAvroLogicalTypes *bool
 }
 
 //Init initialises request
@@ -69,6 +73,10 @@ func (r *ExportRequest) Init(projectID string, activity *task.Action) (err error
 		if r.FieldDelimiter != "" {
 			r.Format = "CSV"
 		}
+	}
+	if r.Format == "AVRO" && r.UseAvroLogicalTypes == nil {
+		set := true
+		r.UseAvroLogicalTypes = &set
 	}
 
 	if r.Compression == "" {

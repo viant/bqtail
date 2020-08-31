@@ -1,0 +1,11 @@
+When:
+  Prefix: "/data/supply_performance"
+  Suffix: ".avro"
+Async: true
+Batch:
+  Window:
+    DurationInSec: 10
+Dest:
+  Table: bqtail.supply_performance_v${parentIndex}
+OnSuccess:
+  - Action: delete

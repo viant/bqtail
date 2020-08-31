@@ -33,7 +33,7 @@ pipeline:
     action: storage:copy
     expand: true
     source:
-      URL: rule.yaml
+      URL: performance.yaml
     dest:
       credentials: $gcpCredentials
       URL: gs://${configBucket}/BqTail/Rules/deployment_sync_test.yaml

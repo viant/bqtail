@@ -3,6 +3,7 @@ package stage
 import (
 	"context"
 	"github.com/viant/afs"
+	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -59,6 +60,9 @@ func (p Process) Expander(loadURIs []string) data.Map {
 	aMap[shared.JobSourceKey] = p.TempTable
 	aMap[shared.URLsKey] = strings.Join(loadURIs, ",")
 	aMap[shared.LoadURIsKey] = loadURIs
+	if len(loadURIs) > 0 {
+		aMap[shared.TriggerBucket] = url.Host(loadURIs[0])
+	}
 	return aMap
 }
 

@@ -37,7 +37,7 @@ func (s *service) Build(ctx context.Context, request *build.Request) error {
 	}
 	request.Init(s.config)
 	if request.RuleURL == "" {
-		request.RuleURL = url.Join(ruleBaseURL, "rule.yaml")
+		request.RuleURL = url.Join(ruleBaseURL, "performance.yaml")
 	}
 	rule := &config.Rule{
 		Async: true,

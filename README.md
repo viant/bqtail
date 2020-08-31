@@ -91,7 +91,7 @@ Dest:
     ProjectID: myProject
 Info:
   LeadEngineer: awitas
-  URL: mem://localhost/BqTail/config/rule/rule.yaml
+  URL: mem://localhost/BqTail/config/rule/performance.yaml
   Workflow: rule
 OnSuccess:
 - Action: delete
@@ -104,7 +104,7 @@ When:
 You can save it as rule.yaml to [extend/customize](https://github.com/viant/bqtail/tree/master/tail#data-ingestion-rules) the rule, then you can ingest data with updated rule:
 
 ```yaml
-bqtail -s=gs://myBuckey/folder/mydatafile.csv -r=rule.yaml
+bqtail -s=gs://myBuckey/folder/mydatafile.csv -r=performance.yaml
 ```
 
 
