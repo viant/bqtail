@@ -178,19 +178,31 @@ func (a *Actions) AddOnFailure(actions ...*Action) {
 	}
 }
 
-//AddOnSuccess adds on sucess action
 func (a *Actions) FinalizeOnSuccess(actions ...*Action) {
 	if len(a.OnSuccess) == 0 {
 		a.OnSuccess = make([]*Action, 0)
 	}
 	finalized := false
-	for _, action := range a.OnSuccess {
-		if action.Action == shared.ActionQuery {
-			finalized = true
-			action.FinalizeOnSuccess(actions...)
+	postActionCount := len(a.OnSuccess)
+outer:
+	for i := 0; i < postActionCount;  i++ {
+		action := a.OnSuccess[postActionCount - (i+1)]
+		switch postActionCount {
+		case 1:
+			if action.Action == shared.ActionQuery || action.Action == shared.ActionExport || action.Action == shared.ActionCopy {
+				finalized = true
+				action.FinalizeOnSuccess(actions...)
+				break outer
+			}
+		default:
+			if action.Action == shared.ActionQuery {
+				finalized = true
+				action.FinalizeOnSuccess(actions...)
+				break outer
+			}
 		}
 	}
-	if ! finalized {
+	if !finalized {
 		a.OnSuccess = append(a.OnSuccess, actions...)
 	}
 }

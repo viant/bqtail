@@ -138,7 +138,6 @@ func (j *Job) initTableSplit(ctx context.Context, service bq.Service) error {
 	schema := tempTable.Schema
 
 	if j.IsTablePartitioned {
-
 		j.TempSchema.Clustering = &bigquery.Clustering{
 			Fields: split.ClusterColumns,
 		}
@@ -195,6 +194,7 @@ func (j *Job) initTableSplit(ctx context.Context, service bq.Service) error {
 	j.SplitSchema = tempTable
 	return service.CreateTableIfNotExist(ctx, tempTable, false)
 }
+
 
 func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.TableFieldSchema {
 	column = strings.ToLower(column)

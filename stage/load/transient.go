@@ -12,7 +12,7 @@ import (
 )
 
 func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error) {
-	if j.Rule.Dest.Transient == nil {
+	if j.Rule.Dest.Transient == nil || j.DestTable == "" {
 		return actions, nil
 	}
 	var result = task.NewActions(nil, nil)
@@ -21,13 +21,11 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	}
 	tempRef, _ := base.NewTableReference(j.TempTable)
 	dropAction := bq.NewDropAction(j.ProjectID, base.EncodeTableReference(tempRef, false))
-
 	actions.FinalizeOnSuccess(dropAction)
-
-	dest := j.Rule.Dest
+	dest := j.Rule.Dest.Clone()
 	load := j.Load
 
-	destinationTable, _ := j.Rule.Dest.CustomTableReference(j.DestTable, j.Source)
+	destinationTable, _ := dest.CustomTableReference(j.DestTable, j.Source)
 
 	if dest.Schema.Autodetect {
 		source := base.EncodeTableReference(load.DestinationTable, false)
@@ -55,6 +53,7 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	if dest.Schema.Template != "" {
 		destTemplate = dest.Schema.Template
 	}
+
 
 	if j.Rule.IsDMLCopy() {
 		j.addDMLCopy(load, destinationTable, dest, actions, result)

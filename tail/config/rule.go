@@ -85,6 +85,9 @@ func (r *Rule) IsDMLCopy() bool {
 
 //DestTable returns dest table
 func (r *Rule) DestTable(URL string, modTime time.Time) string {
+	if r.Dest.Table == "" {
+		return ""
+	}
 	table, _ := r.Dest.ExpandTable(r.Dest.Table, stage.NewSource(URL, modTime))
 	if table == "" {
 		table = r.Dest.Table

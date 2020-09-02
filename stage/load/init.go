@@ -12,25 +12,31 @@ import (
 )
 
 //Init initialises job
-func (j *Job) Init(ctx context.Context, service bq.Service) error {
-	tableReference, err := base.NewTableReference(j.DestTable)
-	if err != nil {
-		return err
-	}
-	j.setDestinationTable(tableReference)
-	tableReference, _ = base.NewTableReference(j.DestTable)
-	if err = j.updateSchemaIfNeeded(ctx, tableReference, service); err != nil {
-		return err
-	}
+func (j *Job) Init(ctx context.Context, service bq.Service) (err error) {
+	var tableReference *bigquery.TableReference
 
+	if j.DestTable != "" {
+		if tableReference, err = base.NewTableReference(j.DestTable); err != nil {
+			return err
+		}
+		j.setDestinationTable(tableReference)
+		tableReference, _ = base.NewTableReference(j.DestTable)
+		if err = j.updateSchemaIfNeeded(ctx, tableReference, service); err != nil {
+			return err
+		}
+	}
 	if j.Rule.Dest.HasSplit() {
 		if err = j.initTableSplit(ctx, service); err != nil {
 			return errors.Wrapf(err, "failed to apply split schema optimization: %+v", j.Rule.Dest.Schema.Split)
 		}
 	}
-	if err = j.updateTableExpiryIfNeeded(ctx, service, tableReference); err != nil {
-		return err
+
+	if tableReference != nil {
+		if err = j.updateTableExpiryIfNeeded(ctx, service, tableReference); err != nil {
+			return err
+		}
 	}
+
 	j.Actions, err = j.buildActions()
 	if err != nil {
 		return errors.Wrapf(err, "failed to build actions")

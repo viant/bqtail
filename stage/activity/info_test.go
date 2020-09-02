@@ -1,7 +1,6 @@
 package activity
 
 import (
-	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"testing"
@@ -52,56 +51,4 @@ func TestParse(t *testing.T) {
 		//assertly.AssertValues(t, useCase.expect, actual, useCase.description)
 	}
 
-}
-
-func TestInfo_ChildInfo(t *testing.T) {
-
-	var useCases = []struct {
-		description string
-		encoded     string
-		action      string
-		step        int
-		expect      string
-	}{
-		{
-			description: "top level",
-			encoded:     "github.com/viant/bqtail_dummy--869694905034386_00001_query--dispatch",
-			action:      "query",
-			step:        1,
-			expect:      "github.com/viant/bqtail_dummy/869694905034386_01001_query--dispatch",
-		},
-		{
-			description: "leaf level 1",
-			action:      "query",
-			encoded:     "github.com/viant/bqtail_dummy/869694905034386_01001_query--dispatch",
-			expect:      "github.com/viant/bqtail_dummy/869694905034386_02001_query--dispatch",
-			step:        1,
-		},
-		{
-			description: "leaf level 2",
-			action:      "query",
-			encoded:     "github.com/viant/bqtail_dummy/869694905034386_02001_query--dispatch",
-			expect:      "github.com/viant/bqtail_dummy/869694905034386_03001_query--dispatch",
-			step:        1,
-		},
-		{
-			description: "leaf level 3",
-			action:      "query",
-			encoded:     "github.com/viant/bqtail_dummy/869694905034386_02002_query--dispatch",
-			expect:      "github.com/viant/bqtail_dummy/869694905034386_04003_query--dispatch",
-			step:        3,
-		},
-		{
-			description: "query",
-			action:      "query",
-			encoded:     "875469346223080_00001_query--dispatch",
-			expect:      "875469346223080_01001_query--dispatch",
-			step:        1,
-		},
-	}
-	for _, useCase := range useCases {
-		parent := Parse(useCase.encoded)
-		child := parent.ChildInfo(useCase.action, useCase.step)
-		assert.Equal(t, useCase.expect, child.ID(), useCase.description)
-	}
 }

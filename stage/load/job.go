@@ -78,12 +78,22 @@ func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window) (*J
 		Process: process,
 		Window:  window,
 	}
+
+	dest := rule.Dest.Clone()
 	var err error
+	var URIs []string
 	if window != nil {
-		job.Load, err = rule.Dest.NewJobConfigurationLoad(process.Source, window.URIs...)
+		URIs = window.URIs
 	} else {
-		job.Load, err = rule.Dest.NewJobConfigurationLoad(process.Source, process.Source.URL)
+		URIs = []string{process.Source.URL}
 	}
+	if len(process.Params) == 0 {
+		process.Params = make(map[string]interface{})
+	}
+	expander := process.Expander(URIs)
+	process.DestTable = expander.ExpandAsText(process.DestTable)
+	process.Params[shared.EventIDKey] = process.EventID
+	job.Load, err =  dest.NewJobConfigurationLoad(process.Source, URIs...)
 	return job, err
 }
 

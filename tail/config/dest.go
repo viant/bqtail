@@ -48,8 +48,8 @@ type Destination struct {
 }
 
 //HasTemplate
-func (r *Destination) HasTemplate() bool {
-	return r.Schema.Template != "" || (r.Transient != nil && r.Transient.Template != "")
+func (d *Destination) HasTemplate() bool {
+	return d.Schema.Template != "" || (d.Transient != nil && d.Transient.Template != "")
 }
 
 //Params build pattern paramters
@@ -82,6 +82,7 @@ func (d Destination) HasSplit() bool {
 //Clone clones destination
 func (d Destination) Clone() *Destination {
 	cloned := &Destination{
+		JobConfigurationLoad:d.JobConfigurationLoad,
 		Table:            d.Table,
 		Partition:        d.Partition,
 		Pattern:          d.Pattern,
@@ -94,6 +95,8 @@ func (d Destination) Clone() *Destination {
 		UniqueColumns:    d.UniqueColumns,
 		SideInputs:       d.SideInputs,
 		Override:         d.Override,
+		AllowFieldAddition:d.AllowFieldAddition,
+		Expiry: d.Expiry,
 	}
 
 	if len(d.Transform) > 0 {
@@ -108,10 +111,9 @@ func (d Destination) Clone() *Destination {
 
 //Validate checks if destination is valid
 func (d Destination) Validate() error {
-	if d.Table == "" {
+	if d.Table == "" && ((d.Schema.Template == "" && !d.Schema.Autodetect) || d.Transient == nil) {
 		return fmt.Errorf("dest.Table was empty")
 	}
-
 	if d.Schema.Split != nil {
 		if d.Transient == nil || d.Transient.Dataset == "" {
 			return fmt.Errorf("dest.Schema.Split requires dest.Transient.Dataset")
@@ -277,9 +279,12 @@ func toComparableTable(table string) string {
 //Match matched candidate table with the dest
 func (d *Destination) Match(candidate string) bool {
 	table := d.Table
+	if table == "" {
+		return candidate == ""
+	}
 	index := strings.Index(table, "$")
 	if index != -1 {
-		table = string(table[:index])
+		table = table[:index]
 	}
 	if strings.Contains(candidate, table) {
 		return true

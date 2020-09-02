@@ -99,6 +99,9 @@ const (
 	//SourceURLKey source URL key
 	SourceURLKey = "SourceURL"
 
+	//EventIDKey event ID key
+	EventIDKey = "EventID"
+
 	//ResponseKey response key
 	ResponseKey = "Response"
 

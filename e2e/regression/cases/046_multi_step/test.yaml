@@ -80,7 +80,7 @@ pipeline:
 
     checkDone:
       action: goto
-      sleepTimeMs: 20000
+      sleepTimeMs: 30000
       when: $Len(${listDone.Assets}) = 0 && $doneCounter < 15
       task: waitForDone
 
