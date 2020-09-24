@@ -38,7 +38,7 @@ pipeline:
     checkError: true
     commands:
       - export GOOGLE_APPLICATION_CREDENTIALS='${env.HOME}/.secret/${gcpCredentials}.json'
-      - ${bqtailCmd} -r='${parent.path}/rule/performance.yaml' -s='gs://${triggerBucket}/data/case${parent.index}/'
+      - ${bqtailCmd} -r='${parent.path}/rule/rule.yaml' -s='gs://${triggerBucket}/data/case${parent.index}/'
 
   validate:
     check-db:

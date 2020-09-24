@@ -29,7 +29,7 @@ pipeline:
     errors: []
     commands:
       - export GOOGLE_APPLICATION_CREDENTIALS='${env.HOME}/.secret/${gcpCredentials}.json'
-      - ${bqtailCmd} -r='${parent.path}/rule/performance.yaml' -s='${parent.path}/data/trigger' -l=debug
+      - ${bqtailCmd} -r='${parent.path}/rule/rule.yaml' -s='${parent.path}/data/trigger' -l=debug
 
   validate:
     check-db:
