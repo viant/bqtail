@@ -1,5 +1,5 @@
 ## September 24 2020 2.7.0
- * Introduced conditional action exection (When.Exists for now)
+ * Introduced conditional action execution (When.Exists for now)
  * Extended SiteInput with Inner bool flag for INNER JOIN (default LEFT JOIN)
  * Added retries to CreateTableIfNotExist 
 
