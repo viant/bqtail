@@ -27,6 +27,9 @@ func (s *service) Drop(ctx context.Context, request *DropRequest, action *task.A
 	if base.IsNotFoundError(err) {
 		err = nil
 	}
+	if shared.IsInfoLoggingLevel() {
+		shared.LogF("[%v] running drop %v\n", action.Meta.DestTable, table.ProjectId+"."+table.DatasetId+"."+table.TableId)
+	}
 	return err
 }
 

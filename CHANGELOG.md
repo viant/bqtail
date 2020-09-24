@@ -1,3 +1,8 @@
+## September 24 2020 2.7.0
+ * Introduced conditional action exection (When.Exists for now)
+ * Extended SiteInput with Inner bool flag for INNER JOIN (default LEFT JOIN)
+ * Added retries to CreateTableIfNotExist 
+
 ## August 31 2020 2.6.0
  * Extended export request with UseAvroLogicalTypes (default true for avro format export)
  * Added $TriggerBucket variable

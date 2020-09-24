@@ -211,8 +211,8 @@ func loadRules(data []byte, ext string) ([]*Rule, error) {
 		ruleMap := map[string]interface{}{}
 		if err := yaml.Unmarshal(data, &ruleMap); err != nil {
 			rulesMap := []map[string]interface{}{}
-			err = json.Unmarshal(data, &rulesMap)
-			if err != nil {
+			jsonErr := json.Unmarshal(data, &rulesMap)
+			if jsonErr != nil {
 				return nil, err
 			}
 			err = toolbox.DefaultConverter.AssignConverted(&rules, rulesMap)

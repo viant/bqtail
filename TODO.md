@@ -11,6 +11,7 @@ Nice Have:
 - Add conditional action
 - ADD datafile replay function to bqtail CLI
 - Test internal error with complex ingestion workflow
+- Add post batching event with access to all batch shards data
 
 
 Blocked:

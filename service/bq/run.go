@@ -26,6 +26,8 @@ func (s *service) Run(ctx context.Context, request *task.Action) (task.Response,
 		job, err = s.Load(ctx, req, request)
 	case *InsertRequest:
 		_, err = s.Insert(ctx, req, request)
+	case *TableExistsRequest:
+		return s.TableExists(ctx, req)
 	default:
 		return nil, errors.Errorf("unsupported request type:%T", request)
 	}

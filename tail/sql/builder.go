@@ -210,7 +210,11 @@ func buildJoins(sideInputs []*config.SideInput) string {
 		if sideInput.From != "" {
 			table = "(" + sideInput.From + ")"
 		}
-		joins = append(joins, fmt.Sprintf(" LEFT JOIN %v %v ON %v", table, sideInput.Alias, sideInput.On))
+		joinKind := "LEFT"
+		if sideInput.Inner {
+			joinKind = ""
+		}
+		joins = append(joins, fmt.Sprintf(" %v JOIN %v %v ON %v", joinKind, table, sideInput.Alias, sideInput.On))
 	}
 	return strings.Join(joins, "\n  ")
 }

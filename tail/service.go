@@ -314,7 +314,6 @@ func (s *service) submitJob(ctx context.Context, job *load.Job, response *contra
 	return job, err
 }
 
-
 //runLoadProcess this method allows rerun Activity/Done job as long original data files are present
 func (s *service) runLoadProcess(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	process := &stage.Process{ProcessURL: request.SourceURL}

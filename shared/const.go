@@ -50,6 +50,9 @@ const (
 	//ActionInsert action insert
 	ActionInsert = "insert"
 
+	//ActionTableExists action
+	ActionTableExists = "tableExists"
+
 	//ActionExport action export
 	ActionExport = "export"
 	//ActionMove move storage file

@@ -195,7 +195,6 @@ func (j *Job) initTableSplit(ctx context.Context, service bq.Service) error {
 	return service.CreateTableIfNotExist(ctx, tempTable, false)
 }
 
-
 func getColumn(fields []*bigquery.TableFieldSchema, column string) *bigquery.TableFieldSchema {
 	column = strings.ToLower(column)
 	if index := strings.Index(column, "."); index != -1 {

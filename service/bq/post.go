@@ -106,7 +106,7 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 	call.Context(ctx)
 	var callJob *bigquery.Job
 
-	if job.Configuration.Load != nil {// retry load job even with internal server error
+	if job.Configuration.Load != nil { // retry load job even with internal server error
 		err = base.RunWithRetriesOnRetryOrInternalError(func() error {
 			callJob, err = call.Do()
 			return err

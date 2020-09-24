@@ -125,7 +125,6 @@
               ],
               "Request": {
                 "Append": true,
-                "DML": false,
                 "Dest": "logs.ad_impressions_20200227",
                 "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id \nFROM `temp.ad_20200227_6056467489517448` t   WHERE  id in (43,73) AND adMeta.campaignId \u003e 0 ",
                 "Template": "logs.ad_v1",
@@ -135,7 +134,6 @@
           ],
           "Request": {
             "Append": true,
-            "DML": false,
             "Dest": "logs.ad_default_impressions_3_20200227",
             "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id \nFROM `temp.ad_20200227_6056467489517448` t   WHERE  id in (43,73) AND adMeta.campaignId is null ",
             "Template": "logs.ad_v1",
@@ -169,7 +167,6 @@
       ],
       "Request": {
         "Append": false,
-        "DML": false,
         "Dest": "temp.ad_20200227_6056467489517448",
         "SQL": "SELECT t.id AS id, t.timestamp AS timestamp, t.batch_id AS batch_id, t.event_id AS event_id, t.sku_id AS sku_id, t.supply_entity_id AS supply_entity_id, t.payment AS payment, t.demany_entity_id AS demany_entity_id, t.charge AS charge, t.qty AS qty, t.fee_id AS fee_id, TIMESTAMP(NULL) AS ts \nFROM `temp.ad_20200227_s6056467489517448` t  ",
         "UseLegacy": false

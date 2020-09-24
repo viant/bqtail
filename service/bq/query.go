@@ -38,7 +38,7 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, action *task
 		s.adjustRegion(ctx, action, job.Configuration.Query.DestinationTable)
 	}
 
-	if request.DML {
+	if !request.IsSelectQuery() {
 		job.Configuration.Query.WriteDisposition = ""
 		job.Configuration.Query.DestinationTable = nil
 	}
@@ -64,9 +64,8 @@ func (s *service) Query(ctx context.Context, request *QueryRequest, action *task
 		if job.Configuration.Query.DestinationTable != nil {
 			dest = base.EncodeTableReference(job.Configuration.Query.DestinationTable, true)
 		}
-		shared.LogF("[%v] runing query %v ... into %v\n", action.Meta.DestTable, source, dest)
+		shared.LogF("[%v] running query %v ... into %v\n", action.Meta.DestTable, source, dest)
 	}
-
 	return s.Post(ctx, job, action)
 }
 
@@ -78,9 +77,14 @@ type QueryRequest struct {
 	UseLegacy        bool
 	Append           bool
 	Dest             string
-	DML              bool
 	Template         string
 	destinationTable *bigquery.TableReference
+}
+
+//IsSelectQuery returns true if SELECT query
+func (r *QueryRequest) IsSelectQuery() bool {
+	SQL := strings.TrimSpace(r.SQL)
+	return strings.HasPrefix(strings.ToUpper(SQL), "SELECT")
 }
 
 //Init initialises request
@@ -96,6 +100,7 @@ func (r *QueryRequest) Init(projectID string, Action *task.Action) (err error) {
 			r.destinationTable.ProjectId = projectID
 		}
 	}
+
 	return nil
 }
 
@@ -130,7 +135,6 @@ func NewQueryAction(SQL string, dest *bigquery.TableReference, template string, 
 //NewDMLAction creates a new DML query request
 func NewDMLAction(SQL string, dest *bigquery.TableReference, template string, append bool, finally *task.Actions) *task.Action {
 	query := &QueryRequest{
-		DML:              true,
 		SQL:              SQL,
 		destinationTable: dest,
 		Append:           append,

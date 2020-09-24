@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/viant/bqtail/base"
+	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -17,7 +18,6 @@ func (s *service) Export(ctx context.Context, request *ExportRequest, action *ta
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
-
 	job := &bigquery.Job{
 		Configuration: &bigquery.JobConfiguration{
 			Extract: &bigquery.JobConfigurationExtract{
@@ -34,6 +34,9 @@ func (s *service) Export(ctx context.Context, request *ExportRequest, action *ta
 		job.Configuration.Extract.UseAvroLogicalTypes = *request.UseAvroLogicalTypes
 	}
 	job.JobReference = action.JobReference()
+	if shared.IsInfoLoggingLevel() {
+		shared.LogF("[%v] running export %v->%v\n", action.Meta.DestTable, request.Source, request.DestURL)
+	}
 	return s.Post(ctx, job, action)
 }
 

@@ -32,17 +32,16 @@ type Destination struct {
 	Partition string `json:"partition,omitempty"`
 	//Pattern uses URI relative path (without leading backslash)
 	bigquery.JobConfigurationLoad
-	Pattern          string           `json:",omitempty"`
-	Parameters       []*pattern.Param `json:",omitempty"`
-	compiled         *regexp.Regexp
-	Schema           Schema            `json:",omitempty"`
-	TransientDataset string            `json:",omitempty"`
-	Transient        *Transient        `json:",omitempty"`
-	UniqueColumns    []string          `json:",omitempty"`
-	Transform        map[string]string `json:",omitempty" description:"optional map of the source column to dest expression"`
-	SideInputs       []*SideInput      `json:",omitempty"`
-	Override         *bool
-
+	Pattern            string           `json:",omitempty"`
+	Parameters         []*pattern.Param `json:",omitempty"`
+	compiled           *regexp.Regexp
+	Schema             Schema            `json:",omitempty"`
+	TransientDataset   string            `json:",omitempty"`
+	Transient          *Transient        `json:",omitempty"`
+	UniqueColumns      []string          `json:",omitempty"`
+	Transform          map[string]string `json:",omitempty" description:"optional map of the source column to dest expression"`
+	SideInputs         []*SideInput      `json:",omitempty"`
+	Override           *bool
 	AllowFieldAddition bool   `json:",omitempty"`
 	Expiry             string `json:",omitempty"`
 }
@@ -82,21 +81,21 @@ func (d Destination) HasSplit() bool {
 //Clone clones destination
 func (d Destination) Clone() *Destination {
 	cloned := &Destination{
-		JobConfigurationLoad:d.JobConfigurationLoad,
-		Table:            d.Table,
-		Partition:        d.Partition,
-		Pattern:          d.Pattern,
-		Transform:        d.Transform,
-		Parameters:       d.Parameters,
-		compiled:         d.compiled,
-		Schema:           d.Schema,
-		TransientDataset: d.TransientDataset,
-		Transient:        d.Transient,
-		UniqueColumns:    d.UniqueColumns,
-		SideInputs:       d.SideInputs,
-		Override:         d.Override,
-		AllowFieldAddition:d.AllowFieldAddition,
-		Expiry: d.Expiry,
+		JobConfigurationLoad: d.JobConfigurationLoad,
+		Table:                d.Table,
+		Partition:            d.Partition,
+		Pattern:              d.Pattern,
+		Transform:            d.Transform,
+		Parameters:           d.Parameters,
+		compiled:             d.compiled,
+		Schema:               d.Schema,
+		TransientDataset:     d.TransientDataset,
+		Transient:            d.Transient,
+		UniqueColumns:        d.UniqueColumns,
+		SideInputs:           d.SideInputs,
+		Override:             d.Override,
+		AllowFieldAddition:   d.AllowFieldAddition,
+		Expiry:               d.Expiry,
 	}
 
 	if len(d.Transform) > 0 {

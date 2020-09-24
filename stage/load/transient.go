@@ -22,7 +22,7 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	tempRef, _ := base.NewTableReference(j.TempTable)
 	dropAction := bq.NewDropAction(j.ProjectID, base.EncodeTableReference(tempRef, false))
 	actions.FinalizeOnSuccess(dropAction)
-	dest := j.Rule.Dest.Clone()
+	dest := j.Rule.Dest
 	load := j.Load
 
 	destinationTable, _ := dest.CustomTableReference(j.DestTable, j.Source)
@@ -49,11 +49,9 @@ func (j Job) buildTransientActions(actions *task.Actions) (*task.Actions, error)
 	selectAll = strings.Replace(selectAll, "$WHERE", j.getDMLWhereClause(), 1)
 	partition := base.TablePartition(destinationTable.TableId)
 	destTemplate := ""
-
 	if dest.Schema.Template != "" {
 		destTemplate = dest.Schema.Template
 	}
-
 
 	if j.Rule.IsDMLCopy() {
 		j.addDMLCopy(load, destinationTable, dest, actions, result)

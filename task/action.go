@@ -19,6 +19,7 @@ import (
 //Action represents route action
 type Action struct {
 	Action         string                 `json:",omitempty"`
+	When           *When                  `json:",omitempty"`
 	Meta           *activity.Meta         `json:",omitempty"`
 	Request        map[string]interface{} `json:",omitempty"`
 	serviceRequest interface{}
@@ -27,11 +28,12 @@ type Action struct {
 
 //Clone clones actions
 func (a Action) Clone() *Action {
-	result :=  &Action{
+	result := &Action{
 		Action:         a.Action,
 		Meta:           a.Meta,
 		Request:        a.Request,
 		serviceRequest: a.serviceRequest,
+		When:           a.When,
 	}
 	if a.Actions != nil {
 		result.Actions = a.Actions.Clone()
@@ -145,6 +147,7 @@ func (a Action) Expand(root *stage.Process, expander data.Map) *Action {
 	}
 	var result = &Action{
 		Action: a.Action,
+		When:   a.When,
 	}
 	expanded := expander.Expand(a.Request)
 	result.Request = toolbox.AsMap(expanded)

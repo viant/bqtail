@@ -66,7 +66,7 @@ func RunWithRetriesOnRetryOrInternalError(f func() error) (err error) {
 	retry := NewRetry()
 	for i := 0; i < maxRetries; i++ {
 		err = f()
-		if !  (IsInternalError(err)  || IsRetryError(err)) {
+		if !(IsInternalError(err) || IsRetryError(err)) {
 			return err
 		}
 		time.Sleep(retry.Pause())

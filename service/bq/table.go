@@ -48,19 +48,27 @@ func (s *service) CreateTableIfNotExist(ctx context.Context, table *bigquery.Tab
 	if ref.ProjectId == "" {
 		ref.ProjectId = s.ProjectID
 	}
-	getTableCall := srv.Get(ref.ProjectId, ref.DatasetId, ref.TableId)
-	getTableCall.Context(ctx)
-	existing, err := getTableCall.Do()
-	if !base.IsNotFoundError(err) && !patchIfDifferent {
-		return nil
-	}
 
-	if existing != nil {
-		isEqual := isSchemaEqual(existing.Schema.Fields, table.Schema.Fields)
+	var currentTable *bigquery.Table
+	err := base.RunWithRetriesOnRetryOrInternalError(func() error {
+		var err error
+		getTableCall := srv.Get(ref.ProjectId, ref.DatasetId, ref.TableId)
+		getTableCall.Context(ctx)
+		currentTable, err = getTableCall.Do()
+		if err == nil || base.IsNotFoundError(err) {
+			return nil
+		}
+		return err
+	})
+	if currentTable != nil {
+		if !patchIfDifferent {
+			return nil
+		}
+		isEqual := isSchemaEqual(currentTable.Schema.Fields, table.Schema.Fields)
 		if isEqual {
 			return nil
 		}
-		patchable := isSchemaPatchable(existing.Schema.Fields, table.Schema.Fields)
+		patchable := isSchemaPatchable(currentTable.Schema.Fields, table.Schema.Fields)
 		if patchable {
 			if isEqual {
 				return nil

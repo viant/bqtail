@@ -10,6 +10,7 @@ type SideInput struct {
 	Table string
 	From  string
 	On    string
+	Inner bool
 	Alias string
 }
 
@@ -28,6 +29,9 @@ func (s SideInput) Validate(alias string) error {
 	}
 	if s.Alias == "" {
 		return errors.New("alias was empty")
+	}
+	if strings.Contains(s.On, "$") {
+		return nil
 	}
 	if strings.Count(s.On, alias+".") == 0 {
 		return errors.Errorf("on criteria missing reference to main table with '%v.' alias: %v", alias, s.On)

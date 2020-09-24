@@ -14,7 +14,6 @@ import (
 //Init initialises job
 func (j *Job) Init(ctx context.Context, service bq.Service) (err error) {
 	var tableReference *bigquery.TableReference
-
 	if j.DestTable != "" {
 		if tableReference, err = base.NewTableReference(j.DestTable); err != nil {
 			return err

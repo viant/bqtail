@@ -185,8 +185,8 @@ func (a *Actions) FinalizeOnSuccess(actions ...*Action) {
 	finalized := false
 	postActionCount := len(a.OnSuccess)
 outer:
-	for i := 0; i < postActionCount;  i++ {
-		action := a.OnSuccess[postActionCount - (i+1)]
+	for i := 0; i < postActionCount; i++ {
+		action := a.OnSuccess[postActionCount-(i+1)]
 		switch postActionCount {
 		case 1:
 			if action.Action == shared.ActionQuery || action.Action == shared.ActionExport || action.Action == shared.ActionCopy {

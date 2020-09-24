@@ -93,7 +93,7 @@ func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window) (*J
 	expander := process.Expander(URIs)
 	process.DestTable = expander.ExpandAsText(process.DestTable)
 	process.Params[shared.EventIDKey] = process.EventID
-	job.Load, err =  dest.NewJobConfigurationLoad(process.Source, URIs...)
+	job.Load, err = dest.NewJobConfigurationLoad(process.Source, URIs...)
 	return job, err
 }
 

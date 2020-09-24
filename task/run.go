@@ -25,6 +25,7 @@ func RunAll(ctx context.Context, registry Registry, actions []*Action) (bool, er
 			runRequest := expandable.Expand(actions[i].Request)
 			actions[i].Request = toolbox.AsMap(runRequest)
 		}
+
 		if taskResponse, err = Run(ctx, registry, actions[i]); err != nil {
 			if !retriable {
 				retriable = base.IsRetryError(err)
@@ -33,6 +34,19 @@ func RunAll(ctx context.Context, registry Registry, actions []*Action) (bool, er
 		}
 	}
 	return retriable, nil
+}
+
+func canRun(ctx context.Context, when *When, registry Registry) (bool, error) {
+	if when == nil || when.Exists == "" {
+		return true, nil
+	}
+	exists, err := Run(ctx, registry, &Action{
+		Action: shared.ActionTableExists,
+		Request: map[string]interface{}{
+			"table": when.Exists,
+		},
+	})
+	return toolbox.AsBoolean(exists), err
 }
 
 //Run execute supplied actions
@@ -57,6 +71,13 @@ func RunWithService(ctx context.Context, registry Registry, serviceName string, 
 	service, err := registry.Service(serviceName)
 	if err != nil {
 		return nil, err
+	}
+	shallRun, cErr := canRun(ctx, request.When, registry)
+	if cErr != nil {
+		return false, cErr
+	}
+	if !shallRun {
+		return nil, nil
 	}
 	if shared.IsDebugLoggingLevel() {
 		shared.LogLn(request)

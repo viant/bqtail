@@ -125,7 +125,6 @@ func TestJob_NewLoadRequest(t *testing.T) {
 		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
-
 		_, action := job.NewLoadRequest()
 		if !assertly.AssertValues(t, useCase.expect, action, useCase.description) {
 			toolbox.DumpIndent(action, true)

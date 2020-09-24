@@ -19,7 +19,7 @@ pipeline:
   set_sdk:
     action: sdk.set
     target: $target
-    sdk: go:1.14
+    sdk: go:1.15
 
   deploy:
     checkOut:
@@ -57,7 +57,7 @@ pipeline:
       public: true
       '@name': $functionName
       entryPoint: Monitor
-      runtime: go111
+      runtime: go113
       availableMemoryMb: 256
       timeout: 540s
       serviceAccountEmail: $serviceAccount

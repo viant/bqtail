@@ -9,7 +9,7 @@ For each source datafile an event is triggered to local BqTail process.
 Since BigQuery Load API accepts URI that is valid Google Cloud Storage location, all data events also needs to be valid GCS locations.
 
 Data event can be **trigger directly** to the bqtail process if source URL is valid Google Cloud Storage URL and source path matches bucket and rule filter.
-Otherwise all files are copied from sourceURL to gs://${bucket}/$filterPath, and then event is fired.
+Otherwise all files get copied from sourceURL to gs://${bucket}/$filterPath, and then an event gets fired.
 **$filterPath** can be derived from source path when it matches rule filter, or constructed from rule prefix and pattern.
 
 In **direct eventing mode** all data source files are govern by BqTail ingestion rule. For example if rule uses batching window, 
@@ -27,8 +27,8 @@ By default only streaming mode stores history file in file:///${env.HOME}/.bqtai
 
 
 ```bash
-wget https://github.com/viant/bqtail/releases/download/v2.6.0/bqtail_osx_2.6.0.tar.gz
-tar -xvzf bqtail_osx_2.6.0.tar.gz
+wget https://github.com/viant/bqtail/releases/download/v2.7.0/bqtail_osx_2.7.0.tar.gz
+tar -xvzf bqtail_osx_2.7.0.tar.gz
 cp bqtail /usr/local/bin/
 ```
 
@@ -36,8 +36,8 @@ cp bqtail /usr/local/bin/
 ##### Linux
 
 ```bash
-wget https://github.com/viant/bqtail/releases/download/v2.6.0/bqtail_linux_2.6.0.tar.gz
-tar -xvzf bqtail_linux_2.6.0.tar.gz
+wget https://github.com/viant/bqtail/releases/download/v2.7.0/bqtail_linux_2.7.0.tar.gz
+tar -xvzf bqtail_linux_2.7.0.tar.gz
 cp bqtail /usr/local/bin/
 ```
 

@@ -1,0 +1,28 @@
+When:
+  Prefix: /data/case047/
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_v047
+  Transient:
+    Dataset: temp
+
+Batch:
+  RollOver: true
+  MultiPath: true
+  Window:
+    DurationInSec: 15
+Async: true
+OnSuccess:
+  - Action: query
+    When:
+      Exists: bqtail.dummy_dep2_v047
+    Request:
+      SQL: SELECT * FROM $TempTable
+      Dest: bqtail.dummy_dep2_v047
+  - Action: query
+    When:
+      Exists: bqtail.dummy_dep1_v047
+    Request:
+      SQL: SELECT * FROM $TempTable
+      Dest: bqtail.dummy_dep1_v047
+  - Action: delete
