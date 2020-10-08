@@ -1,3 +1,7 @@
+## September 24 2020 2.8.0
+ * Added Template attribute to the copy action
+ * Added Date based on the source global expanding variable
+
 ## September 24 2020 2.7.0
  * Introduced conditional action execution (When.Exists for now)
  * Extended SiteInput with Inner bool flag for INNER JOIN (default LEFT JOIN)

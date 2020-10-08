@@ -22,6 +22,7 @@ type Rule struct {
 	Dest                  *Destination   `json:",omitempty"`
 	When                  matcher.Basic  `json:",omitempty"`
 	Batch                 *Batch         `json:",omitempty"`
+	OnLoad                *task.Action   `json:",omitempty"`
 	OnSuccess             []*task.Action `json:",omitempty"`
 	OnFailure             []*task.Action `json:",omitempty"`
 	Async                 bool           `json:",omitempty"`

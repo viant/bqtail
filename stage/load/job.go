@@ -13,6 +13,7 @@ import (
 	"github.com/viant/bqtail/tail/config"
 	"github.com/viant/bqtail/task"
 	"google.golang.org/api/bigquery/v2"
+	"time"
 )
 
 //Job represents a tail jobID
@@ -93,6 +94,17 @@ func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window) (*J
 	expander := process.Expander(URIs)
 	process.DestTable = expander.ExpandAsText(process.DestTable)
 	process.Params[shared.EventIDKey] = process.EventID
+
+	source := process.Source
+	if window != nil {
+		source = window.Source
+	}
+	if source == nil {
+		source = &stage.Source{Time: time.Now()}
+	}
+	if _, ok := process.Params[shared.DateKey]; !ok {
+		process.Params[shared.DateKey] = source.Time.Format(shared.DateSuffixLayout)
+	}
 	job.Load, err = dest.NewJobConfigurationLoad(process.Source, URIs...)
 	return job, err
 }

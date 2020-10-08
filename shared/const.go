@@ -105,6 +105,12 @@ const (
 	//EventIDKey event ID key
 	EventIDKey = "EventID"
 
+	//DateKey date key
+	DateKey = "Date"
+
+	//DateSuffixLayout date layout suffix
+	DateSuffixLayout = "20060102"
+
 	//ResponseKey response key
 	ResponseKey = "Response"
 
