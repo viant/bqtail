@@ -17,6 +17,9 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
+	if request.Template != "" {
+		s.createFromTemplate(ctx, request.Template, request.destinationTable)
+	}
 	job := &bigquery.Job{
 		Configuration: &bigquery.JobConfiguration{
 			Copy: &bigquery.JobConfigurationTableCopy{
@@ -49,12 +52,12 @@ type CopyRequest struct {
 	sourceTable      *bigquery.TableReference
 	Dest             string
 	destinationTable *bigquery.TableReference
+	Template         string
 }
 
 //Init initialises a copy request
 func (r *CopyRequest) Init(projectID string, activity *task.Action) (err error) {
 	activity.Meta.GetOrSetProject(projectID)
-
 	if r.Source != "" {
 		if r.sourceTable, err = base.NewTableReference(r.Source); err != nil {
 			return err
