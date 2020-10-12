@@ -18,7 +18,11 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 		return nil, err
 	}
 	if request.Template != "" {
-		s.createFromTemplate(ctx, request.Template, request.destinationTable)
+		if err := base.RunWithRetries(func() error {
+			return  s.createFromTemplate(ctx, request.Template, request.destinationTable)
+		}); err != nil {
+			return nil, err
+		}
 	}
 	job := &bigquery.Job{
 		Configuration: &bigquery.JobConfiguration{
@@ -33,10 +37,11 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 	} else {
 		job.Configuration.Copy.WriteDisposition = "WRITE_TRUNCATE"
 	}
-	job.Configuration.Copy.CreateDisposition = "CREATE_IF_NEEDED"
+	if request.Template == "" {
+		job.Configuration.Copy.CreateDisposition = "CREATE_IF_NEEDED"
+	}
 	s.adjustRegion(ctx, action, job.Configuration.Copy.DestinationTable)
 	job.JobReference = action.JobReference()
-
 	if shared.IsInfoLoggingLevel() {
 		source := base.EncodeTableReference(job.Configuration.Copy.SourceTable, true)
 		dest := base.EncodeTableReference(job.Configuration.Copy.DestinationTable, true)

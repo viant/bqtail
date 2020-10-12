@@ -1,0 +1,28 @@
+When:
+  Prefix: /data/case034
+  Suffix: .json
+Async: true
+Dest:
+  Table: bqtail.dummy_v048_${EventID}
+  Schema:
+    Template: bqtail.dummy_v048
+  Transient:
+    Dataset: temp
+OnSuccess:
+  - Action: copy
+    Request:
+      Source: bqtail.dummy_v048_${EventID}
+      Dest: bqtail.dummy_v048
+      Append: true
+    OnSuccess:
+    - Action: copy
+      Request:
+        Source: bqtail.dummy_v048_${EventID}
+        Dest: bqtail.dummy_v048_${Date}
+        Template: bqtail.dummy_v048_transient
+        Append: true
+      OnSuccess:
+        - Action: drop
+          Request:
+            Table: bqtail.dummy_v048_${EventID}
+        - Action: delete
