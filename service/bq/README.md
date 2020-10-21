@@ -46,7 +46,7 @@ When MultiPartition flag is set, data is copied per each paritition individually
 with the following variable are present:
 
 - DollarSign: expend to $
-- PartitionID: expand to parition_id
+- PartitionID: expand to partition_id
 
 
 #### query

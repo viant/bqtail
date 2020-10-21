@@ -26,11 +26,11 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 		if index := strings.Index(tableId, "$"); index != -1 {
 			tableId = tableId[:index]
 		}
-		SQL := fmt.Sprintf("SELECT partition_id FROM [%v:%v.%v$__PARTITIONS_SUMMARY__] WHERE partition_id NOT IN('__NULL__') ORDER BY 1",
-			source.ProjectId,
-			source.DatasetId,
-			tableId)
-		records, err := s.fetchAll(ctx, source.ProjectId, true, SQL)
+
+		SQL := s.getPartitionSQL(source, tableId, request)
+
+		isLegacy := strings.Contains(SQL, "[") || strings.Contains(SQL, "]")
+		records, err := s.fetchAll(ctx, source.ProjectId, isLegacy, SQL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to run SQL: %v, %w", SQL, err)
 		}
@@ -55,6 +55,22 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 	}
 
 	return s.copy(ctx, request, action)
+}
+
+func (s *service) getPartitionSQL(source *bigquery.TableReference, tableId string, request *CopyRequest) string {
+	if request.PartitionSQL != "" {
+		aMap := data.NewMap()
+		aMap.Put("Source.ProjectID", source.ProjectId)
+		aMap.Put("Source.DatasetID", source.DatasetId)
+		aMap.Put("Source.TableID", source.TableId)
+		return aMap.ExpandAsText(request.PartitionSQL)
+	}
+	SQL := fmt.Sprintf("SELECT partition_id FROM [%v:%v.%v$__PARTITIONS_SUMMARY__] WHERE partition_id NOT IN('__NULL__') ORDER BY 1",
+		source.ProjectId,
+		source.DatasetId,
+		tableId)
+	fmt.Printf("%v\n", request.PartitionSQL)
+	return SQL
 }
 
 func (s *service) copy(ctx context.Context, request *CopyRequest, action *task.Action) (*bigquery.Job, error) {
@@ -101,7 +117,9 @@ type CopyRequest struct {
 	destinationTable *bigquery.TableReference
 	Template         string
 	MultiPartition   bool
+	PartitionSQL string //SQL returning  records with partition_id column
 }
+
 
 //Clone clones copy request with partition
 func (r *CopyRequest) Clone(partitionID string) *CopyRequest {
