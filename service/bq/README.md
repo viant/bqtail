@@ -42,6 +42,11 @@ When use with dispatch service, source value is populated from event destination
 }
 ```
 
+When MultiPartition flag is set, data is copied per each paritition individually
+with the following variable are present:
+
+- DollarSign: expend to $
+- PartitionID: expand to parition_id
 
 
 #### query
