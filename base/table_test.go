@@ -42,6 +42,14 @@ func TestEncodeTableReference(t *testing.T) {
 			},
 		},
 		{
+			description: "dataset and table with partition",
+			input:       "dataset.table$test",
+			expect: &bigquery.TableReference{
+				DatasetId: "dataset",
+				TableId:   "table$test",
+			},
+		},
+		{
 			description: "invalid table",
 			input:       "table",
 			hasError:    true,

@@ -11,8 +11,7 @@ import (
 	"time"
 )
 
-func (s *service) fetchAll(ctx context.Context, projectID string, SQL string) ([]map[string]bigquery.JsonValue, error) {
-	useLegacy := false
+func (s *service) fetchAll(ctx context.Context, projectID string, useLegacy bool, SQL string) ([]map[string]bigquery.JsonValue, error) {
 	job := &bigquery.Job{
 		Configuration: &bigquery.JobConfiguration{
 			Query: &bigquery.JobConfigurationQuery{

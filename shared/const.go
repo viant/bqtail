@@ -127,6 +127,13 @@ const (
 	MaxRetriesEnvKey = "MAX_RETRIES"
 )
 
+const (
+	//PartitionIDExpr dynamically expand with partition_id value
+	PartitionIDExpr = "PartitionID"
+	//DollarSign represents dolar sign
+	DollarSign = "DollarSign"
+)
+
 //BigQuery job status
 const (
 	//DoneState done status

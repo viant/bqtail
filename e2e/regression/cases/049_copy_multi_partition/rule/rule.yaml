@@ -1,0 +1,21 @@
+When:
+  Prefix: /data/case034
+  Suffix: .json
+Async: true
+Dest:
+  Table: bqtail.dummy_v049_${EventID}
+  Schema:
+    Template: bqtail.dummy_v049
+  Transient:
+    Dataset: temp
+OnSuccess:
+  - Action: copy
+    Request:
+      Source: bqtail.dummy_v049_${EventID}${DollarSign}${PartitionID}
+      Dest: bqtail.dummy_v049_${PartitionID}${DollarSign}${PartitionID}
+      MultiPartition: true
+    OnSuccess:
+      - Action: drop
+        Request:
+          Table: bqtail.dummy_v049_${EventID}
+      - Action: delete

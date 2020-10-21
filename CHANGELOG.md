@@ -1,3 +1,6 @@
+## September 20 2020 2.9.0
+ * Added Copy.MultiPartition to copy with $PartitionID
+
 ## September 24 2020 2.8.0
  * Added Template attribute to the copy action
  * Added Date based on the source global expanding variable
