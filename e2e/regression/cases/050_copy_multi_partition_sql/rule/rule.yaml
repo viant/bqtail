@@ -1,0 +1,22 @@
+When:
+  Prefix: /data/case034
+  Suffix: .json
+Async: true
+Dest:
+  Table: bqtail.dummy_v050_${EventID}
+  Schema:
+    Template: bqtail.dummy_v050
+  Transient:
+    Dataset: temp
+OnSuccess:
+  - Action: copy
+    Request:
+      Source: bqtail.dummy_v050_${EventID}${DollarSign}${PartitionID}
+      Dest: bqtail.dummy_v050_${PartitionID}${DollarSign}${PartitionID}
+      MultiPartition: true
+      PartitionSQL: SELECT partition_id FROM [${Source.ProjectID}:${Source.DatasetID}.${Source.TableID}$__PARTITIONS_SUMMARY__]  WHERE partition_id NOT IN('__NULL__')
+    OnSuccess:
+      - Action: drop
+        Request:
+          Table: bqtail.dummy_v050_${EventID}
+      - Action: delete

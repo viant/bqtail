@@ -60,9 +60,9 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 func (s *service) getPartitionSQL(source *bigquery.TableReference, tableId string, request *CopyRequest) string {
 	if request.PartitionSQL != "" {
 		aMap := data.NewMap()
-		aMap.Put("Source.ProjectID", source.ProjectId)
-		aMap.Put("Source.DatasetID", source.DatasetId)
-		aMap.Put("Source.TableID", source.TableId)
+		aMap.SetValue("Source.ProjectID", source.ProjectId)
+		aMap.SetValue("Source.DatasetID", source.DatasetId)
+		aMap.SetValue("Source.TableID", base.TableID(source.TableId))
 		return aMap.ExpandAsText(request.PartitionSQL)
 	}
 	SQL := fmt.Sprintf("SELECT partition_id FROM [%v:%v.%v$__PARTITIONS_SUMMARY__] WHERE partition_id NOT IN('__NULL__') ORDER BY 1",
