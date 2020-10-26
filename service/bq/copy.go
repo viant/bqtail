@@ -6,6 +6,7 @@ import (
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/task"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"google.golang.org/api/bigquery/v2"
 	"strings"
@@ -19,7 +20,6 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
-
 	if request.MultiPartition {
 		source := request.sourceTable
 		tableId := source.TableId
@@ -28,27 +28,39 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 		}
 
 		SQL := s.getPartitionSQL(source, tableId, request)
-
 		isLegacy := strings.Contains(SQL, "[") || strings.Contains(SQL, "]")
 		records, err := s.fetchAll(ctx, source.ProjectId, isLegacy, SQL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to run SQL: %v, %w", SQL, err)
 		}
 		var job *bigquery.Job
-		onSuccess := action.OnSuccess
-		action.OnSuccess = nil
+		var onSuccess []*task.Action
+		if action != nil {
+			onSuccess = action.OnSuccess
+			action.OnSuccess = nil
+		}
+		shared.LogF("[%v] copy.partitions %+v from %v\n", action.Meta.DestTable, records , SQL)
+		if len(records) == 0 {
+			return nil, nil
+		}
 		for i, record := range records {
 			isLast := i == len(records)-1
 			partitionID, ok := record["partition_id"]
 			if !ok {
-				return nil, fmt.Errorf("failed get parition id  run SQL: %v, record: %w", SQL, record)
+				return nil, fmt.Errorf("failed get parition id  run SQL: %v, record: %v", SQL, record)
 			}
-			action := action.Clone()
-			action.Meta.Step += i * 100
-			if isLast {
-				action.OnSuccess = onSuccess
+			var partitionAction *task.Action
+			if action != nil {
+				partitionAction = action.Clone()
 			}
-			job, err = s.copy(ctx, request.Clone(partitionID.(string)), action)
+			if isLast && partitionAction != nil  {
+				partitionAction.Meta.Step += i * 100
+				partitionAction.OnSuccess = onSuccess
+			}
+			job, err = s.copy(ctx, request.Clone(toolbox.AsString(partitionID)), partitionAction)
+			if err != nil {
+				return nil, err
+			}
 		}
 		return job, err
 
