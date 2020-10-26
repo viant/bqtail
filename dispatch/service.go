@@ -137,7 +137,7 @@ func (s *service) listProjectEvents(ctx context.Context) ([]*project.Events, err
 	addEvents(s.config.ProjectID, events, registry)
 	for _, obj := range events {
 		if obj.IsDir() && strings.HasPrefix(obj.Name(), shared.TempProjectPrefix) {
-			projectRegion := string(obj.Name()[len(shared.TempProjectPrefix):])
+			projectRegion := obj.Name()[len(shared.TempProjectPrefix):]
 			projectEvents, err := s.fs.List(ctx, obj.URL())
 			if err != nil {
 				return nil, err
@@ -153,8 +153,37 @@ func addEvents(projectID string, events []astorage.Object, registry *project.Reg
 		if event.IsDir() {
 			continue
 		}
+		if path.Ext(event.Name()) == shared.WindowExt {
+			destProject := extractBatchDestProject(event)
+			if destProject == "" {
+				destProject = projectID
+			}
+			if destProject == "" {
+				destProject = projectID
+			}
+			registry.Add(destProject+"/batching", events[i])
+			continue
+		}
 		registry.Add(projectID, events[i])
 	}
+}
+
+func extractBatchDestProject(event astorage.Object) string {
+	URL := event.URL()
+	if index := strings.Index(URL, "/Tasks/"); index != -1 {
+		project := URL[index+7:]
+		if index := strings.Index(project, ":"); index != -1 {
+			if project = project[:index]; project != "" {
+				return project
+			}
+		}
+		if index := strings.Index(project, "."); index != -1 {
+			if project = project[:index]; project != "" {
+				return project
+			}
+		}
+	}
+	return ""
 }
 
 func (s *service) wait(ctx context.Context, startTime time.Time, waitGroup *sync.WaitGroup, running *int32, remaining *time.Duration) bool {
@@ -390,6 +419,7 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 			err = e
 			continue
 		}
+
 		if time.Now().After(dueTime.Add(shared.StorageListVisibilityDelay * time.Millisecond)) {
 			if !s.canNotify(shared.ActionLoad, perf) {
 				continue
