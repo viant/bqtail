@@ -17,13 +17,12 @@ func LoadProjectPerformance(ctx context.Context, fs afs.Service, config *base.Co
 	if ok, _ := fs.Exists(ctx, URL); !ok {
 		return nil, nil
 	}
-	reader, err := fs.DownloadWithURL(ctx, URL)
+	data, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
 	result := disp.ProjectPerformance{}
-	err = json.NewDecoder(reader).Decode(&result)
+	err = json.Unmarshal(data, &result)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode performance")
 	}

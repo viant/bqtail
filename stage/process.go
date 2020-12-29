@@ -17,6 +17,7 @@ type Process struct {
 	DoneProcessURL string                 `json:",omitempty"`
 	FailedURL      string                 `json:",omitempty"`
 	RuleURL        string                 `json:",omitempty"`
+	GroupURL       string                 `json:",omitempty"`
 	EventID        string                 `json:",omitempty"`
 	ProjectID      string                 `json:",omitempty"`
 	Region         string                 `json:",omitempty"`

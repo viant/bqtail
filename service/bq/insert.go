@@ -17,9 +17,9 @@ type InsertRequest struct {
 	ProjectId string
 	Dest      string
 
-	Template string
-	Data     []map[string]bigquery.JsonValue
-	SQL      string
+	Template  string
+	Data      []map[string]bigquery.JsonValue
+	SQL       string
 	UseLegacy bool
 }
 
@@ -32,7 +32,7 @@ func (s *service) Insert(ctx context.Context, request *InsertRequest, action *ta
 	s.initInsertRequest(action, request, tableRef)
 
 	if request.SQL != "" {
-		if request.Data, err = s.fetchAll(ctx, request.ProjectId, request.UseLegacy,  request.SQL); err != nil {
+		if request.Data, err = s.fetchAll(ctx, request.ProjectId, request.UseLegacy, request.SQL); err != nil {
 			return nil, err
 		}
 	}

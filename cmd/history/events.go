@@ -10,7 +10,6 @@ import (
 	"github.com/viant/afs/option"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
-	"io/ioutil"
 )
 
 //Events represents history events
@@ -67,12 +66,7 @@ func FromURL(ctx context.Context, URL string, fs afs.Service) (*Events, error) {
 		return New(URL), nil
 	}
 	events := &Events{}
-	reader, err := fs.DownloadWithURL(ctx, URL)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-	data, err := ioutil.ReadAll(reader)
+	data, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read: %v", URL)
 	}

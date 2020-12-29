@@ -1,3 +1,8 @@
+## December 30 2020 2.10.0
+ * Added batch grouping
+ * Updated error GCE internal errors handling
+ * Updated contract with afs
+ 
 ## September 20 2020 2.9.0
  * Added Copy.MultiPartition to copy with $PartitionID
 

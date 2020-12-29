@@ -39,7 +39,7 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 			onSuccess = action.OnSuccess
 			action.OnSuccess = nil
 		}
-		shared.LogF("[%v] copy.partitions %+v from %v\n", action.Meta.DestTable, records , SQL)
+		shared.LogF("[%v] copy.partitions %+v from %v\n", action.Meta.DestTable, records, SQL)
 		if len(records) == 0 {
 			return nil, nil
 		}
@@ -53,7 +53,7 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 			if action != nil {
 				partitionAction = action.Clone()
 			}
-			if isLast && partitionAction != nil  {
+			if isLast && partitionAction != nil {
 				partitionAction.Meta.Step += i * 100
 				partitionAction.OnSuccess = onSuccess
 			}
@@ -129,9 +129,8 @@ type CopyRequest struct {
 	destinationTable *bigquery.TableReference
 	Template         string
 	MultiPartition   bool
-	PartitionSQL string //SQL returning  records with partition_id column
+	PartitionSQL     string //SQL returning  records with partition_id column
 }
-
 
 //Clone clones copy request with partition
 func (r *CopyRequest) Clone(partitionID string) *CopyRequest {

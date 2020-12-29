@@ -10,8 +10,7 @@ replay
 replay/
 node_modules
 main
-go.mod
-go.sum
+vendor
 local.go
 local_test.go
 cmd

@@ -96,12 +96,9 @@ func (r *Ruleset) ReloadIfNeeded(ctx context.Context, fs afs.Service) (bool, err
 }
 
 func (r *Ruleset) loadRule(ctx context.Context, storage afs.Service, URL string) ([]*Rule, error) {
-	reader, err := storage.DownloadWithURL(ctx, URL)
-	defer func() {
-		_ = reader.Close()
-	}()
+	data, err := storage.DownloadWithURL(ctx, URL)
 	rules := make([]*Rule, 0)
-	err = json.NewDecoder(reader).Decode(&rules)
+	err = json.Unmarshal(data, &rules)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode: %v", URL)
 	}

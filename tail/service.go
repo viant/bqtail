@@ -11,6 +11,7 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	astorage "github.com/viant/afs/storage"
+	"github.com/viant/afs/sync"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
 	"github.com/viant/bqtail/auth"
@@ -32,10 +33,8 @@ import (
 	"github.com/viant/bqtail/tail/contract"
 	"github.com/viant/bqtail/tail/status"
 	"github.com/viant/bqtail/task"
-	"github.com/viant/toolbox"
 	"google.golang.org/api/bigquery/v2"
 	goption "google.golang.org/api/option"
-	"io/ioutil"
 	"strings"
 	"time"
 )
@@ -241,34 +240,12 @@ func (s *service) moveToRetryLocation(response *contract.Response, request *cont
 }
 
 func (s *service) canRetryEvent(ctx context.Context, errorCounterURL string, response *contract.Response) bool {
-	counter, err := s.getCounterAndIncrease(ctx, errorCounterURL)
+	counter := sync.NewCounter(errorCounterURL, s.fs)
+	count, err := counter.Increment(ctx)
 	if err != nil {
 		response.CounterError = err.Error()
 	}
-	return counter < s.config.MaxRetries
-}
-
-func (s *service) getCounterAndIncrease(ctx context.Context, URL string) (int, error) {
-	ok, _ := s.fs.Exists(ctx, URL, option.NewObjectKind(true))
-	counter := 0
-	if ok {
-		reader, err := s.fs.DownloadWithURL(ctx, URL)
-		if err != nil {
-			return 0, errors.Wrapf(err, "failed to download counter :%v", URL)
-		}
-		data, err := ioutil.ReadAll(reader)
-		if err != nil {
-			return 0, errors.Wrapf(err, "failed to read counter :%v", URL)
-		}
-		counter = toolbox.AsInt(string(data))
-
-	}
-	counter++
-	err := s.fs.Upload(ctx, URL, file.DefaultFileOsMode, strings.NewReader(fmt.Sprintf("%v", counter)))
-	if err != nil {
-		return counter, errors.Wrapf(err, "failed to update counter: %v", URL)
-	}
-	return counter, nil
+	return count < s.config.MaxRetries
 }
 
 func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*stage.Process, error) {
@@ -340,7 +317,7 @@ func (s *service) runLoadProcess(ctx context.Context, request *contract.Request,
 }
 
 func (s *service) tailIndividually(ctx context.Context, process *stage.Process, rule *config.Rule, response *contract.Response) (*load.Job, error) {
-	job, err := load.NewJob(rule, process, nil)
+	job, err := load.NewJob(rule, process, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -506,8 +483,12 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	if err != nil || len(window.URIs) == 0 {
 		return nil, err
 	}
-	s.logBatchInfo(ctx, window)
-	loadJob, jobErr := load.NewJob(rule, window.Process, window)
+	_ = s.logBatchInfo(ctx, window)
+	group, err := s.loadGroup(ctx, rule, window)
+	if err != nil {
+		return nil, err
+	}
+	loadJob, jobErr := load.NewJob(rule, window.Process, window, group)
 	if jobErr != nil {
 		return nil, jobErr
 	}
@@ -517,6 +498,13 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	}
 	loadJob, err = s.submitJob(ctx, loadJob, response)
 	return loadJob, err
+}
+
+func (s *service) loadGroup(ctx context.Context, rule *config.Rule, window *batch.Window) (*batch.Group, error) {
+	if rule.Batch.Group == nil {
+		return nil, nil
+	}
+	return s.batch.AcquireGroup(ctx, window.Process, rule)
 }
 
 func (s *service) tryRecover(ctx context.Context, job *load.Job, response *contract.Response) error {

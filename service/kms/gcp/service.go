@@ -10,7 +10,6 @@ import (
 	"github.com/viant/bqtail/service/kms"
 	"google.golang.org/api/cloudkms/v1"
 	"google.golang.org/api/option"
-	"io/ioutil"
 )
 
 type service struct {
@@ -18,12 +17,10 @@ type service struct {
 }
 
 func (s *service) downloadBase64(ctx context.Context, URL string) (string, error) {
-	reader, err := s.Service.DownloadWithURL(ctx, URL)
+	data, err := s.Service.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return "", err
 	}
-	defer func() { _ = reader.Close() }()
-	data, err := ioutil.ReadAll(reader)
 	_, err = base64.StdEncoding.DecodeString(string(data))
 	if err == nil {
 		return string(data), nil

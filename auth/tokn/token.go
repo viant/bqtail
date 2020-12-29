@@ -9,7 +9,6 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"golang.org/x/oauth2"
-	"io/ioutil"
 	"time"
 )
 
@@ -48,12 +47,10 @@ func FromURL(ctx context.Context, URL string, fs afs.Service) (*Token, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to check token: %v", URL)
 	}
-	reader, err := fs.DownloadWithURL(ctx, URL)
+	data, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get token: %v", URL)
 	}
-	defer reader.Close()
-	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read token: %v", URL)
 	}

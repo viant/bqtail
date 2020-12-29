@@ -12,12 +12,13 @@ import (
 func TestField_AdjustType(t *testing.T) {
 
 	var useCases = []struct {
-		description string
-		field       *Field
-		expectType  string
-		location    string
-		assets      []*asset.Resource
-		hasError    bool
+		description  string
+		field        *Field
+		expectType   string
+		expectedMode string
+		location     string
+		assets       []*asset.Resource
+		hasError     bool
 	}{
 		{
 			description: "string type",
@@ -97,7 +98,7 @@ func TestField_AdjustType(t *testing.T) {
 		},
 
 		{
-			description: "unsupported yey type",
+			description: "repeated  type",
 			location:    "mem://localhost/status/field/case004",
 			field: &Field{
 				Name:     "value",
@@ -105,7 +106,7 @@ func TestField_AdjustType(t *testing.T) {
 				Row:      1,
 				Type:     "",
 			},
-			hasError: true,
+			//hasError: true,
 			assets: []*asset.Resource{
 				{
 					Name: "data.json",
@@ -114,6 +115,8 @@ func TestField_AdjustType(t *testing.T) {
 {"id": 103, "name": "dummy 3", "type_id": 1}`),
 				},
 			},
+			expectType:   "INT64",
+			expectedMode: "REPEATED",
 		},
 	}
 
@@ -138,6 +141,7 @@ func TestField_AdjustType(t *testing.T) {
 			continue
 		}
 		assert.Equal(t, useCase.expectType, useCase.field.Type, useCase.description)
+		assert.Equal(t, useCase.expectedMode, useCase.field.Mode, useCase.description)
 
 	}
 

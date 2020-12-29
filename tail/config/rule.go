@@ -27,12 +27,21 @@ type Rule struct {
 	OnFailure             []*task.Action `json:",omitempty"`
 	Async                 bool           `json:",omitempty"`
 	Info                  base.Info      `json:",omitempty"`
-	Group                 string         `json:",omitempty"`
-	StalledThresholdInSec int            `description:"duration after which unprocess file will be flag as error"`
+	StalledThresholdInSec int            `description:"duration after which unprocessed file will be flag as error"`
 	CorruptedFileURL      string         `json:",omitempty"`
 	InvalidSchemaURL      string         `json:",omitempty"`
 	CounterURL            string         `json:",omitempty"`
 	MaxReload             *int           `json:",omitempty"`
+}
+
+//Name returns rule name derived from name
+func (r Rule) Name() string {
+	_, name := url.Split(r.Info.URL, file.Scheme)
+	idx := strings.LastIndex(name, ".")
+	if idx != -1 {
+		name = name[:idx]
+	}
+	return name
 }
 
 //StalledDuration returns stalled duration

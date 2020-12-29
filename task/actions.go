@@ -75,11 +75,11 @@ func loadResource(ctx context.Context, action *Action, fs afs.Service, dataKey, 
 	if bodyURL == "" {
 		return nil
 	}
-	body, err := load(ctx, fs, bodyURL)
+	data, err := fs.DownloadWithURL(ctx, bodyURL)
 	if err != nil {
 		return err
 	}
-	action.Request[dataKey] = body
+	action.Request[dataKey] = string(data)
 	return nil
 }
 
@@ -106,8 +106,6 @@ func (a Actions) ToRun(err error, job *base.Job) []*Action {
 	}
 
 	for i := range toRun {
-		//childInfo := a.Meta.ChildInfo(toRun[i].Action, i+1)
-		//toRun[i].Request[shared.JobIDKey] = childInfo.GetJobID()
 		if toRun[i].Action == shared.ActionNotify || toRun[i].Action == shared.ActionCall {
 			if responseJSON, err := json.Marshal(a); err == nil {
 				toRun[i].Request[shared.ResponseKey] = string(responseJSON)

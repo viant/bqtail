@@ -8,17 +8,22 @@ import (
 )
 
 //backend errors states that retries may solve error but actually it never does.
-const backendError = "backendError"
-const internalError = "internal error"
-const noFound = "Not found"
-const accessDenied = "Error 403"
-const resetError = "connection reset by peer"
-const timeoutError = "connection timed out"
-const eofError = "unexpected EOF"
-const rateLimit = "Exceeded rate limits"
+const (
+	backendError           = "backendError"
+	internalError          = "internal error"
+	internalServerResponse = "Internal Server Error"
+	error500               = "Error 500"
+	code500                = "code 500"
+	noFound                = "Not found"
+	accessDenied           = "Error 403"
+	resetError             = "connection reset by peer"
+	timeoutError           = "connection timed out"
+	eofError               = "unexpected EOF"
+	rateLimit              = "Exceeded rate limits"
 
-//TableFragment table fragment
-const TableFragment = "Table"
+	//TableFragment table fragment
+	TableFragment = "Table"
+)
 
 //IsRetryError returns true if backend error
 func IsRetryError(err error) bool {
@@ -59,7 +64,8 @@ func IsInternalError(err error) bool {
 		}
 	}
 	message := err.Error()
-	return strings.Contains(message, internalError)
+	return strings.Contains(message, internalError) || strings.Contains(message, internalServerResponse) ||
+		strings.Contains(message, error500) || strings.Contains(message, code500)
 }
 
 //IsNotFoundError returns true if not found storage error

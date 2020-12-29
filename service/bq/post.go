@@ -36,7 +36,7 @@ func (s *service) schedulePostTask(ctx context.Context, job *bigquery.Job, actio
 	}
 	filename := action.Meta.JobFilename()
 	URL := url.Join(s.Config.AsyncTaskURL, filename)
-	return base.RunWithRetries(func() error {
+	return base.RunWithRetriesOnRetryOrInternalError(func() error {
 		return s.fs.Upload(ctx, URL, file.DefaultFileOsMode, bytes.NewReader(data))
 	})
 }
@@ -106,17 +106,10 @@ func (s *service) post(ctx context.Context, job *bigquery.Job, action *task.Acti
 	call.Context(ctx)
 	var callJob *bigquery.Job
 
-	if job.Configuration.Load != nil { // retry load job even with internal server error
-		err = base.RunWithRetriesOnRetryOrInternalError(func() error {
-			callJob, err = call.Do()
-			return err
-		})
-	} else {
-		base.RunWithRetries(func() error {
-			callJob, err = call.Do()
-			return err
-		})
-	}
+	err = base.RunWithRetriesOnRetryOrInternalError(func() error {
+		callJob, err = call.Do()
+		return err
+	})
 
 	if base.IsDuplicateJobError(err) {
 		if shared.IsDebugLoggingLevel() {

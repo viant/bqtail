@@ -18,20 +18,10 @@ pipeline:
       checkError: true
       commands:
         - export GIT_TERMINAL_PROMPT=1
-        - export go113MODULE=on
         - unset GOPATH
         - cd ${appPath}/
         - go mod vendor
         - go build
-        - echo 'apply cloud functiion hack'
-        - mkdir -p vendor/github.com/viant/bqtail
-        - cp -rf base vendor/github.com/viant/bqtail
-        - cp -rf dispatch vendor/github.com/viant/bqtail
-        - cp -rf mon vendor/github.com/viant/bqtail
-        - cp -rf service vendor/github.com/viant/bqtail
-        - cp -rf s* vendor/github.com/viant/bqtail/
-        - cp -rf t* vendor/github.com/viant/bqtail/
-        - cp -rf a* vendor/github.com/viant/bqtail/
         - cd ${appPath}/cmd/bqtail
         - export GOOS=linux
         - go build -ldflags "-X main.Version=${AppVersion}"
@@ -42,8 +32,6 @@ pipeline:
         - unset GOOS
         - go build -ldflags "-X main.Version=${AppVersion}"
         - cp bqtail /usr/local/bin
-        - rm -rf vendor/cloud.google.com
-        - rm -rf ${appPath}/vendor/cloud.google.com
 
     deploay:
       bqtail:

@@ -22,7 +22,6 @@ import (
 	"github.com/viant/bqtail/tail"
 	"github.com/viant/bqtail/task"
 	"github.com/viant/toolbox"
-	"io/ioutil"
 	"sort"
 	"strings"
 
@@ -224,12 +223,8 @@ func (s *service) updateLongRunningProcesses(ctx context.Context, active activeL
 			}
 			response.LongRunning = append(response.LongRunning, process)
 			errorURL := loadProcess.ErrorURL()
-			if reader, err := s.fs.DownloadWithURL(ctx, errorURL); err == nil {
-				data, err := ioutil.ReadAll(reader)
-				_ = reader.Close()
-				if err == nil {
-					process.Error = string(data)
-				}
+			if data, err := s.fs.DownloadWithURL(ctx, errorURL); err == nil {
+				process.Error = string(data)
 			}
 			if stalled || process.Error != "" {
 				s.processLongRunningProcess(ctx, inf, process)
@@ -399,13 +394,9 @@ func (s *service) getError(ctx context.Context, dest string, files []storage.Obj
 	processName := fmt.Sprintf("%v%v", result.EventID, shared.ProcessExt)
 	errorURL := url.Join(files[0].URL(), errName)
 
-	reader, err := s.fs.DownloadWithURL(ctx, errorURL)
+	data, err := s.fs.DownloadWithURL(ctx, errorURL)
 	if err == nil {
-		data, err := ioutil.ReadAll(reader)
-		_ = reader.Close()
-		if err == nil {
-			result.Message = string(data)
-		}
+		result.Message = string(data)
 	}
 
 	processURL := url.Join(files[0].URL(), processName)
@@ -413,11 +404,10 @@ func (s *service) getError(ctx context.Context, dest string, files []storage.Obj
 
 	if processURL != "" {
 		actions := []*task.Action{}
-		if reader, err := s.fs.DownloadWithURL(ctx, processURL); err == nil {
-			if err = json.NewDecoder(reader).Decode(&actions); err == nil && len(actions) > 0 {
+		if data, err := s.fs.DownloadWithURL(ctx, processURL); err == nil {
+			if err = json.Unmarshal(data, &actions); err == nil && len(actions) > 0 {
 				result.DataURLs, _ = s.getUnprocessedFiles(ctx, actions[0])
 			}
-			_ = reader.Close()
 		}
 	}
 

@@ -10,7 +10,6 @@ import (
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/toolbox"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
 	"path"
 	"time"
@@ -162,17 +161,9 @@ func (r *Ruleset) ReloadIfNeeded(ctx context.Context, fs afs.Service) (bool, err
 }
 
 func (r *Ruleset) loadRule(ctx context.Context, fs afs.Service, URL string) ([]*Rule, error) {
-	reader, err := fs.DownloadWithURL(ctx, URL)
+	data, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to load resource: %v", URL)
-	}
-	defer func() {
-		_ = reader.Close()
-	}()
-
-	data, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, err
 	}
 	rules, err := loadRules(data, path.Ext(URL))
 	if err != nil {

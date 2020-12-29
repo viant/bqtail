@@ -19,9 +19,10 @@ import (
 //Job represents a tail jobID
 type Job struct {
 	*stage.Process     `json:",omitempty"`
-	Rule               *config.Rule                   `json:"-"`
-	Status             string                         `json:",omitempty"`
-	Window             *batch.Window                  `json:",omitempty"`
+	Rule               *config.Rule  `json:"-"`
+	Status             string        `json:",omitempty"`
+	Window             *batch.Window `json:",omitempty"`
+	Group              *batch.Group
 	Statistics         *bigquery.JobStatistics        `json:"statistics,omitempty"`
 	JobStatus          *bigquery.JobStatus            `json:"jobStatus,omitempty"`
 	Load               *bigquery.JobConfigurationLoad `json:"load,ommittempty"`
@@ -72,12 +73,13 @@ func (j Job) Dest() string {
 }
 
 //NewJob create a load job
-func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window) (*Job, error) {
+func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window, group *batch.Group) (*Job, error) {
 	job := &Job{
 		Status:  shared.StatusOK,
 		Rule:    rule,
 		Process: process,
 		Window:  window,
+		Group:   group,
 	}
 
 	dest := rule.Dest.Clone()
@@ -105,19 +107,22 @@ func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window) (*J
 	if _, ok := process.Params[shared.DateKey]; !ok {
 		process.Params[shared.DateKey] = source.Time.Format(shared.DateSuffixLayout)
 	}
+	if group != nil {
+		process.Params[shared.GroupID] = group.ID()
+		process.GroupURL = group.URL
+	}
 	job.Load, err = dest.NewJobConfigurationLoad(process.Source, URIs...)
 	return job, err
 }
 
 //NewJobFromURL create a job from url
 func NewJobFromURL(ctx context.Context, rule *config.Rule, processURL string, fs afs.Service) (*Job, error) {
-	reader, err := fs.DownloadWithURL(ctx, processURL)
+	data, err := fs.DownloadWithURL(ctx, processURL)
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
 	job := &Job{}
-	err = json.NewDecoder(reader).Decode(job)
+	err = json.Unmarshal(data, job)
 	if err != nil {
 		return nil, err
 	}

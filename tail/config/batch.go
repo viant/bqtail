@@ -4,25 +4,36 @@ import (
 	"fmt"
 	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/shared"
+	"github.com/viant/bqtail/task"
 	"time"
 )
 
 //Batch transfer config
-type Batch struct {
-	//Window batch time window
-	Window *Window `json:",omitempty"`
+type (
+	Batch struct {
+		//Window batch time window
+		Window *Window `json:",omitempty"`
 
-	//RollOver if this flag is set, if the first event of the batch fall outside of the first half time, the window can be expanded if previous window had not existed.
-	//Do not use on prod, it was intended for testing only
-	RollOver bool `json:",omitempty"`
+		//RollOver if this flag is set, if the first event of the batch fall outside of the first half time, the window can be expanded if previous window had not existed.
+		//Do not use on prod, it was intended for testing only
+		RollOver bool `json:",omitempty"`
 
-	//MultiPath is one batch can collect files from various folder
-	MultiPath bool `json:",omitempty"`
+		//MultiPath is one batch can collect files from various folder
+		MultiPath bool `json:",omitempty"`
 
-	//MaxDelayInSec delay before collecting batch file. to randomly distribute workload,
-	// when a table has 40 shards, 40 batches would start exactly at the same time unless this parameter is specified
-	MaxDelayInSec int `json:",omitempty"`
-}
+		//MaxDelayInSec delay before collecting batch file. to randomly distribute workload,
+		// when a table has 40 shards, 40 batches would start exactly at the same time unless this parameter is specified
+		MaxDelayInSec int `json:",omitempty"`
+
+		//Group batch grouping setting
+		Group *Group
+	}
+
+	//Group represent batch group
+	Group struct {
+		OnDone []*task.Action
+	}
+)
 
 //Init initialises batch mode
 func (b *Batch) Init() {

@@ -16,7 +16,7 @@ import (
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/stage"
 	"github.com/viant/bqtail/tail/config"
-	"io/ioutil"
+	"log"
 	"path"
 	"strings"
 )
@@ -28,11 +28,14 @@ type Service interface {
 
 	//MatchWindowDataURLs returns matching data URLs
 	MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) error
+
+	//AcquireGroup acquired group for the process
+	AcquireGroup(ctx context.Context, process *stage.Process, rule *config.Rule) (*Group, error)
 }
 
 type service struct {
-	batchURLProvider func(rule *config.Rule) string
-	fs               afs.Service
+	taskURLProvider func(rule *config.Rule) string
+	fs              afs.Service
 }
 
 //addLocationFile tracks parent locations for a batch
@@ -51,7 +54,7 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 
 //TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (info *Info, err error) {
-	err = base.RunWithRetries(func() error {
+	err = base.RunWithRetriesOnRetryOrInternalError(func() error {
 		info, err = s.tryAcquireWindow(ctx, process, rule)
 		return err
 	})
@@ -70,7 +73,7 @@ func (s *service) tryAcquireWindow(ctx context.Context, process *stage.Process, 
 		suffixRaw += parentURL
 	}
 	windowDest = fmt.Sprintf("%v_%v", process.DestTable, base.Hash(suffixRaw))
-	taskURL := s.batchURLProvider(rule)
+	taskURL := s.taskURLProvider(rule)
 	batch := rule.Batch
 	windowURL := batch.WindowURL(taskURL, windowDest, process.Source.Time)
 	exists, _ := s.fs.Exists(ctx, windowURL, option.NewObjectKind(true))
@@ -114,21 +117,6 @@ func (s *service) tryAcquireWindow(ctx context.Context, process *stage.Process, 
 	return &Info{Window: window}, err
 }
 
-func (s *service) readLocation(ctx context.Context, URL string) (string, error) {
-	reader, err := s.fs.DownloadWithURL(ctx, URL)
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		_ = reader.Close()
-	}()
-	data, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
-
 func (s *service) getBaseURLS(ctx context.Context, rule *config.Rule, window *Window) ([]string, error) {
 	var baseURLs = make(map[string]bool)
 	baseURL, _ := url.Split(window.Source.URL, gs.Scheme)
@@ -145,12 +133,12 @@ func (s *service) getBaseURLS(ctx context.Context, rule *config.Rule, window *Wi
 			if object.IsDir() || path.Ext(object.Name()) != shared.LocationExt {
 				continue
 			}
-			location, err := s.readLocation(ctx, object.URL())
+			location, err := s.fs.Download(ctx, object)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to load location: %v", object.URL())
 			}
 			window.Locations = append(window.Locations, object.URL())
-			baseURLs[location] = true
+			baseURLs[string(location)] = true
 		}
 	}
 	var result = make([]string, 0)
@@ -214,10 +202,31 @@ func (s *service) matchData(ctx context.Context, window *Window, rule *config.Ru
 	return nil
 }
 
+func (s *service) AcquireGroup(ctx context.Context, process *stage.Process, rule *config.Rule) (*Group, error) {
+	taskURL := s.taskURLProvider(rule)
+	groupURL := url.Join(taskURL, rule.Name()+shared.GroupExp)
+	group := NewGroup(groupURL, s.fs)
+	endTime := rule.Batch.WindowEndTime(process.Source.Time)
+	group.SetID(int(endTime.Unix()))
+	counter, err := group.Increment(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if counter <= 0 { //sanity check,
+		_ = s.fs.Delete(ctx, groupURL)
+		log.Printf("group %v onDone triggered more than once", groupURL)
+	}
+	_, err = group.Increment(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return group, nil
+}
+
 //New create stage service
 func New(batchURLProvider func(rule *config.Rule) string, storageService afs.Service) Service {
 	return &service{
-		batchURLProvider: batchURLProvider,
-		fs:               storageService,
+		taskURLProvider: batchURLProvider,
+		fs:              storageService,
 	}
 }

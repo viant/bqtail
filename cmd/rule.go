@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
@@ -13,14 +14,10 @@ import (
 )
 
 func (s *service) loadRule(ctx context.Context, URL string) (*config.Rule, error) {
-	reader, err := s.fs.DownloadWithURL(ctx, URL)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to download rule: %v", URL)
-	}
-	defer reader.Close()
+	data, err := s.fs.DownloadWithURL(ctx, URL)
 	_, name := url.Split(URL, "")
 	ruleURL := url.Join(s.config.RulesURL, name)
-	err = s.fs.Upload(ctx, ruleURL, file.DefaultFileOsMode, reader)
+	err = s.fs.Upload(ctx, ruleURL, file.DefaultFileOsMode, bytes.NewReader(data))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to update rule: %v", ruleURL)
 	}

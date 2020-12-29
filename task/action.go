@@ -12,14 +12,14 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"google.golang.org/api/bigquery/v2"
-	"io/ioutil"
 	"strings"
 )
 
 //Action represents route action
 type Action struct {
-	Action         string                 `json:",omitempty"`
-	When           *When                  `json:",omitempty"`
+	Action string `json:",omitempty"`
+	When   *When  `json:",omitempty"`
+
 	Meta           *activity.Meta         `json:",omitempty"`
 	Request        map[string]interface{} `json:",omitempty"`
 	serviceRequest interface{}
@@ -192,20 +192,16 @@ func NewActionFromURL(ctx context.Context, fs afs.Service, URL string) (action *
 
 func newActionFromURL(fs afs.Service, ctx context.Context, URL string) (*Action, error) {
 	result := &Action{}
-	reader, err := fs.DownloadWithURL(ctx, URL)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to download: %v", URL)
-	}
-	defer func() {
-		_ = reader.Close()
-	}()
-	actionData, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, errors.Wrapf(err, "fail to read post actions: %v", URL)
-	}
-	err = json.Unmarshal(actionData, &result)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to unmarshal: %s", actionData)
-	}
+	err := base.RunWithRetriesOnRetryOrInternalError(func() error {
+		actionData, err := fs.DownloadWithURL(ctx, URL)
+		if err != nil {
+			return errors.Wrapf(err, "failed to download: %v", URL)
+		}
+		err = json.Unmarshal(actionData, &result)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to unmarshal: %s", actionData)
+		}
+		return err
+	})
 	return result, err
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/bqtail/stage"
-	"io/ioutil"
 	"time"
 )
 
@@ -45,14 +44,7 @@ func NewWindow(process *stage.Process, startTime, endTime time.Time, windowURL s
 
 //GetWindow returns a batch window or error
 func GetWindow(ctx context.Context, URL string, fs afs.Service) (*Window, error) {
-	reader, err := fs.DownloadWithURL(ctx, URL)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		_ = reader.Close()
-	}()
-	data, err := ioutil.ReadAll(reader)
+	data, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read window: %v", URL)
 	}

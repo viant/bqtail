@@ -53,6 +53,9 @@ const (
 	//ActionTableExists action
 	ActionTableExists = "tableExists"
 
+	//ActionNoOperation no operation action
+	ActionNoOperation = "nop"
+
 	//ActionExport action export
 	ActionExport = "export"
 	//ActionMove move storage file
@@ -108,6 +111,9 @@ const (
 	//DateKey date key
 	DateKey = "Date"
 
+	//GroupID group key
+	GroupID = "GroupID"
+
 	//DateSuffixLayout date layout suffix
 	DateSuffixLayout = "20060102"
 
@@ -150,6 +156,9 @@ const (
 	ErrorExt = ".err"
 	//ResponseErrorExt
 	ResponseErrorExt = ".rsp"
+
+	//GroupExp group file extension
+	GroupExp = ".grp"
 
 	//TempProjectPrefix represents temp project prefix
 	TempProjectPrefix = "proj:"

@@ -5,7 +5,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	ini "gopkg.in/ini.v1"
-	"io/ioutil"
 )
 
 //Config represents gsutil config
@@ -37,11 +36,7 @@ func ConfigFromURL(ctx context.Context, URL string, fs afs.Service) (*Config, er
 		return config, nil
 	}
 
-	reader, err := fs.Download(ctx, object)
-	if err != nil {
-		return nil, err
-	}
-	data, err := ioutil.ReadAll(reader)
+	data, err := fs.Download(ctx, object)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read: %v", URL)
 	}

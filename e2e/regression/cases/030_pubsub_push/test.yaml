@@ -91,7 +91,7 @@ pipeline:
         '@indexBy@': Attributes.CaseNo
         '${parentIndex}':
             Transformed:
-               RuleURL: '/BqTail/Rules/case_${parent.index}/performance.yaml/'
+               RuleURL: '/BqTail/Rules/case_${parent.index}/rule.yaml/'
                URLs: '/dummy.json/'
 
   info:

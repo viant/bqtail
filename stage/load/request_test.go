@@ -105,7 +105,7 @@ func TestJob_NewLoadRequest(t *testing.T) {
 		if useCase.rule.Batch != nil {
 			window = &useCase.window
 		}
-		job, err := NewJob(&useCase.rule, &useCase.process, window)
+		job, err := NewJob(&useCase.rule, &useCase.process, window, nil)
 		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
@@ -137,10 +137,9 @@ func loadTestAsset(ctx context.Context, asset interface{}, location string) erro
 	if exists, _ := fs.Exists(ctx, location); !exists {
 		return nil
 	}
-	reader, err := fs.DownloadWithURL(ctx, location)
+	data, err := fs.DownloadWithURL(ctx, location)
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
-	return json.NewDecoder(reader).Decode(asset)
+	return json.Unmarshal(data, asset)
 }

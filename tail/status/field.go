@@ -2,6 +2,7 @@ package status
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -24,12 +25,11 @@ type Field struct {
 }
 
 func (f *Field) AdjustType(ctx context.Context, fs afs.Service) error {
-	reader, err := fs.DownloadWithURL(ctx, f.Location)
+	data, err := fs.DownloadWithURL(ctx, f.Location)
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
-	scanner := bufio.NewScanner(reader)
+	scanner := bufio.NewScanner(bytes.NewReader(data))
 	rowNo := 1
 	fName := f.Name
 	var schemaRecord map[string]interface{}

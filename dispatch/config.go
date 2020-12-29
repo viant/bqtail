@@ -73,12 +73,12 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 //NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	storageService := afs.New()
-	reader, err := storageService.DownloadWithURL(ctx, URL)
+	data, err := storageService.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return nil, err
 	}
 	cfg := &Config{}
-	err = json.NewDecoder(reader).Decode(cfg)
+	err = json.Unmarshal(data, cfg)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to decode config: %s", URL)
 	}
