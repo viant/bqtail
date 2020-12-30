@@ -3,8 +3,6 @@ package task
 import (
 	"context"
 	"github.com/pkg/errors"
-	"github.com/viant/afs"
-	"github.com/viant/afs/sync"
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/toolbox"
@@ -51,31 +49,11 @@ func canRun(ctx context.Context, when *When, registry Registry) (bool, error) {
 		})
 		return toolbox.AsBoolean(exists), err
 	}
-	if when.GroupDone && when.GroupURL != "" {
-		return isGroupDone(ctx, when)
-	}
 	return false, nil
-}
-
-func isGroupDone(ctx context.Context, when *When) (bool, error) {
-	fs := afs.New()
-	counter := sync.NewCounter(when.GroupURL, fs)
-	count, err := counter.Decrement(ctx)
-	if err != nil {
-		return false, err
-	}
-	canRun := count == 0
-	if canRun {
-		go fs.Delete(ctx, when.GroupURL)
-	}
-	return canRun, nil
 }
 
 //Run execute supplied actions
 func Run(ctx context.Context, registry Registry, action *Action) (Response, error) {
-	if action.Action == shared.ActionNoOperation {
-		return runNop(ctx, registry, action)
-	}
 	serviceAction, err := registry.Action(action.Action)
 	if err != nil {
 		return nil, err
@@ -89,25 +67,6 @@ func Run(ctx context.Context, registry Registry, action *Action) (Response, erro
 		err = errors.Wrapf(err, "failed to run %v.%v", serviceAction.Service, action.Action)
 	}
 	return resp, err
-}
-
-func runNop(ctx context.Context, registry Registry, action *Action) (Response, error) {
-	shallRun, err := canRun(ctx, action.When, registry)
-	if !shallRun {
-		return false, err
-	}
-	response := &struct{}{}
-	if len(action.OnSuccess) == 0 && len(action.OnFailure) == 0 {
-		return response, nil
-	}
-	if err != nil {
-		if len(action.OnFailure) > 0 {
-			RunAll(ctx, registry, action.OnSuccess)
-		}
-		return response, err
-	}
-	_, err = RunAll(ctx, registry, action.OnSuccess)
-	return response, err
 }
 
 //RunWithService handlers service request or error

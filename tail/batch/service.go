@@ -204,21 +204,27 @@ func (s *service) matchData(ctx context.Context, window *Window, rule *config.Ru
 
 func (s *service) AcquireGroup(ctx context.Context, process *stage.Process, rule *config.Rule) (*Group, error) {
 	taskURL := s.taskURLProvider(rule)
-	groupURL := url.Join(taskURL, rule.Name()+shared.GroupExp)
-	group := NewGroup(groupURL, s.fs)
+	fragment := ""
 	endTime := rule.Batch.WindowEndTime(process.Source.Time)
-	group.SetID(int(endTime.Unix()))
+	groupID := int(endTime.Unix())
+	if rule.Batch.Group.DurationInSec > 0 {
+		groupEnd := rule.Batch.GroupEndTime(process.Source.Time)
+		groupID = int(groupEnd.Unix())
+		fragment = fmt.Sprintf("_%v", groupEnd.Unix())
+	}
+	groupURL := url.Join(taskURL, process.DestTable+fragment+shared.GroupExp)
+	group := NewGroup(groupURL, s.fs)
+	group.SetID(groupID)
 	counter, err := group.Increment(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if counter <= 0 { //sanity check,
-		_ = s.fs.Delete(ctx, groupURL)
+		group.Delete(ctx)
 		log.Printf("group %v onDone triggered more than once", groupURL)
-	}
-	_, err = group.Increment(ctx)
-	if err != nil {
-		return nil, err
+		if _, err = group.Increment(ctx); err != nil {
+			return nil, err
+		}
 	}
 	return group, nil
 }

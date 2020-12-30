@@ -1,0 +1,27 @@
+When:
+  Prefix: /data/case051/
+  Suffix: .json
+Dest:
+  Table: bqtail.dummy_$GroupID
+  Schema:
+    Template: bqtail.dummy_v051
+  Transient:
+    Dataset: temp
+
+Batch:
+  RollOver: true
+  MultiPath: true
+  Window:
+    DurationInSec: 15
+  Group:
+    OnDone:
+      - Action: copy
+        Request:
+          Append: true
+          Source: bqtail.dummy_$GroupID
+          Dest: bqtail.dummy_v051
+
+
+Async: true
+OnSuccess:
+  - Action: delete

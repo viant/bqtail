@@ -1,6 +1,7 @@
 package load
 
 import (
+	sbatch "github.com/viant/bqtail/service/batch"
 	"github.com/viant/bqtail/service/storage"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/task"
@@ -20,12 +21,11 @@ func (j *Job) buildActions() (*task.Actions, error) {
 }
 
 func (j Job) buildGroupActions(actions *task.Actions) {
-	groupAction, _ := task.NewAction(shared.ActionNoOperation, &struct{}{})
-	groupAction.When = &task.When{
-		GroupDone: true,
-		GroupURL:  j.GroupURL,
+	groupAction, _ := task.NewAction(shared.ActionGroup, sbatch.GroupRequest{MaxDurationInSec: j.Rule.Batch.Group.DurationInSec})
+	groupAction.Actions = &task.Actions{
+		OnSuccess: j.Rule.Batch.Group.OnDone,
 	}
-	groupAction.OnSuccess = j.Rule.Batch.Group.OnDone
+	actions.FinalizeOnSuccess(groupAction)
 }
 
 //buildDoneProcessAction append track action

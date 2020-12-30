@@ -12,6 +12,7 @@ import (
 	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/dispatch/contract"
 	"github.com/viant/bqtail/dispatch/project"
+	"github.com/viant/bqtail/service/batch"
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/service/secret"
 	"github.com/viant/bqtail/service/slack"
@@ -70,6 +71,8 @@ func (s *service) Init(ctx context.Context) error {
 	}
 	s.bq = bq.New(bqService, s.Registry, s.config.ProjectID, s.fs, s.config.Config)
 	bq.InitRegistry(s.Registry, s.bq)
+
+	batch.InitRegistry(s.Registry, batch.New(s.fs, s.Registry))
 	storage.InitRegistry(s.Registry, storage.New(s.fs))
 	return err
 }

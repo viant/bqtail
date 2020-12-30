@@ -18,6 +18,7 @@ import (
 	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/base/job"
 	"github.com/viant/bqtail/schema"
+	sbatch "github.com/viant/bqtail/service/batch"
 	"github.com/viant/bqtail/service/bq"
 	"github.com/viant/bqtail/service/http"
 	"github.com/viant/bqtail/service/pubsub"
@@ -82,6 +83,7 @@ func (s *service) Init(ctx context.Context) error {
 	s.batch = batch.New(s.config.TaskURL, s.fs)
 	bq.InitRegistry(s.Registry, s.bq)
 	http.InitRegistry(s.Registry, http.New())
+	sbatch.InitRegistry(s.Registry, sbatch.New(s.fs, s.Registry))
 	storage.InitRegistry(s.Registry, storage.New(s.fs))
 	return err
 }

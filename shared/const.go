@@ -53,8 +53,8 @@ const (
 	//ActionTableExists action
 	ActionTableExists = "tableExists"
 
-	//ActionNoOperation no operation action
-	ActionNoOperation = "nop"
+	//ActionGroup grouping done action
+	ActionGroup = "group"
 
 	//ActionExport action export
 	ActionExport = "export"
@@ -83,6 +83,7 @@ var Actionable = map[string]bool{
 	ActionDrop:   true,
 	ActionCall:   true,
 	ActionPush:   true,
+	ActionGroup:  true,
 }
 
 const (

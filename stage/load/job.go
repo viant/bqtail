@@ -93,10 +93,18 @@ func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window, gro
 	if len(process.Params) == 0 {
 		process.Params = make(map[string]interface{})
 	}
+	if group != nil {
+		process.Params[shared.GroupID] = group.ID()
+		process.GroupURL = group.URL
+	}
 	expander := process.Expander(URIs)
-	process.DestTable = expander.ExpandAsText(process.DestTable)
-	process.Params[shared.EventIDKey] = process.EventID
 
+	process.DestTable = expander.ExpandAsText(process.DestTable)
+	process.DoneProcessURL = expander.ExpandAsText(process.DoneProcessURL)
+	process.FailedURL = expander.ExpandAsText(process.FailedURL)
+	process.ProcessURL = expander.ExpandAsText(process.ProcessURL)
+
+	process.Params[shared.EventIDKey] = process.EventID
 	source := process.Source
 	if window != nil {
 		source = window.Source
@@ -107,10 +115,7 @@ func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window, gro
 	if _, ok := process.Params[shared.DateKey]; !ok {
 		process.Params[shared.DateKey] = source.Time.Format(shared.DateSuffixLayout)
 	}
-	if group != nil {
-		process.Params[shared.GroupID] = group.ID()
-		process.GroupURL = group.URL
-	}
+
 	job.Load, err = dest.NewJobConfigurationLoad(process.Source, URIs...)
 	return job, err
 }

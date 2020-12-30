@@ -31,7 +31,8 @@ type (
 
 	//Group represent batch group
 	Group struct {
-		OnDone []*task.Action
+		DurationInSec int
+		OnDone        []*task.Action
 	}
 )
 
@@ -71,6 +72,15 @@ func (b *Batch) WindowEndTime(sourceTime time.Time) time.Time {
 	sourceUnixTimestamp := sourceTime.Unix()
 	remainder := int(sourceUnixTimestamp) % windowDuration
 	endTimeWindowDelta := windowDuration - remainder
+	return time.Unix(sourceUnixTimestamp+int64(endTimeWindowDelta), 0).UTC()
+}
+
+//WindowEndTime returns window end time
+func (b *Batch) GroupEndTime(sourceTime time.Time) time.Time {
+	groupDuration := b.Group.DurationInSec
+	sourceUnixTimestamp := sourceTime.Unix()
+	remainder := int(sourceUnixTimestamp) % groupDuration
+	endTimeWindowDelta := groupDuration - remainder
 	return time.Unix(sourceUnixTimestamp+int64(endTimeWindowDelta), 0).UTC()
 }
 
