@@ -10,22 +10,12 @@ pipeline:
     target: $target
     checkError: true
     commands:
-      - export GIT_TERMINAL_PROMPT=1
+      - cd $appPath
       - export GO111MODULE=on
       - unset GOPATH
-      - cd ${appPath}/
       - go mod vendor
-      - echo 'apply cloud function vendor optimization'
-      - mkdir -p vendor/github.com/viant/bqtail
-      - cp -rf base vendor/github.com/viant/bqtail
-      - cp -rf dispatch vendor/github.com/viant/bqtail
-      - cp -rf mon vendor/github.com/viant/bqtail
-      - cp -rf service vendor/github.com/viant/bqtail
-      - cp -rf s* vendor/github.com/viant/bqtail/
-      - cp -rf t* vendor/github.com/viant/bqtail/
-      - cp -rf a* vendor/github.com/viant/bqtail/
       - go build
-      - rm -rf vendor/cloud.google.com
+
 
   bqtail:
     action: gcp/cloudfunctions:deploy
