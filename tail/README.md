@@ -124,6 +124,40 @@ or
   - Prefix: path prefix or
   - Suffix: path suffix or
   - Filter: path regexp
+  - Exclusion: path regexp
+  
+You can use the following [RegExpr snippet](https://play.golang.org/p/y7II4apKZGT) to test Filter/Exclusion expr
+
+```go
+package main
+
+import (
+	"fmt"
+	"regexp"
+)
+
+func main() {
+    //URL := "gs://xxx_bqtail/XXXX/bqtail/partner/dv_hashes_20201224.csv"
+	URLPath := `/XXXX/bqtail/partner/dv_hashes_20201224.csv`
+		
+	// a regular expression
+	regex := regexp.MustCompile(`\/XXXX\/bqtail\/partner\/([^\.|^\s]+)`)
+	fmt.Printf("regex: '%v'\n", regex)
+	matches := regex.FindStringSubmatch(URLPath)
+	for i, v := range matches {
+		fmt.Printf("match %2d: '%s'\n", i, v)
+	}
+	
+	URLPath = `/XXXX/bqtail/partner/dv_hashes_20201224 (4).csv`
+	matches = regex.FindStringSubmatch(URLPath)
+	for i, v := range matches {
+		fmt.Printf("match %2d: '%s'\n", i, v)
+	}
+}
+```
+
+  
+  
  
 - MaxReload: maximum load attemps, where each attempt excludes reported corrupted locations (15 default)  
 - Batch: specified batch window, when specifying window make sure that number of batches never exceed 1K per day.
