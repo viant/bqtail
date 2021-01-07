@@ -167,6 +167,11 @@ func main() {
 Post actions can use predefined [Cloud Service](../service/README.md) operation.
 
 
+- Batch.Group.OnDone - list of action to execute after the batch group get completed.  
+- Batch.Group.DurationMs - maximum duration of the group (optional)
+
+
+
 #### Data destination  
 
 Dest supports the following attributes:

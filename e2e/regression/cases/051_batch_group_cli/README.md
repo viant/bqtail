@@ -1,17 +1,22 @@
-### Asynchronous in batch data ingestion
+### Batch group ingestion
+
+In case when you need to group all subsequent batched ingestion unless there is no more data arrival, 
+you can use batch group. $GroupID variable can be used in table name.
+
 
 ### Scenario:
 
-This scenario tests post action with When and table Exists criteria to run action.
-
+This scenario tests Group.OnDone action after all batches have been processes.
 
 [@rule.yaml](rule/rule.yaml)
 ```yaml
 When:
-  Prefix: /data/case${parentIndex}/
+  Prefix: /data/case051/
   Suffix: .json
 Dest:
-  Table: bqtail.dummy_v${parentIndex}
+  Table: bqtail.dummy_$GroupID
+  Schema:
+    Template: bqtail.dummy_v051
   Transient:
     Dataset: temp
 
@@ -20,19 +25,17 @@ Batch:
   MultiPath: true
   Window:
     DurationInSec: 15
+  Group:
+    OnDone:
+      - Action: copy
+        Request:
+          Append: true
+          Source: bqtail.dummy_$GroupID
+          Dest: bqtail.dummy_v051
+
+
 Async: true
 OnSuccess:
-  - Action: query
-    When:
-      Exits: bqtail.dummy_dep1_v${parentIndex}
-    Request:
-      SQL: SELECT * FROM $TempTable
-      Dest: bqtail.dummy_dep1_v${parentIndex}
-  - Action: query
-    When:
-      Exits: bqtail.dummy_dep2_v${parentIndex}
-    Request:
-      SQL: SELECT * FROM $TempTable
-      Dest: bqtail.dummy_dep2_v${parentIndex}
   - Action: delete
+
 ```

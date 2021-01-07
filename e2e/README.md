@@ -339,10 +339,60 @@ Remove skip.txt
     endly -t=test -i=split_dml
 ```
 
-- [Load Journal with Stream API](regression/cases/043_load_journal)
+- [Split DML](regression/cases/043_split_dml)
+
+```bash
+    endly -t=test -i=split_dml
+```
+
+- [Load Journal with Stream API](regression/cases/044_load_journal)
 
 ```bash
     endly -t=test -i=load_journal
 ```
 
+- [Table override API](regression/cases/045_override)
 
+```bash
+    endly -t=test -i=override
+```
+
+- [Multi step ingestion](regression/cases/046_multi_step)
+
+```bash
+    endly -t=test -i=multi_step
+```
+
+
+- [Conditional when table exist ingestion](regression/cases/047_when_exists)
+
+```bash
+    endly -t=test -i=when_exists
+```
+
+
+- [Copy action with template](regression/cases/048_copy_template)
+
+```bash
+    endly -t=test -i=copy_template
+```
+
+- [Copy action with multi partition](regression/cases/049_copy_multi_partition)
+
+```bash
+    endly -t=test -i=copy_multi_partition
+```
+
+
+- [Copy action with multi custom partition SQL](regression/cases/050_copy_multi_partition_sql)
+
+```bash
+    endly -t=test -i=copy_multi_partition_sql
+```
+
+
+- [Batch Group Actions](regression/cases/051_batch_group_cli)
+
+```bash
+    endly -t=test -i=batch_group_cli
+```
