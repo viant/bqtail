@@ -383,13 +383,11 @@ Remove skip.txt
     endly -t=test -i=copy_multi_partition
 ```
 
-
 - [Copy action with multi custom partition SQL](regression/cases/050_copy_multi_partition_sql)
 
 ```bash
     endly -t=test -i=copy_multi_partition_sql
 ```
-
 
 - [Batch Group Actions](regression/cases/051_batch_group_cli)
 
