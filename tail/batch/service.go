@@ -19,6 +19,7 @@ import (
 	"log"
 	"path"
 	"strings"
+	"time"
 )
 
 //Service representa a batch service
@@ -214,7 +215,7 @@ func (s *service) AcquireGroup(ctx context.Context, process *stage.Process, rule
 	}
 	groupURL := url.Join(taskURL, process.DestTable+fragment+shared.GroupExp)
 	group := NewGroup(groupURL, s.fs)
-	group.SetID(groupID)
+	group.SetID(int(time.Now().Unix()))
 	counter, err := group.Increment(ctx)
 	if err != nil {
 		return nil, err
