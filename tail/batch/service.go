@@ -206,11 +206,8 @@ func (s *service) matchData(ctx context.Context, window *Window, rule *config.Ru
 func (s *service) AcquireGroup(ctx context.Context, process *stage.Process, rule *config.Rule) (*Group, error) {
 	taskURL := s.taskURLProvider(rule)
 	fragment := ""
-	endTime := rule.Batch.WindowEndTime(process.Source.Time)
-	groupID := int(endTime.Unix())
 	if rule.Batch.Group.DurationInSec > 0 {
 		groupEnd := rule.Batch.GroupEndTime(process.Source.Time)
-		groupID = int(groupEnd.Unix())
 		fragment = fmt.Sprintf("_%v", groupEnd.Unix())
 	}
 	groupURL := url.Join(taskURL, process.DestTable+fragment+shared.GroupExp)
