@@ -2,6 +2,7 @@ package batch
 
 import (
 	"context"
+	"github.com/viant/bqtail/base"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail/batch"
 	"github.com/viant/bqtail/task"
@@ -27,8 +28,13 @@ func (s *service) OnDone(ctx context.Context, req *GroupRequest, action *task.Ac
 		}
 	}
 	if isGroupDone {
+		 if err = group.Delete(ctx);err != nil {
+		 	if base.IsPreConditionError(err) {
+		 		return nil
+			}
+		 }
 		_, err = task.RunAll(ctx, s.registry, action.OnSuccess)
-		group.Delete(ctx)
+
 	}
 	if shared.IsInfoLoggingLevel() {
 		shared.LogF("[%v] checking group:%v, count:%v, done:%v, URL:%v\n", action.Meta.DestTable, group.ID(), count, isGroupDone, group.URL)
