@@ -374,14 +374,11 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		}
 		return err
 	}
-
 	response.Process = &action.Meta.Process
 	action.Meta.Region = action.Job.JobReference.Location
 	action.Meta.ProjectID = action.Job.JobReference.ProjectId
 	projectID := action.Meta.GetOrSetProject(s.config.ProjectID)
-
 	bqJob, err := s.bq.GetJob(ctx, action.Job.JobReference.Location, projectID, action.Job.JobReference.JobId)
-
 	if bqErr := base.JobError(bqJob); bqErr != nil {
 		errorURL := url.Join(s.config.ErrorURL, action.Meta.DestTable, fmt.Sprintf("%v%v", action.Meta.EventID, shared.ErrorExt))
 		_ = s.fs.Upload(ctx, errorURL, file.DefaultFileOsMode, strings.NewReader(bqErr.Error()))
@@ -399,9 +396,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	if err := s.logJobInfo(ctx, bqJob, action); err != nil {
 		response.UploadError = fmt.Sprintf("failed to log aJob info: %v", err.Error())
 	}
-
 	bqJobError := base.JobError(bqJob)
-
 	if bqJobError != nil && bqJob.Configuration != nil && bqJob.Configuration.Load != nil {
 		if shared.IsDebugLoggingLevel() {
 			shared.LogF("load error - reloading ...\n")
@@ -417,14 +412,23 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 		}
 		return s.tryRecover(ctx, processJob, response)
 	}
-	if base.IsRetryError(bqJobError) {
-		response.Retriable = true
-		return bqJobError
+	if action.Meta != nil {
+		action.Meta.Step *= 100
 	}
-
 	if err := action.Init(ctx, s.cfs); err != nil {
 		return err
 	}
+
+	//try retry copy/query/extract jobs
+	if base.IsRetryError(bqJobError) || base.IsInternalError(bqJobError){
+		errorCounterURL := url.Join(s.config.JournalURL, shared.RetryCounterSubpath, action.Meta.EventID+shared.CounterExt)
+		if canRetry := s.canRetryEvent(ctx, errorCounterURL, response); canRetry {
+			response.Retriable = false
+			_, err = task.Run(ctx, s.Registry, action)
+			return err
+		}
+	}
+
 	bqjob := base.Job(*bqJob)
 	toRun := action.ToRun(bqJobError, &bqjob)
 	retriable, err := task.RunAll(ctx, s.Registry, toRun)

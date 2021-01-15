@@ -1,5 +1,5 @@
 When:
-  Prefix: /data/case034
+  Prefix: /data/case049
   Suffix: .json
 Async: true
 Dest:
@@ -12,7 +12,7 @@ OnSuccess:
   - Action: copy
     Request:
       Source: bqtail.dummy_v049_${EventID}${DollarSign}${PartitionID}
-      Dest: bqtail.dummy_v049_${PartitionID}${DollarSign}${PartitionID}
+      Dest: bqtail.dummy_v049${DollarSign}${PartitionID}
       MultiPartition: true
     OnSuccess:
       - Action: drop

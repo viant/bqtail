@@ -52,9 +52,9 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 			var partitionAction *task.Action
 			if action != nil {
 				partitionAction = action.Clone()
+				partitionAction.Meta.Step += i * 100
 			}
 			if isLast && partitionAction != nil {
-				partitionAction.Meta.Step += i * 100
 				partitionAction.OnSuccess = onSuccess
 			}
 			job, err = s.copy(ctx, request.Clone(toolbox.AsString(partitionID)), partitionAction)
@@ -68,6 +68,7 @@ func (s *service) Copy(ctx context.Context, request *CopyRequest, action *task.A
 
 	return s.copy(ctx, request, action)
 }
+
 
 func (s *service) getPartitionSQL(source *bigquery.TableReference, tableId string, request *CopyRequest) string {
 	if request.PartitionSQL != "" {
@@ -84,6 +85,7 @@ func (s *service) getPartitionSQL(source *bigquery.TableReference, tableId strin
 	fmt.Printf("%v\n", request.PartitionSQL)
 	return SQL
 }
+
 
 func (s *service) copy(ctx context.Context, request *CopyRequest, action *task.Action) (*bigquery.Job, error) {
 	if request.Template != "" {

@@ -31,8 +31,11 @@ type Service interface {
 
 	CreateTableIfNotExist(ctx context.Context, table *bigquery.Table, patchIfDifferent bool) error
 
+	Copy(ctx context.Context, request *CopyRequest, action *task.Action) (*bigquery.Job, error)
+
 	Insert(ctx context.Context, request *InsertRequest, action *task.Action) (response *bigquery.TableDataInsertAllResponse, err error)
 }
+
 
 type service struct {
 	base.Config

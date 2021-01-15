@@ -14,6 +14,7 @@ Batch:
   Window:
     DurationInSec: 15
   Group:
+    DurationInSec: 15
     OnDone:
       - Action: copy
         Request:
