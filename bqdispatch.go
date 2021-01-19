@@ -23,6 +23,8 @@ func handleDispatchEvent(ctx context.Context) (*contract.Response, error) {
 		return nil, err
 	}
 	response := service.Dispatch(ctx)
+	response.Lock()
+	defer response.UnLock()
 	shared.LogLn(response)
 	if response.Error != "" {
 		return response, errors.New(response.Error)
