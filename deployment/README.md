@@ -111,6 +111,7 @@ ssh root@127.0.0.1 -p 7722 ## password is dev
 ## create localhost endly secret with
 endly -l=localhost
 ## type user root, and password dev  (you can skip SSH setup)
+## check  ~/.secret/localhost.json SSH secret file with encrypted password was created 
 apt-get install vim
 ```
 
