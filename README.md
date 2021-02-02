@@ -23,7 +23,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 The goal of this project is to provide a single point of robust and cost-effective event driven, data ingestion to Big Query.
 BqTail elegantly addresses  BigQuery limitations/restriction/quotas (load jobs per table, project, corrupted data files) with batching and transient project(s)/dataset approach.
-In addition it also provides data transformation enrichment and deduplication capabilities.
+In addition, it also provides data transformation enrichment and deduplication capabilities.
 
 A single point means that there is only one deployment instance of bqtai/dispatch/monitor to ingest data to various BigQuery projects, where each ingestion process can use a dedicated one or more transient projects to control billing, reservation, or default-pipeline workload.
 The transient project function is to load data to a temp table, run the optional transformation, and copy data to a destination table.

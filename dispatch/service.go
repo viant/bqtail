@@ -33,6 +33,7 @@ import (
 
 var thinkTime = 1500 * time.Millisecond
 var maxBqJobListLoopback = 6 * time.Hour
+const batchConcurrency = 40
 
 //Service represents event service
 type Service interface {
@@ -98,7 +99,6 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	}
 	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
 	defer cancelFunc()
-
 	running := int32(1)
 	timeoutDuration = timeoutDuration - thinkTime
 
@@ -410,34 +410,53 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 		return nil
 	}
 	response.BatchCount = len(objects)
-	for _, obj := range objects {
-		if obj.IsDir() || path.Ext(obj.Name()) != shared.WindowExt {
-			continue
-		}
-		if response.HasBatch(obj.URL()) {
-			continue
-		}
-		dueTime, e := URLToWindowEndTime(obj.URL())
-		if e != nil {
-			err = e
-			continue
-		}
-
-		if time.Now().After(dueTime.Add(shared.StorageListVisibilityDelay * time.Millisecond)) {
-			if !s.canNotify(shared.ActionLoad, perf) {
-				continue
-			}
-			perf.Metric(shared.RunningState).BatchJobs++
-			perf.Metric(shared.RunningState).LoadJobs++
-			response.AddBatch(obj.URL(), *dueTime)
-			baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
-			destURL := url.Join(baseURL, obj.Name())
-			if e := s.fs.Move(ctx, obj.URL(), destURL, option.NewObjectKind(true)); e != nil {
+	var rateLimiter = make(chan bool, batchConcurrency)
+	defer close(rateLimiter)
+	wg := sync.WaitGroup{}
+	for i := range objects {
+		wg.Add(1)
+		rateLimiter <- true
+		func(obj astorage.Object) {
+			defer wg.Done()
+			if e := s.processBatch(ctx, response, obj, perf);e !=nil {
 				err = e
 			}
+			<- rateLimiter
+		}(objects[i])
+	}
+	wg.Wait()
+	return err
+}
+
+
+
+func (s *service) processBatch(ctx context.Context, response *contract.Response, obj astorage.Object,  perf *contract.Performance) error {
+	if obj.IsDir() || path.Ext(obj.Name()) != shared.WindowExt {
+		return nil
+	}
+	if response.HasBatch(obj.URL()) {
+		return nil
+	}
+	dueTime, e := URLToWindowEndTime(obj.URL())
+	if e != nil {
+
+		return e
+	}
+
+	if time.Now().After(dueTime.Add(shared.StorageListVisibilityDelay * time.Millisecond)) {
+		if !s.canNotify(shared.ActionLoad, perf) {
+			return nil
+		}
+		perf.Metric(shared.RunningState).BatchJobs++
+		perf.Metric(shared.RunningState).LoadJobs++
+		response.AddBatch(obj.URL(), *dueTime)
+		baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
+		destURL := url.Join(baseURL, obj.Name())
+		if e := s.fs.Move(ctx, obj.URL(), destURL, option.NewObjectKind(true)); e != nil {
+			return  e
 		}
 	}
-	return err
+	return e
 }
 
 //JobID returns job ID for supplied URL
