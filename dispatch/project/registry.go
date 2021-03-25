@@ -2,11 +2,13 @@ package project
 
 import (
 	"github.com/viant/afs/storage"
+	"sync"
 )
 
 //Registry represents a project registry
 type Registry struct {
 	registry map[string]*Events
+	mux sync.RWMutex
 }
 
 //Events returns
@@ -19,13 +21,16 @@ func (r *Registry) Events() []*Events {
 }
 
 //Put adds project objects
-func (r *Registry) Add(regionedProject string, event storage.Object) {
-	_, ok := r.registry[regionedProject]
+func (r *Registry) Add(regionProject string, event storage.Object) {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+	_, ok := r.registry[regionProject]
 	if !ok {
-		r.registry[regionedProject] = New(regionedProject)
+		r.registry[regionProject] = New(regionProject)
 	}
-	r.registry[regionedProject].Items = append(r.registry[regionedProject].Items, event)
+	r.registry[regionProject].Items = append(r.registry[regionProject].Items, event)
 }
+
 
 //NewRegistry create a registry
 func NewRegistry() *Registry {

@@ -136,18 +136,24 @@ func (s *service) listProjectEvents(ctx context.Context) ([]*project.Events, err
 	if err != nil {
 		return nil, err
 	}
-
 	addEvents(s.config.ProjectID, events, registry)
-	for _, obj := range events {
+	waitGroup := sync.WaitGroup{}
+	for i, obj := range events {
 		if obj.IsDir() && strings.HasPrefix(obj.Name(), shared.TempProjectPrefix) {
-			projectRegion := obj.Name()[len(shared.TempProjectPrefix):]
-			projectEvents, err := s.fs.List(ctx, obj.URL())
-			if err != nil {
-				return nil, err
-			}
-			addEvents(projectRegion, projectEvents, registry)
+			waitGroup.Add(1)
+			go func(i int) {
+				defer waitGroup.Done()
+				event := events[i]
+				projectRegion := event.Name()[len(shared.TempProjectPrefix):]
+				projectEvents, err := s.fs.List(ctx, event.URL())
+				if err != nil {
+					return
+				}
+				addEvents(projectRegion, projectEvents, registry)
+			}(i)
 		}
 	}
+	waitGroup.Wait()
 	return registry.Events(), nil
 }
 

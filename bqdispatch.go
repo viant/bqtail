@@ -2,10 +2,11 @@ package bqtail
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/viant/bqtail/dispatch"
 	"github.com/viant/bqtail/dispatch/contract"
-	"github.com/viant/bqtail/shared"
 	"net/http"
 )
 
@@ -25,7 +26,8 @@ func handleDispatchEvent(ctx context.Context) (*contract.Response, error) {
 	response := service.Dispatch(ctx)
 	response.Lock()
 	defer response.UnLock()
-	shared.LogLn(response)
+	data, _ := json.Marshal(response)
+	fmt.Printf("%s\n", data)
 	if response.Error != "" {
 		return response, errors.New(response.Error)
 	}
