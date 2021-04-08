@@ -8,7 +8,7 @@
   "ProjectID": "xx-e2e",
   "Region": "US",
   "Source": {
-    "URL": "gs://xx_e2e_bqtail/data/case005/transactions.json",
+    "URL": "gs://xx_e2e_bqtail/data/case011/transactions.json",
     "Time": "2020-02-19T15:03:37Z"
   }
 }

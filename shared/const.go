@@ -31,6 +31,9 @@ const (
 	ProcessExt = ".run"
 	//WindowExt batch window extension file
 	WindowExt = ".win"
+	//WindowExtScheduled batch window extension file for scheduled files
+	WindowExtScheduled = ".wis"
+
 	//LocationExt location extension
 	LocationExt = ".loc"
 	//CounterExt counter file extension
@@ -215,8 +218,10 @@ const (
 const (
 	//MaxRetries defines max retries
 	MaxRetries = 4
-	//StorageListVisibilityDelay - list storage operation can be delay with actual put object state.
-	StorageListVisibilityDelay = 7000
+	//StorageListVisibilityDelayMs - list storage operation can be delay with actual put object state.
+	StorageListVisibilityDelayMs = 7000
+	//MaxTriggerDelayMs	maximum trigger delay (2min)
+	MaxTriggerDelayMs = 120000
 )
 
 //MaxReload default max load attempts (excluding corrupted files)

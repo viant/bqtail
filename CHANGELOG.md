@@ -1,3 +1,6 @@
+## April 7 2021 2.10.1
+ * Updated dispatcher batch handling to avoid double firing in case large GoogleStorage trigger delays
+   
 ## December 30 2020 2.10.0
  * Added batch grouping
  * Updated error GCE internal errors handling

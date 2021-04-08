@@ -39,11 +39,12 @@ type Config struct {
 	BqJobInfoPath        string
 	BqBatchInfoPath      string
 
-	ErrorURL         string
-	CorruptedFileURL string
-	InvalidSchemaURL string
-	SlackCredentials *Secret
-	MaxRetries       int
+	ErrorURL          string
+	CorruptedFileURL  string
+	InvalidSchemaURL  string
+	SlackCredentials  *Secret
+	MaxRetries        int
+	MaxTriggerDelayMs int
 }
 
 //BuildLoadURL returns active action ProcessURL for supplied event id

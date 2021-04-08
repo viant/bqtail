@@ -474,10 +474,10 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	if rule == nil {
 		return nil, fmt.Errorf("rule was empty for %v", window.RuleURL)
 	}
-	batchingDistributionDelay := time.Duration(getRandom(shared.StorageListVisibilityDelay, rule.Batch.MaxDelayMs(shared.StorageListVisibilityDelay))) * time.Millisecond
+	batchingDistributionDelay := time.Duration(getRandom(shared.StorageListVisibilityDelayMs, rule.Batch.MaxDelayMs(shared.StorageListVisibilityDelayMs))) * time.Millisecond
 	remainingDuration := window.End.Sub(time.Now().UTC()) + batchingDistributionDelay
 	if remainingDuration < 0 && window.IsSyncMode() { //intendent for client sync mode
-		remainingDuration = time.Duration(shared.StorageListVisibilityDelay) * time.Millisecond
+		remainingDuration = time.Duration(shared.StorageListVisibilityDelayMs) * time.Millisecond
 	}
 	if shared.IsInfoLoggingLevel() {
 		shared.LogF("[%v] starting batch window: %s\n", window.DestTable, rule.Batch.Window.Duration)

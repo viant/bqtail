@@ -5,11 +5,16 @@ import (
 	"sync"
 )
 
+
+
 //Registry represents a project registry
 type Registry struct {
 	registry map[string]*Events
-	mux sync.RWMutex
+	mux      sync.RWMutex
+	ScheduleBatches
 }
+
+type ScheduleBatches map[string]bool
 
 //Events returns
 func (r *Registry) Events() []*Events {
@@ -18,6 +23,13 @@ func (r *Registry) Events() []*Events {
 		result = append(result, v)
 	}
 	return result
+}
+
+//Put adds project objects
+func (r *Registry) AddScheduled(object storage.Object) {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+	r.ScheduleBatches[object.URL()] = true
 }
 
 //Put adds project objects
@@ -31,8 +43,7 @@ func (r *Registry) Add(regionProject string, event storage.Object) {
 	r.registry[regionProject].Items = append(r.registry[regionProject].Items, event)
 }
 
-
 //NewRegistry create a registry
 func NewRegistry() *Registry {
-	return &Registry{registry: make(map[string]*Events)}
+	return &Registry{registry: make(map[string]*Events), ScheduleBatches: make(map[string]bool)}
 }

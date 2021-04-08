@@ -1,7 +1,7 @@
 {
   "Async": true,
   "When": {
-    "Prefix": "/data/case005",
+    "Prefix": "/data/case011",
     "Suffix": ".json"
   },
   "Batch": {

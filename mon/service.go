@@ -461,7 +461,7 @@ func (s *service) listLoadStages(ctx context.Context, result *[]*activity.Meta) 
 		return err
 	}
 	for _, object := range objects {
-		if object.IsDir() || path.Ext(object.Name()) == shared.WindowExt || path.Ext(object.Name()) == shared.GroupExp  {
+		if object.IsDir() || path.Ext(object.Name()) == shared.WindowExt || path.Ext(object.Name()) == shared.WindowExtScheduled || path.Ext(object.Name()) == shared.GroupExp  {
 			continue
 		}
 		stageInfo := activity.Parse(object.Name())

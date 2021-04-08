@@ -9,7 +9,7 @@ pipeline:
     set_sdk:
       action: sdk.set
       target: $target
-      sdk: go:1.15
+      sdk: go:1.16
 
     package:
       action: exec:run
@@ -59,7 +59,7 @@ pipeline:
         timeout: 58s
         public: true
         serviceAccountEmail: ${gcp.serviceAccount}
-        availableMemoryMb: 128
+        availableMemoryMb: 512
         entryPoint: BqDispatch
         runtime: go113
         environmentVariables:

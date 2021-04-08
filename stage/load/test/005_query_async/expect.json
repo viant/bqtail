@@ -7,6 +7,10 @@
     "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions/2020-02-19_15/997782008735915.run",
     "EventID": "997782008735915",
     "Mode": "dispatch",
+    "Params": {
+      "Date": "20210407",
+      "EventID": "997782008735915"
+    },
     "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions--997782008735915.run",
     "ProjectID": "xx-e2e",
     "Region": "US",
@@ -29,6 +33,10 @@
         "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions/2020-02-19_15/997782008735915.run",
         "EventID": "997782008735915",
         "Mode": "dispatch",
+        "Params": {
+          "Date": "20210407",
+          "EventID": "997782008735915"
+        },
         "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions--997782008735915.run",
         "ProjectID": "xx-e2e",
         "Region": "US",
@@ -51,6 +59,10 @@
             "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions/2020-02-19_15/997782008735915.run",
             "EventID": "997782008735915",
             "Mode": "dispatch",
+            "Params": {
+              "Date": "20210407",
+              "EventID": "997782008735915"
+            },
             "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions--997782008735915.run",
             "ProjectID": "xx-e2e",
             "Region": "US",
@@ -73,6 +85,14 @@
               }
             },
             {
+              "Action": "move",
+              "Request": {
+                "DestURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions/2020-02-19_15/997782008735915.run",
+                "IsDestAbsoluteURL": true,
+                "SourceURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions--997782008735915.run"
+              }
+            },
+            {
               "Action": "drop",
               "Meta": {
                 "Action": "drop",
@@ -81,6 +101,10 @@
                 "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions/2020-02-19_15/997782008735915.run",
                 "EventID": "997782008735915",
                 "Mode": "nop",
+                "Params": {
+                  "Date": "20210407",
+                  "EventID": "997782008735915"
+                },
                 "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions--997782008735915.run",
                 "ProjectID": "xx-e2e",
                 "Region": "US",
@@ -89,8 +113,8 @@
                   "Time": "2020-02-19T15:03:37Z",
                   "URL": "gs://xx_e2e_bqtail/data/case005/transactions.json"
                 },
-                "Step": 5,
-                "StepCount": 5,
+                "Step": 6,
+                "StepCount": 6,
                 "TempTable": "`xx-e2e.temp.transactions_997782008735915`"
               },
               "Request": {
@@ -112,19 +136,12 @@
               "gs://xx_e2e_bqdispatch/BqDispatch/Tasks/bqtail.transactions_1113916560434381781_1582124620.win"
             ]
           }
-        },
-        {
-          "Action": "move",
-          "Request": {
-            "DestURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.transactions/2020-02-19_15/997782008735915.run",
-            "IsDestAbsoluteURL": true,
-            "SourceURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.transactions--997782008735915.run"
-          }
         }
       ],
       "Request": {
         "Append": true,
         "Dest": "bqtail.transactions",
+        "MultiPartition": false,
         "Source": "xx-e2e:temp.transactions_997782008735915"
       }
     }

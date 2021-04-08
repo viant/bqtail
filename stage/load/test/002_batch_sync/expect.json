@@ -7,6 +7,10 @@
     "DoneProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v002/2020-02-18_08/996615343761989.run",
     "EventID": "996615343761989",
     "Mode": "tail",
+    "Params": {
+      "Date": "20210407",
+      "EventID": "996615343761989"
+    },
     "ProcessURL": "gs://xx_e2e_operation/BqTail/Journal/Running/bqtail.dummy_v002--996615343761989.run",
     "ProjectID": "xx-e2e",
     "RuleURL": "gs://xx_e2e_config/BqTail/Rules/case_002/rule.yaml",
@@ -28,14 +32,6 @@
       }
     },
     {
-      "Action": "delete",
-      "Request": {
-        "URLs": [
-          "gs://xx_e2e_operation/BqTail/Tasks/bqtail.dummy_v002_1113915460922753545_1582042005.win"
-        ]
-      }
-    },
-    {
       "Action": "move",
       "Request": {
         "DestURL": "gs://xx_e2e_operation/BqTail/Journal/Done/bqtail.dummy_v002/2020-02-18_08/996615343761989.run",
@@ -45,16 +41,39 @@
     }
   ],
   "Request": {
+    "AllowJaggedRows": false,
+    "AllowQuotedNewlines": false,
     "Append": true,
+    "Autodetect": false,
+    "DMLAppend": false,
     "DestinationTable": {
       "DatasetId": "bqtail",
       "TableId": "dummy_v002"
+    },
+    "IgnoreUnknownValues": false,
+    "Schema": {
+      "Fields": [
+        {
+          "Mode": "REQUIRED",
+          "Name": "id",
+          "Type": "INTEGER"
+        },
+        {
+          "Mode": "REQUIRED",
+          "Name": "type_id",
+          "Type": "INTEGER"
+        },
+        {
+          "Name": "name",
+          "Type": "STRING"
+        }
+      ]
     },
     "SourceUris": [
       "gs://xx_e2e_bqtail/data/case002/dummy1.json",
       "gs://xx_e2e_bqtail/data/case002/dummy2.json"
     ],
-
+    "UseAvroLogicalTypes": false,
     "WriteDisposition": "WRITE_APPEND"
   }
 }

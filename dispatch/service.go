@@ -33,6 +33,7 @@ import (
 
 var thinkTime = 1500 * time.Millisecond
 var maxBqJobListLoopback = 6 * time.Hour
+
 const batchConcurrency = 40
 
 //Service represents event service
@@ -105,7 +106,11 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	for atomic.LoadInt32(&running) == 1 {
 		cycleStartTime := time.Now()
 		waitGroup := &sync.WaitGroup{}
-		projectEvents, err := s.listProjectEvents(ctx)
+		registry, err := s.listProjectEvents(ctx)
+		if err != nil {
+			return err
+		}
+		projectEvents := registry.Events()
 		for i := range projectEvents {
 			fmt.Printf("Processing: %v:%v %v\n", projectEvents[i].Region, projectEvents[i].ProjectID, len(projectEvents[i].Items))
 		}
@@ -114,7 +119,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		}
 		for i := range projectEvents {
 			waitGroup.Add(1)
-			go s.dispatchEvents(ctx, waitGroup, response, projectEvents[i])
+			go s.dispatchEvents(ctx, waitGroup, response, projectEvents[i], registry.ScheduleBatches)
 		}
 		response.Cycles++
 		if err = s.logPerformance(ctx, response); err != nil {
@@ -130,7 +135,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	return nil
 }
 
-func (s *service) listProjectEvents(ctx context.Context) ([]*project.Events, error) {
+func (s *service) listProjectEvents(ctx context.Context) (*project.Registry, error) {
 	registry := project.NewRegistry()
 	events, err := s.fs.List(ctx, s.config.AsyncTaskURL)
 	if err != nil {
@@ -154,7 +159,7 @@ func (s *service) listProjectEvents(ctx context.Context) ([]*project.Events, err
 		}
 	}
 	waitGroup.Wait()
-	return registry.Events(), nil
+	return registry, nil
 }
 
 func addEvents(projectID string, events []astorage.Object, registry *project.Registry) {
@@ -173,6 +178,9 @@ func addEvents(projectID string, events []astorage.Object, registry *project.Reg
 			registry.Add(destProject+"/batching", events[i])
 			continue
 		}
+		if path.Ext(event.Name()) == shared.WindowExtScheduled {
+			registry.AddScheduled(events[i])
+		}
 		registry.Add(projectID, events[i])
 	}
 }
@@ -180,15 +188,15 @@ func addEvents(projectID string, events []astorage.Object, registry *project.Reg
 func extractBatchDestProject(event astorage.Object) string {
 	URL := event.URL()
 	if index := strings.Index(URL, "/Tasks/"); index != -1 {
-		project := URL[index+7:]
-		if index := strings.Index(project, ":"); index != -1 {
-			if project = project[:index]; project != "" {
-				return project
+		batchProject := URL[index+7:]
+		if index := strings.Index(batchProject, ":"); index != -1 {
+			if batchProject = batchProject[:index]; batchProject != "" {
+				return batchProject
 			}
 		}
-		if index := strings.Index(project, "."); index != -1 {
-			if project = project[:index]; project != "" {
-				return project
+		if index := strings.Index(batchProject, "."); index != -1 {
+			if batchProject = batchProject[:index]; batchProject != "" {
+				return batchProject
 			}
 		}
 	}
@@ -225,12 +233,24 @@ func (s *service) wait(ctx context.Context, startTime time.Time, waitGroup *sync
 	return true
 }
 
-func (s *service) dispatchEvents(ctx context.Context, waitGroup *sync.WaitGroup, response *contract.Response, projectEvents *project.Events) {
+func (s *service) dispatchEvents(ctx context.Context, waitGroup *sync.WaitGroup, response *contract.Response, projectEvents *project.Events, batches project.ScheduleBatches) {
 	defer waitGroup.Done()
-	err := s.dispatchBqEvents(ctx, response, projectEvents)
-	if err == nil || IsNotFound(err) {
-		err = s.dispatchBatchEvents(ctx, response, projectEvents)
-	}
+	group := sync.WaitGroup{}
+	group.Add(2)
+	var err error
+	go func() {
+		group.Done()
+		if e := s.dispatchBqEvents(ctx, response, projectEvents); e != nil {
+			err = e
+		}
+	}()
+	go func() {
+		group.Done()
+		if e := s.dispatchBatchEvents(ctx, response, projectEvents, batches); e != nil {
+			err = e
+		}
+	}()
+	group.Wait()
 	if IsContextError(err) || IsNotFound(err) || err == nil {
 		response.Merge(projectEvents.Performance)
 		return
@@ -251,7 +271,7 @@ func (s *service) logPerformance(ctx context.Context, response *contract.Respons
 func (s *service) filterCandidate(response *contract.Response, objects []astorage.Object, action string) map[string][]astorage.Object {
 	var result = make(map[string][]astorage.Object, 0)
 	for i, object := range objects {
-		if object.IsDir() || path.Ext(object.Name()) == shared.WindowExt {
+		if object.IsDir() || path.Ext(object.Name()) == shared.WindowExt || path.Ext(object.Name()) == shared.WindowExtScheduled {
 			continue
 		}
 		if response.Jobs.Has(object.URL()) {
@@ -279,7 +299,7 @@ func (s *service) filterCandidate(response *contract.Response, objects []astorag
 func (s *service) notifyDoneProcesses(ctx context.Context, events *project.Events, response *contract.Response, jobsByID *jobs) (err error) {
 	waitGroup := &sync.WaitGroup{}
 	for i, object := range events.Items {
-		if object.IsDir() || path.Ext(object.Name()) == shared.WindowExt {
+		if object.IsDir() || path.Ext(object.Name()) == shared.WindowExt || path.Ext(object.Name()) == shared.WindowExtScheduled {
 			continue
 		}
 
@@ -409,7 +429,7 @@ func (s *service) notify(ctx context.Context, job *contract.Job, events *project
 	return s.fs.Move(ctx, job.URL, taskURL, option.NewObjectKind(true))
 }
 
-func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Response, projectObjects *project.Events) (err error) {
+func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Response, projectObjects *project.Events, scheduled project.ScheduleBatches) (err error) {
 	objects := projectObjects.Items
 	perf := projectObjects.Performance
 	if len(objects) == 0 {
@@ -424,46 +444,65 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 		rateLimiter <- true
 		func(obj astorage.Object) {
 			defer wg.Done()
-			if e := s.processBatch(ctx, response, obj, perf);e !=nil {
+			if e := s.processBatch(ctx, response, obj, perf, scheduled); e != nil {
 				err = e
 			}
-			<- rateLimiter
+			<-rateLimiter
 		}(objects[i])
 	}
 	wg.Wait()
 	return err
 }
 
-
-
-func (s *service) processBatch(ctx context.Context, response *contract.Response, obj astorage.Object,  perf *contract.Performance) error {
+func (s *service) processBatch(ctx context.Context, response *contract.Response, obj astorage.Object, perf *contract.Performance, scheduled project.ScheduleBatches) error {
 	if obj.IsDir() || path.Ext(obj.Name()) != shared.WindowExt {
 		return nil
 	}
-	if response.HasBatch(obj.URL()) {
+	batchURL := obj.URL()
+	if response.HasBatch(batchURL) {
 		return nil
 	}
-	dueTime, e := URLToWindowEndTime(obj.URL())
+	dueTime, e := URLToWindowEndTime(batchURL)
 	if e != nil {
-
 		return e
 	}
-
-	if time.Now().After(dueTime.Add(shared.StorageListVisibilityDelay * time.Millisecond)) {
-		if !s.canNotify(shared.ActionLoad, perf) {
-			return nil
+	if !time.Now().After(dueTime.Add(shared.StorageListVisibilityDelayMs * time.Millisecond)) {
+		return nil
+	}
+	scheduledURL := strings.Replace(batchURL, shared.WindowExt, shared.WindowExtScheduled, 1)
+	isScheduled := scheduled[scheduledURL]
+	if isScheduled {
+		if time.Now().After(dueTime.Add(s.getMaxTriggerDelay())) {
+			//at this point batch should have been completed, thus deleting .win and .wins pair
+			_ = s.fs.Delete(ctx, batchURL)
+			_ = s.fs.Delete(ctx, scheduledURL)
 		}
-		perf.Metric(shared.RunningState).BatchJobs++
-		perf.Metric(shared.RunningState).LoadJobs++
-		response.AddBatch(obj.URL(), *dueTime)
-		baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
-		destURL := url.Join(baseURL, obj.Name())
-		if e := s.fs.Move(ctx, obj.URL(), destURL, option.NewObjectKind(true)); e != nil {
-			return  e
-		}
+	}
+	if !s.canNotify(shared.ActionLoad, perf) {
+		return nil
+	}
+	perf.Metric(shared.RunningState).BatchJobs++
+	perf.Metric(shared.RunningState).LoadJobs++
+	response.AddBatch(obj.URL(), *dueTime)
+	baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
+	destURL := url.Join(baseURL, obj.Name())
+	if e := s.fs.Copy(ctx, batchURL, destURL, option.NewObjectKind(true)); e != nil {
+		return e
+	}
+	if e := s.fs.Upload(ctx, scheduledURL, file.DefaultFileOsMode, strings.NewReader("."));e != nil {
+		return e
 	}
 	return e
 }
+
+func (s *service) getMaxTriggerDelay() time.Duration {
+	maxTriggerDelayMs := s.config.MaxTriggerDelayMs
+	if maxTriggerDelayMs == 0 {
+		maxTriggerDelayMs = shared.MaxTriggerDelayMs
+	}
+	return time.Duration(maxTriggerDelayMs) * time.Millisecond
+}
+
 
 //JobID returns job ID for supplied URL
 func JobID(baseURL string, URL string) string {
