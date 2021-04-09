@@ -24,11 +24,21 @@ pipeline:
         - go build
         - cd ${appPath}/cmd/bqtail
         - export GOOS=linux
+        - export GOARCH=amd64
         - go build -ldflags "-X main.Version=${AppVersion}"
-        - tar cvzf bqtail_linux_${AppVersion}.tar.gz bqtail
+        - tar cvzf bqtail_linux_amd64_${AppVersion}.tar.gz bqtail
+        - export GOOS=linux
+        - export GOARCH=arm64
+        - go build -ldflags "-X main.Version=${AppVersion}"
+        - tar cvzf bqtail_linux_arm64_${AppVersion}.tar.gz bqtail
+        - export GOARCH=arm64
         - export GOOS=darwin
         - go build -ldflags "-X main.Version=${AppVersion}"
-        - tar cvzf bqtail_osx_${AppVersion}.tar.gz bqtail
+        - tar cvzf bqtail_osx_arm64_${AppVersion}.tar.gz bqtail
+        - export GOARCH=amd64
+        - export GOOS=darwin
+        - go build -ldflags "-X main.Version=${AppVersion}"
+        - tar cvzf bqtail_osx_amd64_${AppVersion}.tar.gz bqtail
         - unset GOOS
         - go build -ldflags "-X main.Version=${AppVersion}"
         - cp bqtail /usr/local/bin

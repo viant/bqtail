@@ -23,22 +23,47 @@ By default only streaming mode stores history file in file:///${env.HOME}/.bqtai
 
 ### Installation
 
-##### OSX
-
+##### OSX(amd64)
 
 ```bash
-wget https://github.com/viant/bqtail/releases/download/v2.10.0/bqtail_osx_2.10.0.tar.gz
-tar -xvzf bqtail_osx_2.10.0.tar.gz
+wget https://github.com/viant/bqtail/releases/download/v2.10.1/bqtail_osx_amd64_2.10.1.tar.gz
+tar -xvzf bqtail_osx_amd64_2.10.1.tar.gz
 cp bqtail /usr/local/bin/
 ```
 
 
-##### Linux
+##### OSX(arm64)
 
 ```bash
-wget https://github.com/viant/bqtail/releases/download/v2.10.0/bqtail_linux_2.10.0.tar.gz
-tar -xvzf bqtail_linux_2.10.0.tar.gz
+wget https://github.com/viant/bqtail/releases/download/v2.10.1/bqtail_osx_arm64_2.10.1.tar.gz
+tar -xvzf bqtail_osx_arm64_2.10.1.tar.gz
 cp bqtail /usr/local/bin/
+```
+
+
+##### Linux(amd64)
+
+```bash
+wget https://github.com/viant/bqtail/releases/download/v2.10.1/bqtail_amd64_linux_2.10.1.tar.gz
+tar -xvzf bqtail_linux_amd64_2.10.1.tar.gz
+cp bqtail /usr/local/bin/
+```
+
+
+##### Linux(arm64)
+
+```bash
+wget https://github.com/viant/bqtail/releases/download/v2.10.1/bqtail_arm64_linux_2.10.1.tar.gz
+tar -xvzf bqtail_linux_arm64_2.10.1.tar.gz
+cp bqtail /usr/local/bin/
+```
+
+#### Building from the source
+
+```bash
+git clone https://github.com/viant/bqtail.git
+cd bqtail/cmd/bqtail
+go build
 ```
 
 ### Usage  
@@ -98,8 +123,6 @@ You can save it as rule.yaml to extend/customize the rule, then you can ingest d
 ```yaml
 bqtail -s=gs://myBuckey/folder/mydatafile.csv -r=performance.yaml
 ```
-
-
 
 
 **Local data ingestion with data ingestion rule**

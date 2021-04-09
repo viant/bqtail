@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 )
 
 //Server represent an auth callback endpoint
@@ -26,7 +27,10 @@ func (s *Server) Close() {
 func (s *Server) Wait() error {
 	select {
 	case <-s.httpHandler.done:
-		s.server.Close()
+		go func() {
+			time.Sleep(3 *time.Second)
+			s.server.Close()
+		}()
 	}
 	return s.err
 }

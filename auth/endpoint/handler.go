@@ -7,7 +7,15 @@ import (
 
 var content = `
 <!DOCTYPE html>
-<html><head><title>Auth Callback</title></head><body onload="window.close();"></body></html>
+<html>
+   <head>
+      <title>HTML Meta Tag</title>	
+		<meta http-equiv="refresh" content="0; url=https://www.bqtail.com/" />
+     </head>
+   <body>
+      <p>BqTail Client OAuth</p>
+   </body>
+</html>
 `
 
 type httpHandler struct {
