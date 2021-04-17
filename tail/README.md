@@ -234,7 +234,7 @@ Dest:
     - Name: PID
       Expression: $4
     - Name: XID
-      Expression: $4
+      Expression: $5
   Transform:
     pid: $PID
     xid: $XID
