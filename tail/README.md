@@ -208,6 +208,38 @@ Dest:
     
     
     "/nobid/adlog.request/(\\d{4})/(\\d{2})/(\\d{2})/.+"
+  
+  _Note_ In case of using batching, grouping is performed on the dest table (including dynamic parameter) and folder structure.
+  Extracting parameter from file name is implemented only for the first file from the batch, unless this extracted
+  parameter is part of the dest table name. 
+  
+For example the following rule will enrich dest table with pid and xid value extracted from path.
+Since ingestion batch group files by folder and destination table. Each batch is guarantee to have 
+shared $PID, but xid would be evaluated from the first file in the batch.
+
+```yaml
+Batch:
+  Window:
+    DurationInSec: 120
+    
+Dest:
+  Table: myproj:data.feed_$Date
+  Transient:
+    Dataset: temp
+    Template: myproj:data.feed_tmpl
+  Pattern: /xxxx/v1/(\d{4})/(\d{2})/(\d{2})/(\d{2})/f_(\d+)_([a-zA-Z0-9-.]+)
+  Parameters:
+    - Name: Date
+      Expression: $1-$2-$3
+    - Name: PID
+      Expression: $4
+    - Name: XID
+      Expression: $4
+  Transform:
+    pid: $PID
+    xid: $XID
+    created: CURRENT_TIMESTAMP()
+```
 
 
 - **Parameters** name pattern substitution parameters 
