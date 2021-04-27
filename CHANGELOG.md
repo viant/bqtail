@@ -1,3 +1,6 @@
+## April 27 2021 2.10.2
+ * Updated dispatcher batch handling
+
 ## April 7 2021 2.10.1
  * Updated dispatcher batch handling to avoid double firing in case large GoogleStorage trigger delays
    

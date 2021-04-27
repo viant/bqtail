@@ -5,8 +5,6 @@ import (
 	"sync"
 )
 
-
-
 //Registry represents a project registry
 type Registry struct {
 	registry map[string]*Events
@@ -14,7 +12,20 @@ type Registry struct {
 	ScheduleBatches
 }
 
-type ScheduleBatches map[string]bool
+type ScheduleBatches struct {
+	Scheduled map[string]storage.Object
+	batches   map[string]bool
+}
+
+func (s *ScheduleBatches) HasSchedule(URL string) bool {
+	_, ok := s.Scheduled[URL]
+	return ok
+}
+
+func (s *ScheduleBatches) HasBatch(URL string) bool {
+	_, ok := s.batches[URL]
+	return ok
+}
 
 //Events returns
 func (r *Registry) Events() []*Events {
@@ -25,12 +36,21 @@ func (r *Registry) Events() []*Events {
 	return result
 }
 
-//Put adds project objects
+//AddScheduled adds schedule event
 func (r *Registry) AddScheduled(object storage.Object) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
-	r.ScheduleBatches[object.URL()] = true
+	r.Scheduled[object.URL()] = object
 }
+
+
+//AddBatch add batch
+func (r *Registry) AddBatch(object storage.Object) {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+	r.Scheduled[object.URL()] = object
+}
+
 
 //Put adds project objects
 func (r *Registry) Add(regionProject string, event storage.Object) {
@@ -45,5 +65,8 @@ func (r *Registry) Add(regionProject string, event storage.Object) {
 
 //NewRegistry create a registry
 func NewRegistry() *Registry {
-	return &Registry{registry: make(map[string]*Events), ScheduleBatches: make(map[string]bool)}
+	return &Registry{registry: make(map[string]*Events), ScheduleBatches: ScheduleBatches{
+		Scheduled: make(map[string]storage.Object),
+		batches:   make(map[string]bool),
+	}}
 }

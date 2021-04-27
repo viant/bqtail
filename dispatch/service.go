@@ -95,6 +95,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
 	timeoutDuration := s.config.TimeToLive()
+
 	if timeoutDuration > remainingDuration && remainingDuration > 0 {
 		timeoutDuration = remainingDuration
 	}
@@ -125,6 +126,10 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		if err = s.logPerformance(ctx, response); err != nil {
 			shared.LogF("%v\n", err)
 		}
+
+		waitGroup.Add(1)
+		s.cleanupScheduled(ctx, registry.ScheduleBatches, waitGroup)
+
 		if !s.wait(ctx, cycleStartTime, waitGroup, &running, &timeoutDuration) {
 			break
 		}
@@ -133,6 +138,24 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		}
 	}
 	return nil
+}
+
+func (s *service) cleanupScheduled(ctx context.Context, schedules project.ScheduleBatches, wg *sync.WaitGroup) {
+	defer wg.Done()
+	now := time.Now()
+	count := 0
+	for k, event := range schedules.Scheduled {
+		if age := now.Sub(event.ModTime()); age > 5*s.getMaxTriggerDelay() {
+			batchURL := strings.Replace(k, shared.WindowExtScheduled, shared.WindowExt, 1)
+			if !schedules.HasBatch(batchURL) {
+				_ = s.fs.Delete(ctx, k)
+				count++
+			}
+		}
+	}
+	if count > 0 {
+		fmt.Printf("cleared schedules: %v\n", count)
+	}
 }
 
 func (s *service) listProjectEvents(ctx context.Context) (*project.Registry, error) {
@@ -176,10 +199,12 @@ func addEvents(projectID string, events []astorage.Object, registry *project.Reg
 				destProject = projectID
 			}
 			registry.Add(destProject+"/batching", events[i])
+			registry.AddBatch(events[i])
 			continue
 		}
 		if path.Ext(event.Name()) == shared.WindowExtScheduled {
 			registry.AddScheduled(events[i])
+			continue
 		}
 		registry.Add(projectID, events[i])
 	}
@@ -436,18 +461,14 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 		return nil
 	}
 	response.BatchCount = len(objects)
-	var rateLimiter = make(chan bool, batchConcurrency)
-	defer close(rateLimiter)
 	wg := sync.WaitGroup{}
 	for i := range objects {
 		wg.Add(1)
-		rateLimiter <- true
 		func(obj astorage.Object) {
 			defer wg.Done()
 			if e := s.processBatch(ctx, response, obj, perf, scheduled); e != nil {
 				err = e
 			}
-			<-rateLimiter
 		}(objects[i])
 	}
 	wg.Wait()
@@ -470,13 +491,14 @@ func (s *service) processBatch(ctx context.Context, response *contract.Response,
 		return nil
 	}
 	scheduledURL := strings.Replace(batchURL, shared.WindowExt, shared.WindowExtScheduled, 1)
-	isScheduled := scheduled[scheduledURL]
+	isScheduled := scheduled.HasSchedule(scheduledURL)
 	if isScheduled {
 		if time.Now().After(dueTime.Add(s.getMaxTriggerDelay())) {
 			//at this point batch should have been completed, thus deleting .win and .wins pair
 			_ = s.fs.Delete(ctx, batchURL)
 			_ = s.fs.Delete(ctx, scheduledURL)
 		}
+		return nil
 	}
 	if !s.canNotify(shared.ActionLoad, perf) {
 		return nil
@@ -486,11 +508,10 @@ func (s *service) processBatch(ctx context.Context, response *contract.Response,
 	response.AddBatch(obj.URL(), *dueTime)
 	baseURL := fmt.Sprintf("gs://%v%v", s.config.TriggerBucket, s.config.BatchPrefix)
 	destURL := url.Join(baseURL, obj.Name())
-	if e := s.fs.Copy(ctx, batchURL, destURL, option.NewObjectKind(true)); e != nil {
-		return e
-	}
-	if e := s.fs.Upload(ctx, scheduledURL, file.DefaultFileOsMode, strings.NewReader("."));e != nil {
-		return e
+	if err := s.fs.Upload(ctx, scheduledURL, file.DefaultFileOsMode, strings.NewReader("."), option.NewGeneration(true, 0)); err == nil {
+		if err = s.fs.Copy(ctx, batchURL, destURL, option.NewObjectKind(true)); err != nil {
+			return err
+		}
 	}
 	return e
 }
@@ -502,7 +523,6 @@ func (s *service) getMaxTriggerDelay() time.Duration {
 	}
 	return time.Duration(maxTriggerDelayMs) * time.Millisecond
 }
-
 
 //JobID returns job ID for supplied URL
 func JobID(baseURL string, URL string) string {
