@@ -145,7 +145,7 @@ func (s *service) cleanupScheduled(ctx context.Context, schedules project.Schedu
 	now := time.Now()
 	count := 0
 	for k, event := range schedules.Scheduled {
-		if age := now.Sub(event.ModTime()); age > 5*s.getMaxTriggerDelay() {
+		if age := now.Sub(event.ModTime()); age > 24 * time.Hour {
 			batchURL := strings.Replace(k, shared.WindowExtScheduled, shared.WindowExt, 1)
 			if !schedules.HasBatch(batchURL) {
 				_ = s.fs.Delete(ctx, k)
