@@ -125,7 +125,12 @@ func NewConfigFromEnv(ctx context.Context, key string) (*Config, error) {
 //NewConfigFromURL creates new config from URL
 func NewConfigFromURL(ctx context.Context, URL string) (*Config, error) {
 	storageService := cache.Singleton(URL)
-	data, err := storageService.DownloadWithURL(ctx, URL)
+	var data []byte
+	var err error
+	err = base.RunWithRetries(func() error {
+		data, err = storageService.DownloadWithURL(ctx, URL)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
