@@ -19,9 +19,11 @@ OnSuccess:
       Topic: ${prefix}_bqtailbus
       Attributes:
         EventID: $EventID
+        CaseNo: '${parentIndex}'
       Message:
         RuleURL: $RuleURL
-        SourceURIs: ${prefix}_bqtailbus
+        SourceURIs: $LoadURIs
+        URLs: $URLs
 
   - Action: delete
 ```
