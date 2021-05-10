@@ -111,6 +111,8 @@ func (r *LoadRequest) Init(projectID string, Action *task.Action) {
 			r.SourceFormat = "CSV"
 		} else if strings.Contains(sourceURI, ".avro") {
 			r.SourceFormat = "AVRO"
+		} else if strings.Contains(sourceURI, ".parquet") {
+				r.SourceFormat = "PARQUET"
 		} else if strings.Contains(sourceURI, ".json") {
 			r.SourceFormat = "NEWLINE_DELIMITED_JSON"
 		}

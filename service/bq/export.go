@@ -72,6 +72,8 @@ func (r *ExportRequest) Init(projectID string, activity *task.Action) (err error
 			r.Format = "NEWLINE_DELIMITED_JSON"
 		} else if strings.Contains(r.DestURL, ".avro") {
 			r.Format = "AVRO"
+		} else if strings.Contains(r.DestURL, ".parquet") {
+			r.Format = "PARQUET"
 		}
 		if r.FieldDelimiter != "" {
 			r.Format = "CSV"
