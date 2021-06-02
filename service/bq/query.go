@@ -83,9 +83,14 @@ type QueryRequest struct {
 
 //IsSelectQuery returns true if SELECT query
 func (r *QueryRequest) IsSelectQuery() bool {
-	SQL := strings.TrimSpace(r.SQL)
-	return strings.HasPrefix(strings.ToUpper(SQL), "SELECT")
+	SQL := strings.ToUpper(strings.TrimSpace(r.SQL))
+	if strings.HasPrefix(SQL, "SELECT") || strings.HasPrefix(SQL, "WITH") {
+		return  true
+	}
+	isDML := strings.Contains(SQL, "INSERT ") || strings.Contains(SQL, "UPDATE ") || strings.Contains(SQL, "DELETE ") || strings.Contains(SQL, "MERGE ")
+	return !isDML
 }
+
 
 //Init initialises request
 func (r *QueryRequest) Init(projectID string, Action *task.Action) (err error) {
