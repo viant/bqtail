@@ -1,3 +1,6 @@
+## June 1 2021 2.10.3
+ * Patched query dest DML
+
 ## April 27 2021 2.10.2
  * Updated dispatcher batch handling
 
