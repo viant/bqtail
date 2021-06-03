@@ -115,6 +115,10 @@ const (
 	//DateKey date key
 	DateKey = "Date"
 
+	//HourKey hour key
+	HourKey = "Hour"
+
+
 	//GroupID group key
 	GroupID = "GroupID"
 

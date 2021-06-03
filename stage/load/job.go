@@ -115,7 +115,9 @@ func NewJob(rule *config.Rule, process *stage.Process, window *batch.Window, gro
 	if _, ok := process.Params[shared.DateKey]; !ok {
 		process.Params[shared.DateKey] = source.Time.Format(shared.DateSuffixLayout)
 	}
-
+	if _, ok := process.Params[shared.HourKey]; !ok {
+		process.Params[shared.HourKey] = source.Time.Format("03")
+	}
 	job.Load, err = dest.NewJobConfigurationLoad(process.Source, URIs...)
 	return job, err
 }
