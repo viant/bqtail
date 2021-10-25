@@ -20,7 +20,7 @@ pipeline:
   bqtail:
     action: gcp/cloudfunctions:deploy
     credentials: $gcpCredentials
-    '@name': BqTail2
+    '@name': BqTail
     timeout: 540s
     public: true
     availableMemoryMb: 256
