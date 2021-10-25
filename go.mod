@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	cloud.google.com/go v0.74.0
+	github.com/GoogleCloudPlatform/functions-framework-go v1.3.0
 	github.com/aws/aws-sdk-go v1.34.10 // indirect
 	github.com/go-errors/errors v1.1.1 // indirect
 	github.com/jessevdk/go-flags v1.4.0
