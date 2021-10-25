@@ -41,5 +41,5 @@ func (s *service) emit(ctx context.Context, object storage.Object, response *tai
 
 func nextEventID() uint64 {
 	rand.Seed((time.Now().UTC().UnixNano()))
-	return rand.Uint64() / 1000
+	return (rand.Uint64() + uint64(time.Now().UnixNano())) / 1000
 }

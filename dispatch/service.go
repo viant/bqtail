@@ -96,9 +96,9 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
 	timeoutDuration := s.config.TimeToLive()
 
-	if timeoutDuration > remainingDuration && remainingDuration > 0 {
+	//if timeoutDuration > remainingDuration && remainingDuration > 0 {
 		timeoutDuration = remainingDuration
-	}
+	//}
 	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
 	defer cancelFunc()
 	running := int32(1)

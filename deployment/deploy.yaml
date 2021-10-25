@@ -3,7 +3,7 @@ pipeline:
   set_sdk:
     action: sdk.set
     target: $target
-    sdk: go:1.15
+    sdk: go:1.17
 
   package:
     action: exec:run
@@ -20,7 +20,7 @@ pipeline:
   bqtail:
     action: gcp/cloudfunctions:deploy
     credentials: $gcpCredentials
-    '@name': BqTail
+    '@name': BqTail2
     timeout: 540s
     public: true
     availableMemoryMb: 256

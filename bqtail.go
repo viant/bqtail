@@ -1,6 +1,7 @@
 package bqtail
 
 import (
+	_ "github.com/GoogleCloudPlatform/functions-framework-go/funcframework"
 	"cloud.google.com/go/functions/metadata"
 	"context"
 	"errors"
