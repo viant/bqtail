@@ -95,10 +95,9 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
 	timeoutDuration := s.config.TimeToLive()
-
-	//if timeoutDuration > remainingDuration && remainingDuration > 0 {
+	if timeoutDuration > remainingDuration && remainingDuration > 0 {
 		timeoutDuration = remainingDuration
-	//}
+	}
 	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
 	defer cancelFunc()
 	running := int32(1)
@@ -145,7 +144,7 @@ func (s *service) cleanupScheduled(ctx context.Context, schedules project.Schedu
 	now := time.Now()
 	count := 0
 	for k, event := range schedules.Scheduled {
-		if age := now.Sub(event.ModTime()); age > 24 * time.Hour {
+		if age := now.Sub(event.ModTime()); age > 24*time.Hour {
 			batchURL := strings.Replace(k, shared.WindowExtScheduled, shared.WindowExt, 1)
 			if !schedules.HasBatch(batchURL) {
 				_ = s.fs.Delete(ctx, k)
