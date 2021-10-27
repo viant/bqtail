@@ -7,6 +7,7 @@ import (
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/tail"
 	"github.com/viant/bqtail/tail/contract"
+	_ "github.com/GoogleCloudPlatform/functions-framework-go/funcframework"
 )
 
 const maxStackDriver = 265 * 1024

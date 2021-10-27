@@ -13,6 +13,7 @@ main
 vendor
 local.go
 local_test.go
+go.sum
 cmd
 cmd/
 scratchpad
