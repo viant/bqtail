@@ -420,7 +420,7 @@ func (s *service) runPostLoadActions(ctx context.Context, request *contract.Requ
 	}
 
 	//try retry copy/query/extract jobs
-	if base.IsRetryError(bqJobError) || base.IsInternalError(bqJobError){
+	if base.IsRetryError(bqJobError) || base.IsInternalError(bqJobError) {
 		errorCounterURL := url.Join(s.config.JournalURL, shared.RetryCounterSubpath, action.Meta.EventID+shared.CounterExt)
 		if canRetry := s.canRetryEvent(ctx, errorCounterURL, response); canRetry {
 			response.Retriable = false
@@ -683,6 +683,7 @@ func (s *service) logJobInfo(ctx context.Context, bqjob *bigquery.Job, action *t
 }
 
 func (s *service) addMissingFields(ctx context.Context, job *load.Job, uris *status.URIs) error {
+
 	for _, field := range uris.MissingFields {
 		if err := field.AdjustType(ctx, s.fs); err != nil {
 			return err

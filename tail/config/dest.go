@@ -189,7 +189,7 @@ func (d *Destination) Init() error {
 	if len(d.Transform) == 0 {
 		d.Transform = make(map[string]string)
 	}
-	if d.AllowFieldAddition && (d.SourceFormat == "AVRO" || d.SourceFormat == "PARQUET") {
+	if d.AllowFieldAddition && (d.SourceFormat == "AVRO" || d.SourceFormat == "PARQUET" || d.SourceFormat == "NEWLINE_DELIMITED_JSON") {
 		if len(d.SchemaUpdateOptions) == 0 {
 			d.SchemaUpdateOptions = []string{"ALLOW_FIELD_ADDITION", "ALLOW_FIELD_RELAXATION"}
 		}

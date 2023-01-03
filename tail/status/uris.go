@@ -99,6 +99,16 @@ func (u *URIs) addMissingFields(job *bigquery.Job) {
 		}
 		if index := strings.Index(element.Message, noSuchFieldFragment); index != -1 {
 			field := strings.Trim(string(element.Message[index+1+len(noSuchFieldFragment):]), ".")
+			if index := strings.Index(field, "File:"); index != -1 {
+				issueLocation := field[index+len("File:"):]
+				if len(issueLocation) > 0 {
+					if index := strings.Index(issueLocation, "gs:"); index != -1 {
+						element.Location = strings.TrimSpace(issueLocation[index:])
+					}
+				}
+				field = field[:index]
+			}
+			field = strings.Trim(field, " .")
 			u.MissingFields = append(u.MissingFields, &Field{
 				Name:     field,
 				Location: element.Location,
