@@ -28,7 +28,7 @@ require (
 	cloud.google.com/go/pubsub v1.36.1 // indirect
 	cloud.google.com/go/storage v1.36.0 // indirect
 	github.com/aws/aws-sdk-go v1.34.10 // indirect
-	github.com/cloudevents/sdk-go/v2 v2.2.0 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.15.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
@@ -42,7 +42,9 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.2 // indirect
 	github.com/gorilla/websocket v1.2.0 // indirect
 	github.com/jmespath/go-jmespath v0.3.0 // indirect
-	github.com/lightstep/tracecontext.go v0.0.0-20181129014701-1757c391b1ac // indirect
+	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
