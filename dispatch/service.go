@@ -36,7 +36,7 @@ var maxBqJobListLoopback = 6 * time.Hour
 
 const batchConcurrency = 40
 
-//Service represents event service
+// Service represents event service
 type Service interface {
 	Dispatch(ctx context.Context) *contract.Response
 	Config() *Config
@@ -50,12 +50,12 @@ type service struct {
 	bq        bq.Service
 }
 
-//Config returns service config
+// Config returns service config
 func (s *service) Config() *Config {
 	return s.config
 }
 
-//BQService returns bq service
+// BQService returns bq service
 func (s *service) BQService() bq.Service {
 	return s.bq
 }
@@ -79,7 +79,7 @@ func (s *service) Init(ctx context.Context) error {
 	return err
 }
 
-//Dispatch dispatched BigQuery event
+// Dispatch dispatched BigQuery event
 func (s *service) Dispatch(ctx context.Context) *contract.Response {
 	response := contract.NewResponse()
 	defer response.SetTimeTaken(response.Started)
@@ -90,7 +90,7 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 	return response
 }
 
-//Dispatch dispatched BigQuery event
+// Dispatch dispatched BigQuery event
 func (s *service) dispatch(ctx context.Context, response *contract.Response) error {
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
 	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
@@ -441,7 +441,7 @@ func (s *service) listBQJobs(ctx context.Context, projectID string, minCreated, 
 	}
 }
 
-//notify notify bqtail
+// notify notify bqtail
 func (s *service) notify(ctx context.Context, job *contract.Job, events *project.Events) error {
 	info := activity.Parse(job.ID)
 	info.Region = events.Region
@@ -523,7 +523,7 @@ func (s *service) getMaxTriggerDelay() time.Duration {
 	return time.Duration(maxTriggerDelayMs) * time.Millisecond
 }
 
-//JobID returns job ID for supplied URL
+// JobID returns job ID for supplied URL
 func JobID(baseURL string, URL string) string {
 	if len(baseURL) > len(URL) {
 		return ""
@@ -539,7 +539,7 @@ func JobID(baseURL string, URL string) string {
 	return jobID
 }
 
-//New creates a dispatchBqEvents service
+// New creates a dispatchBqEvents service
 func New(ctx context.Context, config *Config) (Service, error) {
 	srv := &service{
 		config:   config,

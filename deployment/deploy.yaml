@@ -3,7 +3,7 @@ pipeline:
   set_sdk:
     action: sdk.set
     target: $target
-    sdk: go:1.17
+    sdk: go:1.21
 
   package:
     action: exec:run
@@ -26,7 +26,7 @@ pipeline:
     availableMemoryMb: 256
     entryPoint: BqTail
     retry: true
-    runtime: go113
+    runtime: go121
     serviceAccountEmail: ${gcp.serviceAccount}
     environmentVariables:
       CONFIG: gs://${configBucket}/BqTail/config.json
@@ -48,7 +48,7 @@ pipeline:
     serviceAccountEmail: ${gcp.serviceAccount}
     availableMemoryMb: 256
     entryPoint: BqDispatch
-    runtime: go113
+    runtime: go121
     environmentVariables:
       CONFIG: gs://${configBucket}/BqDispatch/config.json
       LOGGING: false

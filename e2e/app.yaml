@@ -9,7 +9,7 @@ pipeline:
     set_sdk:
       action: sdk.set
       target: $target
-      sdk: go:1.16
+      sdk: go:1.21
 
     package:
       action: exec:run
@@ -51,7 +51,7 @@ pipeline:
         public: true
         availableMemoryMb: 256
         entryPoint: BqTail
-        runtime: go113
+        runtime: go121
         retry: true
         serviceAccountEmail: ${gcp.serviceAccount}
         environmentVariables:
@@ -71,7 +71,7 @@ pipeline:
         serviceAccountEmail: ${gcp.serviceAccount}
         availableMemoryMb: 512
         entryPoint: BqDispatch
-        runtime: go113
+        runtime: go121
         environmentVariables:
           CONFIG: gs://${configBucket}/BqDispatch/config.json
           LOGGING: true
@@ -97,7 +97,7 @@ pipeline:
         timeout: 30s
         availableMemoryMb: 128
         entryPoint: Echo
-        runtime: go113
+        runtime: go121
         serviceAccountEmail: ${gcp.serviceAccount}
         source:
           URL: ${appPath}/e2e/echo
@@ -110,7 +110,7 @@ pipeline:
         public: true
         availableMemoryMb: 256
         entryPoint: Monitor
-        runtime: go113
+        runtime: go121
         retry: true
         serviceAccountEmail: ${gcp.serviceAccount}
         environmentVariables:

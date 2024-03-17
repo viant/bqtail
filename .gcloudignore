@@ -18,3 +18,4 @@ cmd
 cmd/
 scratchpad
 scratchpad/
+*.md
