@@ -23,10 +23,11 @@ const (
 	ModExpr = "$Mod"
 	//DateExpr data expression
 	DateExpr   = "$Date"
+	HourExpr   = "$Hour"
 	dateLayout = "20060102"
 )
 
-//Destination data ingestion destination
+// Destination data ingestion destination
 type Destination struct {
 	Table     string `json:"table,omitempty"`
 	Partition string `json:"partition,omitempty"`
@@ -46,12 +47,12 @@ type Destination struct {
 	Expiry             string `json:",omitempty"`
 }
 
-//HasTemplate
+// HasTemplate
 func (d *Destination) HasTemplate() bool {
 	return d.Schema.Template != "" || (d.Transient != nil && d.Transient.Template != "")
 }
 
-//Params build pattern paramters
+// Params build pattern paramters
 func (d Destination) Params(source string) (map[string]interface{}, error) {
 	var result = make(map[string]interface{})
 	if d.Pattern == "" || len(d.Parameters) == 0 {
@@ -73,12 +74,12 @@ func (d Destination) Params(source string) (map[string]interface{}, error) {
 	return result, nil
 }
 
-//HasSplit returns true if dest has split
+// HasSplit returns true if dest has split
 func (d Destination) HasSplit() bool {
 	return d.Schema.Split != nil
 }
 
-//Clone clones destination
+// Clone clones destination
 func (d Destination) Clone() *Destination {
 	cloned := &Destination{
 		JobConfigurationLoad: d.JobConfigurationLoad,
@@ -108,7 +109,7 @@ func (d Destination) Clone() *Destination {
 	return cloned
 }
 
-//Validate checks if destination is valid
+// Validate checks if destination is valid
 func (d Destination) Validate() error {
 	if d.Table == "" && ((d.Schema.Template == "" && !d.Schema.Autodetect) || d.Transient == nil) {
 		return fmt.Errorf("dest.Table was empty")
@@ -170,7 +171,7 @@ func (d Destination) Validate() error {
 	return nil
 }
 
-//Init initialises destination
+// Init initialises destination
 func (d *Destination) Init() error {
 	if d == nil {
 		return errors.Errorf("dest was nil")
@@ -206,7 +207,7 @@ func (d *Destination) Init() error {
 	return nil
 }
 
-//IsCopyMethodCopy returns true if copy method
+// IsCopyMethodCopy returns true if copy method
 func (d *Destination) IsCopyMethodCopy() bool {
 	if d.Transient == nil || d.Transient.CopyMethod == nil {
 		return true
@@ -214,7 +215,7 @@ func (d *Destination) IsCopyMethodCopy() bool {
 	return *d.Transient.CopyMethod == shared.CopyMethodCopy
 }
 
-//IsQueryCopyMethod returns true if query copy method
+// IsQueryCopyMethod returns true if query copy method
 func (d *Destination) IsCopyMethodQuery() bool {
 	if d.Transient == nil || d.Transient.CopyMethod == nil {
 		return false
@@ -226,17 +227,17 @@ func (d *Destination) IsCopyMethodQuery() bool {
 	return false
 }
 
-//HasTransformation returns true if dest requires transformation
+// HasTransformation returns true if dest requires transformation
 func (d *Destination) HasTransformation() bool {
 	return len(d.SideInputs) > 0 || len(d.Transform) > 0 || d.Schema.Split != nil || len(d.UniqueColumns) > 0
 }
 
-//ExpandTable returns expanded table
+// ExpandTable returns expanded table
 func (d *Destination) ExpandTable(table string, source *stage.Source) (string, error) {
 	return d.Expand(table, source)
 }
 
-//Expand returns sourced table
+// Expand returns sourced table
 func (d *Destination) Expand(dest string, source *stage.Source) (string, error) {
 	var err error
 	if count := strings.Count(dest, ModExpr); count > 0 {
@@ -247,6 +248,10 @@ func (d *Destination) Expand(dest string, source *stage.Source) (string, error) 
 	if count := strings.Count(dest, DateExpr); count > 0 {
 		dest = expandDate(dest, source.Time, count)
 	}
+	if count := strings.Count(dest, HourExpr); count > 0 {
+		dest = expandHour(dest, source.Time, count)
+	}
+
 	if d.Pattern != "" {
 		if d.compiled == nil {
 			d.compiled, err = regexp.Compile(d.Pattern)
@@ -275,7 +280,7 @@ func toComparableTable(table string) string {
 	return table
 }
 
-//Match matched candidate table with the dest
+// Match matched candidate table with the dest
 func (d *Destination) Match(candidate string) bool {
 	table := d.Table
 	if table == "" {
@@ -299,12 +304,12 @@ func (d *Destination) Match(candidate string) bool {
 	return strings.Contains(candidate, table)
 }
 
-//TableReference returns table reference, source table syntax: project:dataset:table
+// TableReference returns table reference, source table syntax: project:dataset:table
 func (d *Destination) TableReference(source *stage.Source) (*bigquery.TableReference, error) {
 	return d.CustomTableReference(d.Table, source)
 }
 
-//CustomTableReference returns custom table reference
+// CustomTableReference returns custom table reference
 func (d *Destination) CustomTableReference(table string, source *stage.Source) (*bigquery.TableReference, error) {
 	table, err := d.ExpandTable(table, source)
 	if err != nil {
@@ -353,6 +358,11 @@ func expandDate(table string, created time.Time, count int) string {
 	return strings.Replace(table, DateExpr, date, count)
 }
 
+func expandHour(table string, created time.Time, count int) string {
+	hour := created.UTC().Format("03")
+	return strings.Replace(table, HourExpr, hour, count)
+}
+
 func expandWithPattern(expr *regexp.Regexp, sourceURL string, expression string) string {
 	_, URLPath := url.Base(sourceURL, file.Scheme)
 	matched := expr.FindStringSubmatch(URLPath)
@@ -366,7 +376,7 @@ func expandWithPattern(expr *regexp.Regexp, sourceURL string, expression string)
 	return expression
 }
 
-//NewJobConfigurationLoad creates a new load request
+// NewJobConfigurationLoad creates a new load request
 func (d *Destination) NewJobConfigurationLoad(source *stage.Source, URIs ...string) (*bigquery.JobConfigurationLoad, error) {
 	if len(URIs) == 0 {
 		return nil, fmt.Errorf("URIs were empty")
