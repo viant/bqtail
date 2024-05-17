@@ -135,6 +135,9 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 		for i := range projectEvents {
 			shared.LogF("%v\n", projectEvents[i].Performance)
 		}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 	}
 	return nil
 }
@@ -410,35 +413,47 @@ func (s *service) dispatchBqEvents(ctx context.Context, response *contract.Respo
 	}
 	startTime := time.Now()
 	waitGroup := &sync.WaitGroup{}
+	var err error
 	for {
 		waitGroup.Add(1)
 		go func(minCreated, maxCreated time.Time) {
 			defer waitGroup.Done()
-			s.listBQJobs(ctx, perf.ProjectID, minCreated, maxCreated, jobsByID)
+			if e := s.listBQJobs(ctx, perf.ProjectID, minCreated, maxCreated, jobsByID); e != nil {
+				err = e
+			}
 		}(minCreated, maxCreated)
 		maxCreated = maxCreated.Add(-stepDuration)
 		minCreated = minCreated.Add(-stepDuration)
 		candidate := minCreated.Add(-stepDuration)
+		if err != nil {
+			break
+		}
 		if candidate.Before(minListTime) {
 			break
 		}
 	}
+
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		waitGroup.Wait()
 		response.ListTime = fmt.Sprintf("%s", time.Now().Sub(startTime))
 	}()
-	err := s.notifyDoneProcesses(ctx, events, response, jobsByID)
+	err = s.notifyDoneProcesses(ctx, events, response, jobsByID)
 	return err
 }
 
-func (s *service) listBQJobs(ctx context.Context, projectID string, minCreated, maxCreated time.Time, jobsByID *jobs) {
+func (s *service) listBQJobs(ctx context.Context, projectID string, minCreated, maxCreated time.Time, jobsByID *jobs) error {
 	jobs, err := s.bq.ListJob(ctx, projectID, minCreated, maxCreated, "done", "pending", "running")
 	if err != nil {
-		return
+		return err
 	}
 	for i := range jobs {
 		jobsByID.put(jobs[i])
 	}
+	return nil
 }
 
 // notify notify bqtail
@@ -463,6 +478,9 @@ func (s *service) dispatchBatchEvents(ctx context.Context, response *contract.Re
 	wg := sync.WaitGroup{}
 	for i := range objects {
 		wg.Add(1)
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		func(obj astorage.Object) {
 			defer wg.Done()
 			if e := s.processBatch(ctx, response, obj, perf, scheduled); e != nil {
@@ -493,6 +511,7 @@ func (s *service) processBatch(ctx context.Context, response *contract.Response,
 	isScheduled := scheduled.HasSchedule(scheduledURL)
 	if isScheduled {
 		if time.Now().After(dueTime.Add(s.getMaxTriggerDelay())) {
+			fmt.Printf("removing stalled scheduled batch: %v\n", scheduledURL)
 			//at this point batch should have been completed, thus deleting .win and .wins pair
 			_ = s.fs.Delete(ctx, batchURL)
 			_ = s.fs.Delete(ctx, scheduledURL)
