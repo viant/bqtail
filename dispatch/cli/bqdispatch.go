@@ -39,6 +39,12 @@ func handleDispatchEvent(ctx context.Context) (*contract.Response, error) {
 	response := service.Dispatch(ctx)
 	response.Lock()
 	defer response.UnLock()
+	defer func() {
+		r := recover()
+		if r != nil {
+			log.Printf("recovered: %v\n", r)
+		}
+	}()
 	data, _ := json.Marshal(response)
 	fmt.Printf("%s\n", data)
 	if response.Error != "" {
