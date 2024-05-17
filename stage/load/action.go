@@ -20,7 +20,7 @@ func (j *Job) buildActions() (*task.Actions, error) {
 	return result, err
 }
 
-func (j Job) buildGroupActions(actions *task.Actions) {
+func (j *Job) buildGroupActions(actions *task.Actions) {
 	groupAction, _ := task.NewAction(shared.ActionGroup, sbatch.GroupRequest{MaxDurationInSec: j.Rule.Batch.Group.DurationInSec})
 	groupAction.Actions = &task.Actions{
 		OnSuccess: j.Rule.Batch.Group.OnDone,
@@ -28,7 +28,7 @@ func (j Job) buildGroupActions(actions *task.Actions) {
 	actions.FinalizeOnSuccess(groupAction)
 }
 
-//buildDoneProcessAction append track action
+// buildDoneProcessAction append track action
 func (j *Job) buildProcessActions(actions *task.Actions) {
 
 	moveRequest := storage.MoveRequest{SourceURL: j.ProcessURL, DestURL: j.DoneProcessURL, IsDestAbsoluteURL: true}

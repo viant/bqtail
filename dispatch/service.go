@@ -34,8 +34,6 @@ import (
 var thinkTime = 1500 * time.Millisecond
 var maxBqJobListLoopback = 6 * time.Hour
 
-const batchConcurrency = 40
-
 // Service represents event service
 type Service interface {
 	Dispatch(ctx context.Context) *contract.Response
@@ -93,11 +91,12 @@ func (s *service) Dispatch(ctx context.Context) *contract.Response {
 // Dispatch dispatched BigQuery event
 func (s *service) dispatch(ctx context.Context, response *contract.Response) error {
 	timeInSec := toolbox.AsInt(os.Getenv("FUNCTION_TIMEOUT_SEC"))
-	remainingDuration := time.Duration(timeInSec)*time.Second - thinkTime
+	remainingDuration := (time.Duration(timeInSec) * time.Second) - thinkTime
 	timeoutDuration := s.config.TimeToLive()
-	if timeoutDuration > remainingDuration && remainingDuration > 0 {
+	if timeoutDuration < remainingDuration && remainingDuration > 0 {
 		timeoutDuration = remainingDuration
 	}
+	fmt.Printf("running with timeout %s\n", timeoutDuration)
 	ctx, cancelFunc := context.WithTimeout(ctx, timeoutDuration)
 	defer cancelFunc()
 	running := int32(1)
@@ -115,6 +114,7 @@ func (s *service) dispatch(ctx context.Context, response *contract.Response) err
 			fmt.Printf("Processing: %v:%v %v\n", projectEvents[i].Region, projectEvents[i].ProjectID, len(projectEvents[i].Items))
 		}
 		if isProcessingError(err) {
+			fmt.Printf("Processing error: %v\n", err)
 			return err
 		}
 		for i := range projectEvents {
