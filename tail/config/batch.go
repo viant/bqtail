@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//Batch transfer config
+// Batch transfer config
 type (
 	Batch struct {
 		//Window batch time window
@@ -25,6 +25,9 @@ type (
 		// when a table has 40 shards, 40 batches would start exactly at the same time unless this parameter is specified
 		MaxDelayInSec int `json:",omitempty"`
 
+		//UsePatternHash if set, the batch will be grouped by the matched pattern
+		UsePatternHash bool `json:",omitempty"`
+
 		//Group batch grouping setting
 		Group *Group
 	}
@@ -36,7 +39,7 @@ type (
 	}
 )
 
-//Init initialises batch mode
+// Init initialises batch mode
 func (b *Batch) Init() {
 	if b.Window == nil {
 		b.Window = &Window{}
@@ -45,7 +48,7 @@ func (b *Batch) Init() {
 
 }
 
-//MaxDelayMs max delay in ms
+// MaxDelayMs max delay in ms
 func (b *Batch) MaxDelayMs(minInMs int) int {
 	maxDelayMs := b.MaxDelayInSec * 1000
 	if maxDelayMs < minInMs {
@@ -54,19 +57,19 @@ func (b *Batch) MaxDelayMs(minInMs int) int {
 	return maxDelayMs
 }
 
-//Validate checks if batch configuration is valid
+// Validate checks if batch configuration is valid
 func (b *Batch) Validate() error {
 	return b.Window.Validate()
 }
 
-//IsWithinFirstHalf returns true if source time is within the first half window
+// IsWithinFirstHalf returns true if source time is within the first half window
 func (b *Batch) IsWithinFirstHalf(sourceTime time.Time) bool {
 	halfDuration := b.Window.DurationInSec / 2
 	remainder := int(sourceTime.Unix()) % b.Window.DurationInSec
 	return remainder < halfDuration
 }
 
-//WindowEndTime returns window end time
+// WindowEndTime returns window end time
 func (b *Batch) WindowEndTime(sourceTime time.Time) time.Time {
 	windowDuration := b.Window.DurationInSec
 	sourceUnixTimestamp := sourceTime.Unix()
@@ -75,7 +78,7 @@ func (b *Batch) WindowEndTime(sourceTime time.Time) time.Time {
 	return time.Unix(sourceUnixTimestamp+int64(endTimeWindowDelta), 0).UTC()
 }
 
-//WindowEndTime returns window end time
+// WindowEndTime returns window end time
 func (b *Batch) GroupEndTime(sourceTime time.Time) time.Time {
 	groupDuration := b.Group.DurationInSec
 	sourceUnixTimestamp := sourceTime.Unix()
@@ -84,13 +87,13 @@ func (b *Batch) GroupEndTime(sourceTime time.Time) time.Time {
 	return time.Unix(sourceUnixTimestamp+int64(endTimeWindowDelta), 0).UTC()
 }
 
-//WindowURL returns windowURL
+// WindowURL returns windowURL
 func (b *Batch) WindowURL(baseURL, dest string, sourceTime time.Time) string {
 	endTime := b.WindowEndTime(sourceTime)
 	return url.Join(baseURL, fmt.Sprintf("%v_%v%v", dest, endTime.Unix(), shared.WindowExt))
 }
 
-//NewBatch creates a batch
+// NewBatch creates a batch
 func NewBatch(durationInSec int) *Batch {
 	return &Batch{
 		Window: &Window{

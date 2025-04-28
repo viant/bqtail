@@ -12,6 +12,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/data/udf"
 	"google.golang.org/api/bigquery/v2"
+	"hash/fnv"
 	"regexp"
 	"strconv"
 	"strings"
@@ -253,11 +254,9 @@ func (d *Destination) Expand(dest string, source *stage.Source) (string, error) 
 	}
 
 	if d.Pattern != "" {
-		if d.compiled == nil {
-			d.compiled, err = regexp.Compile(d.Pattern)
-			if err != nil {
-				return "", err
-			}
+		err := d.ensurePattern()
+		if err != nil {
+			return "", err
 		}
 		dest = expandWithPattern(d.compiled, source.URL, dest)
 	}
@@ -272,6 +271,34 @@ func (d *Destination) Expand(dest string, source *stage.Source) (string, error) 
 
 	}
 	return dest, err
+}
+
+func (d *Destination) ensurePattern() error {
+	if d.compiled == nil {
+		var err error
+		d.compiled, err = regexp.Compile(d.Pattern)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *Destination) PatternHash(source *stage.Source) int64 {
+	if d.Pattern == "" {
+		return 0
+	}
+	err := d.ensurePattern()
+	if err != nil {
+		return 0
+	}
+	_, URLPath := url.Base(source.URL, file.Scheme)
+	matched := d.compiled.FindStringSubmatch(URLPath)
+	h := fnv.New64a()
+	for i := 1; i < len(matched); i++ {
+		h.Write([]byte(matched[i]))
+	}
+	return int64(h.Sum64())
 }
 
 func toComparableTable(table string) string {

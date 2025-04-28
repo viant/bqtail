@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
-	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/url"
 	"github.com/viant/afsc/gs"
@@ -18,11 +17,12 @@ import (
 	"github.com/viant/bqtail/tail/config"
 	"log"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
 
-//Service representa a batch service
+// Service representa a batch service
 type Service interface {
 	//Try to acquire batch window
 	TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error)
@@ -39,7 +39,7 @@ type service struct {
 	fs              afs.Service
 }
 
-//addLocationFile tracks parent locations for a batch
+// addLocationFile tracks parent locations for a batch
 func (s *service) addLocationFile(ctx context.Context, window *Window, location string) error {
 	locationFile := fmt.Sprintf("%v%v", base.Hash(location), shared.LocationExt)
 	URL := strings.Replace(window.URL, shared.WindowExt, "/"+locationFile, 1)
@@ -53,7 +53,7 @@ func (s *service) addLocationFile(ctx context.Context, window *Window, location 
 	return nil
 }
 
-//TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
+// TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (info *Info, err error) {
 	err = base.RunWithRetriesOnRetryOrInternalError(func() error {
 		info, err = s.tryAcquireWindow(ctx, process, rule)
@@ -63,12 +63,19 @@ func (s *service) TryAcquireWindow(ctx context.Context, process *stage.Process, 
 
 }
 
-//TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
+// TryAcquireWindow try to acquire window for batched transfer, only one cloud function can acquire window
 func (s *service) tryAcquireWindow(ctx context.Context, process *stage.Process, rule *config.Rule) (*Info, error) {
 	parentURL, _ := url.Split(process.Source.URL, gs.Scheme)
 	windowDest := process.DestTable
 	ext := path.Ext(process.Source.URL)
-	suffixRaw := process.DestTable + rule.When.Suffix + ext
+
+	pattenHash := ""
+	if rule.Batch != nil && rule.Batch.UsePatternHash {
+		hash := rule.Dest.PatternHash(process.Source)
+		pattenHash = strconv.Itoa(int(hash))
+	}
+
+	suffixRaw := process.DestTable + rule.When.Suffix + pattenHash + ext
 
 	if !rule.Batch.MultiPath {
 		suffixRaw += parentURL
@@ -149,13 +156,9 @@ func (s *service) getBaseURLS(ctx context.Context, rule *config.Rule, window *Wi
 	return result, nil
 }
 
-//MatchWindowData matches window data, it waits for window to ends if needed
+// MatchWindowData matches window data, it waits for window to ends if needed
 func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, window *Window) (err error) {
-	before := window.End          //inclusive
-	after := window.Start.Add(-1) //exclusive
-	modFilter := matcher.NewModification(&before, &after)
 	window.Resources = make([]*Resource, 0)
-
 	var baseURLS []string
 	err = base.RunWithRetries(func() error {
 		baseURLS, err = s.getBaseURLS(ctx, rule, window)
@@ -166,7 +169,7 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 	}
 	var result = make([]string, 0)
 	for _, baseURL := range baseURLS {
-		if err := s.matchData(ctx, window, rule, baseURL, modFilter, &result); err != nil {
+		if err := s.matchData(ctx, window, rule, baseURL, &result); err != nil {
 			return err
 		}
 	}
@@ -174,7 +177,7 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 	return nil
 }
 
-func (s *service) matchData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, matcher option.Matcher, result *[]string) error {
+func (s *service) matchData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, result *[]string) error {
 
 	objects, err := s.fs.List(ctx, baseURL)
 	if err != nil {
@@ -227,7 +230,7 @@ func (s *service) AcquireGroup(ctx context.Context, process *stage.Process, rule
 	return group, nil
 }
 
-//New create stage service
+// New create stage service
 func New(batchURLProvider func(rule *config.Rule) string, storageService afs.Service) Service {
 	return &service{
 		taskURLProvider: batchURLProvider,
