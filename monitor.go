@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 	"github.com/pkg/errors"
 	"github.com/viant/bqtail/mon"
 	"github.com/viant/bqtail/shared"
@@ -11,6 +12,10 @@ import (
 	"log"
 	"net/http"
 )
+
+func init() {
+	functions.HTTP("Monitor", Monitor)
+}
 
 //Monitor cloud function entry point
 func Monitor(w http.ResponseWriter, r *http.Request) {

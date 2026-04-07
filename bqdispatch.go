@@ -5,10 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 	"github.com/viant/bqtail/dispatch"
 	"github.com/viant/bqtail/dispatch/contract"
 	"net/http"
 )
+
+func init() {
+	functions.HTTP("BqDispatch", BqDispatch)
+}
 
 //BqDispatch BigQuery trigger background cloud function entry point
 func BqDispatch(w http.ResponseWriter, r *http.Request) {
