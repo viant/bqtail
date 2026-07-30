@@ -74,8 +74,12 @@ func (s *service) tryAcquireWindow(ctx context.Context, process *stage.Process, 
 		hash := rule.Dest.PatternHash(process.Source)
 		pattenHash = strconv.Itoa(int(hash))
 	}
+	groupKey, err := rule.Batch.GroupKey(process.Params)
+	if err != nil {
+		return nil, err
+	}
 
-	suffixRaw := process.DestTable + rule.When.Suffix + pattenHash + ext
+	suffixRaw := process.DestTable + rule.When.Suffix + pattenHash + groupKey + ext
 
 	if !rule.Batch.MultiPath {
 		suffixRaw += parentURL
@@ -88,7 +92,6 @@ func (s *service) tryAcquireWindow(ctx context.Context, process *stage.Process, 
 
 	endTime := batch.WindowEndTime(process.Source.Time)
 	startTime := endTime.Add(-batch.Window.Duration)
-	var err error
 	var window *Window
 	if exists {
 		window = NewWindow(process, startTime, endTime, windowURL)
@@ -178,7 +181,10 @@ func (s *service) MatchWindowDataURLs(ctx context.Context, rule *config.Rule, wi
 }
 
 func (s *service) matchData(ctx context.Context, window *Window, rule *config.Rule, baseURL string, result *[]string) error {
-
+	windowGroupKey, err := rule.Batch.GroupKey(window.Process.Params)
+	if err != nil {
+		return err
+	}
 	objects, err := s.fs.List(ctx, baseURL)
 	if err != nil {
 		return errors.Wrapf(err, "failed to list batch %v data files", baseURL)
@@ -186,6 +192,19 @@ func (s *service) matchData(ctx context.Context, window *Window, rule *config.Ru
 	for _, object := range objects {
 		if rule.HasMatch(object.URL()) {
 			source := stage.NewSource(object.URL(), object.ModTime())
+			if windowGroupKey != "" {
+				params, err := rule.Dest.Params(object.URL())
+				if err != nil {
+					return errors.Wrapf(err, "failed to extract batch grouping parameters from %v", object.URL())
+				}
+				candidateGroupKey, err := rule.Batch.GroupKey(params)
+				if err != nil {
+					return errors.Wrapf(err, "failed to group batch candidate %v", object.URL())
+				}
+				if candidateGroupKey != windowGroupKey {
+					continue
+				}
+			}
 			table, err := rule.Dest.ExpandTable(rule.Dest.Table, source)
 			if err != nil {
 				return errors.Wrapf(err, "failed to expand table: %v", rule.Dest.Table)

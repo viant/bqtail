@@ -127,3 +127,33 @@ func TestBatch_WindowURL(t *testing.T) {
 	}
 
 }
+
+func TestBatch_GroupKey(t *testing.T) {
+	batch := &Batch{GroupByParameters: []string{"UidType", "UserPoolID"}}
+
+	ip123, err := batch.GroupKey(map[string]interface{}{"UidType": "ip", "UserPoolID": "123", "Ignored": "a"})
+	assert.NoError(t, err)
+	ip123Again, err := batch.GroupKey(map[string]interface{}{"UidType": "ip", "UserPoolID": "123", "Ignored": "b"})
+	assert.NoError(t, err)
+	device123, err := batch.GroupKey(map[string]interface{}{"UidType": "device", "UserPoolID": "123"})
+	assert.NoError(t, err)
+	ip234, err := batch.GroupKey(map[string]interface{}{"UidType": "ip", "UserPoolID": "234"})
+	assert.NoError(t, err)
+
+	assert.Equal(t, ip123, ip123Again)
+	assert.NotEqual(t, ip123, device123)
+	assert.NotEqual(t, ip123, ip234)
+	assert.Len(t, ip123, 64)
+}
+
+func TestBatch_GroupKeyDisabled(t *testing.T) {
+	key, err := (&Batch{}).GroupKey(nil)
+	assert.NoError(t, err)
+	assert.Empty(t, key)
+}
+
+func TestBatch_GroupKeyMissingParameter(t *testing.T) {
+	batch := &Batch{GroupByParameters: []string{"UidType", "UserPoolID"}}
+	_, err := batch.GroupKey(map[string]interface{}{"UidType": "ip"})
+	assert.EqualError(t, err, `batch grouping parameter "UserPoolID" was not found`)
+}

@@ -1,10 +1,13 @@
 package config
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"github.com/viant/afs/url"
 	"github.com/viant/bqtail/shared"
 	"github.com/viant/bqtail/task"
+	"strings"
 	"time"
 )
 
@@ -28,6 +31,10 @@ type (
 		//UsePatternHash if set, the batch will be grouped by the matched pattern
 		UsePatternHash bool `json:",omitempty"`
 
+		//GroupByParameters groups files by the selected destination pattern parameters.
+		//When empty, batching behavior is unchanged.
+		GroupByParameters []string `json:",omitempty"`
+
 		//Group batch grouping setting
 		Group *Group
 	}
@@ -38,6 +45,25 @@ type (
 		OnDone        []*task.Action
 	}
 )
+
+// GroupKey returns a stable key for the configured grouping parameters.
+// Parameter names are included in the digest to avoid ambiguous combinations.
+func (b *Batch) GroupKey(params map[string]interface{}) (string, error) {
+	if b == nil || len(b.GroupByParameters) == 0 {
+		return "", nil
+	}
+	var builder strings.Builder
+	for _, name := range b.GroupByParameters {
+		value, ok := params[name]
+		if !ok {
+			return "", fmt.Errorf("batch grouping parameter %q was not found", name)
+		}
+		nameValue := fmt.Sprint(value)
+		fmt.Fprintf(&builder, "%d:%s=%d:%s;", len(name), name, len(nameValue), nameValue)
+	}
+	digest := sha256.Sum256([]byte(builder.String()))
+	return hex.EncodeToString(digest[:]), nil
+}
 
 // Init initialises batch mode
 func (b *Batch) Init() {
