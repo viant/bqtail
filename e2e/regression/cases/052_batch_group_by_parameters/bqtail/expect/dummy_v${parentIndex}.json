@@ -1,0 +1,7 @@
+[
+  {"@indexBy@": "id"},
+  {"id": 1, "uid": "10.0.0.1", "uid_type": "ip", "user_pool_id": 123},
+  {"id": 2, "uid": "10.0.0.2", "uid_type": "ip", "user_pool_id": 123},
+  {"id": 3, "uid": "device-a", "uid_type": "device", "user_pool_id": 234},
+  {"id": 4, "uid": "device-b", "uid_type": "device", "user_pool_id": 234}
+]

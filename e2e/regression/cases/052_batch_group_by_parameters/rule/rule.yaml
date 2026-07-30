@@ -1,0 +1,25 @@
+When:
+  Prefix: /data/case${parentIndex}/
+  Suffix: .json
+Async: true
+Batch:
+  Window:
+    DurationInSec: 15
+  GroupByParameters:
+    - UidType
+    - UserPoolID
+Dest:
+  Table: bqtail.dummy_v${parentIndex}
+  Transient:
+    Dataset: temp
+  Pattern: /data/case${parentIndex}/(ip|device)_(\d+)_
+  Parameters:
+    - Name: UidType
+      Expression: $1
+    - Name: UserPoolID
+      Expression: $2
+  Transform:
+    uid_type: "'$UidType'"
+    user_pool_id: $UserPoolID
+OnSuccess:
+  - Action: delete
