@@ -40,7 +40,7 @@ import (
 	"time"
 )
 
-//Service represents a tail service
+// Service represents a tail service
 type Service interface {
 	//Tails appends data from source URL to matched BigQuery table
 	Tail(ctx context.Context, request *contract.Request) *contract.Response
@@ -223,7 +223,7 @@ func (s *service) handlerProcessError(ctx context.Context, request *contract.Req
 	}
 }
 
-//failProcess  copy a a failed process to error location, and moves it to done location
+// failProcess  copy a a failed process to error location, and moves it to done location
 func (s *service) failProcess(ctx context.Context, info *stage.Process, request *contract.Request) {
 	processErrorURL := url.Join(s.config.ErrorURL, "proc", info.DestTable, fmt.Sprintf("%v%v", request.EventID, shared.ProcessExt))
 	_ = s.fs.Copy(ctx, info.ProcessURL, processErrorURL)
@@ -252,20 +252,38 @@ func (s *service) canRetryEvent(ctx context.Context, errorCounterURL string, res
 
 func (s *service) newProcess(ctx context.Context, source astorage.Object, rule *config.Rule, request *contract.Request, response *contract.Response) (*stage.Process, error) {
 	result := stage.NewProcess(request.EventID, stage.NewSource(source.URL(), source.ModTime()), rule.Info.URL, rule.Async)
-	var err error
-	if result.DestTable, err = rule.Dest.ExpandTable(rule.Dest.Table, result.Source); err != nil {
+	params, err := rule.Dest.Params(result.Source.URL)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to expand destination parameters")
+	}
+	result.Params = params
+	modSource, err := destinationModSource(rule, params, result.Source.URL)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build destination mod source")
+	}
+	if result.DestTable, err = rule.Dest.ExpandTableWithModSource(rule.Dest.Table, result.Source, modSource); err != nil {
 		return nil, errors.Wrapf(err, "failed to expand table :%v", rule.Dest.Table)
 	}
 	result.ProcessURL = s.config.BuildLoadURL(result)
 	result.DoneProcessURL = s.config.DoneLoadURL(result)
 	result.FailedURL = url.Join(s.config.JournalURL, "failed")
 	result.ProjectID = s.selectProjectID(ctx, rule, response)
-	result.Params, err = rule.Dest.Params(result.Source.URL)
 	if shared.IsDebugLoggingLevel() {
 		shared.LogF("process: ")
 		shared.LogLn(result)
 	}
 	return result, err
+}
+
+func destinationModSource(rule *config.Rule, params map[string]interface{}, sourceURL string) (string, error) {
+	if rule == nil || rule.Batch == nil || len(rule.Batch.GroupByParameters) == 0 {
+		return sourceURL, nil
+	}
+	groupKey, err := rule.Batch.GroupKey(params)
+	if err != nil {
+		return "", err
+	}
+	return groupKey, nil
 }
 
 func (s *service) submitJob(ctx context.Context, job *load.Job, response *contract.Response) (*load.Job, error) {
@@ -293,7 +311,7 @@ func (s *service) submitJob(ctx context.Context, job *load.Job, response *contra
 	return job, err
 }
 
-//runLoadProcess this method allows rerun Activity/Done job as long original data files are present
+// runLoadProcess this method allows rerun Activity/Done job as long original data files are present
 func (s *service) runLoadProcess(ctx context.Context, request *contract.Request, response *contract.Response) error {
 	process := &stage.Process{ProcessURL: request.SourceURL}
 	processJob, err := load.NewJobFromURL(ctx, nil, process.ProcessURL, s.fs)
@@ -457,7 +475,22 @@ func (s *service) runBatch(ctx context.Context, request *contract.Request, respo
 		}
 	}
 	request.EventID = window.EventID
+	// Batch triggers can be delivered to a warm Cloud Run instance whose rule
+	// cache predates the data-file event that created the window. Refresh here,
+	// just as the data-file path does, before resolving the window's rule.
+	if err = s.config.ReloadIfNeeded(ctx, s.cfs); err != nil {
+		response.Retriable = true
+		return err
+	}
 	rule := s.config.Rule(ctx, window.RuleURL)
+	if rule == nil {
+		response.Retriable = true
+		return fmt.Errorf("batch rule was not found for %v", window.RuleURL)
+	}
+	if rule.Batch == nil {
+		response.Retriable = true
+		return fmt.Errorf("batch configuration was missing for %v", window.RuleURL)
+	}
 	loadJob, batchErr := s.runInBatch(ctx, rule, window, response)
 	if !loadJob.Recoverable() {
 		if batchErr != nil {
@@ -473,6 +506,9 @@ func (s *service) runInBatch(ctx context.Context, rule *config.Rule, window *bat
 	response.BatchRunner = true
 	if rule == nil {
 		return nil, fmt.Errorf("rule was empty for %v", window.RuleURL)
+	}
+	if rule.Batch == nil {
+		return nil, fmt.Errorf("batch configuration was missing for %v", window.RuleURL)
 	}
 	batchingDistributionDelay := time.Duration(getRandom(shared.StorageListVisibilityDelayMs, rule.Batch.MaxDelayMs(shared.StorageListVisibilityDelayMs))) * time.Millisecond
 	remainingDuration := window.End.Sub(time.Now().UTC()) + batchingDistributionDelay
@@ -629,7 +665,7 @@ func (s *service) moveAssets(ctx context.Context, URLs []string, baseDestURL str
 	return err
 }
 
-//restartProcess restart process, start ingestion process from scratch using original process execution plan
+// restartProcess restart process, start ingestion process from scratch using original process execution plan
 func (s *service) restartProcess(ctx context.Context, process *stage.Process, request *contract.Request, response *contract.Response) error {
 	if !process.Async {
 		resp := contract.NewResponse(request.EventID)
@@ -736,7 +772,7 @@ func (s *service) PatchedTable(ctx context.Context, fields []*status.Field, tabl
 	return err
 }
 
-//New creates a new service
+// New creates a new service
 func New(ctx context.Context, config *Config) (Service, error) {
 	srv := &service{
 		config:   config,

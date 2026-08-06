@@ -215,7 +215,20 @@ Dest:
   
 For example the following rule will enrich dest table with pid and xid value extracted from path.
 Since ingestion batch group files by folder and destination table. Each batch is guarantee to have 
-shared $PID, but xid would be evaluated from the first file in the batch.
+  shared $PID, but xid would be evaluated from the first file in the batch.
+
+To batch only files that share selected filename parameters, list those
+parameters in `Batch.GroupByParameters`. When omitted, the existing destination,
+folder, and window grouping behavior is unchanged.
+
+```yaml
+Batch:
+  Window:
+    DurationInSec: 120
+  GroupByParameters:
+    - UidType
+    - UserPoolID
+```
 
 ```yaml
 Batch:

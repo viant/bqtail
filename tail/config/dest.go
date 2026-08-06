@@ -238,11 +238,21 @@ func (d *Destination) ExpandTable(table string, source *stage.Source) (string, e
 	return d.Expand(table, source)
 }
 
+// ExpandTableWithModSource expands a table while using modSource only for
+// $Mod expressions. URL pattern and parameter expressions still use source.
+func (d *Destination) ExpandTableWithModSource(table string, source *stage.Source, modSource string) (string, error) {
+	return d.expand(table, source, modSource)
+}
+
 // Expand returns sourced table
 func (d *Destination) Expand(dest string, source *stage.Source) (string, error) {
+	return d.expand(dest, source, source.URL)
+}
+
+func (d *Destination) expand(dest string, source *stage.Source, modSource string) (string, error) {
 	var err error
 	if count := strings.Count(dest, ModExpr); count > 0 {
-		if dest, err = expandMod(dest, source.URL, count); err != nil {
+		if dest, err = expandMod(dest, modSource, count); err != nil {
 			return dest, err
 		}
 	}

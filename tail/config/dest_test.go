@@ -109,6 +109,28 @@ func TestDestination_ExpandTable(t *testing.T) {
 
 }
 
+func TestDestination_ExpandTableWithModSource(t *testing.T) {
+	dest := &Destination{Table: "proj:dataset:table_$Mod(1000000)"}
+	created := time.Unix(1567529212, 326)
+	sourceA := stage.NewSource("gs://bucket/path/file-a.csv", created)
+	sourceB := stage.NewSource("gs://bucket/path/file-b.csv", created)
+
+	sameGroupA, err := dest.ExpandTableWithModSource(dest.Table, sourceA, "userpool=123;uidtype=ip")
+	assert.NoError(t, err)
+	sameGroupB, err := dest.ExpandTableWithModSource(dest.Table, sourceB, "userpool=123;uidtype=ip")
+	assert.NoError(t, err)
+	differentGroup, err := dest.ExpandTableWithModSource(dest.Table, sourceB, "userpool=234;uidtype=device")
+	assert.NoError(t, err)
+	legacy, err := dest.ExpandTable(dest.Table, sourceA)
+	assert.NoError(t, err)
+	legacyWithExplicitSource, err := dest.ExpandTableWithModSource(dest.Table, sourceA, sourceA.URL)
+	assert.NoError(t, err)
+
+	assert.Equal(t, sameGroupA, sameGroupB)
+	assert.NotEqual(t, sameGroupA, differentGroup)
+	assert.Equal(t, legacy, legacyWithExplicitSource)
+}
+
 func TestDestination_TableReference(t *testing.T) {
 
 	inThePast := time.Unix(1567529212, 326)

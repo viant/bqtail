@@ -205,7 +205,11 @@ func (s *service) matchData(ctx context.Context, window *Window, rule *config.Ru
 					continue
 				}
 			}
-			table, err := rule.Dest.ExpandTable(rule.Dest.Table, source)
+			modSource := source.URL
+			if windowGroupKey != "" {
+				modSource = windowGroupKey
+			}
+			table, err := rule.Dest.ExpandTableWithModSource(rule.Dest.Table, source, modSource)
 			if err != nil {
 				return errors.Wrapf(err, "failed to expand table: %v", rule.Dest.Table)
 			}
